@@ -5,11 +5,13 @@
 
 ![Lunarc · Light in Motion. 让视频增强的每一步，都清晰可控。](docs/assets/lunarc-banner.png)
 
-**Windows x64** &nbsp; · &nbsp; **源码发布** &nbsp; · &nbsp; **GPL-3.0-or-later**
+**Windows x64** &nbsp; · &nbsp; **安装版与源码** &nbsp; · &nbsp; **GPL-3.0-or-later**
 
 一个把重建、画面对比与导出放在一起的中文视频增强工作台。排好渲染顺序，调整画面，检查结果。
 
-[开始使用](docs/getting-started.md) &nbsp; / &nbsp; [运行库管理](docs/dlssnr-runtime.md) &nbsp; / &nbsp; [验证范围](docs/public-release.md)
+[下载 Windows 安装版](https://github.com/Yukikaze1945/Lunarc/releases/tag/v2.1.1) &nbsp; / &nbsp; [源码运行](docs/getting-started.md) &nbsp; / &nbsp; [运行库管理](docs/dlssnr-runtime.md) &nbsp; / &nbsp; [验证范围](docs/public-release.md)
+
+**安装 2.1.1：** 在 Release 下载 `Lunarc-2.1.1-x64-Installer.zip` 和两个 `.nsis.7z.001` / `.002` 数据分卷。把 ZIP 解压到分卷所在文件夹，双击 **`Install-Lunarc.cmd`**，自动校验、合并并打开安装器。无需另装 Python 或 CUDA Toolkit；DLSSNR 通过运行库管理器另行导入。详细步骤见 [安装说明](docs/installing.md)。
 
 ---
 
@@ -38,7 +40,7 @@
 
 ### 使用前了解
 
-- 当前公开仓库提供**源码与测试**。预编译桥接 DLL、NVIDIA 专有运行库、模型权重和安装包不在公开发布中。
+- Git 仓库提供**源码与测试**；Windows 安装版在 **Releases**。完整包携带 Python、PyTorch / CUDA、FFmpeg、RAFT 权重及桥接库，DLSSNR / DLAA / VSR / VFG 模型运行库由用户另行提供。
 - HDR 预览通过 8-bit 显示图像进行映射，尚未校准显示器，不能用预览判断最终 HDR 亮度。
 - 特效支持受 GPU、驱动、运行库、尺寸与素材影响；缺失组件会明确报告，不静默替换算法。
 - 预览、诊断和标量回读仍有主机传输。部分 GPU 图像边界的零回读，不代表整个程序零主机流量。
@@ -60,7 +62,7 @@ cd Lunarc
 
 项目提供独立运行环境收集器和离线两文件安装器，可将 CPython、依赖、FFmpeg 与模型放在应用目录中；显卡驱动仍需单独安装。
 
-本地构建方法见 [打包说明](packaging/README.md)。组合安装包当前暂停公开发布；构建脚本、下载来源或文件签名均不授予专有组件的再分发权。本项目保持纯 GPL-3.0-or-later，未添加专有链接例外。
+构建方法见 [打包说明](packaging/README.md)。安装版在 Releases 以分卷方式提供，合并后与已验收的离线数据包一致。本项目源码保持 GPL-3.0-or-later，第三方组件保留自身许可；构建脚本、下载来源或文件签名不授予额外的组件再分发权。
 
 </details>
 

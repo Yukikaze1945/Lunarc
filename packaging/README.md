@@ -45,4 +45,15 @@ npm run electron:installer
 
 ## 公开源码许可
 
-项目整体为 GPL-3.0-or-later；未授予专有库链接例外。当前公开仓库只发布源码，不发布安装包或专有运行库。打包配置为本地构建工具，不能据此推定组合二进制可以公开再分发。发布二进制前还需解决所有链接及组件许可问题，并保留完整通知和所需源码；参见根目录 `THIRD_PARTY_NOTICES.md`。
+项目源码为 GPL-3.0-or-later；第三方组件保留自身许可。Git 仓库保留源码，Windows 安装文件通过 Releases 发布。打包配置不能授予第三方组件的再分发权；完整通知与组件信息见根目录 `THIRD_PARTY_NOTICES.md`，实际包内通知位于 `resources/licenses` 和各 Python 分发包的许可目录。
+
+## GitHub Release 分卷
+
+GitHub 的单个附件须小于 2 GiB。对已验收的离线安装器执行以下命令，按字节分割数据包，不重新压缩或改变安装内容：
+
+```powershell
+python packaging/build_release_assets.py --input "<nsis-web 输出目录>" --output "<新分卷目录>" --version 2.1.1
+powershell -NoProfile -ExecutionPolicy Bypass -File "<新分卷目录>/Install-Lunarc.ps1" -VerifyOnly
+```
+
+验证合并后的整体 SHA-256 后发布两个分卷，并将安装 EXE、两份启动脚本、`installer-payload.json` 与安装说明打成小型安装入口 ZIP。用户将 ZIP 解压到分卷所在目录，运行 `Install-Lunarc.cmd`；源码构建仍可直接使用原离线两文件安装集。

@@ -40,7 +40,7 @@ DLAA、RTX VSR、VFG 使用本机另行安装的 NVIDIA 运行库；缺少组件
 
 ## 独立环境与测试
 
-本地安装包构建见 [打包说明](../packaging/README.md)。公开仓库仍只发布源码，组合安装包暂停公开分发。
+安装版下载及分卷安装见 [安装说明](installing.md)；自行构建见 [打包说明](../packaging/README.md)。运行库、模型和编译二进制不放入 Git 源码历史。
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install pytest
