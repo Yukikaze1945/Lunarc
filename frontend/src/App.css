@@ -66,6 +66,9 @@ html[data-window-overlay='true'] .project-header { padding-right: calc(var(--win
 .about-page > .brand { margin-bottom: 36px; }
 .about-page > h1 { font-size: 64px; font-weight: 600; letter-spacing: -2px; margin: 20px 0; }
 .about-page > h1 em { font-size: 24px; color: var(--color-lunarc-muted); font-style: normal; letter-spacing: 0; }
+.app-update-panel .inline-form h2, .app-update-panel .inline-form .badge { margin: 0; }
+.app-update-panel > .inline-form:first-child { margin-bottom: 20px; justify-content: space-between; }
+.app-update-panel progress { width: 100%; height: 5px; accent-color: var(--color-lunarc-accent); }
 .about-page .about-lead { font-size: 20px; color: var(--color-lunarc-text); }
 .fact-list { display: grid; grid-template-columns: 80px 1fr; gap: 16px; font-size: 13px; }
 .fact-list dt { color: var(--color-lunarc-muted); }

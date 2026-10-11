@@ -74,6 +74,7 @@ cd Lunarc
 | [运行库管理](docs/dlssnr-runtime.md) | 本地导入、版本切换、来源下载、哈希与签名检查。 |
 | [原生组件](docs/native-runtime.md) | DLAA、RTX VSR、VFG 等外部运行库配置。 |
 | [AMD 光流](docs/AMD_FLOW_DEPENDENCIES.md) | 固定 SDK 版本与官方编译器要求。 |
+| [软件更新](docs/app-updates.md) | 检查发布版、完整安装包下载、续传与校验。新入口将在后续安装构建提供。 |
 | [本地打包](packaging/README.md) | 独立环境、离线安装与启动检查。 |
 | [验证范围](docs/public-release.md) | 已完成的真实检查、实验性范围和未覆盖的组合。 |
 

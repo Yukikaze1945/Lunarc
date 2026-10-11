@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, protocol, net } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, protocol, net, shell } from 'electron'
 import crypto from 'node:crypto'
 import path from 'node:path'
 import http from 'node:http'
@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { spawn, execFileSync, ChildProcess } from 'node:child_process'
 import fs from 'node:fs'
 import {runtimeCandidates, runtimeDirectory, runtimeFingerprint, runtimeEnvironment, probeRuntime, type BackendStartup} from './backendRuntime'
+import {AppUpdates} from './appUpdates'
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -41,6 +42,13 @@ try {
 }
 
 let win: BrowserWindow | null = null
+let updates: AppUpdates | null = null
+function appUpdates() {
+  if (!updates) updates = new AppUpdates(app.getVersion(), app.isPackaged, path.join(app.getPath('userData'), 'updates'), state => {
+    if (win && !win.isDestroyed()) win.webContents.send('updates:state', state)
+  }, net.fetch.bind(net) as typeof fetch)
+  return updates
+}
 let pyProc: ChildProcess | null = null
 let backendStartup: BackendStartup = {state: 'checking', message: '正在检查运行环境'}
 const backendPort = process.env.E2E_TEST === '1' ? Number(process.env.E2E_BACKEND_PORT || 18923) : 18923
@@ -308,6 +316,18 @@ ipcMain.handle('dialog:openDirectory', async () => {
 // Authentication token IPC handler (P0-01)
 ipcMain.handle('auth:getToken', () => process.env.DLSS_LOCAL_TOKEN || '')
 ipcMain.handle('backend:getStartup', (event) => event.sender === win?.webContents ? backendStartup : null)
+ipcMain.handle('updates:get', event => event.sender === win?.webContents && event.senderFrame === win?.webContents.mainFrame ? appUpdates().state : null)
+ipcMain.handle('updates:check', (event, preview: unknown) => {
+  if ((event.sender !== win?.webContents || event.senderFrame !== win?.webContents.mainFrame) || typeof preview !== 'boolean') return null
+  return appUpdates().check(preview)
+})
+ipcMain.handle('updates:download', event => event.sender === win?.webContents && event.senderFrame === win?.webContents.mainFrame ? appUpdates().download() : null)
+ipcMain.handle('updates:cancel', event => {if (event.sender === win?.webContents && event.senderFrame === win?.webContents.mainFrame) appUpdates().cancel()})
+ipcMain.handle('updates:openDirectory', async event => {
+  if ((event.sender !== win?.webContents || event.senderFrame !== win?.webContents.mainFrame) || appUpdates().state.phase !== 'ready') return
+  const directory=appUpdates().state.directory
+  if (directory) {const error=await shell.openPath(directory); if (error) throw new Error(error)}
+})
 
 // Only the application renderer can update the two supported chrome palettes.
 ipcMain.handle('window:setTheme', (event, theme: unknown) => {
@@ -345,6 +365,7 @@ app.on('window-all-closed', () => {
 })
 
 app.on('before-quit', () => {
+  updates?.cancel()
   killPythonBackend()
 })
 

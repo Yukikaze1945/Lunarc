@@ -12,6 +12,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   localToken: process.env.DLSS_LOCAL_TOKEN || '',
   getToken: () => ipcRenderer.invoke('auth:getToken'),
   getBackendStartup: () => ipcRenderer.invoke('backend:getStartup'),
+  getAppUpdate: () => ipcRenderer.invoke('updates:get'),
+  checkAppUpdate: (preview: boolean) => ipcRenderer.invoke('updates:check', preview),
+  downloadAppUpdate: () => ipcRenderer.invoke('updates:download'),
+  cancelAppUpdate: () => ipcRenderer.invoke('updates:cancel'),
+  openAppUpdateDirectory: () => ipcRenderer.invoke('updates:openDirectory'),
+  onAppUpdate: (cb: (state: unknown) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, state: unknown) => cb(state)
+    ipcRenderer.on('updates:state', handler)
+    return () => ipcRenderer.removeListener('updates:state', handler)
+  },
   onBackendExit: (cb: (info: { code: number | null; signal: string }) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, info: { code: number | null; signal: string }) => cb(info)
     ipcRenderer.on('backend-exit', handler)
