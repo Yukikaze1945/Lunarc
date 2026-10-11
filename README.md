@@ -1,89 +1,75 @@
 <p>
-  <img src="docs/assets/lunarc-logo.svg" width="32" height="32" alt="Lunarc 青绿色光弧标志" />
-  &nbsp; <strong>LUNARC</strong> &nbsp; / &nbsp; VIDEO ENHANCEMENT WORKBENCH
+  <img src="docs/assets/lunarc-logo.svg" width="32" height="32" alt="Lunarc" />
+  &nbsp; <strong>LUNARC</strong>
 </p>
 
-![Lunarc · Light in Motion. 让视频增强的每一步，都清晰可控。](docs/assets/lunarc-banner.png)
+![Lunarc — 视频增强与插帧](docs/assets/lunarc-banner.png)
 
-**Windows x64** &nbsp; · &nbsp; **安装版与源码** &nbsp; · &nbsp; **GPL-3.0-or-later**
+**Windows x64** &nbsp; · &nbsp; **GPL-3.0-or-later**
 
-一个把重建、画面对比与导出放在一起的中文视频增强工作台。排好渲染顺序，调整画面，检查结果。
+Lunarc 是一款视频增强软件，支持 DLSSNR、DLAA、RTX VSR 和 NVIDIA VFG，可调整处理顺序、预览画面并批量导出。
 
-[下载 Windows 安装版](https://github.com/Yukikaze1945/Lunarc/releases/tag/v2.1.2) &nbsp; / &nbsp; [源码运行](docs/getting-started.md) &nbsp; / &nbsp; [运行库管理](docs/dlssnr-runtime.md) &nbsp; / &nbsp; [验证范围](docs/public-release.md)
+[下载安装版](https://github.com/Yukikaze1945/Lunarc/releases/tag/v2.1.2) &nbsp; / &nbsp; [安装说明](docs/installing.md) &nbsp; / &nbsp; [源码运行](docs/getting-started.md)
 
-**安装 2.1.2：** 下载 **`Lunarc-2.1.2-x64-Setup.exe`**。首次启动按教程安装基础运行环境与视频处理组件，再进入工作台。RAFT 光流按需下载，软件更新复用已有组件；不再提供完整离线包。详细步骤见 [安装说明](docs/installing.md)。
+## 01 / 界面
 
----
+![视频预览、渲染顺序与画质设置](docs/assets/lunarc-workbench.png)
 
-## 01 / 工作台
+<sub>截图中的视频为演示素材。</sub>
 
-![Lunarc 实际工作台：视频预览、可排序渲染链和画质参数](docs/assets/lunarc-workbench.png)
-
-<sub>实际安装版界面，使用原创合成素材。截图展示操作布局，不作为画质或性能对比证据。</sub>
-
-| 渲染链 · Enhance | 画面对比 · Inspect | 导出队列 · Deliver |
+| 画面处理 | 视频对比 | 批量导出 |
 | :--- | :--- | :--- |
-| 拖动卡片决定处理顺序，按需组合 DLAA、DLSSNR、RTX VSR 与 VFG。 | 原图、处理后与分屏预览；对比页支持两段视频连续播放。 | 配置编码与封装，查看进度、诊断任务、移除完成或失败的条目。 |
+| 拖动卡片调整 DLAA、DLSSNR、RTX VSR 和 VFG 的处理顺序。 | 查看原图、处理结果和分屏预览，对比导出前后的视频。 | 设置编码、画质和保存位置，管理导出任务。 |
 
-## 02 / 你能控制什么
+## 02 / 功能
 
-| 功能 | 支持范围 | 状态与条件 |
-| :--- | :--- | :--- |
-| 神经重建 | DLSSNR 单层 / 双层 / 三层，分层尺寸和权重 | Feature 18 需要匹配的 GPU、驱动及 DLSSNR 运行库；多尺度数据一致性融合为**实验性**。 |
-| 光流引导 | NVOF、AMD FidelityFX Optical Flow、RAFT-Large | 引擎能力与质量选项分别检测；RAFT 可选长边 512 / 720 / 1080 分析尺寸。 |
-| 原生画质处理 | DLAA 模型预设、RTX VSR 质量档位，按倍率或分辨率输出 | 需要用户另行取得对应 NVIDIA 运行库；支持范围在实际会话中验证。 |
-| 导出插帧 | NVIDIA VFG 固定倍率 / 目标帧率，镜头切换检测 | **仅用于导出**，实时预览保持原帧率；固定 5×–8× 为**实验性**。 |
-| 色彩链路 | SDR 8-bit、SDR 10-bit、HDR10 | HDR10 为**实验性**，保留 PQ / BT.2020 / P010 / Main10 及静态元数据。 |
-| 封装与素材 | 视频 / 图片拖入；音轨、字幕、章节、附件与元数据 | FFmpeg 封装；实际保留范围取决于输入流和所选输出容器。 |
-| 运行库管理 | 版本选择、DLL / ZIP 导入、确认来源后下载、独立缓存 | SHA-256、NVIDIA 签名及版本检查；当前已核对 DLSSNR 310.8.0.0。 |
-| 环境检测 | 基础包、原生 GPU 驱动、可选 RAFT CUDA 运算、DLL / ABI、FFmpeg 和模型 | 展示实际检测结果；依赖齐全不等于每种特效已运行成功。 |
+| 功能 | 说明 |
+| :--- | :--- |
+| DLSSNR | 单层、双层和三层处理，可调整各层分辨率与权重。多尺度数据一致性融合为实验性功能。 |
+| DLAA / RTX VSR | DLAA 模型预设；RTX VSR 质量档位，按倍率或指定分辨率输出。 |
+| 光流 | NVIDIA NVOF、AMD FidelityFX Optical Flow 和 RAFT-Large。RAFT 分析尺寸可选长边 512、720、1080。 |
+| NVIDIA VFG | 按固定倍率或目标帧率插帧，支持镜头切换检测。仅用于导出；5×–8× 为实验性选项。 |
+| 色彩 | SDR 8-bit、SDR 10-bit 和 HDR10。HDR10 为实验性功能，支持保留静态 HDR 元数据。 |
+| 素材与封装 | 拖入视频或图片；导出时保留音轨、字幕、章节、附件与元数据，具体取决于输出容器。 |
+| 运行库管理 | 下载、导入和切换 DLSSNR 版本，检查文件摘要、数字签名和版本。 |
 
-### 使用前了解
+## 03 / 安装
 
-- Git 仓库提供**源码与测试**；Windows 安装版在 **Releases**。小包携带界面、项目桥接及其原生依赖；Python 与 FFmpeg 首次安装，PyTorch / CUDA 与 RAFT 权重按需下载。DLSSNR / DLAA / VSR / VFG 模型运行库由用户另行提供。
-- HDR 预览通过 8-bit 显示图像进行映射，尚未校准显示器，不能用预览判断最终 HDR 亮度。
-- 特效支持受 GPU、驱动、运行库、尺寸与素材影响；缺失组件会明确报告，不静默替换算法。
-- 预览、诊断和标量回读仍有主机传输。部分 GPU 图像边界的零回读，不代表整个程序零主机流量。
-- 尚未提供跨机器性能保证；**Performance = NOT_CHARACTERIZED**。字幕尾部事件和音频 padding 可能超过视频结尾。
+1. 在 [Releases](https://github.com/Yukikaze1945/Lunarc/releases/tag/v2.1.2) 下载并运行 `Lunarc-2.1.2-x64-Setup.exe`，约 140 MB。
+2. 首次启动按提示安装基础运行环境和视频处理组件。
+3. 在 **运行与诊断 → DLSSNR 运行库** 中下载或导入运行库，再选择“使用”。
 
-## 03 / 从源码开始
+RAFT 光流需要另外安装 PyTorch/CUDA 和模型，可以在 **软件设置 → 组件管理** 中安装。不使用 RAFT 时无需下载这些文件。更新软件会保留已安装且版本匹配的组件。
+
+### 系统要求与限制
+
+- Windows x64、支持所选功能的 NVIDIA 显卡及驱动。
+- DLSSNR、DLAA、RTX VSR 和 VFG 需要对应的 NVIDIA 运行库，安装包不包含这些文件。
+- 首次安装组件需要联网；RAFT 下载量为数 GB，安装后需重启软件。
+- HDR 预览经过显示映射，不能作为最终 HDR 亮度的判断依据。
+- 处理速度取决于显卡、素材分辨率和所选设置。已测试的环境与功能见 [测试记录](docs/public-release.md)。
+
+## 04 / 源码运行
 
 ```powershell
 git clone https://github.com/Yukikaze1945/Lunarc.git
 cd Lunarc
 ```
 
-准备 Python、Node.js、FFmpeg、C++ 构建工具及所需 SDK，按 [源码运行指南](docs/getting-started.md) 安装依赖、编译桥接库，然后运行根目录 **`run_gui.bat`**。
+按 [源码运行指南](docs/getting-started.md) 安装依赖、编译原生库，然后运行根目录的 **`run_gui.bat`**。
 
-第一次使用时，打开 **运行与诊断** 检查实际环境，并通过 **DLSSNR 运行库** 导入或选择合法取得的模型。普通 DLSS 超分 DLL 不能代替 DLSSNR。
-
-<details>
-<summary>关于本地安装包</summary>
-
-项目提供小型 NSIS 安装器和在线组件管理。基础环境、视频工具、可选 RAFT 保存在用户数据目录；显卡驱动仍需单独安装。
-
-构建方法见 [打包说明](packaging/README.md)。安装版在 Releases 提供单个 Setup EXE，首次使用时安装所需组件。本项目源码保持 GPL-3.0-or-later，第三方组件保留自身许可；构建脚本、下载来源或文件签名不授予额外的组件再分发权。
-
-</details>
-
-## 04 / 文档与验证
+## 05 / 文档
 
 | 文档 | 内容 |
 | :--- | :--- |
-| [源码运行](docs/getting-started.md) | 前置环境、依赖安装、原生桥接库构建与测试。 |
-| [运行库管理](docs/dlssnr-runtime.md) | 本地导入、版本切换、来源下载、哈希与签名检查。 |
-| [原生组件](docs/native-runtime.md) | DLAA、RTX VSR、VFG 等外部运行库配置。 |
-| [AMD 光流](docs/AMD_FLOW_DEPENDENCIES.md) | 固定 SDK 版本与官方编译器要求。 |
-| [软件更新](docs/app-updates.md) | 检查、下载、续传与校验新版安装包。 |
-| [本地打包](packaging/README.md) | 小包构建、在线组件与安装检查。 |
-| [验证范围](docs/public-release.md) | 已完成的真实检查、实验性范围和未覆盖的组合。 |
+| [安装说明](docs/installing.md) | 安装、组件下载和更新。 |
+| [DLSSNR 运行库](docs/dlssnr-runtime.md) | 下载、本地导入和版本管理。 |
+| [DLAA / VSR / VFG 配置](docs/native-runtime.md) | NVIDIA 运行库与 SDK 路径。 |
+| [AMD 光流](docs/AMD_FLOW_DEPENDENCIES.md) | 编译依赖与 SDK 版本。 |
+| [软件更新](docs/app-updates.md) | 检查和下载新版安装程序。 |
+| [构建安装包](packaging/README.md) | 打包方法与依赖。 |
+| [测试记录](docs/public-release.md) | 测试环境、结果和未覆盖的项目。 |
 
-## 05 / 许可与致谢
+## 06 / 许可证
 
-Lunarc 整体按 **GNU GPL version 3 或任何后续版本** 发布，完整文本见 [LICENSE](LICENSE)。允许按许可证使用、修改与再分发，不提供担保。
-
-第三方组件保留各自许可和版权；NVIDIA 运行库仍适用原协议。见 [第三方说明](THIRD_PARTY_NOTICES.md) 与 [历史 MIT 通知](LICENSES/Lunarc-legacy-MIT.txt)。光流、模型、封装与设计参考的来源保留在对应文档中。
-
----
-
-<sub>Lunarc · Light in Motion.</sub>
+Lunarc 使用 **GPL-3.0-or-later**，详见 [LICENSE](LICENSE)。第三方组件适用各自的许可证，见 [第三方说明](THIRD_PARTY_NOTICES.md)。

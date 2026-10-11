@@ -19,9 +19,9 @@
     <path d="M48 76H1392M48 356H1392" stroke="#EAD27A" stroke-opacity=".24"/>
     <text x="48" y="196" font-size="88" font-weight="700" letter-spacing="-5" fill="#EFEEEA">Lunarc.</text>
     <text x="52" y="240" font-size="28" font-weight="500" fill="#EAD27A">Light in Motion.</text>
-    <text x="52" y="285" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="20" fill="#EFEEEA">让视频增强的每一步，都清晰可控。</text>
+    <text x="52" y="285" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="20" fill="#EFEEEA">视频增强与插帧</text>
     <text x="48" y="389" font-size="12" letter-spacing="2" fill="#AAA9A4">ENHANCE / COMPARE / EXPORT</text>
-    <text x="1392" y="389" text-anchor="end" font-size="12" letter-spacing="2" fill="#AAA9A4">SOURCE EDITION</text>
+    <text x="1392" y="389" text-anchor="end" font-size="12" letter-spacing="2" fill="#AAA9A4">GPL-3.0-or-later</text>
   </g>
   <circle cx="1110" cy="216" r="230" fill="url(#halo)"/>
   <rect x="850" y="77" width="542" height="279" fill="url(#grid)"/>

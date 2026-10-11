@@ -1,12 +1,12 @@
 # DLSSNR 运行库管理
 
-打开当前工作台的“运行与诊断 → DLSSNR 运行库”。源码版使用根目录 `run_gui.bat` 启动。
+打开Lunarc的“运行与诊断 → DLSSNR 运行库”。源码版使用根目录 `run_gui.bat` 启动。
 
 ## 使用
 
 - **本地导入**：选择或拖入 DLL / ZIP，也可粘贴路径。ZIP 仅读取其中唯一的 `nvngx_dlssnr.dll`，不执行或安装包内其他文件。原文件保留。
 - **版本目录**：列出已核对的 DLSSNR 版本。当前只有 310.8.0.0；下载来源为 DLSS5-Feeder 安装器引用的社区仓库，不是 NVIDIA 官方发布。勾选来源及使用权确认后下载，再选择“使用”。不自动更新或切换模型。
-- **可信来源**：添加含 DLL 的本机目录，或 HTTPS DLL / ZIP 地址。下载必须填写 DLL SHA-256；ZIP 下载还需填写 ZIP SHA-256。下载是由用户明确发起的操作。
+- **可信来源**：添加含 DLL 的本机目录，或 HTTPS DLL / ZIP 地址。下载必须填写 DLL SHA-256；ZIP 下载还需填写 ZIP SHA-256。
 - **版本管理**：同版本不同字节按不同 SHA-256 分开缓存；可切换、取消选择、校验或移除。未验收但签名有效的版本默认不可选择，明确勾选实验性使用后才可启用。此选项不能跳过签名、产品、架构及哈希校验。
 
 运行库默认位于应用用户数据目录的 `runtimes/dlssnr`；开发环境通常是 `%LOCALAPPDATA%\Lunarc\runtimes\dlssnr`。Electron 传入其自身用户数据根目录。页面显示实际位置。`LUNARC_DATA_DIR` 可指定根目录；`LUNARC_DLSSNR_DLL` 仅在尚无缓存配置时用于首次校验导入，不覆盖已选版本。
@@ -17,7 +17,7 @@
 
 每次会话打开前重新核对缓存哈希。同一进程只对已校验且字节未变的文件复用签名检查结果；“重新校验”会再次检查签名。缓存丢失或被修改时明确失败，不回退其他 DLL。根会话获得缓存路径，独立多层会话继承同一运行库版本，各自保留独立宿主会话。
 
-导出进行中不允许切换或移除运行库。切换前关闭预览会话，GPU 预览在所属线程关闭，下次请求重新创建。取消选择后不从旧目录偷偷恢复。运行库检查通过不代表所有 GPU、分辨率、HDR 或其他渲染组合兼容。
+导出进行中不允许切换或移除运行库。切换前关闭预览会话，GPU 预览在所属线程关闭，下次请求重新创建。取消选择后不会自动启用其他版本。运行库检查通过不代表所有 GPU、分辨率、HDR 或其他渲染组合兼容。
 
 ## 下载
 
@@ -31,8 +31,8 @@ ZIP 不允许越界路径、符号链接、加密、重复目标 DLL 或超限�
 
 这是本项目独立实现的管理器，没有复制上述项目的代码或下载脚本。
 
-- [DLSS Swapper](https://github.com/beeradmoore/dlss-swapper/blob/375e8a43c4a8354cf7d9c8a85e2ba07699fa4760/src/Pages/LibraryPageModel.cs)：版本记录、本地导入、下载缓存分离。其当前 manifest 列出了普通 DLSS / DLSSD / DLSSG 等类型，未提供 DLSSNR 类型，本项目不把普通 DLSS 清单当成 NR 版本。
+- [DLSS Swapper](https://github.com/beeradmoore/dlss-swapper/blob/375e8a43c4a8354cf7d9c8a85e2ba07699fa4760/src/Pages/LibraryPageModel.cs)：版本记录、本地导入、下载缓存分离。其当前 manifest 列出了普通 DLSS / DLSSD / DLSSG 等类型，未提供 DLSSNR 类型，普通 DLSS 清单不能用于 DLSSNR。
 - [DLSS5-Feeder](https://github.com/jlrouzies-fr/DLSS5-Feeder/blob/34edfe16626d52a8f66c5996c58d5b7c982d3023/tools/Install-DLSS5Feeder.ps1)：本机来源覆盖、临时下载文件、ZIP 内目标文件解析；本项目额外要求固定哈希和 NVIDIA 签名。
 - [Overglaze](https://github.com/HANsoA-KevinO/overglaze/blob/4d49c0a64ca96583910c3bcc8694165d9ebc4ccc/docs/MODEL.md)：用户提供模型、复制后按已知 SHA-256 管理、拒绝悄悄替换；本机 DLL 与其记录的 310.8.0.0 哈希一致。
 
-公开源码维持 GPL-3.0-or-later，不分发 DLSSNR DLL，不新增专有链接例外。下载社区文件、文件签名有效或把 DLL 放到应用外部，都不能解决组合二进制的全部许可问题。组合安装包继续暂停发布。
+Lunarc 使用 GPL-3.0-or-later。安装包不包含 DLSSNR DLL，运行库适用其原许可证。

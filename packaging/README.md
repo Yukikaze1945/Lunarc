@@ -1,6 +1,6 @@
-# 小安装包与在线组件
+# 构建安装包
 
-默认构建 Windows x64 NSIS 安装器。安装器只携带 Electron 界面、后端源码、项目桥接与最小原生依赖、固定版本 uv；不收集 Python、PyTorch/CUDA 或 RAFT 权重。旧离线收集器仅保留用于历史构建复现，不再用于默认发布。
+默认构建 Windows x64 NSIS 安装器。安装器只携带 Electron 界面、后端源码、项目桥接与最小原生依赖、固定版本 uv；不收集 Python、PyTorch/CUDA 或 RAFT 权重。旧离线构建脚本保留在仓库中。
 
 ## 构建
 

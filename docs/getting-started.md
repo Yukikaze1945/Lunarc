@@ -17,7 +17,7 @@ npm ci
 cd ..
 ```
 
-FFmpeg 与 FFprobe 需能从 PATH 找到；FFmpeg 必须支持 zscale、scale、select、showinfo。RAFT-Large 首次使用可能下载权重，也可提前准备离线模型。已测独立环境使用 Python 3.10.18、torch 2.10.0+cu128、torchvision 0.25.0+cu128；这不是全部受支持版本的保证。
+FFmpeg 与 FFprobe 需能从 PATH 找到；FFmpeg 必须支持 zscale、scale、select、showinfo。RAFT-Large 首次使用可能下载权重，也可提前准备离线模型。已测独立环境使用 Python 3.10.18、torch 2.10.0+cu128、torchvision 0.25.0+cu128。
 
 ### 编译原生桥接库
 
@@ -35,12 +35,12 @@ AMD 光流另需 CMake 和与固定 SDK 版本匹配的官方 FidelityFX_SC 编�
 
 DLAA、RTX VSR、VFG 使用本机另行安装的 NVIDIA 运行库；缺少组件时在诊断页显示实际缺项。路径配置见 [原生组件配置](native-runtime.md)。
 
-运行根目录的 **`run_gui.bat`**。该脚本构建并打开当前 Lunarc 工作台。页面“运行与诊断 → 运行环境”会实际检测导入、CUDA 运算、DLL / ABI、FFmpeg 和模型文件；检测齐全不代表所有输入及特效会话都可运行。
+运行根目录的 **`run_gui.bat`**。该脚本构建并打开当前 Lunarc 工作台。可在“运行与诊断 → 运行环境”中检查依赖、显卡驱动、CUDA 运算、原生库和模型文件。
 
 
 ## 独立环境与测试
 
-安装版下载及分卷安装见 [安装说明](installing.md)；自行构建见 [打包说明](../packaging/README.md)。运行库、模型和编译二进制不放入 Git 源码历史。
+安装版见 [安装说明](installing.md)；自行构建见 [打包说明](../packaging/README.md)。运行库、模型和编译二进制不放入 Git 源码历史。
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install pytest
@@ -50,4 +50,4 @@ cd frontend
 npm run build
 ```
 
-GPU / ABI 测试需要先编译桥接库。媒体验收脚本在 `tests/helpers`；请查看各脚本的 `--help` 并指定自己的素材。已完成的检查及边界见 [验证范围](public-release.md)。
+GPU / ABI 测试需要先编译桥接库。媒体验收脚本在 `tests/helpers`；请查看各脚本的 `--help` 并指定自己的素材。测试结果见 [测试记录](public-release.md)。
