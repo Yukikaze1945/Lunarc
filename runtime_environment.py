@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 BASE_MODULES = (('numpy', 'NumPy'), ('cv2', 'OpenCV'), ('fastapi', 'FastAPI'),
-                ('uvicorn', 'Uvicorn'), ('pydantic', 'Pydantic'))
+                ('uvicorn', 'Uvicorn'), ('websockets', 'WebSocket'), ('pydantic', 'Pydantic'))
 BRIDGES = {
     'dlss_gpu_host.dll': ('dlss_gpu_host_abi_version', 3),
     'nvof_d3d12_interop.dll': ('nvof_d3d12_abi_version', 1),

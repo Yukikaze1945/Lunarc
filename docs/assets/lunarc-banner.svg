@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="420" viewBox="0 0 1440 420" role="img" aria-labelledby="title desc">
+  <title id="title">Lunarc — Light in Motion.</title>
+  <desc id="desc">Deep charcoal Swiss editorial banner with the original green logo, pale gold motion arc and a fine grid.</desc>
+  <defs>
+    <radialGradient id="halo"><stop stop-color="#EAD27A" stop-opacity=".12"/><stop offset="1" stop-color="#191919" stop-opacity="0"/></radialGradient>
+    <linearGradient id="arc" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#EFDF9F"/><stop offset="1" stop-color="#99864D"/></linearGradient>
+    <pattern id="grid" x="850" y="76" width="56" height="56" patternUnits="userSpaceOnUse"><path d="M56 0H0V56" fill="none" stroke="#EAD27A" stroke-opacity=".09"/></pattern>
+  </defs>
+  <rect width="1440" height="420" fill="#191919"/>
+  <g transform="translate(48 26) scale(.25)">
+    <rect width="128" height="128" rx="29" fill="#101c1a"/>
+    <path d="M90 25a43 43 0 1 0 13 65" fill="none" stroke="#a8e6c7" stroke-width="11" stroke-linecap="round"/>
+    <path d="M87 44a24 24 0 1 0 0 40" fill="none" stroke="#79b7ad" stroke-width="7" stroke-linecap="round"/>
+    <path d="M83 58l22 6-22 7" fill="none" stroke="#e4f3ea" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  </g>
+  <g font-family="Helvetica Neue, Helvetica, sans-serif">
+    <text x="96" y="47" font-size="12" letter-spacing="2" fill="#AAA9A4">VIDEO ENHANCEMENT WORKBENCH</text>
+    <text x="1392" y="47" text-anchor="end" font-size="12" letter-spacing="2" fill="#AAA9A4">WINDOWS x64</text>
+    <path d="M48 76H1392M48 356H1392" stroke="#EAD27A" stroke-opacity=".24"/>
+    <text x="48" y="196" font-size="88" font-weight="700" letter-spacing="-5" fill="#EFEEEA">Lunarc.</text>
+    <text x="52" y="240" font-size="28" font-weight="500" fill="#EAD27A">Light in Motion.</text>
+    <text x="52" y="285" font-family="Microsoft YaHei, Noto Sans CJK SC, sans-serif" font-size="20" fill="#EFEEEA">让视频增强的每一步，都清晰可控。</text>
+    <text x="48" y="389" font-size="12" letter-spacing="2" fill="#AAA9A4">ENHANCE / COMPARE / EXPORT</text>
+    <text x="1392" y="389" text-anchor="end" font-size="12" letter-spacing="2" fill="#AAA9A4">SOURCE EDITION</text>
+  </g>
+  <circle cx="1110" cy="216" r="230" fill="url(#halo)"/>
+  <rect x="850" y="77" width="542" height="279" fill="url(#grid)"/>
+  <circle cx="1106" cy="216" r="124" fill="none" stroke="#EAD27A" stroke-opacity=".17"/>
+  <path d="M1076 102A118 118 0 1 0 1201 143" fill="none" stroke="url(#arc)" stroke-width="9"/>
+  <path d="M1183 251A78 78 0 1 1 1131 141" fill="none" stroke="#EAD27A" stroke-width="3" stroke-opacity=".8"/>
+  <path d="M904 337H1266" stroke="#EAD27A" stroke-opacity=".23"/>
+  <path d="M904 342H1128" stroke="#EAD27A" stroke-width="3"/>
+  <circle cx="1128" cy="342" r="4" fill="#EAD27A"/>
+</svg>

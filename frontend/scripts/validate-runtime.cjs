@@ -9,6 +9,7 @@ module.exports = async function () {
   const manifestPath = path.join(runtime, 'manifest.json')
   if (!fs.existsSync(manifestPath)) throw new Error('先运行 packaging/build_runtime.py 构建独立运行环境，再打包')
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
+  if (!manifest.packages?.some(p => p.name.toLowerCase() === 'websockets')) throw new Error('独立运行环境缺少 WebSocket 播放与队列依赖，请重新构建环境')
   for (const required of ['python/python.exe', 'tools/ffmpeg.exe', 'tools/ffprobe.exe', 'torch_home/hub/checkpoints/raft_large_C_T_SKHT_V2-ff5fadd5.pth']) {
     if (!manifest.files?.[required]) throw new Error(`运行环境清单缺少 ${required}`)
   }

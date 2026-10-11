@@ -22,6 +22,19 @@ def test_bootstrap_explains_broken_native_import(monkeypatch):
     assert 'missing dependency DLL' in result['checks'][1]['detail']
 
 
+def test_bootstrap_refuses_environment_without_websocket_transport(monkeypatch):
+    def load(name):
+        if name == 'websockets':
+            raise ModuleNotFoundError("No module named 'websockets'")
+        return SimpleNamespace(__version__='test')
+    monkeypatch.setattr(env.importlib, 'import_module', load)
+    result = env.bootstrap()
+    assert not result['ready']  # HTTP imports alone cannot play preview or connect queue.
+    failed = [c for c in result['checks'] if c['status'] != 'ok']
+    assert len(failed) == 1 and failed[0]['id'] == 'websockets'
+    assert 'websockets' in failed[0]['detail']
+
+
 def test_system_never_invents_gpu_when_cuda_unavailable(monkeypatch):
     monkeypatch.setitem(sys.modules, 'torch', SimpleNamespace(cuda=SimpleNamespace(is_available=lambda: False)))
     info = env.quick_system_info()

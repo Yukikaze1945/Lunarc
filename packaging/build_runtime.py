@@ -15,7 +15,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-PACKAGES = ['numpy', 'opencv-python', 'torch', 'torchvision', 'fastapi', 'uvicorn',
+PACKAGES = ['numpy', 'opencv-python', 'torch', 'torchvision', 'fastapi', 'uvicorn', 'websockets',
             'pydantic', 'Pillow', 'av']
 INVENTORY = r'''
 import importlib.metadata as m, json, sys, sysconfig
@@ -182,7 +182,7 @@ def build(args):
     if args.dlaa_dll:
         copy_file(Path(args.dlaa_dll), output / 'dlss/nvngx_dlss.dll')
     print('Validating isolated imports and CUDA...', flush=True)
-    code = 'import numpy,cv2,fastapi,uvicorn,pydantic,torch,torchvision,av,PIL,ssl,sqlite3; assert torch.cuda.is_available(); x=torch.ones(8,device="cuda")+1; torch.cuda.synchronize(); assert x.sum().item()==16; print(torch.__version__)'
+    code = 'import numpy,cv2,fastapi,uvicorn,websockets,pydantic,torch,torchvision,av,PIL,ssl,sqlite3; assert torch.cuda.is_available(); x=torch.ones(8,device="cuda")+1; torch.cuda.synchronize(); assert x.sum().item()==16; print(torch.__version__)'
     env = {k: v for k, v in os.environ.items() if k not in ('PYTHONHOME', 'PYTHONPATH', 'VIRTUAL_ENV', 'CONDA_PREFIX')}
     env['PATH'] = str(python) + os.pathsep + str(output / 'tools') + os.pathsep + str(Path(os.environ.get('SystemRoot', r'C:\Windows')) / 'System32')
     subprocess.run([str(python / 'python.exe'), '-c', code], check=True, env=env, timeout=90)

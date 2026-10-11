@@ -4,7 +4,7 @@
 
 ## 构建
 
-构建工具使用 Python 3.10+，需要 `pefile`。`--source-python` 指向已验证的 Windows x64 GPU 环境，其中需要 `packaging` 和以下包：numpy、opencv-python、torch、torchvision、fastapi、uvicorn、pydantic、Pillow、av。构建不会修改源环境。
+构建工具使用 Python 3.10+，需要 `pefile`。`--source-python` 指向已验证的 Windows x64 GPU 环境，其中需要 `packaging` 和以下包：numpy、opencv-python、torch、torchvision、fastapi、uvicorn、websockets、pydantic、Pillow、av。构建不会修改源环境。
 
 ```powershell
 python packaging/build_runtime.py --source-python "<GPU 环境的 python.exe>" --ffmpeg-dir "<完整 FFmpeg 的真实 bin 目录>"
@@ -33,6 +33,7 @@ npm run electron:installer
 - 安装版只使用资源目录里的 Python；不会借用 PYTHON_PATH、系统 Python 或其他软件的环境。
 - `_pth` 隔离用户 site、注册表 Python 和 PYTHONHOME/PYTHONPATH；PATH 只带私有运行库和 Windows 系统目录。
 - 启动前实际导入基础依赖；失败后显示具体启动状态，日志写入用户数据目录的 `logs/backend.log`。
+- WebSocket 传输依赖也在启动和打包前检查中；HTTP 接口正常不能代替预览和队列连接验收。
 - 若同一端口被不同运行环境的旧后端占用，提示先退出旧版，不自动结束其进程。
 - “运行与诊断 → 运行环境”实际检查 CUDA 运算、驱动接口、DLL 加载/ABI、FFmpeg 功能和模型文件。检测在独立进程中执行，有超时和缓存，点击“重新检测”才重新执行。
 - “依赖齐全”不是模型/编码器运行成功。具体 SDK 特效、GPU 架构、输入编码和尺寸支持在创建实际会话时验证；不会把文件存在误报为运行成功。

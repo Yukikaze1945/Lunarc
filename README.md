@@ -1,90 +1,86 @@
-# Lunarc
+<p>
+  <img src="docs/assets/lunarc-logo.svg" width="32" height="32" alt="Lunarc 青绿色光弧标志" />
+  &nbsp; <strong>LUNARC</strong> &nbsp; / &nbsp; VIDEO ENHANCEMENT WORKBENCH
+</p>
 
-Windows 视频增强工作台。以简洁的中文界面组织可排序的渲染链，支持画面对比、实时预览与导出队列。
+![Lunarc · Light in Motion. 让视频增强的每一步，都清晰可控。](docs/assets/lunarc-banner.png)
 
-**公开源码 · GPL-3.0-or-later · Windows x64**
+**Windows x64** &nbsp; · &nbsp; **源码发布** &nbsp; · &nbsp; **GPL-3.0-or-later**
 
-## 功能
+一个把重建、画面对比与导出放在一起的中文视频增强工作台。排好渲染顺序，调整画面，检查结果。
 
-- DLSSNR 单层 / 双层 / 三层重建；多尺度数据一致性融合仍为实验性。
-- 可排序的 DLAA、DLSSNR、RTX VSR、NVIDIA VFG 卡片；功能是否可用取决于本机 GPU、驱动和运行库。
-- NVIDIA VFG 固定倍率与目标帧率模式；5×–8× 标为实验性。VFG 为导出功能，实时预览保持原帧率。
-- NVOF、AMD FidelityFX Optical Flow 与 RAFT-Large 引导；RAFT 支持长边 512 / 720 / 1080 分析尺寸。
-- SDR 8-bit、SDR 10-bit 与实验性 HDR10 处理；HDR10 保留 PQ / BT.2020 / P010 / Main10 链路及静态元数据。
-- FFmpeg 封装原音轨、字幕、章节和附件；队列诊断、素材拖入、连续视频对比与环境检测。
+[开始使用](docs/getting-started.md) &nbsp; / &nbsp; [运行库管理](docs/dlssnr-runtime.md) &nbsp; / &nbsp; [验证范围](docs/public-release.md)
 
-## 获取源码
+---
 
-```powershell
- git clone https://github.com/Yukikaze1945/Lunarc.git
- cd Lunarc
-```
+## 01 / 工作台
 
-本仓库公开源码和测试，不提供预编译桥接 DLL、NVIDIA 专有运行库、模型权重或安装包。新仓库使用独立的源码快照历史。
+![Lunarc 实际工作台：视频预览、可排序渲染链和画质参数](docs/assets/lunarc-workbench.png)
 
-## 源码运行
+<sub>实际安装版界面，使用原创合成素材。截图展示操作布局，不作为画质或性能对比证据。</sub>
 
-准备 Windows x64、支持相关功能的 NVIDIA GPU 和驱动、Python 3.10+、Node.js 22.18+、FFmpeg / FFprobe。RAFT 需要适配 GPU 的 CUDA 版 PyTorch；并非所有显卡都支持 Feature 18 或各项 NVIDIA 特效。
+| 渲染链 · Enhance | 画面对比 · Inspect | 导出队列 · Deliver |
+| :--- | :--- | :--- |
+| 拖动卡片决定处理顺序，按需组合 DLAA、DLSSNR、RTX VSR 与 VFG。 | 原图、处理后与分屏预览；对比页支持两段视频连续播放。 | 配置编码与封装，查看进度、诊断任务、移除完成或失败的条目。 |
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-# 按 PyTorch 官方说明安装适合 GPU 的 CUDA 版本。
-$env:PYTHON_PATH = "$PWD\.venv\Scripts\python.exe"
-cd frontend
-npm ci
-cd ..
-```
+## 02 / 你能控制什么
 
-FFmpeg 与 FFprobe 需能从 PATH 找到；FFmpeg 必须支持 zscale、scale、select、showinfo。RAFT-Large 首次使用可能下载权重，也可提前准备离线模型。已测独立环境使用 Python 3.10.18、torch 2.10.0+cu128、torchvision 0.25.0+cu128；这不是全部受支持版本的保证。
+| 功能 | 支持范围 | 状态与条件 |
+| :--- | :--- | :--- |
+| 神经重建 | DLSSNR 单层 / 双层 / 三层，分层尺寸和权重 | Feature 18 需要匹配的 GPU、驱动及 DLSSNR 运行库；多尺度数据一致性融合为**实验性**。 |
+| 光流引导 | NVOF、AMD FidelityFX Optical Flow、RAFT-Large | 引擎能力与质量选项分别检测；RAFT 可选长边 512 / 720 / 1080 分析尺寸。 |
+| 原生画质处理 | DLAA 模型预设、RTX VSR 质量档位，按倍率或分辨率输出 | 需要用户另行取得对应 NVIDIA 运行库；支持范围在实际会话中验证。 |
+| 导出插帧 | NVIDIA VFG 固定倍率 / 目标帧率，镜头切换检测 | **仅用于导出**，实时预览保持原帧率；固定 5×–8× 为**实验性**。 |
+| 色彩链路 | SDR 8-bit、SDR 10-bit、HDR10 | HDR10 为**实验性**，保留 PQ / BT.2020 / P010 / Main10 及静态元数据。 |
+| 封装与素材 | 视频 / 图片拖入；音轨、字幕、章节、附件与元数据 | FFmpeg 封装；实际保留范围取决于输入流和所选输出容器。 |
+| 运行库管理 | 版本选择、DLL / ZIP 导入、确认来源后下载、独立缓存 | SHA-256、NVIDIA 签名及版本检查；当前已核对 DLSSNR 310.8.0.0。 |
+| 环境检测 | 包依赖、CUDA 运算、驱动接口、DLL / ABI、FFmpeg 和模型 | 展示实际检测结果；依赖齐全不等于每种特效已运行成功。 |
 
-### 编译原生桥接库
+### 使用前了解
 
-安装 Visual Studio C++ Build Tools、Windows SDK；另行取得 NVIDIA DLSS SDK 和含头文件、导入库及共享 DLL 的 FFmpeg 开发包。
+- 当前公开仓库提供**源码与测试**。预编译桥接 DLL、NVIDIA 专有运行库、模型权重和安装包不在公开发布中。
+- HDR 预览通过 8-bit 显示图像进行映射，尚未校准显示器，不能用预览判断最终 HDR 亮度。
+- 特效支持受 GPU、驱动、运行库、尺寸与素材影响；缺失组件会明确报告，不静默替换算法。
+- 预览、诊断和标量回读仍有主机传输。部分 GPU 图像边界的零回读，不代表整个程序零主机流量。
+- 尚未提供跨机器性能保证；**Performance = NOT_CHARACTERIZED**。字幕尾部事件和音频 padding 可能超过视频结尾。
 
-```powershell
-$env:DLSS_SDK_DIR = "<DLSS SDK 根目录>"
-$env:FFMPEG_SDK_DIR = "<FFmpeg 开发包根目录>"
-cmd /c native\build_all.bat
-```
-
-构建脚本自动查找 Visual Studio。也可在 x64 Native Tools 命令提示符中运行，或设置 `VCVARS64`。运行时还需所链接 FFmpeg 共享 DLL，以及合法取得的匹配 DLSSNR 运行库 `nvngx_dlssnr.dll`；仅有普通 DLSS 超分 DLL 不能代替它。“运行与诊断”提供 [DLSSNR 运行库管理器](docs/dlssnr-runtime.md)，支持本地导入及用户确认的来源下载，文件仍受原许可约束，软件不授予取得或再分发权。
-
-AMD 光流另需 CMake 和与固定 SDK 版本匹配的官方 FidelityFX_SC 编译器：设置 `FFX_SC_EXECUTABLE` 后重新运行 `build_all.bat`。未提供编译器时构建会明确报告该组件未构建。详细版本与接口说明见 [AMD 光流依赖](docs/AMD_FLOW_DEPENDENCIES.md)。
-
-DLAA、RTX VSR、VFG 使用本机另行安装的 NVIDIA 运行库；缺少组件时在诊断页显示实际缺项。路径配置见 [原生组件配置](docs/native-runtime.md)。
-
-运行根目录的 **`run_gui.bat`**。该脚本构建并打开当前 Lunarc 工作台。页面“运行与诊断 → 运行环境”会实际检测导入、CUDA 运算、DLL / ABI、FFmpeg 和模型文件；检测齐全不代表所有输入及特效会话都可运行。
-
-## 独立运行环境与安装包构建
-
-项目提供私有运行环境收集器和离线安装脚本，详见 [打包说明](packaging/README.md)。独立包可携带 CPython、Python 依赖、CUDA 运行库、FFmpeg 与模型，不要求接收机器预装 Python / Node.js / CUDA Toolkit；显卡驱动仍需单独安装。
-
-**打包脚本不是第三方运行库的再分发授权。** 本次公开发布仅包含源码；分发包含专有组件的组合二进制前，需要单独确认全部许可兼容性和所需授权。本项目未授予专有库链接例外。
-
-## 测试
+## 03 / 从源码开始
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install pytest
-.\.venv\Scripts\python.exe -m pytest tests/unit -q
-node --experimental-strip-types --test tests/node/*.test.ts
-cd frontend
-npm run build
+git clone https://github.com/Yukikaze1945/Lunarc.git
+cd Lunarc
 ```
 
-GPU / ABI 测试需要先编译桥接库；真实媒体验收工具位于 `tests/helpers` 和 `tests/unit`，请查看各脚本的 `--help` 并指定自己的素材。开发机验收摘要见 [公开版验证范围](docs/public-release.md)。
+准备 Python、Node.js、FFmpeg、C++ 构建工具及所需 SDK，按 [源码运行指南](docs/getting-started.md) 安装依赖、编译桥接库，然后运行根目录 **`run_gui.bat`**。
 
-## 已知限制
+第一次使用时，打开 **运行与诊断** 检查实际环境，并通过 **DLSSNR 运行库** 导入或选择合法取得的模型。普通 DLSS 超分 DLL 不能代替 DLSSNR。
 
-- HDR10、Feature 18 多层融合及高倍率插帧为实验性，不保证所有驱动、尺寸或素材支持。
-- 当前预览输出为 8-bit 显示图像；HDR 预览使用显示映射，未经显示器校准，不能用它评判最终 HDR 亮度。
-- 光流引导、渲染链特效与导出插帧的实际支持不同；缺少对应组件会明确失败，不以其他算法冒充。
-- 部分 GPU 链路已测图像回读边界为零，但预览绘制、诊断和标量回读仍存在主机流量，不能称整条程序没有主机传输。
-- 性能取决于输入尺寸、链路顺序和特效设置；公开版没有跨机器性能保证。Performance = NOT_CHARACTERIZED。
-- 字幕尾部事件和音频 padding 可能超过视频结尾。
+<details>
+<summary>关于本地安装包</summary>
 
-## 许可与致谢
+项目提供独立运行环境收集器和离线两文件安装器，可将 CPython、依赖、FFmpeg 与模型放在应用目录中；显卡驱动仍需单独安装。
 
-项目整体按 **GNU GPL version 3 或任何后续版本**发布，完整文本见 [LICENSE](LICENSE)。允许按许可证使用、修改与再分发，不提供担保。
+本地构建方法见 [打包说明](packaging/README.md)。组合安装包当前暂停公开发布；构建脚本、下载来源或文件签名均不授予专有组件的再分发权。本项目保持纯 GPL-3.0-or-later，未添加专有链接例外。
 
-第三方源码保留原有许可及版权，不因项目采用 GPL 而被改写。旧项目 MIT 通知保留于 [LICENSES/Lunarc-legacy-MIT.txt](LICENSES/Lunarc-legacy-MIT.txt)。第三方范围、外部 SDK 与权重说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+</details>
+
+## 04 / 文档与验证
+
+| 文档 | 内容 |
+| :--- | :--- |
+| [源码运行](docs/getting-started.md) | 前置环境、依赖安装、原生桥接库构建与测试。 |
+| [运行库管理](docs/dlssnr-runtime.md) | 本地导入、版本切换、来源下载、哈希与签名检查。 |
+| [原生组件](docs/native-runtime.md) | DLAA、RTX VSR、VFG 等外部运行库配置。 |
+| [AMD 光流](docs/AMD_FLOW_DEPENDENCIES.md) | 固定 SDK 版本与官方编译器要求。 |
+| [本地打包](packaging/README.md) | 独立环境、离线安装与启动检查。 |
+| [验证范围](docs/public-release.md) | 已完成的真实检查、实验性范围和未覆盖的组合。 |
+
+## 05 / 许可与致谢
+
+Lunarc 整体按 **GNU GPL version 3 或任何后续版本** 发布，完整文本见 [LICENSE](LICENSE)。允许按许可证使用、修改与再分发，不提供担保。
+
+第三方组件保留各自许可和版权；NVIDIA 运行库仍适用原协议。见 [第三方说明](THIRD_PARTY_NOTICES.md) 与 [历史 MIT 通知](LICENSES/Lunarc-legacy-MIT.txt)。光流、模型、封装与设计参考的来源保留在对应文档中。
+
+---
+
+<sub>Lunarc · Light in Motion.</sub>

@@ -9,6 +9,7 @@ torchvision>=0.16
 # ---- backend API (server.py) ----
 fastapi>=0.110
 uvicorn>=0.29
+websockets>=13
 pydantic>=2.5
 # ---- desktop GUI (gui.py) ----
 Pillow>=10.0
