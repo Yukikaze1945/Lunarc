@@ -1,0 +1,17 @@
+# ---- DLSS5 standalone V2 (portable, python-runnable) ----
+# runtime deps for optical flow (RAFT-Large) + DLSSNR (Feature 18) host
+# NOTE: torch MUST be a CUDA build matching your GPU for the DLSS pass (GPU required).
+#   这里用的是 cu128 版 (torch 2.10.0+cu128)。
+numpy>=1.26
+opencv-python>=4.8
+torch>=2.1
+torchvision>=0.16
+# ---- backend API (server.py) ----
+fastapi>=0.110
+uvicorn>=0.29
+pydantic>=2.5
+# ---- desktop GUI (gui.py) ----
+Pillow>=10.0
+# ---- optional: faster/more robust decode path (SmartCapture falls back to
+# ---- FFmpeg CLI pipe when PyAV is absent, so this is recommended, not required)
+av>=11.0

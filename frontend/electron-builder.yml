@@ -1,0 +1,105 @@
+# electron-builder config — Lunarc standalone runtime + optional NSIS installer
+#
+# Layout this produces (release/win-unpacked/):
+#
+#   Lunarc.exe
+#   resources/
+#     app/                     <- `files`: the renderer + Electron shell
+#       dist/                  <- vite renderer output (RENDERER_DIST)
+#       dist-electron/         <- main.js / preload.cjs
+#       package.json
+#     server.py                <- `extraResources`: the Python backend
+#     *.py, native/*.dll, nvngx_dlssnr.dll
+#
+# Why the backend lands in resources/ and not next to the exe: electron/main.ts
+# does
+#     process.env.APP_ROOT = path.join(__dirname, '..')
+#     rootDir = path.resolve(process.env.APP_ROOT, '..')
+# and spawns `${rootDir}/backend_entry.py`. In the source tree __dirname is
+# frontend/dist-electron, so rootDir is the project root where server.py lives.
+# With asar disabled the packaged main.js sits at resources/app/dist-electron, so
+# rootDir becomes resources/ - which is exactly where extraResources puts the
+# backend. No source change is needed for the two layouts to agree.
+
+appId: studio.lunarc.workbench
+productName: Lunarc
+beforePack: ./scripts/validate-runtime.cjs
+
+directories:
+  # NOT the default `dist` - that is vite's renderer output and would be wiped.
+  output: release
+  buildResources: build
+
+files:
+  - dist/**/*
+  - dist-electron/**/*
+  - package.json
+  - "!**/*.map"
+
+# Keep the app unpacked: the renderer is served by the main process through the
+# custom app:// protocol, which reads straight off disk. An asar would only add a
+# layer between those two and give the Python side nothing.
+asar: false
+
+# The Python backend, placed so that main.ts's rootDir resolves onto it.
+#
+# Only the root modules, the native DLLs and the DLSS runtime snippet are carried.
+# Deliberately NOT carried, and why:
+#   - legacy models/: unused depth checkpoints are excluded; the verified RAFT
+#     checkpoint is carried in runtime/torch_home by the runtime builder below.
+#   - native/build, native/bench_out, native/*.bat, native/*.log: build cruft; the
+#     loaders only ever open native/<name>.dll (see bundle_paths.NATIVE_BINARIES).
+#   - Magpie/ (76 MB): a reference shader project, not a runtime input.
+extraResources:
+  - from: ".."
+    to: "."
+    filter:
+      - "*.py"
+      - "native/*.dll"
+      - "!native/nvdec_bridge_p010.dll"
+      - "!native/nvenc_bridge_sdr10.dll"
+      - "nvngx_dlssnr.dll"
+  - from: "../build/standalone-runtime"
+    to: "runtime"
+    filter:
+      - "**/*"
+      - "!**/__pycache__/**"
+      - "!build-in-progress.json"
+  - from: "../LICENSE"
+    to: "licenses/Lunarc-LICENSE.txt"
+  - from: "../native/vendor/fidelityfx/LICENSE.txt"
+    to: "licenses/FidelityFX-MIT.txt"
+  - from: "../native/vendor/nvidia-vfx-abi/LICENSE"
+    to: "licenses/NVIDIA-VFX-ABI-MIT.txt"
+
+# Must match the electron in devDependencies, otherwise electron-builder tries to
+# fetch a runtime other than the one this tree was developed against. Top-level,
+# not a per-platform option - under `win` the schema rejects it.
+electronVersion: 42.2.0
+
+win:
+  icon: public/lunarc.ico
+  # `dir` = an unpacked, no-installer folder: move it anywhere and run the exe.
+  target:
+    - target: dir
+      arch:
+        - x64
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  artifactName: "Lunarc-${version}-${arch}-Setup.${ext}"
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+
+# The GPU runtime exceeds NSIS's embedded payload limit. Use a local sidecar
+# archive; the custom initializer refuses absent/corrupt archives before any
+# download branch can run. No hosting service is required for installation.
+nsisWeb:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  artifactName: "Lunarc-${version}-${arch}-Setup.${ext}"
+  include: "scripts/offline-installer.nsh"
+  appPackageUrl: "https://offline.invalid/lunarc"

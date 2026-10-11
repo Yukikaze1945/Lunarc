@@ -1,0 +1,52 @@
+{
+  "name": "lunarc-workbench",
+  "private": true,
+  "version": "2.1.0",
+  "main": "dist-electron/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "start": "electron .",
+    "electron:build": "npm run build && electron-builder --win --x64 --config electron-builder.yml",
+    "electron:pack": "electron-builder --win --x64 --config electron-builder.yml",
+    "electron:installer": "npm run build && electron-builder --win nsis-web --x64 --config electron-builder.yml",
+    "lint": "oxlint --max-warnings 4",
+    "preview": "vite preview",
+    "test:fixtures": "node ../tests/fixtures/generate_fixtures.js",
+    "test:preview": "node --test ../tests/node/export_preview.test.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:media": "playwright test 04_export_integrity.spec.ts 05_silent_frame_drop.spec.ts",
+    "test:audit": "playwright test 08_ui_control_audit.spec.ts 07_command_preview_consistency.spec.ts"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.46.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "autoprefixer": "^10.6.1",
+    "electron": "^42.2.0",
+    "electron-builder": "^26.15.3",
+    "oxlint": "^1.81.0",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0",
+    "vite-plugin-electron": "^1.1.2",
+    "vite-plugin-electron-renderer": "^1.0.0"
+  },
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Yukikaze1945/Lunarc.git"
+  }
+}

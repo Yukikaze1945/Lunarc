@@ -1,0 +1,25 @@
+{
+  "name": "lunarc",
+  "version": "2.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix frontend start",
+    "test:fixtures": "node tests/fixtures/generate_fixtures.js",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:media": "playwright test tests/e2e/04_export_integrity.spec.ts tests/e2e/05_silent_frame_drop.spec.ts",
+    "test:audit": "playwright test tests/e2e/08_ui_control_audit.spec.ts tests/e2e/07_command_preview_consistency.spec.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "ws": "^8.21.3"
+  },
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Yukikaze1945/Lunarc.git"
+  }
+}

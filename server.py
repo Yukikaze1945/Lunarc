@@ -1,0 +1,727 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+server.py — High-Performance Localhost Backend Server for DLSS5 Studio.
+
+Exposes REST and WebSocket endpoints for:
+- Frame decoding and real-time DLSS neural processing
+- Multi-Engine Optical Flow (NVIDIA Optical Flow Hardware / OpenCV DIS CPU / RAFT-Large in-memory)
+- High-speed WebSocket streaming playback
+- DaVinci-style render queue management
+"""
+import os
+import re
+import secrets
+import sys
+import time
+import json
+import base64
+import asyncio
+import traceback
+import atexit
+from typing import Optional
+from contextlib import asynccontextmanager
+
+if sys.platform == "win32":
+    try:
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        if hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+import uvicorn
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, Query, Response, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, StreamingResponse
+from pydantic import BaseModel
+
+from dlss_service import dlss_service, diagnostic_logger
+from queue_payload import diagnostic_json, queue_job, queue_message
+import pipeline
+from runtime_environment import quick_system_info, environment_report
+
+# ---------------- Local control-plane security (P0-01) ----------------
+# The backend binds localhost but any *web page* can still reach 127.0.0.1.
+# Two layers: (1) Origin/Host gate blocks non-local web origins outright;
+# (2) per-launch session token required for everything except readiness.
+LOCAL_TOKEN = os.environ.get("DLSS_LOCAL_TOKEN") or secrets.token_urlsafe(32)
+if not os.environ.get("DLSS_LOCAL_TOKEN"):
+    print(f"[security] DLSS_LOCAL_TOKEN not set; generated ephemeral token: {LOCAL_TOKEN}", flush=True)
+
+_TOKEN_FILE = os.path.join(os.environ.get('LUNARC_DATA_DIR') or os.path.dirname(os.path.abspath(__file__)), ".session_token")
+
+
+def _save_session_token(token: str) -> None:
+    try:
+        with open(_TOKEN_FILE, "w", encoding="utf-8") as f:
+            f.write(token)
+        if hasattr(os, "chmod"):
+            try:
+                os.chmod(_TOKEN_FILE, 0o600)
+            except Exception:
+                pass
+    except Exception as e:
+        print(f"[security] Warning: could not write session token to {_TOKEN_FILE}: {e}", flush=True)
+
+    try:
+        appdata = os.environ.get("APPDATA") or os.path.expanduser("~")
+        udir = os.environ.get('LUNARC_DATA_DIR') or os.path.join(appdata, "DaVinci_DLSS5_Studio")
+        os.makedirs(udir, exist_ok=True)
+        user_token_file = os.path.join(udir, ".session_token")
+        with open(user_token_file, "w", encoding="utf-8") as f:
+            f.write(token)
+        if hasattr(os, "chmod"):
+            try:
+                os.chmod(user_token_file, 0o600)
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
+def _cleanup_session_token() -> None:
+    try:
+        if os.path.exists(_TOKEN_FILE):
+            os.remove(_TOKEN_FILE)
+    except Exception:
+        pass
+
+
+_save_session_token(LOCAL_TOKEN)
+atexit.register(_cleanup_session_token)
+
+_LOCAL_ORIGIN_RE = re.compile(r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$", re.IGNORECASE)
+_ALLOWED_EXACT_ORIGINS = {"app://studio"}
+
+
+def _origin_allowed(origin: str | None) -> bool:
+    # Browsers always send Origin on cross-origin fetch/WS. Absent covers
+    # curl/python clients and native same-process fetches without an Origin header.
+    # We strictly allow loopback http(s) and the exact production Electron scheme app://studio.
+    # NOTE: "null", "file://", "devtools://", and broad "app://.*" are strictly disallowed.
+    if not origin:
+        return True
+    o = origin.strip().lower()
+    if o in _ALLOWED_EXACT_ORIGINS:
+        return True
+    return bool(_LOCAL_ORIGIN_RE.match(origin.strip()))
+
+
+def _host_allowed(host: str | None) -> bool:
+    # DNS-rebinding guard: Host must be this machine's loopback.
+    if not host:
+        return True
+    h = host.strip().lower().split(",")[0].strip().strip("[]")
+    name = h.rsplit(":", 1)[0] if ":" in h and h.count(":") == 1 else h
+    return name in ("localhost", "127.0.0.1", "::1")
+
+
+def _token_ok(token: str | None) -> bool:
+    return bool(token) and secrets.compare_digest(token, LOCAL_TOKEN)
+
+
+def _request_token(request: Request) -> str | None:
+    return request.headers.get("x-dlss-token") or request.query_params.get("token")
+
+
+# Readiness probe stays open (Electron main + test harness poll it tokenless).
+_TOKEN_OPEN = {("GET", "/api/system")}
+
+# Active WebSocket connections for queue progress
+queue_ws_clients = set()
+main_loop: Optional[asyncio.AbstractEventLoop] = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global main_loop
+    main_loop = asyncio.get_running_loop()
+    _save_session_token(LOCAL_TOKEN)
+    try:
+        yield
+    finally:
+        _cleanup_session_token()
+
+
+app = FastAPI(title="DLSS 5 Studio Backend API", version="2.0.0", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    # Never "*" together with credentials: only this machine's web origins
+    # and the exact Electron production scheme (app://studio) may read responses.
+    # No file://, no null, no devtools://, and no broad app:// wildcards.
+    allow_origin_regex=r"^(https?://(localhost|127\.0\.0\.1)(:\d+)?|app://studio)$",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=['X-Comparison-Actual-Time', 'X-Comparison-Actual-PTS',
+                    'X-Comparison-Delta', 'Content-Range', 'Accept-Ranges'],
+)
+
+
+_comparison_service = None
+
+
+def comparison_service():
+    global _comparison_service
+    if _comparison_service is None:
+        from comparison_media import MediaComparisonService
+        _comparison_service = MediaComparisonService()
+    return _comparison_service
+
+
+@app.post('/api/compare/open')
+async def compare_open(request: Request):
+    try:
+        data = await request.json()
+    except ValueError as error:
+        raise HTTPException(400, 'Invalid comparison request') from error
+    if not isinstance(data, dict):
+        raise HTTPException(400, 'Comparison request must contain two file paths')
+    try:
+        return await asyncio.to_thread(comparison_service().open_pair,
+                                       data.get('original'), data.get('exported'))
+    except ValueError as error:
+        raise HTTPException(400, str(error)) from error
+
+
+@app.get('/api/compare/frame')
+async def compare_frame(session: str, time: float = 0, side: str = 'original'):
+    try:
+        result = await asyncio.to_thread(comparison_service().get_frame, session, time, side)
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
+    return Response(result['jpeg'], media_type='image/jpeg', headers={
+        'X-Comparison-Actual-Time': str(result['actual_time']),
+        'X-Comparison-Actual-PTS': str(result['actual_pts']),
+        'X-Comparison-Delta': str(result['delta_seconds']), 'Cache-Control': 'no-store'})
+
+
+@app.get('/api/compare/timeline')
+async def compare_timeline(session: str, time: float = 0):
+    try:
+        return await asyncio.to_thread(comparison_service().get_timeline, session, time)
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
+
+
+@app.delete('/api/compare/{session}')
+async def compare_close(session: str):
+    return {'closed': comparison_service().close_session(session)}
+
+
+@app.get('/api/compare/audio')
+async def compare_audio(request: Request, session: str, side: str = 'original'):
+    from comparison_audio import wav_range, audio_chunks
+    service = comparison_service()
+    try:
+        source = service.audio_source(session, side)
+        header, start, end, total = wav_range(source, request.headers.get('range'))
+    except ValueError as error:
+        raise HTTPException(416, str(error)) from error
+    ranged = bool(request.headers.get('range'))
+    headers = {'Accept-Ranges': 'bytes', 'Content-Length': str(end-start+1),
+               'Cache-Control': 'no-store'}
+    if ranged:
+        headers['Content-Range'] = f'bytes {start}-{end}/{total}'
+    return StreamingResponse(audio_chunks(service.ffmpeg, source, header, start, end),
+                             media_type='audio/wav', status_code=206 if ranged else 200,
+                             headers=headers)
+
+
+@app.middleware("http")
+async def _local_only_gate(request: Request, call_next):
+    # NOTE: "http" middleware does not cover websocket routes; WS handlers
+    # enforce the same checks inline via _check_ws_access().
+    if not _origin_allowed(request.headers.get("origin")):
+        return JSONResponse({"detail": "Forbidden origin"}, status_code=403)
+    if not _host_allowed(request.headers.get("host")):
+        return JSONResponse({"detail": "Forbidden host (possible DNS rebinding)"}, status_code=403)
+    # CORS preflight (OPTIONS) does not carry custom credentials/headers like X-DLSS-Token.
+    # Once origin and host checks pass, allow preflight through to CORSMiddleware.
+    if request.method == "OPTIONS":
+        return await call_next(request)
+    if (request.method, request.url.path) not in _TOKEN_OPEN and not _token_ok(_request_token(request)):
+        origin = request.headers.get("origin")
+        resp_headers = {}
+        if origin and _origin_allowed(origin):
+            resp_headers["Access-Control-Allow-Origin"] = origin
+            resp_headers["Access-Control-Allow-Credentials"] = "true"
+        return JSONResponse(
+            {"detail": "Missing or invalid local token (X-DLSS-Token header or ?token=)"},
+            status_code=401,
+            headers=resp_headers,
+        )
+    return await call_next(request)
+
+
+def _check_ws_access(websocket: WebSocket) -> str | None:
+    """Return None when allowed, else a human-readable rejection reason."""
+    if not _origin_allowed(websocket.headers.get("origin")):
+        return "forbidden origin"
+    if not _host_allowed(websocket.headers.get("host")):
+        return "forbidden host"
+    if not _token_ok(websocket.query_params.get("token")):
+        return "missing or invalid token"
+    return None
+
+
+async def broadcast_queue_update(job_or_data):
+    """Direct async broadcast to queue WebSockets."""
+    if not queue_ws_clients:
+        return
+    if isinstance(job_or_data, dict) and "type" in job_or_data:
+        msg = json.dumps(queue_message(job_or_data))
+    else:
+        msg = json.dumps(queue_message({"type": "job_update", "job": job_or_data,
+                          "queue_running": dlss_service.queue_is_running()}))
+
+    for ws in list(queue_ws_clients):
+        try:
+            await ws.send_text(msg)
+        except Exception:
+            pass
+
+
+def broadcast_queue_update_from_thread(job_or_data):
+    """Thread-safe broadcast called from background rendering threads."""
+    if not queue_ws_clients:
+        return
+    if isinstance(job_or_data, dict) and "type" in job_or_data:
+        msg = json.dumps(queue_message(job_or_data))
+    else:
+        # A row update cannot answer "may I reset this row?" on its own: between the
+        # last row turning terminal and the worker exiting, nothing is running while
+        # the queue still owns the GPU session. That is precisely when a retry has to
+        # stay disabled, so every update carries the gate the button reads.
+        msg = json.dumps(queue_message({"type": "job_update", "job": job_or_data,
+                          "queue_running": dlss_service.queue_is_running()}))
+
+    global main_loop
+    target_loop = main_loop
+    if target_loop and not target_loop.is_closed():
+        for ws in list(queue_ws_clients):
+            try:
+                asyncio.run_coroutine_threadsafe(ws.send_text(msg), target_loop)
+            except Exception:
+                pass
+
+
+@app.get("/api/system")
+def get_system_info(request: Request):
+    """Return GPU, VRAM and platform status."""
+    return {**quick_system_info(), "client_origin": request.headers.get("origin")}
+
+
+@app.get('/api/environment')
+def get_environment(refresh: bool = False):
+    return environment_report(refresh, {
+        'LUNARC_DLSS_DLL': dlss_service.settings.get('dlss_dll_path'),
+        'LUNARC_VSR_RUNTIME': dlss_service.settings.get('vsr_runtime_path'),
+    })
+
+
+@app.get("/api/flow/providers")
+def get_flow_providers():
+    """Return real capability and status of optical flow engines."""
+    import optical_flow
+    return {
+        "providers": optical_flow.get_all_flow_providers(),
+        "nvof_probe": optical_flow.probe_nvof_capabilities(),
+        "provider_contracts": __import__("flow_contracts").provider_contracts(),
+    }
+
+
+@app.post("/api/dialog/open_file")
+def dialog_open_file():
+    """Trigger native Windows file dialog to choose media file."""
+    import tkinter as tk
+    from tkinter import filedialog
+    try:
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+        path = filedialog.askopenfilename(
+            title="选择导入素材 (视频 / 图像)",
+            filetypes=[
+                ("所有支持的媒体", "*.mp4;*.mkv;*.mov;*.avi;*.wmv;*.flv;*.png;*.jpg;*.jpeg"),
+                ("视频文件", "*.mp4;*.mkv;*.mov;*.avi;*.wmv;*.flv"),
+                ("图像文件", "*.png;*.jpg;*.jpeg"),
+                ("所有文件", "*.*")
+            ]
+        )
+        root.destroy()
+        return {"path": path if path else None}
+    except Exception as e:
+        return {"path": None, "error": str(e)}
+
+
+@app.post("/api/dialog/open_dir")
+def dialog_open_dir():
+    """Trigger native Windows folder picker."""
+    import tkinter as tk
+    from tkinter import filedialog
+    try:
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+        path = filedialog.askdirectory(title="选择导出保存目录")
+        root.destroy()
+        return {"path": path if path else None}
+    except Exception as e:
+        return {"path": None, "error": str(e)}
+
+
+class LoadVideoRequest(BaseModel):
+    path: str
+
+
+@app.post("/api/video/load")
+def load_video(req: LoadVideoRequest):
+    try:
+        info = dlss_service.load_video(req.path)
+        return {"status": "ok", "video": info}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/video/current")
+def current_video():
+    return {
+        "video": dlss_service.video_info,
+        "loaded": dlss_service.video_info is not None
+    }
+
+
+@app.get("/api/preview/diagnostics")
+def preview_diagnostics():
+    return dlss_service.preview_diagnostics()
+
+
+@app.get("/api/frame")
+def get_frame(
+    frame: int = Query(0),
+    view: str = Query("dlss"),
+    split_x: float = Query(0.5),
+    zoom: float = Query(1.0),
+    pan_x: float = Query(0.5),
+    pan_y: float = Query(0.5),
+):
+    """Return rendered frame as JPEG image bytes."""
+    frame = max(0, int(frame))
+    split_x = max(0.0, min(1.0, float(split_x)))
+    zoom = max(0.1, min(10.0, float(zoom)))
+    pan_x = max(0.0, min(1.0, float(pan_x)))
+    pan_y = max(0.0, min(1.0, float(pan_y)))
+    jpeg_bytes, msg = dlss_service.render_preview(
+        frame_idx=frame,
+        view=view,
+        split_x=split_x,
+        zoom=zoom,
+        pan=(pan_x, pan_y)
+    )
+    if jpeg_bytes is None:
+        raise HTTPException(status_code=400, detail=msg)
+    return Response(content=jpeg_bytes, media_type="image/jpeg")
+
+
+@app.get("/api/settings")
+def get_settings():
+    return dlss_service.settings
+
+
+@app.post("/api/settings")
+def update_settings(new_settings: dict):
+    # A refused write has to say why. Raised bare, a retired dlss_backend name answered
+    # HTTP 500 with no body, and the setting the caller named is the one thing the
+    # answer has to make a migration out of - same reason /api/queue/add catches this.
+    try:
+        updated = dlss_service.update_settings(new_settings)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"status": "ok", "settings": updated}
+
+
+# ---------------- Queue Endpoints ----------------
+def _queue_state():
+    """The one shape the queue is reported in, over HTTP and over the socket.
+
+    ``queue_running`` belongs here because the retry action is gated on it: a row
+    reset while a round is in flight would hand the running worker a job it already
+    passed over, which is the implicit re-run the explicit action replaces. The UI
+    cannot infer it from ``active_id`` - between two jobs that reads as idle.
+    """
+    return {
+        "jobs": [queue_job(job) for job in dlss_service.get_jobs()],
+        "active_id": dlss_service.active_job_id,
+        "queue_running": dlss_service.queue_is_running(),
+    }
+
+
+@app.get("/api/queue")
+async def get_queue():
+    return _queue_state()
+
+
+@app.post("/api/queue/add")
+async def add_to_queue(job_data: dict):
+    # A refused job has to say why: raised bare, a ValueError here answered
+    # HTTP 500 with no body, so an opt-in rejection the user could act on
+    # (unknown or unpaired export backend) reached the UI as "Internal Server Error".
+    try:
+        job = dlss_service.add_job(job_data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    await broadcast_queue_update({"type": "job_added", "job": job, **_queue_state()})
+    return {"status": "ok", "job": queue_job(job)}
+
+
+@app.post("/api/queue/remove")
+async def remove_from_queue(req: dict):
+    job_id = req.get("id")
+    if not job_id:
+        raise HTTPException(status_code=400, detail="Missing job id")
+    try:
+        dlss_service.remove_job(job_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+    state = _queue_state()
+    await broadcast_queue_update({"type": "job_removed", "id": job_id, **state})
+    return {"status": "ok", **state}
+
+
+@app.post("/api/queue/retry")
+async def retry_queue_job(req: dict):
+    """Put one named job back to pending - the only way a past failure ever re-renders.
+
+    The queue runs pending jobs and nothing else, so this action exists rather than a
+    rerun-on-start side effect. The service decides the refusal under the queue lock,
+    and the reason has to reach the row that showed it: a bare ValueError would answer
+    HTTP 500 with a body saying nothing about the round still in flight.
+    """
+    job_id = req.get("id")
+    if not job_id:
+        raise HTTPException(status_code=400, detail="Missing job id")
+    try:
+        job = dlss_service.retry_job(job_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"作业 [{job_id}] 已不在渲染队列中")
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    state = _queue_state()
+    await broadcast_queue_update({
+        "type": "job_retried", "job": job, "jobs": state["jobs"],
+        "active_id": state["active_id"], "queue_running": state["queue_running"],
+    })
+    return {"status": "ok", "job": queue_job(job), **state}
+
+
+@app.post("/api/queue/start")
+async def start_queue():
+    started = dlss_service.start_queue(progress_callback=broadcast_queue_update_from_thread)
+    if started:
+        # Says the round has begun before the first row turns running, so a client that
+        # did not press the button reaches the same locked state as the one that did.
+        await broadcast_queue_update({"type": "queue_started", **_queue_state()})
+    return {"status": "started" if started else "already_running", **_queue_state()}
+
+
+@app.post("/api/queue/cancel")
+async def cancel_queue():
+    dlss_service.cancel_active_job()
+    return {"status": "cancelling"}
+
+
+# ---------------- Diagnostics Endpoints ----------------
+@app.get("/api/diagnostics/logs")
+def get_diagnostic_logs(limit: int = Query(200)):
+    return {"logs": diagnostic_logger.get_logs(limit=limit)}
+
+
+@app.get("/api/diagnostics/job/{job_id}")
+def get_job_diagnostic(job_id: str, summary: bool = False):
+    jobs = dlss_service.get_jobs()
+    for j in jobs:
+        if j["id"] == job_id:
+            # The job carries the DLSS host that ran or refused it, and that host's own
+            # last error. There is no host log here: the retired dlssnr_host.dll wrote
+            # dlssnr_run.log next to itself and a GPU-host failure used to be reported
+            # with that file's tail as if it were the GPU host's log.
+            return diagnostic_json({
+                "job": j,
+                "error": j.get("error"),
+                "error_traceback": j.get("error_traceback"),
+                "dlss_host": j.get("dlss_host"),
+                "dlss_host_error": j.get("dlss_host_error")
+            }, summary=summary)
+    raise HTTPException(status_code=404, detail="Job not found")
+
+
+# ---------------- WebSocket Player ----------------
+@app.websocket('/ws/compare')
+async def websocket_comparison(websocket: WebSocket, session: str,
+                               time: float = 0, rate: float = 1):
+    if _check_ws_access(websocket):
+        await websocket.close(code=4401)
+        return
+    await websocket.accept()
+    from comparison_playback import ComparisonPlayback
+    player = None
+    async def stopped():
+        try:
+            await websocket.receive_text()
+        except WebSocketDisconnect:
+            pass
+    disconnect = asyncio.create_task(stopped())
+    try:
+        player = await asyncio.to_thread(ComparisonPlayback, comparison_service(), session, time, rate)
+        # Decode before starting the clock: startup is not elapsed media time.
+        packet = await asyncio.to_thread(player.packet, time)
+        await websocket.send_bytes(packet)
+        started = asyncio.get_running_loop().time()
+        while not disconnect.done():
+            elapsed = asyncio.get_running_loop().time() - started
+            at = min(player.duration, time + elapsed * rate)
+            packet = await asyncio.to_thread(player.packet, at)
+            if disconnect.done():
+                break
+            await websocket.send_bytes(packet)
+            if at >= player.duration:
+                await websocket.send_json({'type': 'ended', 'time': player.duration})
+                break
+            wait = max(0., 1 / (player.fps * rate) - (asyncio.get_running_loop().time() - started - elapsed))
+            try:
+                await asyncio.wait_for(asyncio.shield(disconnect), timeout=wait)
+            except asyncio.TimeoutError:
+                pass
+    except WebSocketDisconnect:
+        pass
+    except Exception as error:
+        if not disconnect.done():
+            try:
+                await websocket.send_json({'type': 'error', 'detail': str(error)})
+            except (WebSocketDisconnect, RuntimeError):
+                pass
+    finally:
+        disconnect.cancel()
+        await asyncio.gather(disconnect, return_exceptions=True)
+        if player:
+            await asyncio.to_thread(player.close)
+        try:
+            await websocket.close()
+        except (WebSocketDisconnect, RuntimeError):
+            pass
+
+
+@app.websocket("/ws/player")
+async def websocket_player(websocket: WebSocket):
+    """Bounded native work and revision-safe realtime preview."""
+    global main_loop
+    if main_loop is None or main_loop.is_closed():
+        main_loop = asyncio.get_running_loop()
+    if _check_ws_access(websocket):
+        await websocket.close(code=4401)
+        return
+    await websocket.accept()
+    from preview_player import PreviewPlayer
+    player = PreviewPlayer(websocket, dlss_service)
+    task = asyncio.create_task(player.run())
+    try:
+        while True:
+            command = json.loads(await websocket.receive_text())
+            player.command(command)
+            if task.done():
+                task.result()
+    except WebSocketDisconnect:
+        pass
+    finally:
+        player.closed = True
+        player.wake.set()
+        # A socket closing is not a license to recycle live native resources.
+        try:
+            await task
+        except WebSocketDisconnect:
+            pass
+
+
+@app.websocket("/ws/queue")
+async def websocket_queue(websocket: WebSocket):
+    global main_loop
+    if main_loop is None or main_loop.is_closed():
+        main_loop = asyncio.get_running_loop()
+    denied = _check_ws_access(websocket)
+    if denied:
+        await websocket.close(code=4401)
+        return
+    await websocket.accept()
+    queue_ws_clients.add(websocket)
+    try:
+        # Send initial state
+        await websocket.send_text(json.dumps({"type": "init", **_queue_state()}))
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        pass
+    finally:
+        queue_ws_clients.discard(websocket)
+
+
+def preflight_check():
+    """P2-02: fail fast with an actionable message when runtime deps or
+    external tools are missing, instead of a bare ModuleNotFoundError mid-run."""
+    missing = []
+    for mod in ("numpy", "cv2", "fastapi", "uvicorn", "pydantic"):
+        try:
+            __import__(mod)
+        except ImportError:
+            missing.append(mod)
+    if missing:
+        raise SystemExit(
+            f"[preflight] 缺少运行时依赖: {', '.join(missing)}。请先 pip install -r requirements.txt")
+    for opt, why in (("torch", "DLSS/RAFT 需要 torch（CPU 版可跑流程，GPU 版才有加速）"),
+                      ("av", "PyAV 缺失将回退到 FFmpeg CLI 解码")):
+        try:
+            __import__(opt)
+        except ImportError:
+            print(f"[preflight] 可选依赖缺失 ({opt})：{why}", flush=True)
+    if not pipeline._bundle_ffmpeg():
+        print("[preflight] 未找到 ffmpeg，可移植解码/编码路径将不可用", flush=True)
+    if not pipeline._bundle_ffprobe():
+        print("[preflight] 未找到 ffprobe，精确帧数探测将降级", flush=True)
+
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", type=int, default=18923)
+    parser.add_argument("--host", type=str, default="127.0.0.1")
+    args = parser.parse_args()
+    preflight_check()
+
+    # Wait for port to be available if previously occupied (e.g. Windows TIME_WAIT / process teardown)
+    import socket
+    for attempt in range(15):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind((args.host, args.port))
+            break
+        except OSError:
+            if attempt < 14:
+                print(f"[server] Port {args.port} busy, waiting for release (attempt {attempt + 1}/15)...", flush=True)
+                time.sleep(1)
+
+    uvicorn.run(
+        app,
+        host=args.host,
+        port=args.port,
+        log_level="info",
+        ws_max_size=33554432,       # 32MB max message size for 4K/8K frame streaming
+        ws_ping_interval=20.0,
+        ws_ping_timeout=20.0
+    )
+
+
+if __name__ == "__main__":
+    main()
