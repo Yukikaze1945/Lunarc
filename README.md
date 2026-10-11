@@ -9,9 +9,9 @@
 
 一个把重建、画面对比与导出放在一起的中文视频增强工作台。排好渲染顺序，调整画面，检查结果。
 
-[下载 Windows 安装版](https://github.com/Yukikaze1945/Lunarc/releases/tag/v2.1.1) &nbsp; / &nbsp; [源码运行](docs/getting-started.md) &nbsp; / &nbsp; [运行库管理](docs/dlssnr-runtime.md) &nbsp; / &nbsp; [验证范围](docs/public-release.md)
+[下载 Windows 安装版](https://github.com/Yukikaze1945/Lunarc/releases/tag/v2.1.2) &nbsp; / &nbsp; [源码运行](docs/getting-started.md) &nbsp; / &nbsp; [运行库管理](docs/dlssnr-runtime.md) &nbsp; / &nbsp; [验证范围](docs/public-release.md)
 
-**安装 2.1.1：** 在 Release 下载 `Lunarc-2.1.1-x64-Installer.zip` 和两个 `.nsis.7z.001` / `.002` 数据分卷。把 ZIP 解压到分卷所在文件夹，双击 **`Install-Lunarc.cmd`**，自动校验、合并并打开安装器。无需另装 Python 或 CUDA Toolkit；DLSSNR 通过运行库管理器另行导入。详细步骤见 [安装说明](docs/installing.md)。
+**安装 2.1.2：** 下载 **`Lunarc-2.1.2-x64-Setup.exe`**。首次启动按教程安装基础运行环境与视频处理组件，再进入工作台。RAFT 光流按需下载，软件更新复用已有组件；不再提供完整离线包。详细步骤见 [安装说明](docs/installing.md)。
 
 ---
 
@@ -36,11 +36,11 @@
 | 色彩链路 | SDR 8-bit、SDR 10-bit、HDR10 | HDR10 为**实验性**，保留 PQ / BT.2020 / P010 / Main10 及静态元数据。 |
 | 封装与素材 | 视频 / 图片拖入；音轨、字幕、章节、附件与元数据 | FFmpeg 封装；实际保留范围取决于输入流和所选输出容器。 |
 | 运行库管理 | 版本选择、DLL / ZIP 导入、确认来源后下载、独立缓存 | SHA-256、NVIDIA 签名及版本检查；当前已核对 DLSSNR 310.8.0.0。 |
-| 环境检测 | 包依赖、CUDA 运算、驱动接口、DLL / ABI、FFmpeg 和模型 | 展示实际检测结果；依赖齐全不等于每种特效已运行成功。 |
+| 环境检测 | 基础包、原生 GPU 驱动、可选 RAFT CUDA 运算、DLL / ABI、FFmpeg 和模型 | 展示实际检测结果；依赖齐全不等于每种特效已运行成功。 |
 
 ### 使用前了解
 
-- Git 仓库提供**源码与测试**；Windows 安装版在 **Releases**。完整包携带 Python、PyTorch / CUDA、FFmpeg、RAFT 权重及桥接库，DLSSNR / DLAA / VSR / VFG 模型运行库由用户另行提供。
+- Git 仓库提供**源码与测试**；Windows 安装版在 **Releases**。小包携带界面、项目桥接及其原生依赖；Python 与 FFmpeg 首次安装，PyTorch / CUDA 与 RAFT 权重按需下载。DLSSNR / DLAA / VSR / VFG 模型运行库由用户另行提供。
 - HDR 预览通过 8-bit 显示图像进行映射，尚未校准显示器，不能用预览判断最终 HDR 亮度。
 - 特效支持受 GPU、驱动、运行库、尺寸与素材影响；缺失组件会明确报告，不静默替换算法。
 - 预览、诊断和标量回读仍有主机传输。部分 GPU 图像边界的零回读，不代表整个程序零主机流量。
@@ -60,9 +60,9 @@ cd Lunarc
 <details>
 <summary>关于本地安装包</summary>
 
-项目提供独立运行环境收集器和离线两文件安装器，可将 CPython、依赖、FFmpeg 与模型放在应用目录中；显卡驱动仍需单独安装。
+项目提供小型 NSIS 安装器和在线组件管理。基础环境、视频工具、可选 RAFT 保存在用户数据目录；显卡驱动仍需单独安装。
 
-构建方法见 [打包说明](packaging/README.md)。安装版在 Releases 以分卷方式提供，合并后与已验收的离线数据包一致。本项目源码保持 GPL-3.0-or-later，第三方组件保留自身许可；构建脚本、下载来源或文件签名不授予额外的组件再分发权。
+构建方法见 [打包说明](packaging/README.md)。安装版在 Releases 提供单个 Setup EXE，首次使用时安装所需组件。本项目源码保持 GPL-3.0-or-later，第三方组件保留自身许可；构建脚本、下载来源或文件签名不授予额外的组件再分发权。
 
 </details>
 
@@ -74,8 +74,8 @@ cd Lunarc
 | [运行库管理](docs/dlssnr-runtime.md) | 本地导入、版本切换、来源下载、哈希与签名检查。 |
 | [原生组件](docs/native-runtime.md) | DLAA、RTX VSR、VFG 等外部运行库配置。 |
 | [AMD 光流](docs/AMD_FLOW_DEPENDENCIES.md) | 固定 SDK 版本与官方编译器要求。 |
-| [软件更新](docs/app-updates.md) | 检查发布版、完整安装包下载、续传与校验。新入口将在后续安装构建提供。 |
-| [本地打包](packaging/README.md) | 独立环境、离线安装与启动检查。 |
+| [软件更新](docs/app-updates.md) | 检查、下载、续传与校验新版安装包。 |
+| [本地打包](packaging/README.md) | 小包构建、在线组件与安装检查。 |
 | [验证范围](docs/public-release.md) | 已完成的真实检查、实验性范围和未覆盖的组合。 |
 
 ## 05 / 许可与致谢

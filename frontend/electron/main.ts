@@ -7,6 +7,7 @@ import { spawn, execFileSync, ChildProcess } from 'node:child_process'
 import fs from 'node:fs'
 import {runtimeCandidates, runtimeDirectory, runtimeFingerprint, runtimeEnvironment, probeRuntime, type BackendStartup} from './backendRuntime'
 import {AppUpdates} from './appUpdates'
+import {ComponentManager} from './componentManager'
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -48,6 +49,29 @@ function appUpdates() {
     if (win && !win.isDestroyed()) win.webContents.send('updates:state', state)
   }, net.fetch.bind(net) as typeof fetch)
   return updates
+}
+let components: ComponentManager | null = null
+function componentManager() {
+  const enabled=app.isPackaged || (process.env.E2E_TEST==='1' && process.env.E2E_COMPONENTS==='1')
+  if(!enabled)return null
+  if(!components)components=new ComponentManager(path.resolve(process.env.APP_ROOT,'..'),
+    path.join(app.getPath('userData'),'components'),state=>win?.webContents.send('components:state',state),net.fetch.bind(net) as typeof fetch)
+  return components
+}
+let starting: Promise<boolean>|null=null
+async function ensureBackend() {
+  if(starting)return starting
+  starting=(async()=>{
+    if(componentManager() && !componentManager()!.readyForBackend())return false
+    const started=await startPythonBackend()
+    for(let i=0;started && i<120 && backendStartup.state!=='error';i++) {
+      if(await checkServerListening(backendPort)){backendStartup={...backendStartup,state:'ready',message:'后端已连接'};return true}
+      await new Promise(r=>setTimeout(r,500))
+    }
+    if(backendStartup.state==='starting')backendStartup={...backendStartup,state:'error',message:'后端启动超时，请查看日志'}
+    return backendStartup.state==='ready'
+  })()
+  try{return await starting}finally{starting=null}
 }
 let pyProc: ChildProcess | null = null
 let backendStartup: BackendStartup = {state: 'checking', message: '正在检查运行环境'}
@@ -94,7 +118,8 @@ async function resolveExistingBackendToken(rootDir: string): Promise<string | nu
 
 async function startPythonBackend() {
   const rootDir = path.resolve(process.env.APP_ROOT, '..')
-  const runtimeDir = runtimeDirectory(rootDir, app.isPackaged)
+  const manager=componentManager()
+  const runtimeDir = manager?.runtime() || runtimeDirectory(rootDir, app.isPackaged)
   const standalone = app.isPackaged || fs.existsSync(path.join(runtimeDir, 'manifest.json'))
   const isRunning = await checkServerListening(backendPort)
   if (isRunning) {
@@ -134,7 +159,8 @@ async function startPythonBackend() {
   process.env.DLSS_LOCAL_TOKEN = localToken
   const userData = app.getPath('userData')
   const environment = runtimeEnvironment(rootDir, userData, {...process.env, LUNARC_RUNTIME_DIR: runtimeDir}, standalone)
-  const pythonCandidates = runtimeCandidates(rootDir, app.isPackaged, process.env)
+  if(manager){environment.LUNARC_COMPONENT_MODE='1';environment.LUNARC_COMPONENT_ROOT=path.join(userData,'components');environment.PATH=path.dirname(manager.python())+path.delimiter+environment.PATH}
+  const pythonCandidates = manager ? [manager.python()] : runtimeCandidates(rootDir, app.isPackaged, process.env)
   let pythonPath = ''
   let failure = ''
   for (const c of pythonCandidates) {
@@ -147,7 +173,7 @@ async function startPythonBackend() {
     } catch (err) {failure = (err as Error).message}
   }
   if (!pythonPath) {
-    const msg = standalone ? `随软件携带的运行环境无法启动，请重新安装。\n${failure}` : `未找到可用的开发运行环境。\n${failure}`
+    const msg = standalone ? `运行环境无法启动，请在组件管理中检查安装结果。\n${failure}` : `未找到可用的开发运行环境。\n${failure}`
     backendStartup = {...backendStartup, state: 'error', message: msg}
     console.error('[Backend]', msg)
     // E2E runs must never block on a modal dialog (it would wedge teardown).
@@ -165,7 +191,7 @@ async function startPythonBackend() {
     log.on('error', err => console.error('[Backend] log error:', err.message))
     log.write(`\n[${new Date().toISOString()}] Backend starting\n`)
     backendStartup = {...backendStartup, state: 'starting', message: '正在启动后端', logPath}
-    pyProc = spawn(pythonPath, [serverScript, '--port', String(backendPort)], {
+    pyProc = spawn(pythonPath, ['-I', serverScript, '--port', String(backendPort)], {
       cwd: rootDir,
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
@@ -315,6 +341,13 @@ ipcMain.handle('dialog:openDirectory', async () => {
 
 // Authentication token IPC handler (P0-01)
 ipcMain.handle('auth:getToken', () => process.env.DLSS_LOCAL_TOKEN || '')
+ipcMain.handle('components:get', event => event.sender===win?.webContents && event.senderFrame===win.webContents.mainFrame ? componentManager()?.state||null : null)
+ipcMain.handle('components:install', (event,id:unknown) => event.sender===win?.webContents && event.senderFrame===win.webContents.mainFrame ? componentManager()?.install(id) : null)
+ipcMain.handle('components:cancel', event => {if(event.sender===win?.webContents && event.senderFrame===win.webContents.mainFrame)componentManager()?.cancel()})
+ipcMain.handle('components:startBackend', async event => {
+  if(event.sender!==win?.webContents || event.senderFrame!==win.webContents.mainFrame)return null
+  await ensureBackend();return backendStartup
+})
 ipcMain.handle('backend:getStartup', (event) => event.sender === win?.webContents ? backendStartup : null)
 ipcMain.handle('updates:get', event => event.sender === win?.webContents && event.senderFrame === win?.webContents.mainFrame ? appUpdates().state : null)
 ipcMain.handle('updates:check', (event, preview: unknown) => {
@@ -366,6 +399,7 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   updates?.cancel()
+  components?.cancel()
   killPythonBackend()
 })
 
@@ -390,13 +424,14 @@ app.whenReady().then(async () => {
     return net.fetch(pathToFileURL(filePath).toString())
   })
 
-  const started = await startPythonBackend()
-  // P1-05: wait for the API before painting UI (cold torch/DLL import can
-  // take tens of seconds; the page used to load against a dead backend).
-  for (let i = 0; started && i < 120 && backendStartup.state !== 'error'; i++) {
-    if (await checkServerListening(backendPort)) {backendStartup = {...backendStartup, state: 'ready', message: '后端已连接'}; break}
-    await new Promise((r) => setTimeout(r, 500))
+  const manager=componentManager()
+  if(manager){
+    if(await checkServerListening(backendPort))process.env.DLSS_LOCAL_TOKEN ||= await resolveExistingBackendToken(path.resolve(process.env.APP_ROOT,'..')) || crypto.randomUUID()
+    else process.env.DLSS_LOCAL_TOKEN ||= crypto.randomUUID()
+    backendStartup={state:'setup',message:'请先安装基础组件'}
+    createWindow()
+  }else{
+    await ensureBackend()
+    createWindow()
   }
-  if (backendStartup.state === 'starting') backendStartup = {...backendStartup, state: 'error', message: '后端启动超时，请查看日志'}
-  createWindow()
 })

@@ -3,7 +3,7 @@ import path from 'node:path'
 import {execFile} from 'node:child_process'
 import crypto from 'node:crypto'
 
-export type BackendStartup = {state: 'checking'|'starting'|'ready'|'error'; message: string; logPath?: string; checks?: unknown[]}
+export type BackendStartup = {state: 'setup'|'checking'|'starting'|'ready'|'error'; message: string; logPath?: string; checks?: unknown[]}
 
 export function runtimeDirectory(root: string, packaged: boolean): string {
   const installed = path.join(root, 'runtime')
@@ -36,7 +36,7 @@ export function runtimeEnvironment(root: string, userData: string, source: NodeJ
   const env = {...source}
   const runtime = source.LUNARC_RUNTIME_DIR || path.join(root, 'runtime')
   if (standalone) {
-    for (const key of ['PYTHONPATH', 'PYTHONHOME', 'PYTHON_PATH', 'VIRTUAL_ENV', 'CONDA_PREFIX', 'FFMPEG_SDK_DIR', 'DLSS5_FFMPEG_DIR']) delete env[key]
+    for (const key of ['PYTHONPATH', 'PYTHONHOME', 'PYTHON_PATH', 'VIRTUAL_ENV', 'CONDA_PREFIX', 'FFMPEG_SDK_DIR', 'DLSS5_FFMPEG_DIR', 'LUNARC_COMPONENT_MODE', 'LUNARC_COMPONENT_ROOT']) delete env[key]
     env.PATH = [path.join(runtime, 'python'), path.join(runtime, 'tools'),
       path.join(source.SystemRoot || 'C:\\Windows', 'System32'), source.SystemRoot || 'C:\\Windows'].join(path.delimiter)
     env.LUNARC_STANDALONE = '1'
@@ -52,7 +52,7 @@ export function runtimeEnvironment(root: string, userData: string, source: NodeJ
 
 export async function probeRuntime(python: string, root: string, env: NodeJS.ProcessEnv): Promise<{ready: boolean; checks: unknown[]}> {
   return new Promise((resolve, reject) => {
-    execFile(python, [path.join(root, 'runtime_environment.py'), '--bootstrap'],
+    execFile(python, ['-I', path.join(root, 'runtime_environment.py'), '--bootstrap'],
       {cwd: root, env, timeout: 30000, windowsHide: true, maxBuffer: 1024 * 1024, encoding: 'utf8'},
       (error, stdout, stderr) => {
         const line = stdout.split(/\r?\n/).reverse().find(l => l.startsWith('LUNARC_ENV='))

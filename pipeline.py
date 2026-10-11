@@ -42,7 +42,7 @@ if hasattr(cv2, "setLogLevel"):
 # actually collected them into.
 BASE = bundle_paths.app_dir()
 os.environ.setdefault("TORCH_HOME", os.path.join(BASE, "torch_home"))
-RAFT_PTH = os.path.join(BASE, "torch_home", "hub", "checkpoints", "raft_large_C_T_SKHT_V2-ff5fadd5.pth")
+RAFT_PTH = os.path.join(os.environ["TORCH_HOME"], "hub", "checkpoints", "raft_large_C_T_SKHT_V2-ff5fadd5.pth")
 
 DEVICE = "cpu"                 # placeholder; resolved lazily when torch is present
 _TORCH_OK = None
@@ -61,7 +61,7 @@ def _torch_available():
 
 def _require_torch(what):
     if not _torch_available():
-        raise RuntimeError(f"{what} 需要 torch/深度光流模型，但当前程序未内嵌（请用完整版或外置模型）")
+        raise RuntimeError(f"{what} 需要 RAFT 光流组件，请在软件设置中安装后重启软件")
 
 from contextlib import contextmanager
 

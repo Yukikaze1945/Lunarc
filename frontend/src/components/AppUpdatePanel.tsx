@@ -17,12 +17,12 @@ export function AppUpdatePanel() {
   },[api])
   async function action(fn:()=>Promise<unknown>) {setError('');try {await fn()} catch(e) {setError((e as Error).message)}}
   const busy=state?.phase==='checking'||state?.phase==='downloading'
-  const size=(bytes:number)=>`${(bytes/1024**3).toFixed(2)} GB`
+  const size=(bytes:number)=>bytes<1024**3?`${Math.round(bytes/1024**2)} MB`:`${(bytes/1024**3).toFixed(2)} GB`
   return <section className="panel app-update-panel">
     <div className="inline-form"><h2>软件更新</h2><span className="badge">{state?`${state.currentVersion}${state.packaged?'':' · 源码运行'}`:'浏览器运行'}</span></div>
     {!api?.getAppUpdate?<p>请在桌面版中检查和下载更新。</p>:<>
       <label className="check-field"><input type="checkbox" checked={preview} disabled={busy} onChange={e=>{setPreview(e.target.checked);localStorage.setItem('lunarc.updates.preview',String(e.target.checked))}}/>包含预发布版本</label>
-      <p role="status" aria-live="polite">{state?.phase==='checking'?'正在检查…':state?.phase==='current'?'未发现更新的完整安装包':state?.release?`可用版本 ${state.release.version}${state.release.preview?' · 预发布':''}`:'从 Lunarc 官方 GitHub 发布页获取更新'}</p>
+      <p role="status" aria-live="polite">{state?.phase==='checking'?'正在检查…':state?.phase==='current'?'当前没有更新的安装包':state?.release?`可用版本 ${state.release.version}${state.release.preview?' · 预发布':''}`:'从 Lunarc 官方 GitHub 发布页获取更新'}</p>
       {state?.phase==='downloading'&&<div><progress aria-label="更新下载进度" value={state.received} max={state.total}/><p>{size(state.received)} / {size(state.total)}</p></div>}
       <div className="inline-form">
         <button className="button" disabled={busy} onClick={()=>action(()=>api.checkAppUpdate(preview))}><RefreshCw size={15}/>检查更新</button>
@@ -31,7 +31,7 @@ export function AppUpdatePanel() {
         {state?.phase==='ready'&&<button className="button primary" onClick={()=>action(()=>api.openAppUpdateDirectory())}><FolderOpen size={15}/>打开安装目录</button>}
         {state?.release&&<a className="button quiet" href={state.release.url} target="_blank" rel="noreferrer">发行说明 ↗</a>}
       </div>
-      {state?.phase==='ready'&&<p>全部文件已校验。{state.release?.assets.some(a=>a.name.endsWith('Installer.zip'))?'解压 Installer.zip，退出工作台后运行 Install-Lunarc.cmd。':'退出工作台后运行 Setup.exe。'}更新需重新下载安装包。</p>}
+      {state?.phase==='ready'&&<p>全部文件已校验。{state.release?.assets.some(a=>a.name.endsWith('Installer.zip'))?'解压 Installer.zip，退出工作台后运行 Install-Lunarc.cmd。':'退出工作台后运行 Setup.exe。'}已安装的运行组件会保留。</p>}
       {(error||state?.error)&&<p className="feedback" role="alert">{error||state?.error}</p>}
     </>}
   </section>

@@ -786,7 +786,7 @@ def preflight_check():
     if missing:
         raise SystemExit(
             f"[preflight] 缺少运行时依赖: {', '.join(missing)}。请先 pip install -r requirements.txt")
-    for opt, why in (("torch", "DLSS/RAFT 需要 torch（CPU 版可跑流程，GPU 版才有加速）"),
+    for opt, why in (("torch", "RAFT 光流需要此组件；原生 GPU 功能不需要"),
                       ("av", "PyAV 缺失将回退到 FFmpeg CLI 解码")):
         try:
             __import__(opt)

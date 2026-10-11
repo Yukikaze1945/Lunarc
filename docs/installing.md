@@ -1,25 +1,31 @@
 # Windows 安装版
 
-[下载 Lunarc 2.1.1](https://github.com/Yukikaze1945/Lunarc/releases/tag/v2.1.1)
+[下载 Lunarc 2.1.2](https://github.com/Yukikaze1945/Lunarc/releases/tag/v2.1.2)
 
-## 下载三个文件
+## 安装与首次启动
 
-- `Lunarc-2.1.1-x64-Installer.zip`：安装入口。
-- `lunarc-workbench-2.1.1-x64.nsis.7z.001`：数据第一卷。
-- `lunarc-workbench-2.1.1-x64.nsis.7z.002`：数据第二卷。
+1. 下载 **Lunarc-2.1.2-x64-Setup.exe**，运行安装程序。无需下载分卷或合并文件。
+2. 首次启动显示使用教程。先安装 **基础运行环境**，再安装 **视频处理组件**。
+3. 组件安装完成后进入工作台。以后可以从侧栏或软件设置重新打开教程。
 
-将三个文件放在同一文件夹，解压安装入口 ZIP，然后双击解压得到的 **`Install-Lunarc.cmd`**。支持 Windows 默认的子文件夹解压方式；脚本会在自身文件夹及其上一级查找完整的数据分卷。
+安装包约 140 MiB，包含桌面界面、项目桥接库与其原生依赖、组件安装工具。Python、基础 Python 依赖和 FFmpeg 命令行程序首次启动时联网下载；PyTorch/CUDA 和 RAFT 权重仅在安装可选的 **RAFT 光流** 时下载。不再提供完整离线包。
 
-脚本先检查安装程序和分卷的大小、SHA-256，再合并数据包，核对整体 SHA-256，最后打开可选择目录的安装器。合并不需要 Python 或 7-Zip，使用 Windows 自带 PowerShell。也可用支持分卷的工具按原始顺序合并；最终文件名为 `lunarc-workbench-2.1.1-x64.nsis.7z`，与 Setup 放在一起。
+组件位于 `%APPDATA%/DaVinci_DLSS5_Studio/components`，独立于软件安装目录。重新安装或更新软件会复用版本仍匹配的组件与已校验的下载文件。首次安装 RAFT 仍有数 GB 的下载与磁盘开销，安装后需要重启软件。
 
-数据总计约 2.5 GB。下载目录需要容纳分卷及约 2.5 GB 的合并文件；安装目录另需约 6 GB。首次合并和解压可能需要数分钟。文件缺失、下载不完整或校验失败时，脚本会停止；不会继续使用损坏的数据。
+安装需要连接 GitHub、PyPI、Astral 的 Python 分发源和 Gyan FFmpeg；RAFT 还需要连接 PyTorch 官方源。失败时显示具体原因，可重试。暂停保留已经完成的下载；FFmpeg、PyTorch/CUDA 主包和 RAFT 模型支持断点续传。其他 Python 依赖由 uv 管理下载缓存，不保证每个文件都能续传。
 
-## 第一次启动
+## 模型运行库与显卡
 
-需要 Windows x64 和匹配的 NVIDIA GPU / 驱动。无需另装 Python、Node.js、pip 或 CUDA Toolkit。完整包携带用于 RAFT 的 PyTorch / CUDA 环境，这也是体积较大的主要原因。
+Windows x64 和匹配的 NVIDIA GPU / 驱动仍是 GPU 功能的前提。不需要自行安装 Python、Node.js、pip 或 CUDA Toolkit。
 
-打开 **运行与诊断 → 运行环境** 检查机器。DLSSNR 不随包携带：在 **DLSSNR 运行库** 导入合法取得的 DLL / ZIP，或确认来源后下载，再选择“使用”。DLAA、RTX VSR、VFG 所需运行库也由用户另行提供。
+DLSSNR 不随安装包携带：在 **运行与诊断 → DLSSNR 运行库** 中导入合法取得的 DLL / ZIP，或确认来源后下载，再选择“使用”。DLAA、RTX VSR 与 NVIDIA VFG 也需要对应 NVIDIA 运行库。
 
-2.1.1 已在 RTX 5060 Ti 开发机实际安装、隔离环境启动、队列连接、真实 NR GPU 预览及连续播放验收通过。尚未在其他机器全面验证；HDR10、多尺度融合与 5×–8× 插帧仍为实验性，Performance = NOT_CHARACTERIZED。
+**不装 RAFT 不影响原生 GPU 功能。** 显卡检测、原生 NVIDIA / AMD 光流、DLSSNR 和 GPU 解码编码不依赖 PyTorch；各特效的设备和模型兼容性仍在实际会话中验证。
 
-项目源码为 GPL-3.0-or-later，第三方组件保留各自许可；见 [第三方说明](../THIRD_PARTY_NOTICES.md)。文件 SHA-256 在 Release 的 `SHA256SUMS.txt`，组件清单和来源在安装入口内的 `SOURCE-AND-NOTICES.md`。
+HDR10、多尺度数据一致性融合和 5×–8× 插帧仍为实验性。预览经过 8-bit 显示映射，不能用来判断显示器上的 HDR 亮度。Performance = NOT_CHARACTERIZED。
+
+## 更新
+
+在 **关于 Lunarc → 软件更新** 中检查、下载和校验新版安装包。退出软件后运行新的 Setup；组件目录会保留。此方式没有安装器增量更新，运行组件也不会自动追随最新版升级。
+
+项目为 GPL-3.0-or-later，第三方组件保留各自许可。Release 提供 `SHA256SUMS.txt` 和 `INSTALLER.json`；安装目录保留组件许可证、来源与固定版本记录。

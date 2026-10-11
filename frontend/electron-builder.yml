@@ -1,4 +1,4 @@
-# electron-builder config — Lunarc standalone runtime + optional NSIS installer
+# electron-builder config — Lunarc small installer with separately downloaded components
 #
 # Layout this produces (release/win-unpacked/):
 #
@@ -46,7 +46,7 @@ asar: false
 # Only the root modules and the project's native DLLs are carried.
 # Deliberately NOT carried, and why:
 #   - legacy models/: unused depth checkpoints are excluded; the verified RAFT
-#     checkpoint is carried in runtime/torch_home by the runtime builder below.
+#     checkpoint is installed separately by the component manager.
 #   - native/build, native/bench_out, native/*.bat, native/*.log: build cruft; the
 #     loaders only ever open native/<name>.dll (see bundle_paths.NATIVE_BINARIES).
 #   - Magpie/ (76 MB): a reference shader project, not a runtime input.
@@ -58,13 +58,14 @@ extraResources:
       - "native/*.dll"
       - "!native/nvdec_bridge_p010.dll"
       - "!native/nvenc_bridge_sdr10.dll"
-  - from: "../build/standalone-runtime"
-    to: "runtime"
+  - from: "../build/small-resources"
+    to: "."
     filter:
-      - "**/*"
-      - "!**/__pycache__/**"
-      - "!build-in-progress.json"
-      - "!**/nvngx_dlssnr.dll"
+      - "manifest.json"
+      - "components/**"
+      - "component-tools/**"
+      - "!component-tools/uv.zip"
+      - "native-deps/**"
   - from: "../LICENSE"
     to: "licenses/Lunarc-LICENSE.txt"
   - from: "../NOTICE"
@@ -98,14 +99,3 @@ nsis:
   artifactName: "Lunarc-${version}-${arch}-Setup.${ext}"
   createDesktopShortcut: true
   createStartMenuShortcut: true
-
-# The GPU runtime exceeds NSIS's embedded payload limit. Use a local sidecar
-# archive; the custom initializer refuses absent/corrupt archives before any
-# download branch can run. No hosting service is required for installation.
-nsisWeb:
-  oneClick: false
-  perMachine: false
-  allowToChangeInstallationDirectory: true
-  artifactName: "Lunarc-${version}-${arch}-Setup.${ext}"
-  include: "scripts/offline-installer.nsh"
-  appPackageUrl: "https://offline.invalid/lunarc"

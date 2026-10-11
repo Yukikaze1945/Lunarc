@@ -34,7 +34,7 @@ export function parseRelease(raw: any): UpdateRelease|null {
     const tag=encodeURIComponent(raw.tag_name)
     const assets: UpdateAsset[]=[]
     for (const a of raw.assets) {
-      if (!/^(?:Lunarc-[0-9A-Za-z.-]+-x64-(?:Installer\.zip|Setup\.exe)|lunarc-workbench-[0-9A-Za-z.-]+-x64\.nsis\.7z(?:\.\d{3})?|SHA256SUMS\.txt|INSTALL\.md)$/.test(a.name)) continue
+      if (!/^(?:Lunarc-[0-9A-Za-z.-]+-x64-(?:Installer\.zip|Setup\.exe)|lunarc-workbench-[0-9A-Za-z.-]+-x64\.nsis\.7z(?:\.\d{3})?|SHA256SUMS\.txt|INSTALL\.md|INSTALLER\.json)$/.test(a.name)) continue
       if (assets.some(x=>x.name===a.name) || a.state !== 'uploaded' || !Number.isSafeInteger(a.size) || a.size<=0 || !/^sha256:[a-f0-9]{64}$/.test(a.digest)) return null
       const url=`${repository}/releases/download/${tag}/${encodeURIComponent(a.name)}`
       if (a.browser_download_url !== url) return null
@@ -47,9 +47,10 @@ export function parseRelease(raw: any): UpdateRelease|null {
     let selected:UpdateAsset[]
     if (zip && parts.length && parts.every((a,i)=>a.name.endsWith(`.${String(i+1).padStart(3,'0')}`))) selected=[zip,...parts]
     else if (exe && payload) selected=[exe,payload]
+    else if (exe && assets.some(a=>a.name==='INSTALLER.json' && a.size<65536)) selected=[exe]
     else return null // A bootstrap exe alone is not a complete installer.
     if (!assets.some(a=>a.name==='SHA256SUMS.txt' && a.size<65536)) return null
-    selected.push(...assets.filter(a=>a.name==='SHA256SUMS.txt'||a.name==='INSTALL.md'))
+    selected.push(...assets.filter(a=>a.name==='SHA256SUMS.txt'||a.name==='INSTALL.md'||a.name==='INSTALLER.json'))
     return {version:v,preview:!!raw.prerelease,url:`${repository}/releases/tag/${tag}`,notes:typeof raw.body==='string'?raw.body.slice(0,20000):'',assets:selected}
   } catch {return null}
 }
@@ -96,6 +97,17 @@ export class AppUpdates {
           const m=/^([a-f0-9]{64})\s+\*?([A-Za-z0-9._-]+)$/.exec(line)
           if (!m || rows.has(m[2])) throw new Error('安装包校验清单格式无效')
           rows.set(m[2],m[1])
+        }
+        const installerInfo=release.assets.find(a=>a.name==='INSTALLER.json')
+        if(installerInfo){
+          const response=await this.request(installerInfo.url,{signal:controller.signal})
+          if(!response.ok)throw new Error('无法获取安装包说明，请重试')
+          const content=Buffer.from(await response.arrayBuffer())
+          if(content.length!==installerInfo.size || createHash('sha256').update(content).digest('hex')!==installerInfo.sha256)throw new Error('安装包说明校验失败')
+          const info=JSON.parse(content.toString('utf8'))
+          const exe=release.assets.find(a=>a.name.endsWith('-Setup.exe'))
+          if(info.schema!==1 || info.mode!=='components' || info.version!==release.version || !exe || info.installer?.name!==exe.name || info.installer?.sha256!==exe.sha256 || info.installer?.bytes!==exe.size)
+            throw new Error('安装包说明与发布文件不一致')
         }
         const names=release.assets.filter(a=>a.name!=='SHA256SUMS.txt')
         if(names.some(a=>rows.get(a.name)!==a.sha256) || [...rows.keys()].some(name=>

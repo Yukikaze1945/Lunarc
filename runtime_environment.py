@@ -20,6 +20,8 @@ import time
 ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+from component_paths import configure
+configure()
 BASE_MODULES = (('numpy', 'NumPy'), ('cv2', 'OpenCV'), ('fastapi', 'FastAPI'),
                 ('uvicorn', 'Uvicorn'), ('websockets', 'WebSocket'), ('pydantic', 'Pydantic'))
 BRIDGES = {
@@ -55,10 +57,31 @@ def bootstrap():
             value = importlib.import_module(module)
             checks.append(item(module, label, 'ok', str(getattr(value, '__version__', '已加载'))))
         except Exception as exc:
-            checks.append(item(module, label, 'missing', str(exc), '重新安装完整运行环境'))
+            checks.append(item(module, label, 'missing', str(exc), '在软件设置中重新安装基础运行环境'))
     return {'ready': all(c['status'] == 'ok' for c in checks), 'checks': checks,
             'python': platform.python_version(), 'executable': sys.executable,
             'isolated': bool(sys.flags.isolated)}
+
+
+def driver_device():
+    driver = ctypes.WinDLL('nvcuda.dll')
+    driver.cuInit.argtypes = [ctypes.c_uint]
+    code = driver.cuInit(0)
+    if code:
+        raise RuntimeError(f'NVIDIA 驱动初始化失败：{code}')
+    count = ctypes.c_int()
+    driver.cuDeviceGetCount.argtypes = [ctypes.POINTER(ctypes.c_int)]
+    if driver.cuDeviceGetCount(ctypes.byref(count)) or count.value < 1:
+        raise RuntimeError('未检测到可用的 NVIDIA 显卡')
+    name = ctypes.create_string_buffer(256)
+    driver.cuDeviceGetName.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_int]
+    if driver.cuDeviceGetName(name, len(name), 0):
+        raise RuntimeError('无法读取显卡名称')
+    memory = ctypes.c_size_t()
+    driver.cuDeviceTotalMem_v2.argtypes = [ctypes.POINTER(ctypes.c_size_t), ctypes.c_int]
+    if driver.cuDeviceTotalMem_v2(ctypes.byref(memory), 0):
+        raise RuntimeError('无法读取显存容量')
+    return {'name': name.value.decode('utf-8', errors='replace'), 'bytes': memory.value}
 
 
 def quick_system_info():
@@ -66,18 +89,18 @@ def quick_system_info():
             'gpu_error': None, 'os': sys.platform, 'python_version': platform.python_version(),
             'backend_ready': True}
     try:
-        import torch
-        if not torch.cuda.is_available():
-            info['gpu_error'] = '当前 PyTorch 未检测到可用的 CUDA 设备'
-        else:
-            info['gpu'] = torch.cuda.get_device_name(0)
-            info['vram_total_gb'] = round(torch.cuda.get_device_properties(0).total_memory / 1024**3, 2)
-            # Allocated bytes are already included in reserved bytes. This is this
-            # process's allocator, not the whole GPU's usage.
-            info['vram_used_gb'] = round(torch.cuda.memory_reserved(0) / 1024**3, 2)
+        device = driver_device()
+        info.update(gpu=device['name'], vram_total_gb=round(device['bytes']/1024**3, 2))
     except Exception as exc:
         info['gpu_error'] = str(exc)
-    info['vram_scope'] = 'process_reserved'
+    # Do not load the optional torch runtime just to display system information.
+    torch = sys.modules.get('torch')
+    if torch is not None and info['gpu']:
+        try:
+            info['vram_used_gb'] = round(torch.cuda.memory_reserved(0)/1024**3, 2)
+        except Exception:
+            pass
+    info['vram_scope'] = 'process_reserved' if info['vram_used_gb'] is not None else 'unavailable'
     info['service'] = 'lunarc'
     info['backend_api'] = 1
     info['runtime_id'] = runtime_id()
@@ -108,19 +131,23 @@ def worker():
     checks = bootstrap()['checks']
     gpu = quick_system_info()
     checks.append(item('python', 'Python', 'ok', f'{platform.python_version()} · {platform.machine()}'))
-    checks.append(item('cuda', 'CUDA 运算', 'missing', gpu['gpu_error'] or '', '安装支持此显卡的 NVIDIA 驱动'))
+    checks.append(item('cuda', 'CUDA 驱动初始化', 'ok' if gpu['gpu'] else 'missing',
+                       gpu['gpu'] or gpu['gpu_error'] or '', '安装 NVIDIA 显卡驱动' if not gpu['gpu'] else ''))
+    torch_status = item('torch_cuda', 'RAFT CUDA 运算', 'missing', '未安装 RAFT 光流组件', '在软件设置中安装 RAFT 光流')
     try:
         import torch
-        if torch.cuda.is_available():
-            # Actually execute and synchronize, not merely import a CUDA wheel.
-            sample = torch.ones(8, device='cuda') + 1
-            torch.cuda.synchronize()
-            if sample.sum().item() != 16:
-                raise RuntimeError('CUDA 运算结果错误')
-            checks[-1] = item('cuda', 'CUDA 运算', 'ok',
-                              f"{gpu['gpu']} · PyTorch {torch.__version__} · CUDA {torch.version.cuda}")
+        if not torch.cuda.is_available():
+            raise RuntimeError('PyTorch 未检测到可用的 CUDA 设备')
+        sample = torch.ones(8, device='cuda') + 1
+        torch.cuda.synchronize()
+        if sample.sum().item() != 16:
+            raise RuntimeError('CUDA 运算结果错误')
+        torch_status = item('torch_cuda', 'RAFT CUDA 运算', 'ok', f'PyTorch {torch.__version__} · CUDA {torch.version.cuda}')
+    except ImportError:
+        pass
     except Exception as exc:
-        checks[-1] = item('cuda', 'CUDA 运算', 'error', str(exc), '检查 NVIDIA 驱动与随软件携带的 CUDA 运行库')
+        torch_status = item('torch_cuda', 'RAFT CUDA 运算', 'error', str(exc), '检查 NVIDIA 驱动与 RAFT 光流组件')
+    checks.append(torch_status)
     try:
         driver = ctypes.WinDLL('nvcuda.dll')
         version = ctypes.c_int()
@@ -151,9 +178,9 @@ def worker():
                 required = ('zscale', 'scale', 'showinfo', 'select')
                 missing = [f for f in required if not any(len(l.split()) >= 2 and l.split()[1] == f for l in filters.stdout.splitlines())]
                 checks.append(item('ffmpeg_filters', '预览与色彩转换', 'missing' if missing else 'ok',
-                                   '缺少：' + ', '.join(missing) if missing else 'zscale / scale / showinfo / select', '安装随软件提供的完整 FFmpeg' if missing else ''))
+                                   '缺少：' + ', '.join(missing) if missing else 'zscale / scale / showinfo / select', '在软件设置中安装视频处理组件' if missing else ''))
         except Exception as exc:
-            checks.append(item(key, name, 'missing', str(exc), '重新安装随软件提供的 FFmpeg'))
+            checks.append(item(key, name, 'missing', str(exc), '在软件设置中安装视频处理组件'))
 
     libraries = {}
     for filename, (symbol, expected) in BRIDGES.items():
@@ -198,9 +225,9 @@ def worker():
         found = next((p for p in weights if p.is_file()), None)
         checks.append(item('raft', 'RAFT-Large', 'ok' if found else 'missing',
                            f'torchvision {torchvision.__version__} · {found}' if found else '未找到模型权重',
-                           '' if found else '安装完整模型组件'))
+                           '' if found else '在软件设置中安装 RAFT 光流'))
     except Exception as exc:
-        checks.append(item('raft', 'RAFT-Large', 'missing', str(exc), '重新安装完整 GPU 运行环境'))
+        checks.append(item('raft', 'RAFT-Large', 'missing', str(exc), '在软件设置中安装 RAFT 光流'))
     index = {c['id']: c for c in checks}
     features = []
     base = ['cuda', 'driver', 'nvdec_bridge.dll', 'nvenc_bridge.dll', 'gpu_rgba_exchange.dll']
@@ -210,7 +237,7 @@ def worker():
         ('hdr', '10-bit / HDR', base + ['gpu_hdr_scrgb_bridge.dll']),
         ('fidelityfx', 'AMD 光流', ['cuda', 'fidelityfx_flow_bridge.dll']),
         ('nvof', 'NVIDIA 光流', ['driver', 'nvof_bridge.dll', 'nvof_d3d12_interop.dll']),
-        ('raft', 'RAFT-Large', ['cuda', 'raft']),
+        ('raft', 'RAFT-Large', ['torch_cuda', 'raft']),
         ('dlaa', 'DLAA', ['cuda', 'driver', 'dlss_gpu_host.dll', 'dlaa_runtime']),
         ('vsr', 'RTX VSR', ['cuda', 'rtx_vsr_bridge.dll', 'vsr_runtime']),
         ('vfg', 'NVIDIA VFG', ['cuda', 'rtx_vsr_bridge.dll', 'vfg_runtime']),
@@ -221,7 +248,7 @@ def worker():
     return {'schema': 1, 'checked_at': time.time(), 'gpu': gpu, 'checks': checks,
             'features': features, 'python': sys.executable,
             'isolated': bool(sys.flags.isolated), 'standalone': (runtime_dir / 'manifest.json').is_file(),
-            'scope': 'imports_cuda_kernel_dll_abi_tools; effect_sessions_not_opened'}
+            'scope': 'driver_init_dll_abi_tools; optional_raft_cuda_kernel; effect_sessions_not_opened'}
 
 
 _cache = None
@@ -239,7 +266,7 @@ def environment_report(refresh=False, overrides=None):
             return _cache
         _cache_key = key
         try:
-            result = subprocess.run([sys.executable, str(ROOT / 'runtime_environment.py'), '--worker'],
+            result = subprocess.run([sys.executable, '-I', str(ROOT / 'runtime_environment.py'), '--worker'],
                 capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60,
                 env={**os.environ, **overrides},
                 creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))

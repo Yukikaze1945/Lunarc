@@ -7,6 +7,25 @@ import {createHash} from 'node:crypto'
 import {AppUpdates, compareVersions, parseRelease} from '../../frontend/electron/appUpdates.ts'
 
 const sha=(data:string)=>createHash('sha256').update(data).digest('hex')
+function smallFixture(bad=false){
+  const v='2.1.2',exe={name:`Lunarc-${v}-x64-Setup.exe`,data:'small-installer'}
+  const info={name:'INSTALLER.json',data:JSON.stringify({schema:1,mode:'components',version:v,installer:{name:exe.name,bytes:exe.data.length,sha256:bad?'0'.repeat(64):sha(exe.data)}})}
+  const files=[exe,info];const ledger={name:'SHA256SUMS.txt',data:files.map(a=>`${sha(a.data)}  ${a.name}`).join('\n')+'\n'}
+  return {tag_name:`v${v}`,draft:false,prerelease:true,published_at:'2026-10-12',assets:[...files,ledger].map(a=>({...a,size:Buffer.byteLength(a.data),state:'uploaded',digest:'sha256:'+sha(a.data),browser_download_url:`https://github.com/Yukikaze1945/Lunarc/releases/download/v${v}/${a.name}`}))}
+}
+
+test('small standalone setup requires a verified component format declaration',async()=>{
+  for(const bad of [false,true]){
+    const r=smallFixture(bad),root=await fs.mkdtemp(path.join(os.tmpdir(),'lunarc-small-update-'))
+    try{
+      const updater=new AppUpdates('2.1.0',true,root,()=>{},async url=>String(url).startsWith('https://api.')?Response.json([r]):new Response(r.assets.find(a=>a.browser_download_url===String(url))!.data))
+      await updater.check(true)
+      assert.equal(updater.state.phase,bad?'error':'available')
+      if(!bad){await updater.download();assert.equal(updater.state.phase,'ready');assert.equal(updater.state.release!.assets.length,3)}
+      const missing={...r,assets:r.assets.filter(a=>a.name!=='INSTALLER.json')};assert.equal(parseRelease(missing),null)
+    }finally{await fs.rm(root,{recursive:true,force:true})}
+  }
+})
 const fixture=(v='2.1.1')=>{const r=({tag_name:`v${v}`,draft:false,prerelease:true,published_at:'2026-10-11',body:'notes',assets:[
   {name:`Lunarc-${v}-x64-Installer.zip`,data:'zip'},
   {name:`lunarc-workbench-${v}-x64.nsis.7z.001`,data:'abcdefgh'},

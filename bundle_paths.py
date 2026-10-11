@@ -218,3 +218,7 @@ def _find_ffmpeg_dir():
         return None
     with_libraries = [d for d in candidates if glob.glob(os.path.join(d, "avcodec-*.dll"))]
     return (with_libraries or candidates)[0]
+
+
+# Small installer carries the bridge import closure separately from CLI FFmpeg.
+add_dll_directory(os.path.join(os.path.dirname(os.path.abspath(__file__)), "native-deps"))

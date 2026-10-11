@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef, useState, useSyncExternalStore, type DragEvent} from 'react'
-import {Home, Layers3, Film, Activity, Bookmark, Settings2, Info, Aperture, ArrowLeftRight} from 'lucide-react'
+import {Home, Layers3, Film, Activity, Bookmark, Settings2, Info, Aperture, ArrowLeftRight, BookOpen} from 'lucide-react'
 import {Header} from './components/Header'
 import {BottomBar, type TabType} from './components/BottomBar'
 import {DLSSPage} from './pages/DLSSPage'
@@ -12,6 +12,8 @@ import {subscribeQueue, queueSnapshot} from './services/queue'
 import {DEFAULT_SETTINGS, completeSettings, readWorkspace, storeWorkspace} from './services/workspace'
 import {applyTheme, readTheme} from './services/appearance'
 import './App.css'
+import {RuntimeGate} from './components/RuntimeGate'
+import {Guide} from './components/Guide'
 import {droppedMediaPath} from './services/mediaDrop'
 const NAV: {id:TabType;label:string;icon:typeof Home}[] = [
   {id:'home',label:'首页',icon:Home},
@@ -21,9 +23,10 @@ const NAV: {id:TabType;label:string;icon:typeof Home}[] = [
   {id:'diagnostics',label:'运行与诊断',icon:Activity},
   {id:'presets',label:'预设管理',icon:Bookmark},
   {id:'settings',label:'软件设置',icon:Settings2},
+  {id:'guide',label:'使用教程',icon:BookOpen},
   {id:'about',label:'关于 Lunarc',icon:Info},
 ]
-export function App() {
+function WorkspaceApp() {
   const [dragging, setDragging] = useState(false)
   const dragDepth = useRef(0)
   const importRevision = useRef(0)
@@ -112,8 +115,10 @@ export function App() {
       <div className={`mounted-page ${activeTab==='dlss'?'':'hidden'}`}><DLSSPage video={video} settings={settings} onSettingsChange={updateSettings} currentFrame={currentFrame} setCurrentFrame={setCurrentFrame} onStatusChange={setStatusText} isActive={activeTab==='dlss'}/></div>
       <div className={`mounted-page ${activeTab==='deliver'?'':'hidden'}`}><DeliverPage video={video} settings={settings} onSettingsChange={updateSettings} onStatusChange={setStatusText} isActive={activeTab==='deliver'}/></div>
       {activeTab==='compare'&&<ComparePage initialPair={comparePair}/>}
-      {!['dlss','deliver','compare'].includes(activeTab)&&<WorkspacePages page={activeTab} video={video} system={system} settings={settings} recent={recent} onImport={importFile} onNavigate={setActiveTab} onApply={applySettings} onStatus={setStatusText}/>}
+      {activeTab==='guide'&&<Guide/>}
+      {!['dlss','deliver','compare','guide'].includes(activeTab)&&<WorkspacePages page={activeTab} video={video} system={system} settings={settings} recent={recent} onImport={importFile} onNavigate={setActiveTab} onApply={applySettings} onStatus={setStatusText}/>}
     </main><BottomBar statusText={statusText} queueSummary={queueSummary} onQueueClick={()=>setActiveTab('deliver')}/></div>
   </div>
 }
+export function App(){return <RuntimeGate><WorkspaceApp/></RuntimeGate>}
 export default App

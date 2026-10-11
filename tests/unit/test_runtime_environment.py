@@ -35,7 +35,9 @@ def test_bootstrap_refuses_environment_without_websocket_transport(monkeypatch):
     assert 'websockets' in failed[0]['detail']
 
 
-def test_system_never_invents_gpu_when_cuda_unavailable(monkeypatch):
+def test_system_never_invents_gpu_when_driver_unavailable(monkeypatch):
+    def fail(): raise OSError("driver unavailable")
+    monkeypatch.setattr(env, "driver_device", fail)
     monkeypatch.setitem(sys.modules, 'torch', SimpleNamespace(cuda=SimpleNamespace(is_available=lambda: False)))
     info = env.quick_system_info()
     assert info['gpu'] is None
@@ -45,6 +47,7 @@ def test_system_never_invents_gpu_when_cuda_unavailable(monkeypatch):
 
 
 def test_system_does_not_double_count_allocated_vram(monkeypatch):
+    monkeypatch.setattr(env, "driver_device", lambda: {"name":"real GPU","bytes":16*1024**3})
     cuda = SimpleNamespace(is_available=lambda: True, get_device_name=lambda n: 'real GPU',
         get_device_properties=lambda n: SimpleNamespace(total_memory=16 * 1024**3),
         memory_reserved=lambda n: 2 * 1024**3)
@@ -120,3 +123,18 @@ def test_builder_does_not_confuse_private_dll_with_bootstrap_dependency(tmp_path
     monkeypatch.setattr(builder, 'imports', lambda p: ['zlib.dll'] if p.name == 'python.exe' else [])
     builder.collect_dependencies(out, [source], native)
     assert (out / 'python/zlib.dll').read_bytes() == b'bootstrap'
+
+
+def test_native_gpu_information_does_not_require_or_import_torch(monkeypatch):
+    monkeypatch.delitem(sys.modules, 'torch', raising=False)
+    original=__import__
+    def guarded(name,*args,**kwargs):
+        if name=='torch':pytest.fail('Native GPU detection imported optional torch')
+        return original(name,*args,**kwargs)
+    monkeypatch.setattr('builtins.__import__',guarded)
+    monkeypatch.setattr(env,'driver_device',lambda:{'name':'driver GPU','bytes':16*1024**3})
+    info=env.quick_system_info()
+    assert info['gpu']=='driver GPU'
+    assert info['vram_total_gb']==16
+    assert info['vram_used_gb'] is None
+    assert info['vram_scope']=='unavailable'

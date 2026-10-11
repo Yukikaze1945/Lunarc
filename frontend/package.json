@@ -1,7 +1,7 @@
 {
   "name": "lunarc-workbench",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.1.2",
   "main": "dist-electron/main.js",
   "type": "module",
   "scripts": {
@@ -10,7 +10,7 @@
     "start": "electron .",
     "electron:build": "npm run build && electron-builder --win --x64 --config electron-builder.yml",
     "electron:pack": "electron-builder --win --x64 --config electron-builder.yml",
-    "electron:installer": "npm run build && electron-builder --win nsis-web --x64 --config electron-builder.yml",
+    "electron:installer": "npm run build && electron-builder --win nsis --x64 --config electron-builder.yml",
     "lint": "oxlint --max-warnings 4",
     "preview": "vite preview",
     "test:fixtures": "node ../tests/fixtures/generate_fixtures.js",
