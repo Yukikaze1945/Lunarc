@@ -1,17 +1,23 @@
 param([string]$DataDirectory = $PSScriptRoot, [switch]$VerifyOnly)
 $ErrorActionPreference = 'Stop'
 $dataRoot = [IO.Path]::GetFullPath($DataDirectory)
-function LocalFile($name) {
+function FileHash($file) {
+    $reader = [IO.File]::OpenRead($file)
+    $hasher = [Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($hasher.ComputeHash($reader))).Replace('-', '').ToLowerInvariant() }
+    finally { $reader.Dispose(); $hasher.Dispose() }
+}
+function LocalFile($name, $root = $dataRoot) {
     if ([IO.Path]::GetFileName($name) -ne $name -or $name -notmatch '^[A-Za-z0-9._-]+$') {
         throw "Invalid package filename: $name"
     }
-    return Join-Path $dataRoot $name
+    return Join-Path $root $name
 }
-function CheckFile($entry) {
-    $file = LocalFile $entry.name
+function CheckFile($entry, $root = $dataRoot) {
+    $file = LocalFile $entry.name $root
     if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "Missing file: $($entry.name)" }
     if ((Get-Item -LiteralPath $file).Length -ne [long]$entry.bytes) { throw "Incomplete file: $($entry.name)" }
-    if ((Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.sha256) {
+    if ((FileHash $file) -ne $entry.sha256) {
         throw "SHA-256 check failed: $($entry.name)"
     }
     return $file
@@ -22,7 +28,17 @@ try {
     $setup = CheckFile $manifest.installer
     $payload = LocalFile $manifest.payload.name
     if (-not (Test-Path -LiteralPath $payload)) {
-        $parts = @($manifest.parts | ForEach-Object { CheckFile $_ })
+        # Explorer normally extracts ZIP contents into a child folder, leaving
+        # the separately downloaded data volumes in its parent directory.
+        $partsRoot = $dataRoot
+        foreach ($candidate in @($dataRoot, [IO.Directory]::GetParent($dataRoot).FullName)) {
+            if (-not $candidate) { continue }
+            $missing = @($manifest.parts | Where-Object {
+                -not (Test-Path -LiteralPath (LocalFile $_.name $candidate) -PathType Leaf)
+            })
+            if ($missing.Count -eq 0) { $partsRoot = $candidate; break }
+        }
+        $parts = @($manifest.parts | ForEach-Object { CheckFile $_ $partsRoot })
         $temporary = $payload + '.rebuilding'
         Write-Host 'Joining installation data. This can take a few minutes...'
         $writer = [IO.File]::Open($temporary, [IO.FileMode]::Create, [IO.FileAccess]::Write, [IO.FileShare]::None)
@@ -33,7 +49,7 @@ try {
             }
         } finally { $writer.Dispose() }
         if ((Get-Item -LiteralPath $temporary).Length -ne [long]$manifest.payload.bytes -or
-            (Get-FileHash -LiteralPath $temporary -Algorithm SHA256).Hash.ToLowerInvariant() -ne $manifest.payload.sha256) {
+            (FileHash $temporary) -ne $manifest.payload.sha256) {
             throw 'Joined installation data failed verification'
         }
         Move-Item -LiteralPath $temporary -Destination $payload

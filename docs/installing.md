@@ -8,7 +8,7 @@
 - `lunarc-workbench-2.1.1-x64.nsis.7z.001`：数据第一卷。
 - `lunarc-workbench-2.1.1-x64.nsis.7z.002`：数据第二卷。
 
-将三个文件放在同一文件夹，把安装入口 ZIP **解压到这个文件夹**，不要再套一层子目录。双击解压得到的 **`Install-Lunarc.cmd`**。
+将三个文件放在同一文件夹，解压安装入口 ZIP，然后双击解压得到的 **`Install-Lunarc.cmd`**。支持 Windows 默认的子文件夹解压方式；脚本会在自身文件夹及其上一级查找完整的数据分卷。
 
 脚本先检查安装程序和分卷的大小、SHA-256，再合并数据包，核对整体 SHA-256，最后打开可选择目录的安装器。合并不需要 Python 或 7-Zip，使用 Windows 自带 PowerShell。也可用支持分卷的工具按原始顺序合并；最终文件名为 `lunarc-workbench-2.1.1-x64.nsis.7z`，与 Setup 放在一起。
 
