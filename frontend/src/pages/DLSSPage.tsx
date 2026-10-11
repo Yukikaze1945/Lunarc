@@ -15,7 +15,8 @@ import { QualityInspector } from '../components/QualityInspector'
 import { RenderPipeline } from '../components/RenderPipeline'
 import { renderStages, vsrOutputSize } from '../services/renderPipeline'
 import { VideoInfo, DLSSSettings } from '../types'
-import { saveSettings, wsUrl, fetchFlowProviders, fetchQueue, fetchJobDiagnostics } from '../services/api'
+import { saveSettings, wsUrl, fetchFlowProviders, fetchJobDiagnostics } from '../services/api'
+import { subscribeQueue } from '../services/queue'
 import { resolveWorkingDims } from '../services/workingScale'
 import {
   HDR_LIMITATIONS, HDR_PAPER_WHITE_SCRGB, HDR_SETTING, HDR_PAPER_WHITE_SETTING,
@@ -85,23 +86,30 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
   useEffect(() => {
     if (!isActive) return
     let stopped = false
-    const pollLatestJob = async () => {
+    let sequence = 0
+    let pendingKey = ''
+    const unsubscribe = subscribeQueue(async queue => {
+      const latestTerminal = [...queue.jobs].reverse().find((job) =>
+        ['completed', 'failed', 'cancelled', 'skipped'].includes(job.status))
+      if (!latestTerminal) {
+        sequence++; pendingKey = ''; inspectedJobId.current = ''
+        setRecentFusionJob(null)
+        return
+      }
+      const key = `${latestTerminal.id}:${latestTerminal.status}`
+      if (key === inspectedJobId.current || key === pendingKey) return
+      pendingKey = key
+      const request = ++sequence
       try {
-        const queue = await fetchQueue()
-        if (stopped) return
-        const latestTerminal = [...queue.jobs].reverse().find((job) =>
-          ['completed', 'failed', 'cancelled', 'skipped'].includes(job.status))
-        if (!latestTerminal || latestTerminal.id === inspectedJobId.current) return
         const body = await fetchJobDiagnostics(latestTerminal.id, true)
-        if (stopped) return
-        inspectedJobId.current = latestTerminal.id
+        if (stopped || request !== sequence) return
+        inspectedJobId.current = key
         setRecentFusionJob({name:latestTerminal.name,status:latestTerminal.status,
           report:body?.job?.residual_backend_diagnostics ?? null})
       } catch { /* Diagnostics are optional; the requested-settings diagram remains available. */ }
-    }
-    void pollLatestJob()
-    const timer = setInterval(() => { void pollLatestJob() }, 8000)
-    return () => { stopped = true; clearInterval(timer) }
+      finally { if (request === sequence) pendingKey = '' }
+    })
+    return () => { stopped = true; unsubscribe() }
   }, [isActive])
 
   const requestRevisionRef = useRef(0)

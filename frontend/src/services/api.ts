@@ -207,8 +207,8 @@ export function buildFrameUrl(
   return `${API_BASE}/api/frame?${params.toString()}`
 }
 
-export async function fetchQueue(): Promise<QueueState> {
-  const res = await fetch(`${API_BASE}/api/queue`, { headers: authHeaders() })
+export async function fetchQueue(signal?: AbortSignal): Promise<QueueState> {
+  const res = await fetch(`${API_BASE}/api/queue`, { headers: authHeaders(), signal })
   if (!res.ok) throw new Error('Failed to fetch queue')
   const data = await res.json()
   return {
@@ -288,8 +288,8 @@ export async function cancelQueue(): Promise<void> {
   }
 }
 
-export async function fetchDiagnosticLogs(limit: number = 200): Promise<{ logs: any[] }> {
-  const res = await fetch(`${API_BASE}/api/diagnostics/logs?limit=${limit}`, { headers: authHeaders() })
+export async function fetchDiagnosticLogs(limit: number = 200, signal?: AbortSignal): Promise<{ logs: any[] }> {
+  const res = await fetch(`${API_BASE}/api/diagnostics/logs?limit=${limit}`, { headers: authHeaders(), signal })
   if (!res.ok) throw new Error('Failed to fetch diagnostic logs')
   return res.json()
 }

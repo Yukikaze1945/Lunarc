@@ -11,6 +11,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 FRONTEND = ROOT / "frontend" / "src"
 SERVER = (ROOT / "server.py").read_text(encoding="utf-8")
 DELIVER = (FRONTEND / "pages" / "DeliverPage.tsx").read_text(encoding="utf-8")
+QUEUE_FEED = (FRONTEND / "services" / "queueFeed.ts").read_text(encoding="utf-8")
 TYPES = (FRONTEND / "types" / "index.ts").read_text(encoding="utf-8")
 API = (FRONTEND / "services" / "api.ts").read_text(encoding="utf-8")
 PREVIEW = (FRONTEND / "services" / "exportPreview.ts").read_text(encoding="utf-8")
@@ -43,10 +44,10 @@ def test_a_skipped_row_says_so_in_the_icon_the_count_and_the_telemetry():
 
 
 def test_a_skipped_row_clears_the_active_job_like_any_other_ending():
-    terminal = DELIVER[DELIVER.index("if (updatedJob.status === 'running')"):]
-    terminal = terminal[:terminal.index("} else if (data.type")]
+    terminal = QUEUE_FEED[QUEUE_FEED.index("if (updated.status === 'running')"):]
     for status in ("completed", "failed", "cancelled", "skipped"):
-        assert f"updatedJob.status === '{status}'" in terminal
+        assert f"'{status}'" in terminal
+    assert "active === updated.id" in terminal
 
 
 # --- finding 3: retry is an action the operator takes --------------------------
@@ -82,9 +83,10 @@ def test_the_page_learned_the_running_gate_from_the_backend_not_from_itself():
     assert "queue_running: boolean" in TYPES
     assert "queue_running: Boolean(data.queue_running)" in API
     assert '"queue_running": dlss_service.queue_is_running()' in SERVER
-    assert "if (typeof data.queue_running === 'boolean') setQueueRunning(data.queue_running)" in DELIVER
+    assert "typeof data.queue_running === 'boolean'" in QUEUE_FEED
+    assert "setQueueRunning(state.queue_running)" in DELIVER
     for message in ("queue_started", "queue_finished", "job_retried"):
-        assert f"data.type === '{message}'" in DELIVER
+        assert f"'{message}'" in QUEUE_FEED
     assert '"type": "queue_finished"' in (ROOT / "dlss_service.py").read_text(encoding="utf-8")
     assert '{"type": "init", **_queue_state()}' in SERVER
 
@@ -93,7 +95,7 @@ def test_a_refused_retry_is_shown_and_the_rows_are_re_read():
     block = DELIVER[DELIVER.index("const handleRetryJob"):]
     body = block[:block.index("\n  const pendingCount")]
     assert "alert(e.message || '重试任务失败')" in body
-    assert "const q = await fetchQueue()" in body, "a refusal re-syncs rather than guesses"
+    assert "const q = await refreshQueue()" in body, "a refusal re-syncs rather than guesses"
 
 
 # --- finding 1: the panel refuses to queue a self-overwrite --------------------

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { renderStages, vsrOutputSize, framegenOutputFps, nativeOutputBlockers } from '../services/renderPipeline'
 import {
   Film,
@@ -28,7 +28,6 @@ import {
 import { VideoInfo, DLSSSettings, RenderJob, TranscodeSettings, DiagnosticLogEntry } from '../types'
 import { isSdr10Source, sourcePrecisionNotice } from '../services/sourcePrecision'
 import {
-  fetchQueue,
   addToQueue,
   removeFromQueue,
   retryQueueJob,
@@ -37,7 +36,6 @@ import {
   openNativeDirDialog,
   fetchDiagnosticLogs,
   fetchJobDiagnostics,
-  wsUrl,
 } from '../services/api'
 import {
   composeJobOutputPath,
@@ -48,6 +46,7 @@ import {
 } from '../services/hdrExport'
 import { hasExportControls } from '../services/qualityControls'
 import {exportOptions, normalizeExportOptions} from '../services/exportOptions'
+import { subscribeQueue, refreshQueue } from '../services/queue'
 import './deliver.css'
 
 const TRANSCODE_DRAFT_KEY = 'lunarc.transcodeDraft'
@@ -116,6 +115,7 @@ function readTranscodeDraft(defaults: TranscodeSettings): TranscodeSettings {
 }
 
 interface DeliverPageProps {
+  isActive?: boolean
   video: VideoInfo | null
   settings: DLSSSettings
   // The reviewed HDR preset writes the shared DLSS settings as well as the transcode
@@ -249,7 +249,8 @@ const DEFAULT_SETTINGS: TranscodeSettings = {
   extra_args: '',
 }
 
-export const DeliverPage: React.FC<DeliverPageProps> = ({
+export const DeliverPage: React.FC<DeliverPageProps> = React.memo(({
+  isActive = true,
   video,
   settings: dlssSettings,
   onStatusChange,
@@ -285,6 +286,9 @@ export const DeliverPage: React.FC<DeliverPageProps> = ({
   const [jobDiagnostics, setJobDiagnostics] = useState<any>(null)
   const [diagnosticsLoading, setDiagnosticsLoading] = useState(false)
   const [diagnosticsError, setDiagnosticsError] = useState('')
+  const diagnosticRevision = useRef(0)
+  const logsAbort = useRef<AbortController | null>(null)
+  const logsPending = useRef(false)
 
   useEffect(() => {
     try { localStorage.setItem(TRANSCODE_DRAFT_KEY, JSON.stringify({ version: TRANSCODE_DRAFT_VERSION, settings: txSettings })) }
@@ -292,37 +296,48 @@ export const DeliverPage: React.FC<DeliverPageProps> = ({
   }, [txSettings])
 
   const inspectJob = async (job: RenderJob) => {
+    const revision = ++diagnosticRevision.current
     setDiagnosticJob(job)
     setJobDiagnostics(null)
     setDiagnosticsError('')
     setDiagnosticsLoading(true)
     try {
-      setJobDiagnostics(await fetchJobDiagnostics(job.id))
+      const diagnostics = await fetchJobDiagnostics(job.id)
+      if (revision === diagnosticRevision.current) setJobDiagnostics(diagnostics)
     } catch (e: any) {
-      setDiagnosticsError(e?.message || '无法读取作业诊断；确认本地后端仍在运行后重试。')
-    } finally { setDiagnosticsLoading(false) }
+      if (revision === diagnosticRevision.current) setDiagnosticsError(e?.message || '无法读取作业诊断；确认本地后端仍在运行后重试。')
+    } finally { if (revision === diagnosticRevision.current) setDiagnosticsLoading(false) }
   }
 
-  const refreshLogs = async () => {
-    try {
-      const res = await fetchDiagnosticLogs(150)
-      if (res && res.logs) {
-        setDiagnosticLogs(res.logs)
-      }
-    } catch (e) {
-      console.warn('Failed to fetch diagnostic logs:', e)
-    }
+  const closeDiagnostics = () => {
+    diagnosticRevision.current++
+    setDiagnosticJob(null)
   }
+
+  const refreshLogs = useCallback(async () => {
+    if (logsPending.current || !consoleOpen || !isActive) return
+    const signal = logsAbort.current?.signal
+    if (signal?.aborted) return
+    logsPending.current = true
+    try {
+      const res = await fetchDiagnosticLogs(150, signal)
+      if (!signal?.aborted && res?.logs) setDiagnosticLogs(res.logs)
+    } catch (error) {
+      if (!signal?.aborted) console.warn('Failed to fetch diagnostic logs:', error)
+    } finally { logsPending.current = false }
+  }, [consoleOpen, isActive])
 
   // NOTE(oxlint baseline react(set-state-in-effect)): intentional external
   // sync — starts log polling only while the console panel is open.
   useEffect(() => {
-    if (consoleOpen) {
-      refreshLogs()
+    if (consoleOpen && isActive) {
+      const controller = new AbortController()
+      logsAbort.current = controller
+      void refreshLogs()
       const interval = setInterval(refreshLogs, 2000)
-      return () => clearInterval(interval)
+      return () => { controller.abort(); clearInterval(interval) }
     }
-  }, [consoleOpen])
+  }, [consoleOpen, isActive, refreshLogs])
 
   // Set default filename & directory when video loads
   // NOTE(oxlint baseline): intentional one-way defaulting of form fields from
@@ -338,110 +353,15 @@ export const DeliverPage: React.FC<DeliverPageProps> = ({
     }
   }, [video])
 
-  // Load Queue & subscribe to WebSocket with auto-reconnect
+  // Share the live queue with the bottom bar; HTTP recovery is owned by the feed.
   useEffect(() => {
-    let ws: WebSocket | null = null
-    let reconnectTimer: any = null
-    let isUnmounted = false
-
-    const connect = () => {
-      if (isUnmounted) return
-      fetchQueue()
-        .then((res) => {
-          setJobs(res.jobs)
-          setActiveJobId(res.active_id)
-          setQueueRunning(res.queue_running)
-        })
-        .catch(console.error)
-
-      try {
-        ws = new WebSocket(wsUrl('queue'))
-        ws.onmessage = (e) => {
-          try {
-            const data = JSON.parse(e.data)
-            // Every message that speaks for the queue may carry the running flag; one
-            // place reads it, so a client that joined mid-round sees the same lock the
-            // client that pressed render saw.
-            if (typeof data.queue_running === 'boolean') setQueueRunning(data.queue_running)
-            if (data.type === 'job_update') {
-              const updatedJob = data.job as RenderJob
-              setJobs((prev) => {
-                const exists = prev.some((j) => j.id === updatedJob.id)
-                if (exists) {
-                  return prev.map((j) => (j.id === updatedJob.id ? updatedJob : j))
-                } else {
-                  // A delayed progress event must not resurrect a deleted row.
-                  // New jobs arrive via job_added/init or the queue snapshot.
-                  return prev
-                }
-              })
-              if (updatedJob.status === 'running') {
-                setActiveJobId(updatedJob.id)
-              } else if (updatedJob.status === 'completed' || updatedJob.status === 'failed' || updatedJob.status === 'cancelled' || updatedJob.status === 'skipped') {
-                setActiveJobId(null)
-              }
-            } else if (data.type === 'job_added') {
-              if (data.jobs) {
-                setJobs(data.jobs)
-              } else if (data.job) {
-                setJobs((prev) =>
-                  prev.some((j) => j.id === data.job.id) ? prev : [...prev, data.job]
-                )
-              }
-            } else if (data.type === 'job_removed') {
-              if (data.jobs) {
-                setJobs(data.jobs)
-              } else if (data.id) {
-                setJobs((prev) => prev.filter((j) => j.id !== data.id))
-              }
-            } else if (data.type === 'job_retried' || data.type === 'queue_started') {
-              // A reset or a start is a queue-wide fact: every row's controls depend on
-              // whether a round is in flight, so the whole list is taken from the message.
-              if (data.jobs) setJobs(data.jobs)
-              if ('active_id' in data) setActiveJobId(data.active_id || null)
-            } else if (data.type === 'queue_finished') {
-              if (data.jobs) setJobs(data.jobs)
-              setActiveJobId(null)
-              setQueueRunning(false)
-            } else if (data.type === 'init') {
-              setJobs(data.jobs || [])
-              setActiveJobId(data.active_id || null)
-            }
-          } catch (err) {
-            console.error(err)
-          }
-        }
-
-        ws.onclose = () => {
-          if (!isUnmounted) {
-            reconnectTimer = setTimeout(connect, 2000)
-          }
-        }
-      } catch {
-        if (!isUnmounted) {
-          reconnectTimer = setTimeout(connect, 2000)
-        }
-      }
-    }
-
-    connect()
-    let syncing = false
-    const syncTimer = setInterval(async () => {
-      if (syncing || isUnmounted) return
-      syncing = true
-      try {
-        const state = await fetchQueue()
-        if (!isUnmounted) { setJobs(state.jobs); setActiveJobId(state.active_id); setQueueRunning(state.queue_running) }
-      } catch {} finally { syncing = false }
-    }, 2000)
-
-    return () => {
-      isUnmounted = true
-      clearTimeout(reconnectTimer)
-      clearInterval(syncTimer)
-      if (ws) ws.close()
-    }
-  }, [])
+    if (!isActive) return
+    return subscribeQueue(state => {
+      setJobs(state.jobs)
+      setActiveJobId(state.active_id)
+      setQueueRunning(state.queue_running)
+    })
+  }, [isActive])
 
   // Helper update
   const updateSetting = <K extends keyof TranscodeSettings>(key: K, value: TranscodeSettings[K]) => {
@@ -724,7 +644,7 @@ export const DeliverPage: React.FC<DeliverPageProps> = ({
 
       // Refresh queue from server to guarantee sync
       try {
-        const q = await fetchQueue()
+        const q = await refreshQueue()
         setJobs(q.jobs)
         setActiveJobId(q.active_id)
         setQueueRunning(q.queue_running)
@@ -759,7 +679,7 @@ export const DeliverPage: React.FC<DeliverPageProps> = ({
       } else {
         // The answer carried no state, so ask instead of assuming a round began.
         try {
-          const q = await fetchQueue()
+          const q = await refreshQueue()
           setQueueRunning(q.queue_running)
         } catch {}
       }
@@ -804,7 +724,7 @@ export const DeliverPage: React.FC<DeliverPageProps> = ({
     } catch (e: any) {
       alert(e.message || '重试任务失败')
       try {
-        const q = await fetchQueue()
+        const q = await refreshQueue()
         setJobs(q.jobs)
         setActiveJobId(q.active_id)
         setQueueRunning(q.queue_running)
@@ -1982,7 +1902,7 @@ export const DeliverPage: React.FC<DeliverPageProps> = ({
           <section className="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-lunarc-border bg-lunarc-surface shadow-2xl">
             <header className="flex items-center justify-between border-b border-lunarc-border px-5 py-4">
               <div><h2 id="job-diagnostics-title" className="font-semibold text-lunarc-text">运行诊断 · {diagnosticJob.name}</h2><p className="mt-1 text-xs text-lunarc-dim">来自本地后端当前可读取的作业记录；不代表跨后端重启的归档历史。</p></div>
-              <button onClick={() => setDiagnosticJob(null)} className="rounded p-2 text-lunarc-muted hover:bg-lunarc-border" aria-label="关闭运行诊断"><X className="h-4 w-4" /></button>
+              <button onClick={closeDiagnostics} className="rounded p-2 text-lunarc-muted hover:bg-lunarc-border" aria-label="关闭运行诊断"><X className="h-4 w-4" /></button>
             </header>
             <div className="space-y-3 overflow-y-auto p-5 text-sm">
               {diagnosticsLoading && <p className="text-lunarc-muted">正在读取后端诊断…</p>}
@@ -2099,4 +2019,4 @@ export const DeliverPage: React.FC<DeliverPageProps> = ({
       )}
     </div>
   )
-}
+})

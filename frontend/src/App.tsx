@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState, type DragEvent} from 'react'
+import {useCallback, useEffect, useRef, useState, useSyncExternalStore, type DragEvent} from 'react'
 import {Home, Layers3, Film, Activity, Bookmark, Settings2, Info, Aperture, ArrowLeftRight} from 'lucide-react'
 import {Header} from './components/Header'
 import {BottomBar, type TabType} from './components/BottomBar'
@@ -6,8 +6,9 @@ import {DLSSPage} from './pages/DLSSPage'
 import {DeliverPage} from './pages/DeliverPage'
 import {WorkspacePages} from './pages/WorkspacePages'
 import {ComparePage} from './pages/ComparePage'
-import type {VideoInfo, DLSSSettings, SystemInfo, QueueState} from './types'
-import {fetchSystemInfo, fetchCurrentVideo, loadVideoFile, fetchSettings, saveSettings, fetchQueue} from './services/api'
+import type {VideoInfo, DLSSSettings, SystemInfo} from './types'
+import {fetchSystemInfo, fetchCurrentVideo, loadVideoFile, fetchSettings, saveSettings} from './services/api'
+import {subscribeQueue, queueSnapshot} from './services/queue'
 import {DEFAULT_SETTINGS, completeSettings, readWorkspace, storeWorkspace} from './services/workspace'
 import {applyTheme, readTheme} from './services/appearance'
 import './App.css'
@@ -37,11 +38,12 @@ export function App() {
   const [video,setVideo]=useState<VideoInfo|null>(null)
   const [system,setSystem]=useState<SystemInfo|null>(null)
   const [settings,setSettings]=useState<DLSSSettings>(DEFAULT_SETTINGS)
+  const updateSettings = useCallback((value: DLSSSettings) => setSettings(completeSettings(value)), [])
   const [recent,setRecent]=useState<string[]>(()=>readWorkspace()?.recent||[])
   const [currentFrame,setCurrentFrame]=useState(0)
   const [statusText,setStatusText]=useState('连接本地工作台…')
   const [ready,setReady]=useState(false)
-  const [queue,setQueue]=useState<QueueState|null>(null)
+  const queue = useSyncExternalStore(subscribeQueue, queueSnapshot)
   useEffect(()=>{
     let cancelled=false, initialized=false, inFlight=false
     const init=async()=>{
@@ -69,11 +71,11 @@ export function App() {
     const unsubscribe=window.electronAPI?.onBackendExit?.(info=>{if(!cancelled){setReady(false);setStatusText(`后端已退出 (${info.code})，请重启应用`)}})
     return()=>{cancelled=true;clearInterval(timer);unsubscribe?.()}
   },[])
-  useEffect(()=>{let stopped=false;const poll=async()=>{try{const q=await fetchQueue();if(stopped)return;setQueue(q)
+  useEffect(()=>{const q=queue;if(!q)return;try{
     const terminal=q.jobs.filter(j=>['completed','failed','cancelled','skipped'].includes(j.status)).map(j=>({id:j.id,name:j.name,status:j.status,input_path:j.input_path,output_path:j.output_path,error:j.error,recorded:new Date().toISOString()}))
     if(terminal.length){let history:any[]=[];try{const h=JSON.parse(localStorage.getItem('lunarc.history.v1')||'[]');if(Array.isArray(h))history=h}catch{}
       const merged=[...terminal.map(j=>({...j,recorded:history.find(h=>h.id===j.id)?.recorded||j.recorded})),...history.filter(h=>!terminal.some(j=>j.id===h.id))].slice(0,100);const serialized=JSON.stringify(merged);if(serialized!==localStorage.getItem('lunarc.history.v1'))localStorage.setItem('lunarc.history.v1',serialized)}
-    }catch{}};void poll();const t=setInterval(poll,1500);return()=>{stopped=true;clearInterval(t)}},[])
+    }catch{}},[queue])
   useEffect(()=>{if(ready){try{storeWorkspace(settings,recent)}catch{setStatusText('本机草稿无法保存；当前后端参数仍保留')}}},[settings,recent,ready])
   const importFile=async(path:string)=>{
     const revision=++importRevision.current;setStatusText('正在读取素材…')
@@ -107,8 +109,8 @@ export function App() {
     {dragging&&<div className="media-drop-overlay" role="status"><span>松开以载入素材</span></div>}
     <aside className="navigation"><div className="rail-mark" aria-hidden="true"><Aperture size={23}/></div><nav aria-label="主导航">{NAV.map(n=><button key={n.id} aria-label={n.label} title={n.label} className={activeTab===n.id?'active':''} onClick={()=>setActiveTab(n.id)} aria-current={activeTab===n.id?'page':undefined}><n.icon size={20}/></button>)}</nav></aside>
     <div className="app-content"><Header activeTab={activeTab} onNavigate={setActiveTab} theme={theme} onThemeChange={()=>setTheme(t=>t==='dark'?'light':'dark')} onFileLoaded={importFile} onError={setStatusText}/><main className="page-host">
-      <div className={`mounted-page ${activeTab==='dlss'?'':'hidden'}`}><DLSSPage video={video} settings={settings} onSettingsChange={s=>setSettings(completeSettings(s))} currentFrame={currentFrame} setCurrentFrame={setCurrentFrame} onStatusChange={setStatusText} isActive={activeTab==='dlss'}/></div>
-      <div className={`mounted-page ${activeTab==='deliver'?'':'hidden'}`}><DeliverPage video={video} settings={settings} onSettingsChange={s=>setSettings(completeSettings(s))} onStatusChange={setStatusText}/></div>
+      <div className={`mounted-page ${activeTab==='dlss'?'':'hidden'}`}><DLSSPage video={video} settings={settings} onSettingsChange={updateSettings} currentFrame={currentFrame} setCurrentFrame={setCurrentFrame} onStatusChange={setStatusText} isActive={activeTab==='dlss'}/></div>
+      <div className={`mounted-page ${activeTab==='deliver'?'':'hidden'}`}><DeliverPage video={video} settings={settings} onSettingsChange={updateSettings} onStatusChange={setStatusText} isActive={activeTab==='deliver'}/></div>
       {activeTab==='compare'&&<ComparePage initialPair={comparePair}/>}
       {!['dlss','deliver','compare'].includes(activeTab)&&<WorkspacePages page={activeTab} video={video} system={system} settings={settings} recent={recent} onImport={importFile} onNavigate={setActiveTab} onApply={applySettings} onStatus={setStatusText}/>}
     </main><BottomBar statusText={statusText} queueSummary={queueSummary} onQueueClick={()=>setActiveTab('deliver')}/></div>
