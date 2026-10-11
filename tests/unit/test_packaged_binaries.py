@@ -204,7 +204,7 @@ def test_a_flattened_copy_of_a_bridge_and_the_machines_own_dlls_are_not_shipped(
     assert "python311.dll" in kept
     assert lower.count("nvof_d3d12_interop.dll") == 1, \
         [name for name in kept if "interop" in name.lower()]
-    assert lower.count("nvngx_dlssnr.dll") == 1, "the bundle's copy won over System32's"
+    assert "nvngx_dlssnr.dll" not in lower, "user-owned runtime must not be bundled"
     for refused in ("nvcuda.dll", "d3dcompiler_47.dll", "nvofapi64.dll"):
         assert refused not in lower, f"{refused} was shipped with the rest"
 
@@ -321,12 +321,12 @@ def test_the_retired_dlss_host_is_neither_shipped_nor_reachable():
     facts have to stay false for that: the manifest naming it, the spec keeping it, and
     a production module importing the wrapper that loaded it.
     """
-    assert bundle_paths.CONTENTS_BINARIES == ("nvngx_dlssnr.dll",)
+    assert bundle_paths.CONTENTS_BINARIES == ()
 
     kept = {os.path.basename(str(entry[0]).replace("\\", "/")).lower()
             for entry in _exec_spec()["kept"]}
     assert "dlssnr_host.dll" not in kept
-    assert "nvngx_dlssnr.dll" in kept
+    assert "nvngx_dlssnr.dll" not in kept
 
     for module in _PRODUCTION + ("dlss_service.py", "server.py"):
         with open(os.path.join(_ROOT, module), encoding="utf-8") as handle:

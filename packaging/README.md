@@ -26,7 +26,7 @@ npm run electron:installer
 
 默认不收集本机的 VFX SDK 和 DLAA DLL。接收机器可自行安装合法取得的对应运行库；缺失时诊断页显示对应功能缺少组件，不影响基础工作台启动。
 
-本机私有构建如需携带这些组件，可使用 `--vfx-runtime "<SDK 根目录>"` 和 `--dlaa-dll "<nvngx_dlss.dll>"`。这些开关不是公开再分发授权，公开发布须另行核对实际运行库许可。现有 DLSSNR 二进制仍由 electron-builder 的资源配置收集。
+本机私有构建如需携带这些组件，可使用 `--vfx-runtime "<SDK 根目录>"` 和 `--dlaa-dll "<nvngx_dlss.dll>"`。这些开关不是公开再分发授权，公开发布须另行核对实际运行库许可。DLSSNR 不再由 electron-builder 或 PyInstaller 自动收集；用户通过运行库管理器导入或确认来源后下载到独立缓存。
 
 ## 启动和检测
 

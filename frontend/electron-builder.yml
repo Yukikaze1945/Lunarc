@@ -9,7 +9,7 @@
 #       dist-electron/         <- main.js / preload.cjs
 #       package.json
 #     server.py                <- `extraResources`: the Python backend
-#     *.py, native/*.dll, nvngx_dlssnr.dll
+#     *.py, native/*.dll; DLSSNR stays in the user's independent cache.
 #
 # Why the backend lands in resources/ and not next to the exe: electron/main.ts
 # does
@@ -43,7 +43,7 @@ asar: false
 
 # The Python backend, placed so that main.ts's rootDir resolves onto it.
 #
-# Only the root modules, the native DLLs and the DLSS runtime snippet are carried.
+# Only the root modules and the project's native DLLs are carried.
 # Deliberately NOT carried, and why:
 #   - legacy models/: unused depth checkpoints are excluded; the verified RAFT
 #     checkpoint is carried in runtime/torch_home by the runtime builder below.
@@ -58,13 +58,13 @@ extraResources:
       - "native/*.dll"
       - "!native/nvdec_bridge_p010.dll"
       - "!native/nvenc_bridge_sdr10.dll"
-      - "nvngx_dlssnr.dll"
   - from: "../build/standalone-runtime"
     to: "runtime"
     filter:
       - "**/*"
       - "!**/__pycache__/**"
       - "!build-in-progress.json"
+      - "!**/nvngx_dlssnr.dll"
   - from: "../LICENSE"
     to: "licenses/Lunarc-LICENSE.txt"
   - from: "../native/vendor/fidelityfx/LICENSE.txt"

@@ -100,7 +100,7 @@ export function App() {
   const running=queue?.jobs.find(j=>j.status==='running')
   const pending=queue?.jobs.filter(j=>j.status==='pending').length||0
   const queueSummary=running?`${running.name} · ${Math.round(running.progress)}%`:pending?`${pending} 个任务等待导出`:'队列空闲'
-  return <div className="app-shell" onDragEnter={event=>{if(hasFiles(event)){event.preventDefault();dragDepth.current++;setDragging(true)}}}
+  return <div className="app-shell" onDragEnter={event=>{if(hasFiles(event)){event.preventDefault();if((event.target as Element).closest?.('.dlssnr-runtime')){dragDepth.current=0;setDragging(false);return}dragDepth.current++;setDragging(true)}}}
     onDragOver={event=>{if(hasFiles(event)){event.preventDefault();event.dataTransfer.dropEffect='copy'}}}
     onDragLeave={event=>{if(hasFiles(event)){event.preventDefault();dragDepth.current=Math.max(0,dragDepth.current-1);if(!dragDepth.current)setDragging(false)}}}
     onDrop={dropMedia}>

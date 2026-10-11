@@ -27,10 +27,8 @@ import sys
 
 _ROOT = os.path.dirname(os.path.abspath(__file__))
 
-# Loaded out of the contents directory by dlss_gpu_engine, which hands the signed
-# NVIDIA snippet to native/dlss_gpu_host.dll by path at session open. It stays at the
-# root rather than beside its loader because the host is given the path it resolves to.
-CONTENTS_BINARIES = ("nvngx_dlssnr.dll",)
+# Proprietary DLSSNR is acquired by the user and validated in an independent cache.
+CONTENTS_BINARIES = ()
 
 # Loaded out of native/. Listed in dependency order so the reason an entry is here is
 # readable: dlss_gpu_host.dll imports nvof_d3d12_interop.dll at load time, and so do
@@ -69,6 +67,7 @@ TOOL_BINARIES = ("ffmpeg.exe", "ffprobe.exe")
 # copy cannot be matched by anything in the bundle: the bridges load them by bare name
 # so the loader resolves them against the installed driver.
 NEVER_BUNDLE = (
+    "nvngx_dlssnr.dll",
     "nvcuda.dll", "nvofapi64.dll", "nvencodeapi64.dll", "nvencodeapi.dll", "nvml.dll",
     "d3d12.dll", "d3dcompiler_47.dll", "dxgi.dll",
 )

@@ -548,7 +548,9 @@ class DLSSService:
                 float(s.get("intensity", 1.0)), float(s.get("local_tone", 1.0)),
                 float(s.get("local_struct", 1.0)), float(s.get("skin_struct", 1.0)),
                 int(s.get("use_auto_mask", 1)), int(s.get("ui_correction", 0)),
-                float(s.get("motion_scale_x", 1.0)), float(s.get("motion_scale_y", 1.0)))
+                float(s.get("motion_scale_x", 1.0)), float(s.get("motion_scale_y", 1.0)),
+                __import__('dlssnr_runtime').selection_key()
+                if 'nr' in __import__('native_effects').stages(s) else None)
 
     # Each GPU preview kind, the capability that says the loaded host can serve
     # it, and what the operator is told when it cannot. The absence of an entry

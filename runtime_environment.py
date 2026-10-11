@@ -173,8 +173,15 @@ def worker():
         except Exception as exc:
             checks.append(item(filename, filename, 'missing', str(exc), '重新安装匹配版本的原生组件'))
     # All checks here are load/interface probes, not feature session initialization.
-    checks.append(item('dlssnr_runtime', 'DLSSNR 运行库', 'ok' if Path(bundle_paths.collected('nvngx_dlssnr.dll')).is_file() else 'missing',
-                       '已找到文件；模型支持在创建会话时验证', '安装合法取得的 DLSSNR 运行库'))
+    try:
+        from dlssnr_runtime import manager
+        runtime = manager().status()
+        error = runtime['error']
+        detail = error['message'] if error else f"{runtime['active']['version']} · NVIDIA 签名有效 · SHA-256 已核对；设备支持在创建会话时验证"
+        checks.append(item('dlssnr_runtime', 'DLSSNR 运行库', 'missing' if error else 'ok',
+                           detail, '在“运行与诊断 → DLSSNR 运行库”导入并选择运行库' if error else ''))
+    except Exception as exc:
+        checks.append(item('dlssnr_runtime', 'DLSSNR 运行库', 'error', str(exc), '检查运行库缓存'))
     from native_runtime_paths import dlss_runtime, vsr_runtime, wide_vfx_runtime
     for key, label, resolver in [('dlaa_runtime', 'DLAA 运行库', dlss_runtime),
                                  ('vsr_runtime', 'RTX VSR 运行库', vsr_runtime),
@@ -225,7 +232,8 @@ _lock = threading.Lock()
 def environment_report(refresh=False, overrides=None):
     global _cache, _cache_key
     overrides = {k: str(v) for k, v in (overrides or {}).items() if k in ('LUNARC_DLSS_DLL', 'LUNARC_VSR_RUNTIME') and v}
-    key = tuple(sorted(overrides.items()))
+    from dlssnr_runtime import selection_key
+    key = (tuple(sorted(overrides.items())), selection_key())
     with _lock:
         if _cache is not None and not refresh and key == _cache_key:
             return _cache

@@ -464,7 +464,9 @@ class GpuPreview:
         if flow_view:
             settings = dict(settings, guidance_mode=1)
         key = (os.path.realpath(video), os.stat(video).st_mtime_ns,
-               json.dumps(settings, sort_keys=True, default=str))
+               json.dumps(settings, sort_keys=True, default=str),
+               __import__('dlssnr_runtime').selection_key()
+               if 'nr' in __import__('native_effects').stages(settings) else None)
         start = time.perf_counter()
         self.frame_readback_ms = self.processed_display_ms = 0.0
         self.display_edge = max(0, int(display_edge))
@@ -472,7 +474,7 @@ class GpuPreview:
             setup = time.perf_counter()
             runtime_changed = False
             if key != self.key:
-                same_source = self.key is not None and self.key[:2] == key[:2]
+                same_source = self.key is not None and self.key[:2] == key[:2] and self.key[3:] == key[3:]
                 runtime_changed = same_source and self._update_runtime(settings)
                 if not runtime_changed:
                     self._close()

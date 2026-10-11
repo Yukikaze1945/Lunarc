@@ -27,9 +27,10 @@ import bundle_paths
 from dlss_errors import DLSSInferenceError
 
 
-# The signed NVIDIA snippet the host is handed by path when a session opens. It is a
-# driver-era artifact rather than project code, so it ships at the contents-directory
-# root and this wrapper is the only reader; the host receives the path it resolved to.
+from dlssnr_runtime import resolve_runtime
+
+# Legacy path hint for callers; sessions resolve the verified user-owned cache.
+# DLSSNR is no longer collected into the application bundle.
 DLSSNR_DLL = bundle_paths.collected("nvngx_dlssnr.dll")
 
 
@@ -342,17 +343,18 @@ class Live:
         only a session that asks for a colour the legacy entry cannot name goes
         through the _ex form.
         """
+        self.runtime_dll = shared_with.runtime_dll if shared_with is not None else resolve_runtime()
         options = self._options()
         if self.bytes_per_pixel == 4:
             if shared_with is None:
-                return self._lib.dlss_gpu_host_open(self._w, self._h, DLSSNR_DLL,
+                return self._lib.dlss_gpu_host_open(self._w, self._h, self.runtime_dll,
                     ctypes.byref(options), ctypes.byref(self._handle))
             return self._lib.dlss_gpu_host_open_layer(shared_with._handle,
                 self._w, self._h, ctypes.byref(options), ctypes.byref(self._handle))
         info = _OpenInfo(ctypes.sizeof(_OpenInfo),
                          _COLOR_FORMAT[self.color_format], 0)
         if shared_with is None:
-            return self._lib.dlss_gpu_host_open_ex(self._w, self._h, DLSSNR_DLL,
+            return self._lib.dlss_gpu_host_open_ex(self._w, self._h, self.runtime_dll,
                 ctypes.byref(options), ctypes.byref(info), ctypes.byref(self._handle))
         return self._lib.dlss_gpu_host_open_layer_ex(shared_with._handle,
             self._w, self._h, ctypes.byref(options), ctypes.byref(info),

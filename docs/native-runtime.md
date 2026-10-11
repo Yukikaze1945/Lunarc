@@ -14,7 +14,9 @@
 | `TORCH_HOME` | 开发环境的 PyTorch 模型缓存根目录；独立包使用自身的离线模型目录。 |
 | `PYTHON_PATH` | 源码启动时选择 Python 解释器；安装版不采用此覆盖。 |
 
-DLSSNR 使用项目根目录的匹配 `nvngx_dlssnr.dll`。DLAA 默认会检查 NVIDIA NGX 本机缓存，VSR / VFG 会检查本机 VFX 目录；发现机制不会下载或授予这些组件的使用权。10-bit / HDR VFX 路径要求新版 SDK Core 和对应特效模块。
+DLSSNR 通过“运行与诊断 → DLSSNR 运行库”管理：本地 DLL / ZIP 导入、可信目录、版本目录下载、缓存版本选择与移除。实际宿主只接收校验后的独立缓存路径，详见 [运行库管理](dlssnr-runtime.md)。开发环境首次使用可将旧根目录 DLL 校验后迁移到缓存；独立运行模式必须明确导入并选择，取消选择后不自动恢复旧库。
+
+DLAA 默认会检查 NVIDIA NGX 本机缓存，VSR / VFG 会检查本机 VFX 目录；这些发现机制不会授予组件使用权。10-bit / HDR VFX 路径要求新版 SDK Core 和对应特效模块。
 
 `nvdec_bridge.dll` / `nvenc_bridge.dll` 的 FFmpeg 导入库版本必须和运行时共享 DLL 匹配。CUDA 驱动 DLL 来自 Windows 已安装的 NVIDIA 驱动，不应从开发机复制显卡驱动到软件目录。
 

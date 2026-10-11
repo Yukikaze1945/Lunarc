@@ -1,0 +1,20 @@
+.dlssnr-runtime {margin-block: 24px}
+.runtime-current, .runtime-version, .runtime-source {display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 0; border-bottom:1px solid var(--color-lunarc-border)}
+.runtime-current {align-items:flex-start; flex-direction:column; gap:6px}
+.runtime-import, .runtime-actions {display:flex; align-items:center; gap:10px}
+.runtime-import {margin-block:12px}
+.runtime-import input {flex:1; min-width:0}
+.runtime-version > div:first-child, .runtime-source > div:first-child {display:flex; gap:12px; flex-wrap:wrap; min-width:0}
+.runtime-source > div:first-child {flex-direction:column; gap:4px}
+.runtime-source span, .runtime-path {overflow-wrap:anywhere}
+.dlssnr-runtime code {font-size:12px; opacity:.7}
+.dlssnr-runtime details {margin-top:18px}
+.runtime-source-form {display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px; border:0; padding:0}
+.runtime-source-form label {display:flex; flex-direction:column; gap:8px}
+.runtime-source-form input, .runtime-source-form select {width:100%; box-sizing:border-box}
+.runtime-wide {grid-column:1/-1}
+.runtime-source-form .runtime-consent {flex-direction:row; align-items:center}
+.runtime-consent {display:flex; align-items:center; gap:8px; margin-top:14px; font-size:13px}
+.runtime-consent input {width:auto}
+.runtime-error {color:var(--danger, #ff9c90)}
+@media(max-width:700px) {.runtime-import, .runtime-version, .runtime-source {flex-wrap:wrap}.runtime-source-form {grid-template-columns:1fr}.runtime-wide {grid-column:auto}}

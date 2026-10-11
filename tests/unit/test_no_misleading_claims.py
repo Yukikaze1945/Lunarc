@@ -29,7 +29,8 @@ import pytest
 _ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 SKIP_DIRS = {".git", "Magpie", "node_modules", "dist", "perf_results", "scratch",
-             "__pycache__", ".pytest_cache", "bench_out", ".venv", "venv", "env", "build"}
+             "__pycache__", ".pytest_cache", "bench_out", ".venv", "venv", "env", "build",
+             "release"}  # Generated installer trees include third-party libraries, not our product claims.
 SUFFIXES = {".py", ".md", ".ts", ".tsx", ".cpp", ".h", ".bat", ".json", ".yaml", ".yml"}
 
 # Case-insensitive; matched against the whole file text, so they fail wherever they return.

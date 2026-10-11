@@ -37,6 +37,30 @@ export async function fetchEnvironment(refresh = false): Promise<EnvironmentRepo
   return res.json()
 }
 
+export interface DlssnrVersion {
+  id: string; version: string; sha256: string; signature: string; bytes: number
+  path?: string; origin?: {kind: string; label?: string}
+  compatibility: 'known' | 'uncharacterized'
+}
+export interface DlssnrSource {
+  id: string; kind: 'directory' | 'download'; label: string; location: string; sha256: string
+}
+export interface DlssnrStatus {
+  active: DlssnrVersion | null; versions: DlssnrVersion[]; sources: DlssnrSource[]
+  error: {code: string; message: string} | null; cache_dir: string; legacy_path?: string | null
+  operation?: {phase: string; received: number; total: number | null} | null
+  catalog: {id: string; version: string; source: string; downloaded: boolean}[]
+}
+export async function runtimeRequest<T>(path = '', method = 'GET', body?: unknown): Promise<T> {
+  const response = await fetch(`${API_BASE}/api/runtime/dlssnr${path}`, {
+    method, headers: authHeaders({'Content-Type': 'application/json'}),
+    ...(body === undefined ? {} : {body: JSON.stringify(body)}),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.detail?.message || data.detail || '运行库操作失败')
+  return data as T
+}
+
 export async function openNativeFileDialog(): Promise<string | null> {
   if (window.electronAPI && typeof window.electronAPI.openFileDialog === 'function') {
     try {

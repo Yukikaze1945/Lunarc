@@ -258,6 +258,21 @@ if (process.env.E2E_TEST === '1') {
 }
 
 // IPC handlers for native file dialogs
+ipcMain.handle('dialog:openRuntime', async event => {
+  if (!win || event.sender !== win.webContents) return null
+  const result = await dialog.showOpenDialog(win, {
+    title: '导入 DLSSNR 运行库', properties: ['openFile'],
+    filters: [{name: 'DLSSNR DLL / ZIP', extensions: ['dll', 'zip']}],
+  })
+  return result.canceled ? null : result.filePaths[0] || null
+})
+ipcMain.handle('dialog:openRuntimeDirectory', async event => {
+  if (!win || event.sender !== win.webContents) return null
+  const result = await dialog.showOpenDialog(win, {
+    title: '选择 DLSSNR 来源目录', properties: ['openDirectory'],
+  })
+  return result.canceled ? null : result.filePaths[0] || null
+})
 ipcMain.handle('dialog:openFile', async () => {
   if (process.env.E2E_TEST === '1' && e2eMockOpenFile) {
     return e2eMockOpenFile

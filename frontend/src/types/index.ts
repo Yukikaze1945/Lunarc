@@ -221,6 +221,8 @@ export interface EnvironmentReport {checked_at: number; checks: EnvironmentCheck
 declare global {
   interface Window {
     electronAPI?: {
+      openRuntimeDialog?: () => Promise<string | null>
+      openRuntimeDirDialog?: () => Promise<string | null>
       openFileDialog: () => Promise<string | null>
       openDirDialog: () => Promise<string | null>
       getPathForFile: (file: File) => string

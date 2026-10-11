@@ -28,6 +28,7 @@ class Live(nr.Live):
         return options
 
     def _open(self, shared_with):
+        self.runtime_dll = self.dlss_dll
         if self.bytes_per_pixel == 8:
             name = 'dlss_gpu_host_open_dlaa_layer_ex' if shared_with is not None else 'dlss_gpu_host_open_dlaa_ex'
             if not hasattr(self._lib, name):

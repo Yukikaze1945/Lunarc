@@ -1,6 +1,8 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  openRuntimeDialog: () => ipcRenderer.invoke('dialog:openRuntime'),
+  openRuntimeDirDialog: () => ipcRenderer.invoke('dialog:openRuntimeDirectory'),
   openFileDialog: () => ipcRenderer.invoke('dialog:openFile'),
   openDirDialog: () => ipcRenderer.invoke('dialog:openDirectory'),
   getPathForFile: (file: File) => webUtils.getPathForFile(file),

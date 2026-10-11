@@ -48,7 +48,7 @@ $env:FFMPEG_SDK_DIR = "<FFmpeg 开发包根目录>"
 cmd /c native\build_all.bat
 ```
 
-构建脚本自动查找 Visual Studio。也可在 x64 Native Tools 命令提示符中运行，或设置 `VCVARS64`。运行时还需所链接 FFmpeg 共享 DLL，以及合法取得的匹配 DLSSNR 运行库 `nvngx_dlssnr.dll`；仅有普通 DLSS 超分 DLL 不能代替它。项目不会提供该运行库的下载或再分发授权。
+构建脚本自动查找 Visual Studio。也可在 x64 Native Tools 命令提示符中运行，或设置 `VCVARS64`。运行时还需所链接 FFmpeg 共享 DLL，以及合法取得的匹配 DLSSNR 运行库 `nvngx_dlssnr.dll`；仅有普通 DLSS 超分 DLL 不能代替它。“运行与诊断”提供 [DLSSNR 运行库管理器](docs/dlssnr-runtime.md)，支持本地导入及用户确认的来源下载，文件仍受原许可约束，软件不授予取得或再分发权。
 
 AMD 光流另需 CMake 和与固定 SDK 版本匹配的官方 FidelityFX_SC 编译器：设置 `FFX_SC_EXECUTABLE` 后重新运行 `build_all.bat`。未提供编译器时构建会明确报告该组件未构建。详细版本与接口说明见 [AMD 光流依赖](docs/AMD_FLOW_DEPENDENCIES.md)。
 

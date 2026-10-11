@@ -68,6 +68,7 @@ HIDDENIMPORTS = ['PIL.Image', 'PIL.ImageTk',
                  'hdr_gpu_engine',
                  'hdr_fusion_engine']
 HIDDENIMPORTS += ['post_control', 'temporal_control']
+HIDDENIMPORTS += ['dlssnr_runtime']
 HIDDENIMPORTS += ['gpu_preview_engine', 'native_effects', 'ordered_vfg', 'dlaa_gpu_engine',
                   'rtx_vsr_engine', 'fidelityfx_flow_engine',
                   'comparison_media', 'comparison_audio', 'comparison_playback', 'queue_payload']

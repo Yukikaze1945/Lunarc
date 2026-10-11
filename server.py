@@ -334,6 +334,112 @@ def get_flow_providers():
     }
 
 
+class RuntimeSourceRequest(BaseModel):
+    kind: str
+    location: str
+    label: str
+    sha256: str = ''
+    confirmed: bool = False
+    archive_sha256: str = ''
+
+
+class RuntimeImportRequest(BaseModel):
+    path: Optional[str] = None
+    source_id: Optional[str] = None
+    sha256: str = ''
+    catalog_id: Optional[str] = None
+    confirmed: bool = False
+
+
+class RuntimeSelectionRequest(BaseModel):
+    id: Optional[str] = None
+    allow_unrecognized: bool = False
+
+
+def _runtime_call(fn):
+    from dlssnr_runtime import RuntimeErrorDetail
+    try:
+        return fn()
+    except RuntimeErrorDetail as exc:
+        raise HTTPException(409 if exc.code in ('operation_busy', 'active_version') else 400,
+                            detail={'code': exc.code, 'message': str(exc)}) from exc
+    except OSError as exc:
+        raise HTTPException(400, detail={'code': 'cache_io', 'message': '运行库缓存不可读写，请检查权限、空间与文件占用'}) from exc
+
+
+@app.get('/api/runtime/dlssnr')
+def get_dlssnr_runtime():
+    from dlssnr_runtime import manager
+    return _runtime_call(manager().status)
+
+
+@app.post('/api/runtime/dlssnr/sources')
+def add_dlssnr_source(body: RuntimeSourceRequest):
+    from dlssnr_runtime import manager
+    return _runtime_call(lambda: manager().add_source(body.kind, body.location, body.label, body.sha256, body.confirmed, body.archive_sha256))
+
+
+@app.delete('/api/runtime/dlssnr/sources/{source_id}')
+def remove_dlssnr_source(source_id: str):
+    from dlssnr_runtime import manager
+    _runtime_call(lambda: manager().remove_source(source_id))
+    return {'ok': True}
+
+
+@app.post('/api/runtime/dlssnr/import')
+def import_dlssnr(body: RuntimeImportRequest):
+    from dlssnr_runtime import manager
+    return _runtime_call(lambda: manager().import_file(body.path, body.sha256, body.source_id,
+                        catalog_id=body.catalog_id, confirmed=body.confirmed))
+
+
+def _runtime_session_change(fn):
+    # Queue reserves a running job under this lock before opening its session.
+    # Hold it through the switch so a newly started export cannot race selection.
+    with dlss_service._queue_lock:
+        if dlss_service.active_job_id is not None:
+            raise HTTPException(409, detail={'code': 'export_busy', 'message': '导出进行中，请完成或停止导出后切换运行库'})
+        if not dlss_service._live_lock.acquire(timeout=2):
+            raise HTTPException(409, detail={'code': 'preview_busy', 'message': '预览正在处理，请稍后重试'})
+        try:
+            dlss_service._close_gpu_preview()  # close on the GPU preview owner thread
+            if dlss_service._live_session:
+                dlss_service._live_session.close()
+                dlss_service._live_session = None
+                dlss_service._live_session_dims = dlss_service._live_session_kind = None
+            return _runtime_call(fn)
+        finally:
+            dlss_service._live_lock.release()
+
+
+@app.post('/api/runtime/dlssnr/activate')
+def activate_dlssnr(body: RuntimeSelectionRequest):
+    from dlssnr_runtime import manager
+    _runtime_session_change(lambda: manager().activate(body.id, body.allow_unrecognized))
+    return {'ok': True}
+
+
+@app.delete('/api/runtime/dlssnr/versions/{version_id}')
+def delete_dlssnr(version_id: str):
+    from dlssnr_runtime import manager
+    _runtime_session_change(lambda: manager().delete(version_id))
+    return {'ok': True}
+
+
+@app.post('/api/runtime/dlssnr/verify')
+def verify_dlssnr(body: RuntimeSelectionRequest):
+    from dlssnr_runtime import manager
+    value = manager()
+    return _runtime_call(lambda: value.verified_path(body.id or value.load()['active'], force_signature=True)[1])
+
+
+@app.post('/api/runtime/dlssnr/cancel')
+def cancel_dlssnr_import():
+    from dlssnr_runtime import manager
+    manager().cancel()
+    return {'ok': True}
+
+
 @app.post("/api/dialog/open_file")
 def dialog_open_file():
     """Trigger native Windows file dialog to choose media file."""
