@@ -67,6 +67,7 @@ cd Lunarc
 | [DLAA / VSR / VFG 配置](docs/native-runtime.md) | NVIDIA 运行库与 SDK 路径。 |
 | [AMD 光流](docs/AMD_FLOW_DEPENDENCIES.md) | 编译依赖与 SDK 版本。 |
 | [软件更新](docs/app-updates.md) | 检查和下载新版安装程序。 |
+| [多尺度融合](docs/multiscale-solver.md) | 求解方法、实测耗时与限制。 |
 | [构建安装包](packaging/README.md) | 打包方法与依赖。 |
 | [测试记录](docs/public-release.md) | 测试环境、结果和未覆盖的项目。 |
 

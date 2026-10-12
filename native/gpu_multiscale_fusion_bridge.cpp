@@ -9,8 +9,10 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <chrono>
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
 #include <new>
 #include <vector>
 
@@ -22,7 +24,7 @@ void fail(const char* operation, long code) {
                   static_cast<unsigned long>(code));
 }
 constexpr uint32_t kMaxTaps = 24;
-constexpr uint32_t kSrvCount = 7, kUavCount = 3, kDescriptors = 10;
+constexpr uint32_t kSrvCount = 8, kUavCount = 4, kDescriptors = 12;
 constexpr uint32_t kDescriptorCapacity = 4096;
 uint32_t pitch_for(uint32_t width) { return (width * 4u + 255u) & ~255u; }
 /* The HDR transport's row: a half sample is 8 bytes, so a row that is width * 4
@@ -36,15 +38,18 @@ bool is_final_format(DXGI_FORMAT format) {
     return format == DXGI_FORMAT_R8G8B8A8_UNORM ||
            format == DXGI_FORMAT_R16G16B16A16_FLOAT;
 }
-struct TapRow { float weights[kMaxTaps]; int32_t indices[kMaxTaps]; };
+struct TapRow { float weights[kMaxTaps]; int32_t indices[kMaxTaps]; float norm_square = 0; };
 struct Edge { uint32_t destination; float weight; };
 struct AxisBuffers {
     ComPtr<ID3D12Resource> rows, offsets, edges;
     uint32_t row_count = 0, offset_count = 0, edge_count = 0;
+    uint32_t taps = 0;
+    double max_row_abs = 0, max_column_abs = 0;
+    float max_norm_square = 0;
 };
 enum Kernel : size_t { kForwardY, kForwardX, kAdjointX, kAdjointY,
                        kCatmull, kVector, kComposite, kDot, kUnpackHalf,
-                       kCompositeHdr, kReduce, kKernelCount };
+                       kCompositeHdr, kReduce, kCgControl, kKernelCount };
 /* The two kernels that store a picture's final pixels write u2 rather than u0,
  * and u2 is bound to the one texture make_texture created in COPY_SOURCE. Both
  * halves of that rule read one predicate, so an R16G16B16A16_FLOAT final is
@@ -53,6 +58,12 @@ enum Kernel : size_t { kForwardY, kForwardX, kAdjointX, kAdjointY,
 bool stores_final(Kernel kernel) {
     return kernel == kComposite || kernel == kCompositeHdr;
 }
+struct CgPacket {
+    float square, initial, alpha, gamma;
+    uint32_t status, iterations;
+    float tolerance, reserved;
+};
+static_assert(sizeof(CgPacket) == 32, "CG packet layout");
 struct Texture {
     ComPtr<ID3D12Resource> resource;
     uint32_t width = 0, height = 0;
@@ -61,7 +72,7 @@ struct LayerBuffers {
     uint32_t width = 0, height = 0;
     float weight = 0;
     AxisBuffers x, y;
-    Texture scratch, down;
+    Texture scratch, down, iterate, gradient, direction;
     /* What this layer contributes to the objective as its r_i. The SDR path
      * never fills it: that path's observation arrives already as an
      * R32G32B32A32_FLOAT texture owned by the caller and is borrowed for the
@@ -104,6 +115,7 @@ struct GpuFusionBridge {
     ComPtr<ID3D12Fence> fence;
     ComPtr<ID3D12RootSignature> root;
     std::array<ComPtr<ID3D12PipelineState>, kKernelCount> kernels;
+    std::array<ComPtr<ID3D12PipelineState>, kMaxTaps+1> forward_x, forward_y;
     ComPtr<ID3D12DescriptorHeap> descriptors;
     uint32_t descriptor_cursor = 0, descriptor_step = 0;
     HANDLE event = nullptr;
@@ -113,10 +125,21 @@ struct GpuFusionBridge {
     std::array<LayerBuffers, 3> layers;
     AxisBuffers baseline_x, baseline_y;
     Texture r0, b[2], x[2], g[2], p[2], h[2], work, final;
+    Texture probe_output;
+    D3D12_RESOURCE_STATES probe_state = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
     ComPtr<ID3D12Resource> partial, partial_readback, reduction_a, reduction_b;
     uint32_t partial_count = 0;
     uint64_t process_count = 0, full_device_copy_bytes = 0;
     uint64_t scalar_readback_bytes = 0;
+    uint64_t workspace_logical_bytes = 0, workspace_committed_bytes = 0;
+    uint64_t scalar_sync_count = 0;
+    ComPtr<ID3D12Resource> control, control_readback;
+    D3D12_RESOURCE_STATES control_state = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+    ID3D12Resource* last_scalar = nullptr;
+    bool gpu_cg = true, cg_guard = false, observation_space = false, jacobi = false;
+    float control_tolerance = 0;
+    uint32_t batch_size = 4;
+    double cpu_wait_ms = 0;
     bool failed = false;
     /* --- typed HDR (scRGB) contract -------------------------------------- */
     /* Which colour contract this bridge was opened for. It is decided once, at
@@ -138,10 +161,14 @@ struct GpuFusionBridge {
 namespace {
 bool wait_gpu(GpuFusionBridge* bridge) {
     if (bridge->fence->GetCompletedValue() >= bridge->fence_value) return true;
+    const auto started = std::chrono::steady_clock::now();
     HRESULT hr = bridge->fence->SetEventOnCompletion(bridge->fence_value,
                                                      bridge->event);
     if (FAILED(hr)) { fail("fusion fence event", hr); return false; }
-    if (WaitForSingleObject(bridge->event, 30000) != WAIT_OBJECT_0) {
+    const auto waited = WaitForSingleObject(bridge->event, 30000);
+    bridge->cpu_wait_ms += std::chrono::duration<double, std::milli>(
+        std::chrono::steady_clock::now() - started).count();
+    if (waited != WAIT_OBJECT_0) {
         fail("fusion fence timeout", ERROR_TIMEOUT); return false;
     }
     return true;
@@ -194,6 +221,28 @@ HRESULT upload_axis(GpuFusionBridge* bridge, const GpuFusionAxisPlan& plan,
             if (real && weight != 0.0f)
                 inverse[source].push_back(Edge{row, weight});
         }
+    std::vector<double> column_abs(plan.src_len, 0.0);
+    for (uint32_t row = 0; row < plan.dst_len; ++row) {
+        double row_abs = 0, row_square = 0;
+        for (uint32_t tap = 0; tap < plan.taps; ++tap) {
+            const auto index = rows[row].indices[tap];
+            bool first = true;
+            for (uint32_t previous = 0; previous < tap; ++previous)
+                if (rows[row].indices[previous] == index) first = false;
+            if (!first) continue;
+            double merged = 0;
+            for (uint32_t next = tap; next < plan.taps; ++next)
+                if (rows[row].indices[next] == index) merged += rows[row].weights[next];
+            row_square += merged * merged;
+            row_abs += std::abs(merged);
+            column_abs[index] += std::abs(merged);
+        }
+        rows[row].norm_square = static_cast<float>(row_square);
+        result->max_norm_square = (std::max)(result->max_norm_square, rows[row].norm_square);
+        result->max_row_abs = (std::max)(result->max_row_abs, row_abs);
+    }
+    for (double value : column_abs)
+        result->max_column_abs = (std::max)(result->max_column_abs, value);
     std::vector<uint32_t> offsets(plan.src_len + 1);
     std::vector<Edge> edges;
     for (uint32_t source = 0; source < plan.src_len; ++source) {
@@ -202,6 +251,14 @@ HRESULT upload_axis(GpuFusionBridge* bridge, const GpuFusionAxisPlan& plan,
     }
     offsets[plan.src_len] = static_cast<uint32_t>(edges.size());
     result->row_count = plan.dst_len;
+    // Remove trailing all-zero padding only. Every non-zero tap is retained.
+    result->taps = plan.taps;
+    while (result->taps > 1) {
+        bool used = false;
+        for (const auto& row : rows) if (row.weights[result->taps-1] != 0) used = true;
+        if (used) break;
+        --result->taps;
+    }
     result->offset_count = static_cast<uint32_t>(offsets.size());
     result->edge_count = static_cast<uint32_t>(edges.size());
     HRESULT hr = upload(bridge, rows, &result->rows);
@@ -228,7 +285,14 @@ HRESULT make_texture(GpuFusionBridge* bridge, uint32_t width, uint32_t height,
     HRESULT hr = bridge->device->CreateCommittedResource(&heap,
         D3D12_HEAP_FLAG_NONE, &desc, state, nullptr,
         IID_PPV_ARGS(output->resource.GetAddressOf()));
-    if (SUCCEEDED(hr)) { output->width = width; output->height = height; }
+    if (SUCCEEDED(hr)) {
+        output->width = width; output->height = height;
+        if (format == DXGI_FORMAT_R32G32B32A32_FLOAT) {
+            bridge->workspace_logical_bytes += uint64_t(width) * height * 16u;
+            bridge->workspace_committed_bytes += bridge->device->GetResourceAllocationInfo(
+                0, 1, &desc).SizeInBytes;
+        }
+    }
     return hr;
 }
 HRESULT make_resources(GpuFusionBridge* bridge) {
@@ -239,11 +303,31 @@ HRESULT make_resources(GpuFusionBridge* bridge) {
             DXGI_FORMAT_R32G32B32A32_FLOAT, texture);
     };
     HRESULT hr = full(&bridge->r0);
-    for (auto& texture : bridge->b) if (SUCCEEDED(hr)) hr = full(&texture);
-    for (auto& texture : bridge->x) if (SUCCEEDED(hr)) hr = full(&texture);
-    for (auto& texture : bridge->g) if (SUCCEEDED(hr)) hr = full(&texture);
-    for (auto& texture : bridge->p) if (SUCCEEDED(hr)) hr = full(&texture);
-    for (auto& texture : bridge->h) if (SUCCEEDED(hr)) hr = full(&texture);
+    if (SUCCEEDED(hr) && !bridge->observation_space) hr = full(&bridge->b[0]);
+    if (SUCCEEDED(hr)) {
+        if (bridge->gpu_cg) bridge->b[1] = bridge->b[0];
+        else hr = full(&bridge->b[1]);
+    }
+    if (SUCCEEDED(hr)) hr = full(&bridge->x[0]);
+    if (SUCCEEDED(hr)) {
+        if (bridge->gpu_cg) bridge->x[1] = bridge->x[0];
+        else hr = full(&bridge->x[1]);
+    }
+    if (SUCCEEDED(hr) && !bridge->observation_space) hr = full(&bridge->g[0]);
+    if (SUCCEEDED(hr)) {
+        if (bridge->gpu_cg) bridge->g[1] = bridge->g[0];
+        else hr = full(&bridge->g[1]);
+    }
+    if (SUCCEEDED(hr) && !bridge->observation_space) hr = full(&bridge->p[0]);
+    if (SUCCEEDED(hr)) {
+        if (bridge->gpu_cg) bridge->p[1] = bridge->p[0];
+        else hr = full(&bridge->p[1]);
+    }
+    if (SUCCEEDED(hr)) hr = full(&bridge->h[0]);
+    if (SUCCEEDED(hr)) {
+        if (bridge->gpu_cg) bridge->h[1] = bridge->h[0];
+        else hr = full(&bridge->h[1]);
+    }
     if (SUCCEEDED(hr)) hr = full(&bridge->work);
     /* The store's pixel format is the colour contract, not a per-call choice:
      * RGBA8 bytes for the chain that has always run here, a half scRGB picture
@@ -258,6 +342,11 @@ HRESULT make_resources(GpuFusionBridge* bridge) {
             DXGI_FORMAT_R32G32B32A32_FLOAT, &layer.scratch);
         if (SUCCEEDED(hr)) hr = make_texture(bridge, layer.width, layer.height,
             DXGI_FORMAT_R32G32B32A32_FLOAT, &layer.down);
+        if (SUCCEEDED(hr) && bridge->observation_space) {
+            for (Texture* texture : {&layer.iterate, &layer.gradient, &layer.direction})
+                if (SUCCEEDED(hr)) hr = make_texture(bridge, layer.width, layer.height,
+                    DXGI_FORMAT_R32G32B32A32_FLOAT, texture);
+        }
         /* The HDR path needs a place of its own to widen each borrowed half
          * plane into, at that layer's extent and in the precision the CG
          * kernels already work in. The SDR path borrows the caller's FP32
@@ -266,6 +355,12 @@ HRESULT make_resources(GpuFusionBridge* bridge) {
             hr = make_texture(bridge, layer.width, layer.height,
                 DXGI_FORMAT_R32G32B32A32_FLOAT, &layer.observed);
     }
+    if (SUCCEEDED(hr)) hr = make_buffer(bridge, sizeof(CgPacket),
+        D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON, &bridge->control);
+    if (SUCCEEDED(hr)) hr = make_buffer(bridge, sizeof(CgPacket),
+        D3D12_HEAP_TYPE_READBACK, D3D12_RESOURCE_STATE_COPY_DEST, &bridge->control_readback);
+    if (SUCCEEDED(hr)) transition(bridge->list.Get(), bridge->control.Get(),
+        D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     bridge->partial_count = ((width + 7) / 8) * ((height + 7) / 8);
     const uint64_t partial_bytes = uint64_t(bridge->partial_count) * sizeof(float);
     if (SUCCEEDED(hr)) hr = make_buffer(bridge, partial_bytes,
@@ -318,7 +413,7 @@ HRESULT make_kernels(GpuFusionBridge* bridge) {
     if (FAILED(hr)) return hr;
     const char* names[kKernelCount] = {"ForwardY", "ForwardX", "AdjointX",
         "AdjointY", "CatmullBaseline", "Vector", "Composite", "Dot",
-        "UnpackHalf", "CompositeHdr", "Reduce"};
+        "UnpackHalf", "CompositeHdr", "Reduce", "CgControl"};
     for (size_t i = 0; i < kKernelCount; ++i) {
         ComPtr<ID3DBlob> code, errors;
         hr = D3DCompile(fusion_shader, sizeof(fusion_shader) - 1,
@@ -337,6 +432,27 @@ HRESULT make_kernels(GpuFusionBridge* bridge) {
         hr = bridge->device->CreateComputePipelineState(&pso,
             IID_PPV_ARGS(bridge->kernels[i].GetAddressOf()));
         if (FAILED(hr)) return hr;
+    }
+    for (uint32_t layer=0; layer<bridge->options.layer_count; ++layer) {
+        for (uint32_t taps : {bridge->layers[layer].x.taps, bridge->layers[layer].y.taps}) {
+            for (size_t direction=0; direction<2; ++direction) {
+                auto& target = direction ? bridge->forward_x[taps] : bridge->forward_y[taps];
+                if (target) continue;
+                char count[16]; std::snprintf(count,sizeof(count),"%u",taps);
+                const D3D_SHADER_MACRO macros[]={{"FUSION_TAP_COUNT",count},{nullptr,nullptr}};
+                ComPtr<ID3DBlob> code, errors;
+                hr=D3DCompile(fusion_shader,sizeof(fusion_shader)-1,"gpu_multiscale_fusion",
+                    macros,nullptr,direction ? "ForwardX" : "ForwardY","cs_5_0",
+                    D3DCOMPILE_ENABLE_STRICTNESS|D3DCOMPILE_IEEE_STRICTNESS,
+                    0,code.GetAddressOf(),errors.GetAddressOf());
+                if (FAILED(hr)) return hr;
+                D3D12_COMPUTE_PIPELINE_STATE_DESC pso{};
+                pso.pRootSignature=bridge->root.Get();
+                pso.CS={code->GetBufferPointer(),code->GetBufferSize()};
+                hr=bridge->device->CreateComputePipelineState(&pso,IID_PPV_ARGS(target.GetAddressOf()));
+                if (FAILED(hr)) return hr;
+            }
+        }
     }
     D3D12_DESCRIPTOR_HEAP_DESC heap{};
     heap.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
@@ -384,7 +500,7 @@ void texture_uav(GpuFusionBridge* bridge, ID3D12Resource* resource,
     bridge->device->CreateUnorderedAccessView(resource, nullptr, nullptr, slot);
 }
 struct FrameConstants {
-    uint32_t out_width, out_height, in_width, in_height;
+    uint32_t out_width, out_height, tap_count, beta_bits;
     uint32_t full_pitch, group_width, mode;
     float scale;
 };
@@ -421,6 +537,13 @@ bool record(GpuFusionBridge* bridge, Kernel kernel, Texture* input_a,
     raw_srv(bridge, full_color, at(5));
     structured_srv(bridge, vertical->rows.Get(), vertical->row_count,
                    sizeof(TapRow), at(6));
+    const auto desired_control_state = kernel==kCgControl ? D3D12_RESOURCE_STATE_UNORDERED_ACCESS :
+        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+    if (bridge->control_state != desired_control_state) {
+        transition(bridge->list.Get(),bridge->control.Get(),bridge->control_state,desired_control_state);
+        bridge->control_state=desired_control_state;
+    }
+    raw_srv(bridge, kernel==kCgControl ? bridge->last_scalar : bridge->control.Get(), at(7));
     texture_uav(bridge, output->resource.Get(), at(kSrvCount));
     D3D12_UNORDERED_ACCESS_VIEW_DESC partial_view{};
     partial_view.Format = DXGI_FORMAT_UNKNOWN;
@@ -430,6 +553,12 @@ bool record(GpuFusionBridge* bridge, Kernel kernel, Texture* input_a,
     bridge->device->CreateUnorderedAccessView(bridge->partial.Get(), nullptr,
                                               &partial_view, at(kSrvCount + 1));
     texture_uav(bridge, bridge->final.resource.Get(), at(kSrvCount + 2));
+    D3D12_UNORDERED_ACCESS_VIEW_DESC control_view{};
+    control_view.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+    control_view.Buffer.NumElements = 1;
+    control_view.Buffer.StructureByteStride = sizeof(CgPacket);
+    bridge->device->CreateUnorderedAccessView(bridge->control.Get(), nullptr,
+        &control_view, at(kSrvCount + 3));
     auto* list = bridge->list.Get();
     if (kernel != kDot) {
         const bool final = stores_final(kernel);
@@ -438,14 +567,20 @@ bool record(GpuFusionBridge* bridge, Kernel kernel, Texture* input_a,
                     D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
             D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
-    list->SetPipelineState(bridge->kernels[kernel].Get());
+    list->SetPipelineState(kernel==kForwardX ? bridge->forward_x[axis->taps].Get() :
+        kernel==kForwardY ? bridge->forward_y[axis->taps].Get() : bridge->kernels[kernel].Get());
     auto gpu = bridge->descriptors->GetGPUDescriptorHandleForHeapStart();
     gpu.ptr += size_t(first) * bridge->descriptor_step;
     list->SetComputeRootDescriptorTable(0, gpu);
     gpu.ptr += size_t(kSrvCount) * bridge->descriptor_step;
     list->SetComputeRootDescriptorTable(1, gpu);
-    FrameConstants constants{width, height, input_a->width, input_a->height,
-        full_pitch, (width + 7) / 8, mode, scale};
+    const bool guarded = bridge->cg_guard &&
+        (kernel == kForwardX || kernel == kForwardY || kernel == kAdjointX ||
+         kernel == kAdjointY || kernel == kVector || kernel == kDot);
+    uint32_t beta_bits = 0;
+    std::memcpy(&beta_bits, &bridge->options.beta, sizeof(beta_bits));
+    FrameConstants constants{width, height, axis->taps, beta_bits,
+        full_pitch, (width + 7) / 8, mode | (guarded ? 256u : 0u), scale};
     list->SetComputeRoot32BitConstants(2, 8, &constants, 0);
     list->Dispatch((width + 7) / 8, (height + 7) / 8, 1);
     if (kernel != kDot) {
@@ -511,25 +646,27 @@ Texture* h_apply(GpuFusionBridge* bridge, Texture* input,
     for (uint32_t i = 0; i < options.layer_count; ++i) {
         if (!down(bridge, i, input, full, pitch) ||
             !adjoint(bridge, i, &bridge->layers[i].down, full, pitch) ||
-            !vector(bridge, &bridge->h[current], &bridge->work,
-                    &bridge->h[1-current], full, pitch,
-                    bridge->layers[i].weight)) return nullptr;
-        current = 1-current;
+            !(bridge->gpu_cg ? record(bridge, kVector, &bridge->work, nullptr,
+                &bridge->h[0], &bridge->baseline_x, &bridge->baseline_y, full,
+                pitch, options.full_width, options.full_height, bridge->layers[i].weight, 5u)
+                : vector(bridge, &bridge->h[current], &bridge->work,
+                    &bridge->h[1-current], full, pitch, bridge->layers[i].weight))) return nullptr;
+        current = bridge->gpu_cg ? 0 : 1-current;
     }
     return &bridge->h[current];
 }
 /* Reduce group partials on the GPU through distinct ping-pong UAV buffers.
  * Only the final FP32 scalar is copied to the host. */
-double reduce_partial(GpuFusionBridge* bridge) {
+ID3D12Resource* reduce_gpu(GpuFusionBridge* bridge, uint32_t count = 0) {
     auto* list = bridge->list.Get();
     ID3D12Resource* input = bridge->partial.Get();
     ID3D12Resource* output = bridge->reduction_a.Get();
-    uint32_t input_count = bridge->partial_count;
+    uint32_t input_count = count ? count : bridge->partial_count;
     while (input_count > 1) {
         const uint32_t output_count = (input_count + 255u) / 256u;
         if (bridge->descriptor_cursor + kDescriptors > kDescriptorCapacity) {
             fail("fusion descriptor heap exhausted during reduction", 0);
-            return NAN;
+            return nullptr;
         }
         const uint32_t first = bridge->descriptor_cursor;
         bridge->descriptor_cursor += kDescriptors;
@@ -571,6 +708,13 @@ double reduce_partial(GpuFusionBridge* bridge) {
         output = output == bridge->reduction_a.Get()
             ? bridge->reduction_b.Get() : bridge->reduction_a.Get();
     }
+    bridge->last_scalar = input;
+    return input;
+}
+double reduce_partial(GpuFusionBridge* bridge) {
+    auto* input = reduce_gpu(bridge);
+    if (!input) return NAN;
+    auto* list = bridge->list.Get();
     transition(list, input, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
                D3D12_RESOURCE_STATE_COPY_SOURCE);
     list->CopyBufferRegion(bridge->partial_readback.Get(), 0, input, 0,
@@ -585,6 +729,7 @@ double reduce_partial(GpuFusionBridge* bridge) {
     const double result = mapped[0];
     bridge->partial_readback->Unmap(0, nullptr);
     bridge->scalar_readback_bytes += sizeof(float);
+    ++bridge->scalar_sync_count;
     return result;
 }
 double gpu_dot(GpuFusionBridge* bridge, Texture* a, Texture* b,
@@ -631,7 +776,7 @@ struct SolveEvidence {
  * tolerance. 11 and 12 are failures rather than outcomes: the bridge is marked
  * and the caller gets an error code, so there is no path here that hands back a
  * picture which is really the baseline while saying it was solved. */
-int32_t run_solve(GpuFusionBridge* bridge, Texture* observed,
+int32_t run_solve_legacy(GpuFusionBridge* bridge, Texture* observed,
                   ID3D12Resource* full, uint32_t pitch,
                   SolveEvidence* evidence, uint32_t* out_x_index) {
     const uint32_t count = bridge->options.layer_count;
@@ -712,6 +857,18 @@ int32_t run_solve(GpuFusionBridge* bridge, Texture* observed,
         square = next_square;
     }
     evidence->iterations = iterations;
+    if (converged) {
+        Texture* truth_h=h_apply(bridge,&bridge->x[x_index],full,pitch);
+        if (!truth_h || !vector(bridge,rhs,truth_h,&bridge->g[g_index],full,pitch,-1)) {
+            bridge->failed=true; return 10;
+        }
+        square=gpu_dot(bridge,&bridge->g[g_index],&bridge->g[g_index],full,pitch);
+        if (!std::isfinite(square) || square<0) {
+            fail("fusion true equation residual is invalid",0); bridge->failed=true; return 11;
+        }
+        relative=initial==0 ? (square==0 ? 0 : INFINITY) : std::sqrt(square)/initial;
+        converged=relative<=bridge->options.relative_tolerance;
+    }
     evidence->final_norm = std::sqrt(square);
     evidence->relative = relative;
     evidence->converged = converged;
@@ -725,11 +882,343 @@ int32_t run_solve(GpuFusionBridge* bridge, Texture* observed,
     *out_x_index = x_index;
     return 0;
 }
+
+void order_control(GpuFusionBridge* bridge) {
+    if (bridge->control_state != D3D12_RESOURCE_STATE_UNORDERED_ACCESS) {
+        transition(bridge->list.Get(),bridge->control.Get(),bridge->control_state,
+            D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        bridge->control_state=D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+    }
+    D3D12_RESOURCE_BARRIER barrier{};
+    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+    barrier.UAV.pResource = bridge->control.Get();
+    bridge->list->ResourceBarrier(1, &barrier);
+}
+bool control_step(GpuFusionBridge* bridge, ID3D12Resource* scalar,
+                  ID3D12Resource* full, uint32_t pitch, uint32_t mode) {
+    if (!scalar) return false;
+    bridge->last_scalar = scalar;
+    order_control(bridge);
+    transition(bridge->list.Get(), scalar, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    const bool ok = record(bridge, kCgControl, &bridge->work, nullptr, &bridge->r0,
+        &bridge->baseline_x, &bridge->baseline_y, full, pitch, 1, 1,
+        bridge->control_tolerance, mode);
+    transition(bridge->list.Get(), scalar, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+        D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    order_control(bridge);
+    return ok;
+}
+ID3D12Resource* dot_device(GpuFusionBridge* bridge, Texture* a, Texture* b,
+                          ID3D12Resource* full, uint32_t pitch) {
+    if (!record(bridge, kDot, a, b, &bridge->work, &bridge->baseline_x,
+        &bridge->baseline_y, full, pitch, a->width, a->height)) return nullptr;
+    return reduce_gpu(bridge, ((a->width+7)/8)*((a->height+7)/8));
+}
+bool read_control(GpuFusionBridge* bridge, CgPacket* packet) {
+    transition(bridge->list.Get(), bridge->control.Get(),
+        bridge->control_state, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    bridge->list->CopyBufferRegion(bridge->control_readback.Get(), 0,
+        bridge->control.Get(), 0, sizeof(*packet));
+    transition(bridge->list.Get(), bridge->control.Get(),
+        D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    bridge->control_state=D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+    if (!flush(bridge)) return false;
+    const D3D12_RANGE range{0, sizeof(*packet)};
+    void* mapped = nullptr;
+    const HRESULT hr = bridge->control_readback->Map(0, &range, &mapped);
+    if (FAILED(hr)) { fail("map fusion CG state", hr); return false; }
+    std::memcpy(packet, mapped, sizeof(*packet));
+    const D3D12_RANGE written{0, 0};
+    bridge->control_readback->Unmap(0, &written);
+    bridge->scalar_readback_bytes += sizeof(*packet);
+    ++bridge->scalar_sync_count;
+    return true;
+}
+bool controlled_vector(GpuFusionBridge* bridge, Texture* input, Texture* output,
+                       ID3D12Resource* full, uint32_t pitch, uint32_t mode) {
+    return record(bridge, kVector, input, nullptr, output, &bridge->baseline_x,
+        &bridge->baseline_y, full, pitch, output->width,
+        output->height, 0, mode);
+}
+int32_t run_solve_gpu(GpuFusionBridge* bridge, Texture* observed,
+                     ID3D12Resource* full, uint32_t pitch,
+                     SolveEvidence* evidence, uint32_t* out_x_index) {
+    bridge->cg_guard = false;
+    const uint32_t count = bridge->options.layer_count;
+    if (!record(bridge, kCatmull, &observed[0], nullptr, &bridge->r0,
+            &bridge->baseline_x, &bridge->baseline_y, full, pitch,
+            bridge->options.full_width, bridge->options.full_height) ||
+        !vector(bridge, &bridge->r0, nullptr, &bridge->b[0], full, pitch,
+            bridge->options.beta, true)) { bridge->failed = true; return 8; }
+    uint32_t rhs_index = 0;
+    for (uint32_t i = 0; i < count; ++i) {
+        if (!adjoint(bridge, i, &observed[i], full, pitch) ||
+            !record(bridge, kVector, &bridge->work, nullptr, &bridge->b[0],
+                &bridge->baseline_x, &bridge->baseline_y, full, pitch,
+                bridge->options.full_width, bridge->options.full_height,
+                bridge->layers[i].weight, 5u)) {
+            bridge->failed = true; return 8;
+        }
+    }
+    Texture* rhs = &bridge->b[rhs_index];
+    if (!vector(bridge, &bridge->r0, nullptr, &bridge->x[0], full, pitch, 1, true)) {
+        bridge->failed = true; return 8;
+    }
+    Texture* hx = h_apply(bridge, &bridge->x[0], full, pitch);
+    if (!hx || !vector(bridge, rhs, hx, &bridge->g[0], full, pitch, -1) ||
+        !vector(bridge, &bridge->g[0], nullptr, &bridge->p[0], full, pitch, 1, true) ||
+        !control_step(bridge, dot_device(bridge, &bridge->g[0], &bridge->g[0], full, pitch),
+            full, pitch, 0)) { bridge->failed = true; return 8; }
+    CgPacket packet{};
+    uint32_t scheduled = 0;
+    while (scheduled < bridge->options.max_iterations) {
+        bridge->cg_guard = bridge->batch_size > 1;
+        const uint32_t batch = (std::min)(bridge->batch_size,
+            bridge->options.max_iterations - scheduled);
+        for (uint32_t i = 0; i < batch; ++i) {
+            Texture* hp = h_apply(bridge, &bridge->p[0], full, pitch);
+            if (!hp || !control_step(bridge, dot_device(bridge, &bridge->p[0], hp, full, pitch),
+                    full, pitch, 1) ||
+                !controlled_vector(bridge, &bridge->p[0], &bridge->x[0], full, pitch, 2) ||
+                !controlled_vector(bridge, hp, &bridge->g[0], full, pitch, 3) ||
+                !control_step(bridge, dot_device(bridge, &bridge->g[0], &bridge->g[0], full, pitch),
+                    full, pitch, 2) ||
+                !controlled_vector(bridge, &bridge->g[0], &bridge->p[0], full, pitch, 4)) {
+                bridge->failed = true; return 10;
+            }
+        }
+        scheduled += batch;
+        bridge->cg_guard = false;
+        if (!read_control(bridge, &packet)) { bridge->failed = true; return 10; }
+        if (packet.status >= 2 || !std::isfinite(packet.initial) ||
+            !std::isfinite(packet.square)) {
+            fail(packet.status == 2 ? "fusion initial norm is invalid" :
+                "fusion CG lost positive definiteness or has non-finite arithmetic", packet.iterations);
+            bridge->failed = true; return packet.status == 2 ? 9 : 11;
+        }
+        evidence->initial = std::sqrt(double(packet.initial));
+        evidence->iterations = packet.iterations;
+        if (packet.status != 1 && scheduled < bridge->options.max_iterations) continue;
+        // Certify the original equation, not only the recursive CG residual.
+        hx = h_apply(bridge, &bridge->x[0], full, pitch);
+        if (!hx || !vector(bridge, rhs, hx, &bridge->g[0], full, pitch, -1)) {
+            bridge->failed = true; return 10;
+        }
+        const double truth = gpu_dot(bridge, &bridge->g[0], &bridge->g[0], full, pitch);
+        if (!std::isfinite(truth) || truth < 0) {
+            fail("fusion true equation residual is invalid", 0);
+            bridge->failed = true; return 11;
+        }
+        evidence->final_norm = std::sqrt(truth);
+        evidence->relative = evidence->initial == 0 ? (truth == 0 ? 0 : INFINITY)
+            : evidence->final_norm / evidence->initial;
+        if (evidence->relative <= bridge->options.relative_tolerance) {
+            evidence->converged = true; *out_x_index = 0; return 0;
+        }
+        if (scheduled < bridge->options.max_iterations) {
+            if (!vector(bridge, &bridge->g[0], nullptr, &bridge->p[0], full, pitch, 1, true) ||
+                !control_step(bridge, bridge->last_scalar, full, pitch, 3)) {
+                bridge->failed = true; return 10;
+            }
+        }
+    }
+    std::snprintf(last_error, sizeof(last_error),
+        "fusion CG did not converge in %u iterations: true relative residual %.8g > %.8g",
+        evidence->iterations, evidence->relative, bridge->options.relative_tolerance);
+    bridge->failed = true; return 12;
+}
+
+bool layer_vector(GpuFusionBridge* bridge, uint32_t index, Texture* a,
+                  Texture* b, Texture* output, ID3D12Resource* full,
+                  uint32_t pitch, float scale, uint32_t mode) {
+    auto& layer = bridge->layers[index];
+    return record(bridge, kVector, a, b, output, &layer.x, &layer.y, full, pitch,
+        layer.width, layer.height, scale, mode);
+}
+bool observation_transpose(GpuFusionBridge* bridge, uint32_t which,
+                           ID3D12Resource* full, uint32_t pitch) {
+    if (!vector(bridge, &bridge->r0, nullptr, &bridge->h[0], full, pitch, 0, true)) return false;
+    for (uint32_t i = 0; i < bridge->options.layer_count; ++i) {
+        auto& layer = bridge->layers[i];
+        Texture* input = which == 0 ? &layer.iterate : which == 1 ? &layer.direction : &layer.gradient;
+        if (!adjoint(bridge, i, input, full, pitch) ||
+            !record(bridge, kVector, &bridge->work, nullptr, &bridge->h[0],
+                &bridge->baseline_x, &bridge->baseline_y, full, pitch,
+                bridge->options.full_width, bridge->options.full_height,
+                std::sqrt(layer.weight), 5u)) return false;
+    }
+    return true;
+}
+bool observation_apply(GpuFusionBridge* bridge, uint32_t which,
+                       ID3D12Resource* full, uint32_t pitch) {
+    if (!observation_transpose(bridge, which, full, pitch)) return false;
+    for (uint32_t i = 0; i < bridge->options.layer_count; ++i) {
+        auto& layer = bridge->layers[i];
+        Texture* input = which == 0 ? &layer.iterate : &layer.direction;
+        if (!down(bridge, i, &bridge->h[0], full, pitch) ||
+            !layer_vector(bridge, i, input, nullptr, &layer.down, full, pitch,
+                std::sqrt(layer.weight), 6u)) return false;
+    }
+    return true;
+}
+bool observation_dot(GpuFusionBridge* bridge, uint32_t mode,
+                     ID3D12Resource* full, uint32_t pitch) {
+    if (!control_step(bridge, bridge->last_scalar, full, pitch, 4)) return false;
+    for (uint32_t i = 0; i < bridge->options.layer_count; ++i) {
+        auto& layer = bridge->layers[i];
+        Texture* a = mode == 1 ? &layer.direction : &layer.gradient;
+        Texture* b = mode == 1 ? &layer.down : mode == 6 ? &layer.direction :
+            bridge->jacobi ? &layer.down : &layer.gradient;
+        if (!control_step(bridge, dot_device(bridge, a, b, full, pitch), full, pitch, 5)) return false;
+    }
+    return control_step(bridge, bridge->last_scalar, full, pitch, mode | 512u);
+}
+int32_t run_solve_observation(GpuFusionBridge* bridge, Texture* observed,
+                            ID3D12Resource* full, uint32_t pitch,
+                            SolveEvidence* evidence, uint32_t* out_x_index) {
+    bridge->cg_guard = false;
+    const uint32_t count = bridge->options.layer_count;
+    if (!record(bridge, kCatmull, &observed[0], nullptr, &bridge->r0,
+            &bridge->baseline_x, &bridge->baseline_y, full, pitch,
+            bridge->options.full_width, bridge->options.full_height)) {
+        bridge->failed = true; return 8;
+    }
+    for (uint32_t i = 0; i < count; ++i) {
+        auto& layer = bridge->layers[i];
+        if (!down(bridge, i, &bridge->r0, full, pitch) ||
+            !layer_vector(bridge, i, &observed[i], &layer.down, &layer.gradient,
+                full, pitch, -1, 0) ||
+            !layer_vector(bridge, i, &layer.gradient, nullptr, &layer.direction,
+                full, pitch, std::sqrt(layer.weight), 1) ||
+            !layer_vector(bridge, i, &layer.direction, nullptr, &layer.gradient,
+                full, pitch, 1, 1) ||
+            !layer_vector(bridge, i, &layer.gradient, nullptr, &layer.iterate,
+                full, pitch, 0, 1)) { bridge->failed = true; return 8; }
+    }
+    // All layers contribute to one A^T sum; no independent per-layer solve.
+    if (!observation_transpose(bridge, 2, full, pitch) ||
+        !control_step(bridge, dot_device(bridge, &bridge->h[0], &bridge->h[0], full, pitch),
+            full, pitch, 0)) { bridge->failed = true; return 8; }
+    for (uint32_t i = 0; i < count; ++i) {
+        auto& layer = bridge->layers[i];
+        if (!layer_vector(bridge, i, &layer.gradient, nullptr, &layer.direction, full,
+                pitch, bridge->jacobi ? layer.weight : 1.f, bridge->jacobi ? 8u : 1u)) {
+            bridge->failed = true; return 8;
+        }
+    }
+    if (!observation_dot(bridge, 6, full, pitch)) { bridge->failed = true; return 8; }
+    CgPacket packet{};
+    uint32_t scheduled = 0;
+    while (scheduled < bridge->options.max_iterations) {
+        bridge->cg_guard = bridge->batch_size > 1;
+        const uint32_t batch = (std::min)(bridge->batch_size,
+            bridge->options.max_iterations - scheduled);
+        for (uint32_t step = 0; step < batch; ++step) {
+            if (!observation_apply(bridge, 1, full, pitch) ||
+                !observation_dot(bridge, 1, full, pitch)) {
+                bridge->failed = true; return 10;
+            }
+            for (uint32_t i = 0; i < count; ++i) {
+                auto& layer = bridge->layers[i];
+                if (!controlled_vector(bridge, &layer.direction, &layer.iterate, full, pitch, 2) ||
+                    !controlled_vector(bridge, &layer.down, &layer.gradient, full, pitch, 3)) {
+                    bridge->failed = true; return 10;
+                }
+                if (bridge->jacobi && !layer_vector(bridge, i, &layer.gradient, nullptr,
+                        &layer.down, full, pitch, layer.weight, 8)) {
+                    bridge->failed = true; return 10;
+                }
+            }
+            if (!observation_dot(bridge, 2, full, pitch)) { bridge->failed = true; return 10; }
+            for (uint32_t i = 0; i < count; ++i) {
+                auto& layer = bridge->layers[i];
+                if (!controlled_vector(bridge, bridge->jacobi ? &layer.down : &layer.gradient,
+                        &layer.direction, full, pitch, 4)) { bridge->failed = true; return 10; }
+            }
+        }
+        scheduled += batch;
+        bridge->cg_guard = false;
+        if (!read_control(bridge, &packet)) { bridge->failed = true; return 10; }
+        if (packet.status >= 2 || !std::isfinite(packet.initial)) {
+            fail(packet.status == 2 ? "fusion initial norm is invalid" :
+                "fusion observation CG lost positive definiteness or has non-finite arithmetic",
+                packet.iterations);
+            bridge->failed = true; return packet.status == 2 ? 9 : 11;
+        }
+        evidence->initial = std::sqrt(double(packet.initial));
+        evidence->iterations = packet.iterations;
+        if (packet.status != 1 && scheduled < bridge->options.max_iterations) continue;
+        // q=e-(beta I+A A^T)z, then original residual=b-Hr=A^T q.
+        if (!observation_apply(bridge, 0, full, pitch)) { bridge->failed = true; return 10; }
+        for (uint32_t i = 0; i < count; ++i) {
+            auto& layer = bridge->layers[i];
+            if (!layer_vector(bridge, i, &layer.down, nullptr, &layer.gradient, full, pitch, 1, 1) ||
+                !down(bridge, i, &bridge->r0, full, pitch) ||
+                !layer_vector(bridge, i, &observed[i], &layer.down, &layer.gradient, full, pitch,
+                    std::sqrt(layer.weight), 7)) { bridge->failed = true; return 10; }
+        }
+        if (!observation_transpose(bridge, 2, full, pitch)) { bridge->failed = true; return 10; }
+        const double truth = gpu_dot(bridge, &bridge->h[0], &bridge->h[0], full, pitch);
+        if (!std::isfinite(truth) || truth < 0) {
+            fail("fusion original equation residual is invalid", 0);
+            bridge->failed = true; return 11;
+        }
+        evidence->final_norm = std::sqrt(truth);
+        evidence->relative = evidence->initial == 0 ? (truth == 0 ? 0 : INFINITY)
+            : evidence->final_norm/evidence->initial;
+        if (evidence->relative <= bridge->options.relative_tolerance) {
+            if (!observation_transpose(bridge, 0, full, pitch) ||
+                !vector(bridge, &bridge->r0, &bridge->h[0], &bridge->x[0], full, pitch, 1)) {
+                bridge->failed = true; return 10;
+            }
+            evidence->converged = true; *out_x_index = 0; return 0;
+        }
+        if (scheduled < bridge->options.max_iterations) {
+            for (uint32_t i = 0; i < count; ++i) {
+                auto& layer = bridge->layers[i];
+                if (!layer_vector(bridge, i, &layer.gradient, nullptr, &layer.direction, full,
+                        pitch, bridge->jacobi ? layer.weight : 1.f, bridge->jacobi ? 8u : 1u)) {
+                    bridge->failed = true; return 10;
+                }
+            }
+            if (!observation_dot(bridge, 6, full, pitch)) { bridge->failed = true; return 10; }
+        }
+    }
+    std::snprintf(last_error, sizeof(last_error),
+        "fusion observation CG did not converge in %u iterations: true relative residual %.8g > %.8g",
+        evidence->iterations, evidence->relative, bridge->options.relative_tolerance);
+    bridge->failed = true; return 12;
+}
+
+int32_t run_solve(GpuFusionBridge* bridge, Texture* observed,
+                 ID3D12Resource* full, uint32_t pitch,
+                 SolveEvidence* evidence, uint32_t* out_x_index) {
+    if (bridge->observation_space)
+        return run_solve_observation(bridge, observed, full, pitch, evidence, out_x_index);
+    return bridge->gpu_cg ? run_solve_gpu(bridge, observed, full, pitch, evidence, out_x_index)
+        : run_solve_legacy(bridge, observed, full, pitch, evidence, out_x_index);
+}
+
 }
 
 extern "C" GPU_FUSION_API uint32_t gpu_fusion_abi_version(void) { return 1; }
 extern "C" GPU_FUSION_API const char* gpu_fusion_last_error(void) {
     return last_error;
+}
+extern "C" GPU_FUSION_API int32_t gpu_fusion_get_solver_diagnostics(
+    GpuFusionBridge* bridge, GpuFusionSolverDiagnostics* report) {
+    if (!bridge || !report || report->struct_size != sizeof(*report)) return 1;
+    *report = GpuFusionSolverDiagnostics{sizeof(*report), 1,
+        bridge->observation_space ? (bridge->jacobi ? 4u : 3u) : bridge->gpu_cg ? 2u : 1u,
+        bridge->gpu_cg ? bridge->batch_size : 1u,
+        bridge->workspace_logical_bytes, bridge->workspace_committed_bytes,
+        bridge->scalar_sync_count, bridge->cpu_wait_ms, {}, {}};
+    for (uint32_t i = 0; i < bridge->options.layer_count; ++i) {
+        report->horizontal_taps[i] = bridge->layers[i].x.taps;
+        report->vertical_taps[i] = bridge->layers[i].y.taps;
+    }
+    return 0;
 }
 extern "C" GPU_FUSION_API int32_t gpu_fusion_get_transfer_counters(
     GpuFusionBridge* bridge, GpuFusionTransferCounters* counters) {
@@ -738,6 +1227,52 @@ extern "C" GPU_FUSION_API int32_t gpu_fusion_get_transfer_counters(
     *counters = GpuFusionTransferCounters{sizeof(*counters),
         bridge->process_count, bridge->full_device_copy_bytes,
         bridge->scalar_readback_bytes, 0};
+    return 0;
+}
+extern "C" GPU_FUSION_API int32_t gpu_fusion_probe_operator(GpuFusionBridge* bridge,
+    uint32_t layer_index, uint32_t transpose, void* texture,
+    void* input_fence, uint64_t input_value,
+    void** out_texture, void** out_fence, uint64_t* out_value) {
+    if (out_texture) *out_texture = nullptr;
+    if (out_fence) *out_fence = nullptr;
+    if (out_value) *out_value = 0;
+    if (!bridge || bridge->failed || layer_index >= bridge->options.layer_count ||
+        transpose > 1 || !texture || !out_texture || !out_fence || !out_value) return 1;
+    auto* resource = static_cast<ID3D12Resource*>(texture);
+    const auto desc = resource->GetDesc();
+    const auto& layer = bridge->layers[layer_index];
+    const uint32_t width = transpose ? layer.width : bridge->options.full_width;
+    const uint32_t height = transpose ? layer.height : bridge->options.full_height;
+    if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D ||
+        desc.Format != DXGI_FORMAT_R32G32B32A32_FLOAT || desc.Width != width ||
+        desc.Height != height || desc.MipLevels != 1) return 2;
+    if (input_fence && FAILED(bridge->queue->Wait(static_cast<ID3D12Fence*>(input_fence), input_value))) return 3;
+    Texture input; input.resource = resource; input.width = width; input.height = height;
+    bridge->cg_guard = false;
+    if (!(transpose ? adjoint(bridge, layer_index, &input, bridge->partial.Get(), 0)
+                    : down(bridge, layer_index, &input, bridge->partial.Get(), 0))) return 4;
+    Texture* computed = transpose ? &bridge->work : &bridge->layers[layer_index].down;
+    if (!bridge->probe_output.resource || bridge->probe_output.width != computed->width ||
+        bridge->probe_output.height != computed->height) {
+        if (!wait_gpu(bridge)) return 5;
+        bridge->probe_output.resource.Reset();
+        if (FAILED(make_texture(bridge, computed->width, computed->height,
+            DXGI_FORMAT_R32G32B32A32_FLOAT, &bridge->probe_output))) return 5;
+        bridge->probe_state = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+    }
+    transition(bridge->list.Get(), computed->resource.Get(),
+        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    transition(bridge->list.Get(), bridge->probe_output.resource.Get(),
+        bridge->probe_state, D3D12_RESOURCE_STATE_COPY_DEST);
+    bridge->list->CopyResource(bridge->probe_output.resource.Get(), computed->resource.Get());
+    transition(bridge->list.Get(), computed->resource.Get(),
+        D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    transition(bridge->list.Get(), bridge->probe_output.resource.Get(),
+        D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    bridge->probe_state = D3D12_RESOURCE_STATE_COPY_SOURCE;
+    if (!flush(bridge)) return 6;
+    *out_texture = bridge->probe_output.resource.Get();
+    *out_fence = bridge->fence.Get(); *out_value = bridge->fence_value;
     return 0;
 }
 extern "C" GPU_FUSION_API void gpu_fusion_close(GpuFusionBridge* bridge) {
@@ -799,6 +1334,31 @@ static int32_t create_bridge(void* device, const GpuFusionOptions* options,
     bridge->device = static_cast<ID3D12Device*>(device);
     bridge->options = *options;
     bridge->hdr = hdr;
+    char mode[32] = {};
+    GetEnvironmentVariableA("LUNARC_FUSION_SOLVER", mode, sizeof(mode));
+    if (mode[0] && std::strcmp(mode,"legacy") && std::strcmp(mode,"primal") &&
+        std::strcmp(mode,"observation")) {
+        delete bridge; fail("unknown fusion solver selection",0); return 3;
+    }
+    const bool large_grid=uint64_t(options->full_width)*options->full_height >= uint64_t(3840)*2160;
+    if (std::strcmp(mode, "legacy") == 0) bridge->gpu_cg = false;
+    // Full-frame dot reductions still run their group barriers for guarded
+    // iterations. Avoid dispatching extra large-grid reductions after convergence.
+    if (large_grid)
+        bridge->batch_size=1;
+    // Observation CG remains explicit: lower vector length alone did not improve
+    // measured throughput on this GPU. Preserve the coupled solver for research.
+    bridge->observation_space = bridge->gpu_cg && std::strcmp(mode,"observation")==0;
+    char preconditioner[32] = {};
+    GetEnvironmentVariableA("LUNARC_FUSION_PRECONDITIONER", preconditioner, sizeof(preconditioner));
+    if ((preconditioner[0] && std::strcmp(preconditioner,"jacobi") &&
+         std::strcmp(preconditioner,"none")) ||
+        (!bridge->observation_space && std::strcmp(preconditioner,"jacobi")==0)) {
+        delete bridge; fail("invalid fusion preconditioner selection; Jacobi requires observation space",0); return 3;
+    }
+    bridge->jacobi = bridge->observation_space && std::strcmp(preconditioner, "jacobi") == 0;
+    bridge->control_tolerance = options->relative_tolerance;
+
     D3D12_COMMAND_QUEUE_DESC queue{};
     queue.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
     HRESULT hr = bridge->device->CreateCommandQueue(&queue,
@@ -823,6 +1383,19 @@ static int32_t create_bridge(void* device, const GpuFusionOptions* options,
         hr = upload_axis(bridge, options->layers[i].horizontal, &layer.x);
         if (SUCCEEDED(hr)) hr = upload_axis(bridge,
             options->layers[i].vertical, &layer.y);
+    }
+    if (SUCCEEDED(hr) && bridge->observation_space) {
+        double row_bound = 0, column_bound = 0, max_diagonal = bridge->jacobi ? 0 : 1;
+        for (uint32_t i = 0; i < options->layer_count; ++i) {
+            const auto& layer = bridge->layers[i];
+            const double weight = std::sqrt(double(layer.weight));
+            row_bound = (std::max)(row_bound, weight*layer.x.max_row_abs*layer.y.max_row_abs);
+            column_bound += weight*layer.x.max_column_abs*layer.y.max_column_abs;
+            if (bridge->jacobi) max_diagonal = (std::max)(max_diagonal,
+                double(options->beta)+layer.weight*layer.x.max_norm_square*layer.y.max_norm_square);
+        }
+        const double bound = (std::max)(1e-30, std::sqrt(row_bound*column_bound*max_diagonal));
+        bridge->control_tolerance = static_cast<float>(options->relative_tolerance / bound);
     }
     if (SUCCEEDED(hr)) hr = make_resources(bridge);
     if (SUCCEEDED(hr)) hr = make_kernels(bridge);

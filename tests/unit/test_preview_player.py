@@ -38,9 +38,10 @@ class Service:
 
 
 async def until(predicate):
-    async with asyncio.timeout(3):
+    async def poll():
         while not predicate():
             await asyncio.sleep(.005)
+    await asyncio.wait_for(poll(),timeout=3)
 
 
 async def close(player, task):

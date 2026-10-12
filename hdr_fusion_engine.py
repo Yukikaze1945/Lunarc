@@ -578,6 +578,11 @@ class HdrFusionBridge:
                 f"{report.output_state}, which is not the COPY_SOURCE a consumer "
                 "on another queue may take")
         self._require_solved(report)
+        from fusion_diagnostics import read_solver_diagnostics
+        native_report = _report_dict(report, REPORT_FIELDS)
+        diagnostics = read_solver_diagnostics(self._lib, self._handle)
+        if diagnostics is not None:
+            native_report["diagnostics"] = diagnostics
         return {
             "d3d12_resource": texture.value, "d3d12_fence": fence.value,
             "fence_value": value.value,
@@ -585,7 +590,7 @@ class HdrFusionBridge:
             "width": int(report.output_width),
             "height": int(report.output_height),
             "state": int(report.output_state),
-            "report": _report_dict(report, REPORT_FIELDS),
+            "report": native_report,
             "iterations": int(report.iterations),
             "converged": bool(report.converged),
             "unrepresentable_components": int(report.unrepresentable_components),

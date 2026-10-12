@@ -143,11 +143,11 @@ def derive(out_dir):
         "status": ("DONE_PROVEN" if analysis.get("pass") and gates["gate4_hardware_timing_and_avx2"]["pass"]
                    and analysis.get("frames_timed", 0) > 0
                    and analysis.get("retired_keys_still_absent")
-                   and analysis.get("frames_with_six_distinct_spans") == analysis.get("frames_timed")
+                   and analysis.get("frames_native_mapped") == analysis.get("frames_timed")
                    else "NOT_READY"),
         "evidence": {
             "hardware_frames_timed": analysis.get("frames_timed"),
-            "frames_where_all_six_spans_differ": analysis.get("frames_with_six_distinct_spans"),
+            "frames_mapped_to_native_fields": analysis.get("frames_native_mapped"),
             "retired_alias_keys_absent": analysis.get("retired_keys_still_absent"),
             "stages_still_unmeasurable": analysis.get("always_unmeasured"),
             "problems": analysis.get("problems"),

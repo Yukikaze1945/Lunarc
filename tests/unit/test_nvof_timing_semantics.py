@@ -55,13 +55,13 @@ def test_every_reported_key_equals_its_own_native_span(analysis):
     assert not analysis["problems"], analysis["problems"]
 
 
-def test_no_two_stages_share_a_number(analysis):
-    """The aliasing this round removed: one measurement written into several keys."""
-    assert analysis["frames_timed"] > 0
-    assert analysis["frames_with_six_distinct_spans"] == analysis["frames_timed"], (
-        f"{analysis['frames_timed'] - analysis['frames_with_six_distinct_spans']} of "
-        f"{analysis['frames_timed']} frames published fewer distinct numbers than the six "
-        f"stages they claim to time, which means two stages shared one measurement")
+def test_equal_duration_stages_still_map_to_their_own_native_fields(rows):
+    """Independent clock spans may coincide; each key must retain its provenance."""
+    paired=[row for row in rows if row['path']=='timed']
+    assert paired
+    for row in paired:
+        for field,key in timing.FIELD_TO_KEY.items():
+            assert row['reported'][key] == row['raw'][field]
 
 
 def test_a_span_that_cannot_be_timed_is_never_zero(rows):

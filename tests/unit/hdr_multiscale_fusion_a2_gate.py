@@ -437,7 +437,10 @@ def main():
     parser.add_argument("--archive", default=ARCHIVE_FUSION,
                         help="the pre-A2 fusion bridge, for the SDR control")
     parser.add_argument("--out", default=None)
+    parser.add_argument("--solver-optimization", action="store_true",
+                        help="compare an optimized solver with a typed or pre-typed archive")
     args = parser.parse_args()
+    args.archive = os.path.abspath(args.archive)
 
     run_dir = os.path.abspath(args.out or os.path.join(
         ROOT, "bench_out", "hdr_a2_evidence", time.strftime("a2-%Y%m%d-%H%M%S")))
@@ -673,10 +676,11 @@ def main():
                                  args.archive, fixture_dir)
     evidence["sdr_new"] = new_sdr
     evidence["sdr_archive"] = old_sdr
-    check(old_sdr.get("fusion_typed_group") == "absent"
+    if not args.solver_optimization:
+        check(old_sdr.get("fusion_typed_group") == "absent"
           and integer(old_sdr, "fusion_hdr_abi") == 0,
           "the archived build carries no typed group and loads as a capability "
-          "answer, not a failure", old_sdr.get("fusion_typed_group", "?"))
+              "answer, not a failure", old_sdr.get("fusion_typed_group", "?"))
     check(integer(new_sdr, "sdr_output_format") == DXGI_R8G8B8A8_UNORM,
           "the SDR entry still composites bytes",
           f"format {new_sdr.get('sdr_output_format')}")
@@ -692,6 +696,15 @@ def main():
                "sdr_final_residual_norm", "sdr_relative_residual",
                "sdr_converged", "sdr_scalar_readback_bytes",
                "sdr_full_device_copy_bytes", "sdr_process_count"):
+        if args.solver_optimization and key in (
+                "sdr_iterations", "sdr_final_residual_norm",
+                "sdr_relative_residual", "sdr_scalar_readback_bytes"):
+            continue  # Different recurrence/reporting and explicitly metered control packets.
+        if args.solver_optimization and key == "sdr_initial_residual_norm":
+            check(math.isclose(number(new_sdr, key), number(old_sdr, key),
+                               rel_tol=2e-6, abs_tol=1e-7),
+                  "SDR baseline equation norm agrees within float32 rounding")
+            continue
         check(number(new_sdr, key) == number(old_sdr, key),
               f"the SDR report is unchanged on {key}",
               f"{new_sdr.get(key)} against {old_sdr.get(key)}")

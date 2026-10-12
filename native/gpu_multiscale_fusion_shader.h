@@ -2,7 +2,7 @@
 #define GPU_MULTISCALE_FUSION_SHADER_H
 static constexpr char fusion_shader[] = R"hlsl(
 #define TAPS 24u
-struct TapRow { float W[TAPS]; int I[TAPS]; };
+struct TapRow { float W[TAPS]; int I[TAPS]; float NormSquare; };
 struct Edge { uint Dest; float Weight; };
 Texture2D<float4> InputA : register(t0);
 Texture2D<float4> InputB : register(t1);
@@ -14,30 +14,46 @@ StructuredBuffer<TapRow> VerticalPlan : register(t6);
 RWTexture2D<float4> Output : register(u0);
 RWStructuredBuffer<float> Partial : register(u1);
 RWTexture2D<float4> Final : register(u2);
+ByteAddressBuffer Scalar : register(t7);
+struct CgPacket {
+    float Square, Initial, Alpha, Gamma;
+    uint Status, Iterations;
+    float Tolerance, Reserved;
+};
+RWStructuredBuffer<CgPacket> Cg : register(u3);
 cbuffer Frame : register(b0) {
-    uint OutWidth, OutHeight, InWidth, InHeight;
+    uint OutWidth, OutHeight, TapCount, BetaBits;
     uint FullPitch, GroupWidth, Mode;
     float Scale;
 };
+bool cg_inactive() { if ((Mode & 256u) == 0u) return false; return Scalar.Load(16) != 0u; }
 [numthreads(8,8,1)]
 void ForwardY(uint3 id : SV_DispatchThreadID) {
-    if (id.x >= OutWidth || id.y >= OutHeight) return;
+    if (id.x >= OutWidth || id.y >= OutHeight || cg_inactive()) return;
     precise float4 total = float4(0,0,0,0);
-    [loop] for (uint t=0; t<TAPS; ++t)
+    #ifdef FUSION_TAP_COUNT
+    [unroll] for (uint t=0; t<FUSION_TAP_COUNT; ++t)
+    #else
+    [loop] for (uint t=0; t<TapCount; ++t)
+    #endif
         total += Plan[id.y].W[t] * InputA.Load(int3(id.x,Plan[id.y].I[t],0));
     Output[id.xy] = total;
 }
 [numthreads(8,8,1)]
 void ForwardX(uint3 id : SV_DispatchThreadID) {
-    if (id.x >= OutWidth || id.y >= OutHeight) return;
+    if (id.x >= OutWidth || id.y >= OutHeight || cg_inactive()) return;
     precise float4 total = float4(0,0,0,0);
-    [loop] for (uint t=0; t<TAPS; ++t)
+    #ifdef FUSION_TAP_COUNT
+    [unroll] for (uint t=0; t<FUSION_TAP_COUNT; ++t)
+    #else
+    [loop] for (uint t=0; t<TapCount; ++t)
+    #endif
         total += Plan[id.x].W[t] * InputA.Load(int3(Plan[id.x].I[t],id.y,0));
     Output[id.xy] = total;
 }
 [numthreads(8,8,1)]
 void AdjointX(uint3 id : SV_DispatchThreadID) {
-    if (id.x >= OutWidth || id.y >= OutHeight) return;
+    if (id.x >= OutWidth || id.y >= OutHeight || cg_inactive()) return;
     precise float4 total = float4(0,0,0,0);
     for (uint k=Offsets[id.x]; k<Offsets[id.x+1]; ++k)
         total += Edges[k].Weight * InputA.Load(int3(Edges[k].Dest,id.y,0));
@@ -45,7 +61,7 @@ void AdjointX(uint3 id : SV_DispatchThreadID) {
 }
 [numthreads(8,8,1)]
 void AdjointY(uint3 id : SV_DispatchThreadID) {
-    if (id.x >= OutWidth || id.y >= OutHeight) return;
+    if (id.x >= OutWidth || id.y >= OutHeight || cg_inactive()) return;
     precise float4 total = float4(0,0,0,0);
     for (uint k=Offsets[id.y]; k<Offsets[id.y+1]; ++k)
         total += Edges[k].Weight * InputA.Load(int3(id.x,Edges[k].Dest,0));
@@ -67,8 +83,18 @@ void CatmullBaseline(uint3 id : SV_DispatchThreadID) {
 [numthreads(8,8,1)]
 void Vector(uint3 id : SV_DispatchThreadID) {
     if (id.x >= OutWidth || id.y >= OutHeight) return;
+    if (cg_inactive()) return;
     float4 a = InputA.Load(int3(id.xy,0));
-    Output[id.xy] = Mode == 1u ? Scale * a :
+    uint operation = Mode & 255u;
+    if (operation == 2u) Output[id.xy] += asfloat(Scalar.Load(8)) * a;
+    else if (operation == 3u) Output[id.xy] -= asfloat(Scalar.Load(8)) * a;
+    else if (operation == 4u) Output[id.xy] = a + asfloat(Scalar.Load(12)) * Output[id.xy];
+    else if (operation == 5u) Output[id.xy] += Scale * a;
+    else if (operation == 6u) Output[id.xy] = Scale * Output[id.xy] + asfloat(BetaBits) * a;
+    else if (operation == 7u) Output[id.xy] = Scale * (a - InputB.Load(int3(id.xy,0))) - Output[id.xy];
+    else if (operation == 8u) Output[id.xy] = a /
+        (asfloat(BetaBits) + Scale*Plan[id.x].NormSquare*VerticalPlan[id.y].NormSquare);
+    else Output[id.xy] = operation == 1u ? Scale * a :
         a + Scale * InputB.Load(int3(id.xy,0));
 }
 [numthreads(8,8,1)]
@@ -81,8 +107,8 @@ void Composite(uint3 id : SV_DispatchThreadID) {
 }
 /* --- Typed HDR (scRGB) path ---------------------------------------------
  *
- * The two entries below exist for the HDR solver only; every kernel above is
- * the code the SDR path has always run and none of them changed. The payload
+ * The two entries below exist for the HDR colour contract; the shared kernels
+ * above solve both colour paths with FP32 working vectors. The payload
  * they move is linear scRGB half at 8 bytes a sample, which is why they read
  * the transport plane by byte offset instead of the RGBA8 byte triplets above.
  * The half widening and the unrepresentable test are the same formulations the
@@ -167,7 +193,7 @@ groupshared float SharedSum[64];
 void Dot(uint3 id : SV_DispatchThreadID, uint3 group : SV_GroupID,
          uint local : SV_GroupIndex) {
     float value = 0;
-    if (id.x < OutWidth && id.y < OutHeight) {
+    if (!cg_inactive() && id.x < OutWidth && id.y < OutHeight) {
         float3 a = InputA.Load(int3(id.xy,0)).rgb;
         float3 b = InputB.Load(int3(id.xy,0)).rgb;
         value = dot(a,b);
@@ -180,6 +206,51 @@ void Dot(uint3 id : SV_DispatchThreadID, uint3 group : SV_GroupID,
     }
     if (local==0) Partial[group.y*GroupWidth+group.x]=SharedSum[0];
 }
+/* Control and subsequent vector passes use the same GPU packet. Status:
+ * 0 active, 1 converged, 2 invalid initial norm, 3 invalid CG arithmetic. */
+[numthreads(1,1,1)]
+void CgControl(uint3 id : SV_DispatchThreadID) {
+    float value = (Mode & 512u) != 0u ? Cg[0].Reserved : asfloat(Scalar.Load(0));
+    uint operation = Mode & 255u;
+    CgPacket state;
+    if (operation == 0u) {
+        state.Square = value; state.Initial = value;
+        state.Alpha = 0; state.Gamma = 0; state.Iterations = 0;
+        state.Tolerance = Scale; state.Reserved = 0;
+        state.Status = !isfinite(value) || value < 0 ? 2u : value == 0 ? 1u : 0u;
+    } else {
+        state = Cg[0];
+        if (operation == 4u) state.Reserved = 0;
+        else if (operation == 5u) state.Reserved += value;
+        else if (operation == 6u) {
+            state.Square = value; state.Alpha = 0; state.Gamma = 0;
+            state.Status = !isfinite(value) || value < 0 ? 2u : state.Initial == 0 ? 1u : 0u;
+        }
+        else if (operation == 3u) { // Reliable residual replacement; retain target/count.
+            state.Square = value; state.Alpha = 0; state.Gamma = 0;
+            state.Status = !isfinite(value) || value < 0 ? 3u : 0u;
+        } else if (state.Status == 0u) {
+            if (operation == 1u) {
+                if (!isfinite(value) || value <= 0) state.Status = 3u;
+                else {
+                    state.Alpha = state.Square / value;
+                    if (!isfinite(state.Alpha)) state.Status = 3u;
+                }
+            } else if (operation == 2u) {
+                if (!isfinite(value) || value < 0) state.Status = 3u;
+                else {
+                    state.Gamma = value / state.Square;
+                    state.Square = value; ++state.Iterations;
+                    if (!isfinite(state.Gamma)) state.Status = 3u;
+                    else if (value <= state.Tolerance*state.Tolerance*state.Initial)
+                        state.Status = 1u;
+                }
+            }
+        }
+    }
+    Cg[0] = state;
+}
+
 groupshared float ReduceSum[256];
 [numthreads(256,1,1)]
 void Reduce(uint3 group : SV_GroupID, uint local : SV_GroupIndex) {

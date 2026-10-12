@@ -2182,6 +2182,9 @@ class HdrMultiScaleChain(HdrChain):
                 flow = entry_flow
         stages["nvof_flow"] = layers[0]["stages"].get("nvof_flow")
         stages["dlss_inference"] = layers[0]["stages"].get("dlss_inference")
+        self.layer_inference_ms = [float(entry["stages"].get("dlss_inference") or 0.0)
+                                   for entry in layers]
+        stages["nr_total_ms"] = sum(self.layer_inference_ms)
         for key in ("layer_nvof_flow_ms", "layer_dlss_inference_ms"):
             stages[key] = sum(entry["stages"].get(key) or 0.0
                               for entry in layers[1:])
@@ -2302,6 +2305,7 @@ class HdrMultiScaleChain(HdrChain):
         """
         return {
             "layer_count": len(self.layer_calls),
+            "layer_inference_ms": list(getattr(self, "layer_inference_ms", [])),
             "reconstruction_mode": self.multi["mode"],
             "fusion_mode_requested": self.multi["fusion"],
             "layer_scales": list(self.multi["scales"]),

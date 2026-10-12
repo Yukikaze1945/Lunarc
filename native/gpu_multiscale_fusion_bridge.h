@@ -63,6 +63,29 @@ GPU_FUSION_API int32_t gpu_fusion_get_transfer_counters(
 GPU_FUSION_API void gpu_fusion_close(GpuFusionBridge* bridge);
 GPU_FUSION_API const char* gpu_fusion_last_error(void);
 
+/* Optional diagnostics; the existing colour and solve ABIs remain unchanged.
+ * Workspace covers this solver's FP32 textures, not NR/decoder/encoder memory.
+ * Times are accumulated CPU fence waits; frame fusion wall time is measured by
+ * the caller around the completed process entry. */
+typedef struct GpuFusionSolverDiagnostics {
+    uint32_t struct_size, version, solver_path, batch_size;
+    uint64_t workspace_logical_bytes, workspace_committed_bytes;
+    uint64_t scalar_sync_count;
+    double cpu_wait_ms;
+    uint32_t horizontal_taps[3], vertical_taps[3];
+} GpuFusionSolverDiagnostics;
+GPU_FUSION_API int32_t gpu_fusion_get_solver_diagnostics(
+    GpuFusionBridge* bridge, GpuFusionSolverDiagnostics* report);
+
+/* Synthetic correctness instrumentation. Borrow an FP32 input in
+ * NON_PIXEL_SHADER_RESOURCE behind its producer fence; return a private copy
+ * in COPY_SOURCE. It neither processes a production frame nor reads a picture
+ * to the host. The returned resource is held until the next probe/close. */
+GPU_FUSION_API int32_t gpu_fusion_probe_operator(GpuFusionBridge* bridge,
+    uint32_t layer, uint32_t adjoint, void* input_texture,
+    void* input_fence, uint64_t input_value,
+    void** output_texture, void** output_fence, uint64_t* output_value);
+
 /* --- Typed HDR (scRGB) path --------------------------------------------- */
 
 /* The optional HDR group, versioned on its own. It does not change

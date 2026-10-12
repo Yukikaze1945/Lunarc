@@ -2309,6 +2309,7 @@ class MultiScaleObservationChain(Chain):
             self.base_low_residual, outcome["_dlss_resource"],
             outcome["_working_color"], frame)
         observations = [first_observation]
+        nr_times = [float(outcome["stages"].get("dlss_inference", 0.0))]
         full_ptr, full_pitch = outcome["_full_color"]
         for number, layer in enumerate(self.extra_layers, 1):
             width, height = layer["dims"]
@@ -2326,17 +2327,22 @@ class MultiScaleObservationChain(Chain):
                 flow = layer["flow_provider"].get_flow_device_rgba(
                     index, working, frame.cuda_context,
                     is_discontinuous=is_discontinuous)
+                inference_start = time.perf_counter()
                 dlss = layer["live"].process_device_color_flow_resource(
                     working, flow, reset=reset)
             else:
+                inference_start = time.perf_counter()
                 dlss = layer["live"].process_device_color_zero_motion_resource(
                     working, reset=reset)
+            nr_times.append((time.perf_counter()-inference_start)*1000.0)
             layer["low_residual"], observed = self._observe(
                 layer["low_residual"], dlss, working, frame)
             observations.append(observed)
             self.layer_calls[number] += 1
             self.layer_reset_flags[number].append(bool(reset))
         outcome["_observations"] = observations
+        self.layer_inference_ms = nr_times
+        outcome["stages"]["nr_total_ms"] = sum(nr_times)
         if self.preview_consumer is not None:
             self._defer_preview_consumer = False
         if self.defer_encode:
@@ -2362,6 +2368,10 @@ class MultiScaleObservationChain(Chain):
                 "final_residual_norm": report.final_residual_norm,
                 "relative_residual": report.relative_residual,
                 "converged": bool(report.converged)})
+            from fusion_diagnostics import read_solver_diagnostics
+            diagnostics = read_solver_diagnostics(self.b["fusion"], self.fusion_handle)
+            if diagnostics is not None:
+                self.fusion_reports[-1]["diagnostics"] = diagnostics
             mark = time.perf_counter()
             controlled = self._post_process(frame, full_ptr, full_pitch,
                 {"d3d12_resource": output.value, "d3d12_fence": None,
@@ -2379,6 +2389,7 @@ class MultiScaleObservationChain(Chain):
 
     def layer_diagnostics(self):
         return {"layer_count": len(self.layer_calls),
+                "layer_inference_ms": list(getattr(self, "layer_inference_ms", [])),
                 "layer_working_dims": [list(self.working)] +
                                       [list(layer["dims"]) for layer in self.extra_layers],
                 "layer_session_ids": [self.live.session_id] +
