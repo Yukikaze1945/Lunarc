@@ -1090,10 +1090,11 @@ export const DeliverPage: React.FC<DeliverPageProps> = React.memo(({
                 <label className="text-[11px] text-lunarc-muted mb-1 block">分辨率</label>
                 <select
                   value={txSettings.resolution_mode}
+                  disabled={choices.resolution_mode?.length === 1}
                   onChange={(e) => updateSetting('resolution_mode', e.target.value)}
                   className="w-full bg-lunarc-dark border border-lunarc-border focus:border-lunarc-accent rounded px-3 py-1.5 text-xs text-lunarc-text focus:outline-none"
                 >
-                  <option value="original" disabled={Boolean(choices.resolution_mode && !choices.resolution_mode.includes("original"))}>保持原始素材比例 ({video ? `${video.width}×${video.height}` : '原始'})</option>
+                  <option value="original" disabled={Boolean(choices.resolution_mode && !choices.resolution_mode.includes("original"))}>{choices.gpu || choices.wide ? `渲染链输出 (${video ? `${outputDimensions.width}×${outputDimensions.height}` : '未加载素材'})` : `保持素材分辨率 (${video ? `${video.width}×${video.height}` : '未加载素材'})`}</option>
                   <option value="double" disabled={Boolean(choices.resolution_mode && !choices.resolution_mode.includes("double"))}>原始 ×2 超分辨率倍乘</option>
                   <option value="half" disabled={Boolean(choices.resolution_mode && !choices.resolution_mode.includes("half"))}>原始 ×0.5 降采倍乘</option>
                   <option value="5120x2880" disabled={Boolean(choices.resolution_mode && !choices.resolution_mode.includes("5120x2880"))}>5120×2880 (5K UHD)</option>
