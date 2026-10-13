@@ -61,6 +61,10 @@ GPU_FUSION_API int32_t gpu_fusion_process(GpuFusionBridge* bridge,
 GPU_FUSION_API int32_t gpu_fusion_get_transfer_counters(
     GpuFusionBridge* bridge, GpuFusionTransferCounters* counters);
 GPU_FUSION_API void gpu_fusion_close(GpuFusionBridge* bridge);
+/* Owner thread, between completed frames. Keeps tap plans and work textures. */
+GPU_FUSION_API int32_t gpu_fusion_update_parameters(GpuFusionBridge* bridge,
+    const float* weights, uint32_t layer_count, float beta, float strength,
+    float relative_tolerance, uint32_t max_iterations);
 GPU_FUSION_API const char* gpu_fusion_last_error(void);
 
 /* Optional diagnostics; the existing colour and solve ABIs remain unchanged.

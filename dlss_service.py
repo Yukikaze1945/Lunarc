@@ -195,6 +195,9 @@ def _hdr_request(job_settings):
 
 
 class DLSSService:
+    # Layout requests and render workers may arrive together during startup.
+    # Protect construction separately from GPU work, so layout stays responsive.
+    _preview_engine_creation_lock = threading.Lock()
     def __init__(self):
         self.video_path = None
         self.video_info = None  # (total_frames, fps, width, height)
@@ -268,6 +271,7 @@ class DLSSService:
 
         # DLSS Live Session
         self._live_session = None
+        self._live_session_owner = None
         self._live_session_dims = None
         # Which GPU-host entry point backs the cached session: "gpu_zero_motion",
         # "gpu_host_motion", "gpu_flow" (an export's device-resident flow) or
@@ -383,6 +387,7 @@ class DLSSService:
         # The GPU owner thread closes/reopens on its next source-key change.
         # Do not wait for an old native frame here; WS revisions suppress it.
         self._preview_revision = getattr(self, '_preview_revision', 0) + 1
+        self._preview_source_revision = getattr(self, '_preview_source_revision', 0) + 1
         self._preview_diagnostics = {}
         self._legacy_source_changed = True
 
@@ -454,6 +459,7 @@ class DLSSService:
             import native_effects
             if new_settings['render_pipeline'] is not None:
                 new_settings['render_pipeline'] = native_effects.stages(new_settings)
+                new_settings['truehdr_enabled'] = 'truehdr' in new_settings['render_pipeline']
         for key, allowed in (('raft_analysis_edge', (512, 720, 1080)),
                              ('raft_iterations', range(1, 25))):
             if key in new_settings:
@@ -518,6 +524,17 @@ class DLSSService:
         # Settings requests must not block behind image readback. Publish a new
         # immutable snapshot; the next GPU request applies it on the owner thread.
         with self._settings_lock:
+            if (new_settings.get('reconstruction_mode') in ('dual', 'triple') and
+                    self.settings.get('reconstruction_mode', 'single') == 'single' and
+                    'fusion_mode' not in new_settings):
+                new_settings['fusion_mode'] = 'sequential'
+            if 'layer_settings' in new_settings:
+                import copy
+                from layer_settings import resolve_layer_settings
+                merged = dict(self.settings, **new_settings)
+                for index in (1, 2):
+                    resolve_layer_settings(merged, index)
+                new_settings['layer_settings'] = copy.deepcopy(new_settings['layer_settings'])
             self.settings = dict(self.settings, **new_settings)
             self._preview_revision = getattr(self, '_preview_revision', 0) + 1
             self._logged_live_err = False
@@ -605,12 +622,17 @@ class DLSSService:
 
     def _get_or_create_live(self, w, h):
         """Ensure a live session exists for the current preview kind and dims."""
-        if self.active_job_id is not None:
+        if self.active_job_id is not None or getattr(self,'_live_session_owner',None)=='export':
             return None
         # The fuse refuses new DLSS work for the whole process, and preview is DLSS work:
         # a session that survived a timed-out close is the polluted state the fuse was
         # set for, so neither reusing it nor opening over it is allowed here.
         self._ensure_native_healthy()
+        engine = getattr(self,'_gpu_preview',None)
+        if engine is not None and getattr(engine,'live',None) is not None:
+            # Both front ends use the same native host's primary slot. Release
+            # the device pipeline on its owner thread before a host-image open.
+            engine.close()
 
         dims = (w, h)
         if getattr(self, '_legacy_source_changed', False):
@@ -654,6 +676,7 @@ class DLSSService:
                 lambda: self._open_gpu_live(module, w, h, kind),
                 120, f"GPU {kind} 预览会话初始化")
             self._live_session = live
+            self._live_session_owner = 'preview'
             self._live_session_dims = dims
             self._live_session_kind = kind
             self._logged_live_err = False
@@ -737,26 +760,40 @@ class DLSSService:
         if engine is not None:
             engine.close()
 
+    def _get_gpu_preview(self):
+        with self._preview_engine_creation_lock:
+            engine = getattr(self,'_gpu_preview',None)
+            if engine is None:
+                from gpu_preview_engine import GpuPreview
+                engine = GpuPreview()
+                self._gpu_preview = engine
+            return engine
+
     def preview_diagnostics(self):
         return dict(getattr(self, '_preview_diagnostics', {}) or {})
 
-    def _render_gpu_preview(self, frame_idx, view, split_x, zoom, pan, preview_mode, display_edge=0):
+    def _render_gpu_preview(self, frame_idx, view, split_x, zoom, pan, preview_mode, display_edge=0, native=False):
         if not self._live_lock.acquire(timeout=2):
             return None, 'GPU is busy; preview waiting, no layer reduction'
         try:
+            if self.active_job_id is not None or getattr(self,'_live_session_owner',None)=='export':
+                return None,'GPU_EXPORT_BUSY'
             self._ensure_native_healthy()
             if self._live_session:
                 self._live_session.close()
                 self._live_session = None
+                self._live_session_owner = None
                 self._live_session_dims = self._live_session_kind = None
-            if getattr(self, '_gpu_preview', None) is None:
-                from gpu_preview_engine import GpuPreview
-                self._gpu_preview = GpuPreview()
-            original, processed, diagnostics = self._gpu_preview.render(
-                self.video_path, self.settings, frame_idx,
-                need_source=view in ('orig', 'dual', 'split'), reuse_display=True,
+            engine = self._get_gpu_preview()
+            with self._settings_lock:
+                settings = dict(self.settings)
+                settings_revision = getattr(self, '_preview_revision', 0)
+            original, processed, diagnostics = engine.render(
+                self.video_path, settings, frame_idx,
+                need_source=native or view in ('orig', 'dual', 'split'), reuse_display=not preview_mode,
                 display_edge=(display_edge // 2 if view == 'dual' else display_edge) if zoom <= 1.01 else 0,
-                **({'flow_view': True} if view == 'flow' else {}))
+                **({'flow_view': True} if view == 'flow' else {}), native=native)
+            diagnostics['settings_revision'] = settings_revision
             self._preview_diagnostics = diagnostics
         except Exception as error:
             self._preview_diagnostics = dict(status='failed', message=str(error), frame=frame_idx)
@@ -765,6 +802,11 @@ class DLSSService:
         finally:
             self._live_lock.release()
         display_start = time.perf_counter()
+        if native:
+            diagnostics.update(jpeg_encode_ms=0,jpeg_bytes=0,compose_ms=0,
+                               transmitted_resolution=None,display_size_policy='native FP16 panel')
+            self._preview_diagnostics = diagnostics
+            return b'native', 'ok'
         if view == 'orig':
             out = original
         elif view == 'dual':
@@ -806,12 +848,14 @@ class DLSSService:
         return (encoded.tobytes(), 'ok') if ok else (None, 'Preview encoding failed')
 
     def render_preview(self, frame_idx: int, view: str = "dlss", split_x: float = 0.5,
-                       zoom: float = 1.0, pan: tuple = (0.5, 0.5), preview_mode: bool = False, display_edge: int = 0):
+                       zoom: float = 1.0, pan: tuple = (0.5, 0.5), preview_mode: bool = False, display_edge: int = 0, native=False):
         """Render preview frame according to active view and settings."""
         if not self.video_path or self.video_info is None:
             return None, "No video loaded"
         if view not in ("orig", "flow", "dlss", "split", "dual"):
             return None, f"Unsupported preview view: {view}"
+        if self.active_job_id is not None or getattr(self,'_live_session_owner',None)=='export':
+            return None,'GPU_EXPORT_BUSY'
 
         # Native device decode and the very same single/multiscale frame core as
         # export. CPU-flow single-layer preview retains its explicit old path.
@@ -831,8 +875,10 @@ class DLSSService:
         if (not image_nr and self.active_job_id is None and
                 (device_flow_view or (view != 'flow' and
                  (native_guidance or wants_multiscale or wide_input)))):
-            return self._render_gpu_preview(frame_idx, view, split_x, zoom, pan, preview_mode, display_edge)
+            return self._render_gpu_preview(frame_idx, view, split_x, zoom, pan, preview_mode, display_edge,native=native)
 
+        if native:
+            return self._render_gpu_preview(frame_idx,view,split_x,zoom,pan,preview_mode,display_edge,native=True)
         cur_bgr = None
         prev_bgr = None
 
@@ -1023,6 +1069,12 @@ class DLSSService:
         for key in ("layer_scales", "layer_weights"):
             if isinstance(job_settings.get(key), (list, tuple)):
                 job_settings[key] = list(job_settings[key])
+        if 'layer_settings' in job_settings:
+            import copy
+            from layer_settings import resolve_layer_settings
+            for index in (1, 2):
+                resolve_layer_settings(job_settings, index)
+            job_settings['layer_settings'] = copy.deepcopy(job_settings['layer_settings'])
         job_settings.pop("depth_convention", None)
         if int(job_settings.get("guidance_mode", 0)) not in (0, 1):
             raise ValueError("guidance_mode supports only 0 (off) or 1 (flow)")
@@ -1060,6 +1112,10 @@ class DLSSService:
         # An empty destination is not a contradiction yet - it is derived from the
         # source at run time and checked again there.
         pipeline.assert_output_not_input(input_path, out_path)
+        from export_range import validate_range
+        selection = validate_range(job_data.get("frame_range"))
+        if selection and requested_export_backend != "gpu_transfer":
+            raise ValueError("选区导出需要 GPU 导出链路")
         tot_frames = self.video_info.get("frames", 0) if self.video_info else 0
         job = {
             "id": str(uuid.uuid4())[:8],
@@ -1073,12 +1129,15 @@ class DLSSService:
             "with_audio": bool(job_data.get("with_audio", True)),
             "settings": job_settings,
             "transcode_settings": job_data.get("transcode_settings", None),
+            "frame_range": selection,
+            "preview_segment": bool(job_data.get("preview_segment", False)),
             "status": "pending",  # pending, running, completed, skipped, cancelled, failed
             "progress": 0.0,
             "fps": 0.0,
             "eta": 0,
             "current_frame": 0,
-            "total_frames": int(job_data.get("total_frames", tot_frames)),
+            "total_frames": (selection['end_frame'] - selection['start_frame'] if selection
+                             else int(job_data.get("total_frames", tot_frames))),
             # Set on a job that left its destination untouched because it already
             # existed; the status says skipped and this says which rule said so.
             "skipped_reason": None,
@@ -1168,23 +1227,60 @@ class DLSSService:
         # Cancel must take effect even when the worker is blocked in IO or a
         # native call: set the flag AND kill owned FFmpeg subprocesses. Pipe
         # readers observe the death promptly via _read_exactly/proc.poll().
+        self._preview_kick_cancelled = True
         self._cancel_requested = True
         self._kill_active_procs()
         diagnostic_logger.log("WARN", "Queue", "收到主动取消当前渲染作业请求（已置位并杀死编码子进程）")
 
-    def start_queue(self, progress_callback=None):
+    def start_queue(self, progress_callback=None, *, preview_only=False):
         with self._queue_lock:
             if self._queue_thread and self._queue_thread.is_alive():
                 return False
             self._cancel_requested = False
             self._queue_thread = threading.Thread(
-                target=self._run_queue, args=(progress_callback,), daemon=True, name="RenderQueue"
+                target=self._run_queue, args=(progress_callback, preview_only), daemon=True, name="RenderQueue"
             )
             self._queue_thread.start()
             diagnostic_logger.log("INFO", "Queue", "后台渲染队列线程已启动")
             return True
 
-    def _run_queue(self, progress_callback):
+    def start_preview_queue(self, progress_callback=None):
+        """Run requested cached segments without starting unrelated pending exports.
+
+        A request arriving during the worker's terminal notification must not be
+        stranded. The small coordinator joins that owner before starting another;
+        it never opens a second GPU session or blocks an HTTP request.
+        """
+        self._preview_kick_cancelled = False
+        if self.start_queue(progress_callback, preview_only=True):
+            return True
+        with self._queue_lock:
+            existing = getattr(self, '_preview_kick_thread', None)
+            if existing and existing.is_alive():
+                return False
+            def resume():
+                try:
+                    while True:
+                        with self._queue_lock:
+                            if getattr(self, '_preview_kick_cancelled', False):
+                                return
+                            pending = any(j['status'] == 'pending' and j.get('preview_segment') for j in self.jobs)
+                            owner = self._queue_thread
+                        if not pending:
+                            return
+                        if owner and owner.is_alive():
+                            owner.join()
+                            continue
+                        if self.start_queue(progress_callback, preview_only=True):
+                            return
+                finally:
+                    with self._queue_lock:
+                        self._preview_kick_thread = None
+            self._preview_kick_thread = threading.Thread(target=resume, daemon=True, name='PreviewQueueResume')
+            self._preview_kick_thread.start()
+        return False
+
+    def _run_queue(self, progress_callback, preview_only=False):
         # UI delivery must never abort the worker or strand a running row. This
         # wrapper also covers callbacks inside the encoder/export implementation.
         original_callback = progress_callback
@@ -1206,7 +1302,8 @@ class DLSSService:
             with self._queue_lock:
                 if self._cancel_requested:
                     break
-                job = next((j for j in self.jobs if j['status'] == 'pending'), None)
+                job = next((j for j in self.jobs if j['status'] == 'pending' and
+                            (not preview_only or j.get('preview_segment'))), None)
                 if job is None:
                     break
                 job['status'] = 'running'
@@ -1330,6 +1427,24 @@ class DLSSService:
         return live_type(width, height, settings, **({'color_format': 'rgba16f'} if wide else {}))
 
     def _execute_job(self, job, progress_callback):
+        try:
+            return self._execute_job_owned(job,progress_callback)
+        finally:
+            # Guidance/encoder setup can fail before the frame-loop finally.
+            # Keep export ownership protected until its host is really closed.
+            if getattr(self,'_live_session_owner',None)=='export':
+                acquired=self._live_lock.acquire(timeout=10)
+                if not acquired:
+                    self._mark_native_degraded('导出会话清理锁超时')
+                else:
+                    try:
+                        if self._live_session is not None:self._live_session.close()
+                        self._live_session=None
+                        self._live_session_dims=self._live_session_kind=None
+                        self._live_session_owner=None
+                    finally:self._live_lock.release()
+
+    def _execute_job_owned(self, job, progress_callback):
         v_path = job["input_path"]
         if not os.path.exists(v_path):
             raise FileNotFoundError(f"Input video not found: {v_path}")
@@ -1342,7 +1457,17 @@ class DLSSService:
         if job["output_path"]:
             pipeline.assert_output_not_input(v_path, job["output_path"])
 
-        total_frames, v_fps, w, h = pipeline.video_info(v_path)
+        total_frames, v_fps, w, h = (pipeline.video_info_uncached(v_path) if job.get('frame_range')
+                                    else pipeline.video_info(v_path))
+        from export_range import validate_range
+        selection = validate_range(job.get("frame_range"), total_frames)
+        job['source_fps'] = v_fps
+        if selection:
+            job["settings"]["_frame_range"] = selection
+            job["transcode_settings"] = dict(job.get("transcode_settings") or {},
+                _source_range_start_seconds=selection["start_frame"] / v_fps,
+                _source_range_duration_seconds=(selection["end_frame"] - selection["start_frame"]) / v_fps)
+            total_frames = selection["end_frame"] - selection["start_frame"]
         job["total_frames"] = total_frames
 
         # Fail fast on invalid encoder (Bug3/11.3 fix): previously an unknown
@@ -1472,7 +1597,7 @@ class DLSSService:
         multi_pass = int(job_settings.get("multi_pass", 1))
 
         nr_w, nr_h = native_effects.processing_size(job_settings, (w, h))
-        live_w, live_h = pipeline.resolve_working_dims(nr_w, nr_h, working_scale)
+        live_w, live_h = pipeline.resolve_working_dims(nr_w, nr_h, native_effects.core_working_scale(job_settings))
 
         # P1-07 fuse: refuse new DLSS work once native state may be polluted.
         self._ensure_native_healthy()
@@ -1507,6 +1632,7 @@ class DLSSService:
                     self._mark_native_degraded(f"会话初始化超时 ({e})")
                 raise RuntimeError(f"GPU DLSS 会话初始化失败：{e}") from e
             self._live_session = live
+            self._live_session_owner = 'export'
             self._live_session_dims = (live_w, live_h)
             self._live_session_kind = (
                 "gpu_hdr_fp16" if experimental_hdr else
@@ -1541,6 +1667,7 @@ class DLSSService:
                         diagnostic_logger.log(
                             "WARN", "Queue", f"被拒绝的 GPU 会话关闭异常: {ce}")
                     self._live_session = None
+                    self._live_session_owner = None
                     self._live_session_dims = None
                     self._live_session_kind = None
                     raise RuntimeError(
@@ -1649,6 +1776,8 @@ class DLSSService:
                     live.close()
                     self._live_session = None
                     self._live_session_dims = None
+                    self._live_session_kind = None
+                    self._live_session_owner = None
             finally:
                 if acquired:
                     try:

@@ -76,6 +76,7 @@ import bundle_paths
 import gpu_transfer_export as gtx
 import hdr_gpu_engine as hdr
 import pipeline
+from layer_settings import layer_parameters, resolve_layer_settings
 
 NATIVE_DIR = bundle_paths.native_dir()
 
@@ -1025,7 +1026,8 @@ def negotiate_hdr(dims: dict, source: dict, job_settings, transcode_settings,
                        "HDR bridge is opened on")
 
     guidance_mode = int(js.get("guidance_mode", 0) or 0)
-    uses_flow = guidance_mode == 1
+    import native_effects
+    uses_flow = guidance_mode == 1 and not isinstance(live, native_effects.Passthrough)
     if guidance_mode not in (0, 1):
         reasons.append(f"guidance_mode={guidance_mode} is neither 0 (off) nor "
                        "1 (flow); this chain runs one or the other")
@@ -1055,7 +1057,7 @@ def negotiate_hdr(dims: dict, source: dict, job_settings, transcode_settings,
     process_w, process_h = native_effects.processing_size(js, (src_w, src_h))
     live_w, live_h = int(dims["live_w"]), int(dims["live_h"])
     dst_w, dst_h = int(dims["dst_w"]), int(dims["dst_h"])
-    scale = float(js.get("working_scale", 1.0))
+    scale = native_effects.core_working_scale(js)
     percent = gtx.working_percent(scale)
     if percent is None:
         reasons.append(
@@ -1074,9 +1076,11 @@ def negotiate_hdr(dims: dict, source: dict, job_settings, transcode_settings,
             f"working extent {live_w}x{live_h} exceeds the full extent "
             f"{src_w}x{src_h}; the HDR bridge downsamples and back up again")
     if (dst_w, dst_h) != native_effects.output_size(js, (src_w, src_h)):
-        reasons.append(
-            f"the encoder is fed the full-size composite, so the output cannot be "
-            f"resized to {dst_w}x{dst_h}")
+        from export_resize import validate
+        try:
+            validate((dst_w, dst_h), ts.get('scale_algorithm', 'lanczos'))
+        except ValueError as exc:
+            reasons.append(str(exc))
     if src_w % 2 or src_h % 2:
         reasons.append("source dimensions must both be even (4:2:0 at full size)")
 
@@ -1205,7 +1209,7 @@ def negotiate_hdr(dims: dict, source: dict, job_settings, transcode_settings,
                            "guidance plane and observation; the pristine master, the "
                            "paper white and the proxy policy are the job's and are "
                            "identical for every layer",
-              "multi_pass": 1, "output_resize": False,
+              "multi_pass": 1, "output_resize": (dst_w, dst_h) != native_effects.output_size(js, (src_w, src_h)),
               "tonemap": False,
               "mux": "the existing gtx.build_mux_command copy pass, run only when the "
                      "request carries anything beyond video, with -c:v copy: never a "
@@ -1217,6 +1221,9 @@ def negotiate_hdr(dims: dict, source: dict, job_settings, transcode_settings,
                       clip_ceiling_scrgb=1.0, paper_white_scrgb=1.0,
                       pq_top_scrgb=None, derived_legal_peak_scrgb=None,
                       nits_per_scrgb=None, linear_units="relative Rec.709, white=1")
+        policy.update(nr_input_domain='bt709_rgb_code_fp16',
+            nr_reconstruction='exact_bt709_eotf_delta',
+            preserve_source_detail=(layers != 1 or bool(js.get('residual_pyramid', True))))
         if source.get('colour_resolution'):
             policy['source_colour_resolution'] = source['colour_resolution']
     return {"supported": not reasons, "reasons": reasons, "plan": plan,
@@ -1296,7 +1303,7 @@ class HdrChain:
         self.encoder_counters = None
         self.bridge_counters = None
         from post_control import GpuPostControl
-        self.post_control = GpuPostControl(hdr=True)
+        self.post_control = GpuPostControl(hdr=True, sdr10=self.sdr10)
         from temporal_control import GpuTemporalControl
         self.temporal_control = GpuTemporalControl(hdr=True)
         self._frame_reset = True
@@ -1322,6 +1329,10 @@ class HdrChain:
             "state": 0x800,
             "producer_completed": True,
         })
+        if getattr(self,'truehdr_tail',None):
+            if getattr(self, 'output_effect', None) and self.output_effect.output_hdr:
+                descriptor['output_hdr'] = True
+            descriptor = self.truehdr_tail.process(descriptor,frame)
         return self.preview_consumer(descriptor, frame)
 
     # -- lifetime -------------------------------------------------------------
@@ -1354,7 +1365,7 @@ class HdrChain:
         """
         self.post_control.close()
         self.temporal_control.close()
-        for name in ('framegen_tail', 'ordered_framegen', 'framegen_input', 'output_effect', 'native_output_exchange', 'input_effect',
+        for name in ('truehdr_tail','export_resize', 'export_resize_bridge', 'framegen_tail', 'ordered_framegen', 'framegen_input', 'output_effect', 'native_output_exchange', 'input_effect',
                      'framegen', 'framegen_exchange', 'framegen_bridge',
                      'encode_exchange', 'encode_bridge', 'decode_bridge'):
             effect = getattr(self, name, None)
@@ -1470,7 +1481,7 @@ class HdrChain:
 
         # Preview owns display/readback. Preserve the decoder, context and colour
         # bridge setup, but do not open an output encoder for a preview-only chain.
-        if self.preview_consumer is not None:
+        if self.preview_consumer is not None or getattr(self,'truehdr_tail',None):
             return
 
         options = HdrOptions()
@@ -1571,9 +1582,14 @@ class HdrChain:
         if self.input_effect is not None:
             self._prefix_discontinuous = bool(self._detect_scene(master, reset, False) or reset)
             mark = time.perf_counter()
-            color = self.input_effect.color(master.as_descriptor(), frame, self._frame_reset)
+            if getattr(self,'_preview_reuse_prefix',False):
+                color = self._preview_prefix_color
+            else:
+                color = self.input_effect.color(master.as_descriptor(),frame,self._frame_reset)
+                if self.preview_consumer is not None: self._preview_prefix_color = dict(color)
             master = self.bridge.import_master(color)
             stages['native_input_effect'] = (time.perf_counter() - mark) * 1000
+            stages['native_input_reused'] = bool(getattr(self,'_preview_reuse_prefix',False))
 
         mark = time.perf_counter()
         working_master = self.bridge.downscale()
@@ -1639,11 +1655,20 @@ class HdrChain:
         order for a one-layer and a many-layer frame, so a fused composite and a
         baseline composite are encoded by identical code.
         """
+        if self.preview_consumer is not None:
+            return None, None
         mark = time.perf_counter()
         encoder_bridge = self.encode_bridge or self.bridge
-        planes = encoder_bridge.encode(
+        if self.preview_consumer is None and not (getattr(self, 'framegen_settings', None) and not getattr(self, 'ordered_framegen', None)):
+            encoder_bridge = self._resize_output(composited, stages) or encoder_bridge
+        if getattr(self, 'truehdr_tail', None) and not (getattr(self, 'framegen_settings', None) and not getattr(self, 'ordered_framegen', None)):
+            color = composited.as_descriptor()
+            if getattr(self, 'output_effect', None) and self.output_effect.output_hdr:
+                color['output_hdr'] = True
+            return self.truehdr_tail.encode(self, color, frame)
+        planes = None if getattr(self, 'truehdr_tail', None) else encoder_bridge.encode(
             clip_ceiling_scrgb=float(self.policy["clip_ceiling_scrgb"]))
-        encode_report = encoder_bridge.encode_report()
+        encode_report = None if planes is None else encoder_bridge.encode_report()
         stages["hdr_encode"] = (time.perf_counter() - mark) * 1000.0
 
         if self.preview_consumer is None:
@@ -1652,10 +1677,12 @@ class HdrChain:
                 if self.framegen is None:
                     from vfx_framegen import Interpolator
                     self.framegen = Interpolator(self.context, self.framegen_stage_size, self.framegen_settings,
-                        self.fps, wide=True, hdr=not self.sdr10, cancel=getattr(self, 'cancel', None))
+                        self.fps, wide=True, hdr=not self.sdr10 or getattr(self, 'framegen_hdr', False), cancel=getattr(self, 'cancel', None))
                 from native_effects import frame_at_size
                 self._framegen_frame = frame_at_size(frame, (frame.width, frame.height))
-                self.framegen.submit(composited.as_descriptor(), frame, self._frame_reset, self._emit_generated)
+                color = composited.as_descriptor()
+                if getattr(self, 'framegen_hdr', False): color['output_hdr'] = True
+                self.framegen.submit(color, frame, self._frame_reset, self._emit_generated)
                 stages['vfg_and_nvenc_submit'] = (time.perf_counter()-mark)*1000
                 return planes, encode_report
             code = int(self.b["nvenc"].nvenc_encode_p010(
@@ -1669,10 +1696,11 @@ class HdrChain:
     def _emit_generated(self, color, pts, kind):
         if self.framegen_bridge is None:
             from native_effects import Exchange
-            self.framegen_exchange = Exchange(self.live.d3d12_device(), self.context, self.output_size, wide=True)
+            render_size = getattr(self, 'render_output_size', self.output_size)
+            self.framegen_exchange = Exchange(self.live.d3d12_device(), self.context, render_size, wide=True)
             self.framegen_bridge = self.bridge_type(d3d12_device=self.live.d3d12_device(), cuda_context=self.context,
-                full_width=self.output_size[0], full_height=self.output_size[1],
-                working_width=self.output_size[0], working_height=self.output_size[1],
+                full_width=render_size[0], full_height=render_size[1],
+                working_width=render_size[0], working_height=render_size[1],
                 paper_white_scrgb=float(self.policy['paper_white_scrgb']))
         tail = getattr(self, 'framegen_tail', None)
         if tail:
@@ -1680,18 +1708,46 @@ class HdrChain:
                 from native_effects import Exchange
                 self.framegen_input = Exchange(self.live.d3d12_device(), self.context, self.framegen_stage_size, wide=True)
             texture = self.framegen_input.texture(color['device_ptr'], color['pitch_bytes'])
+            if color.get('output_hdr'): texture['output_hdr'] = True
             texture = tail.process(texture, self._framegen_frame,
                 self.framegen.emitted == 0 or (kind == 'original' and self._frame_reset))
             color = self.framegen_exchange.color(texture)
         else:
             texture = self.framegen_exchange.texture(color['device_ptr'], color['pitch_bytes'])
+            if color.get('output_hdr'): texture['output_hdr'] = True
+        if getattr(self, 'truehdr_tail', None):
+            self.truehdr_tail.encode(self, texture, self._framegen_frame, pts)
+            return
         self.framegen_bridge.import_master(color)
         self.framegen_bridge.set_composite(texture)
-        planes = self.framegen_bridge.encode(clip_ceiling_scrgb=float(self.policy['clip_ceiling_scrgb']))
+        encoder_bridge = self._resize_output(color, {}) or self.framegen_bridge
+        planes = encoder_bridge.encode(clip_ceiling_scrgb=float(self.policy['clip_ceiling_scrgb']))
         code = int(self.b['nvenc'].nvenc_encode_p010(self.encoder, planes.y.device_ptr, planes.y.pitch_bytes,
             planes.uv.device_ptr, planes.uv.pitch_bytes, pts))
         if code:
             self._fail('nvenc_last_error', code)
+
+    def _resize_output(self, color, stages):
+        if color is None:
+            return None
+        color = color.as_descriptor() if hasattr(color, 'as_descriptor') else color
+        size = (color['width'], color['height'])
+        if size == self.output_size:
+            return None
+        if getattr(self, 'export_resize', None) is None:
+            from export_resize import Resize
+            self.export_resize = Resize(self.live.d3d12_device(), self.context, size,
+                self.output_size, self.export_scale_algorithm, wide=True)
+            self.export_resize_bridge = self.bridge_type(d3d12_device=self.live.d3d12_device(), cuda_context=self.context,
+                full_width=self.output_size[0], full_height=self.output_size[1],
+                working_width=self.output_size[0], working_height=self.output_size[1],
+                paper_white_scrgb=float(self.policy['paper_white_scrgb']))
+        mark = time.perf_counter()
+        resized = self.export_resize.color(color)
+        self.export_resize_bridge.import_master(resized)
+        self.export_resize_bridge.set_composite(self.export_resize.as_texture(resized))
+        stages['export_resize'] = (time.perf_counter()-mark)*1000
+        return self.export_resize_bridge
 
     def process(self, frame, flow_provider, index, is_discontinuous):
         """One frame, device to device, in the order the borrows require.
@@ -1737,7 +1793,8 @@ class HdrChain:
             composited = self.bridge.set_composite(dlss)
             reconstruct_report = None
         else:
-            composited = self.bridge.reconstruct(dlss, residual_strength=self.strength)
+            composited = self.bridge.reconstruct(dlss, residual_strength=self.strength,
+                **({'preserve_source_detail': self.policy.get('preserve_source_detail', True)} if self.sdr10 else {}))
             reconstruct_report = self.bridge.reconstruct_report()
         stages["hdr_reconstruct"] = (time.perf_counter() - mark) * 1000.0
 
@@ -1758,8 +1815,8 @@ class HdrChain:
                        "working_master": working_master.as_dict(),
                        "proxy": proxy.as_dict(), "guidance": guidance.as_dict(),
                        "composited": composited.as_dict(),
-                       "encoded_y": planes.y.as_dict(),
-                       "encoded_uv": planes.uv.as_dict()},
+                       "encoded_y": planes.y.as_dict() if planes else None,
+                       "encoded_uv": planes.uv.as_dict() if planes else None},
             # The Feature 18 output as the bridge saw it: which DXGI format it
             # validated and which extent it checked it against.
             "feature18_output": {"width": dlss.get("width"),
@@ -1776,7 +1833,13 @@ class HdrChain:
         return outcome
 
     def _post_process(self, master, composited, stages, frame=None):
+        capture = getattr(self, '_preview_post_capture', None)
         if self.post_control.controls.neutral and self.temporal_control.controls.mode == "off":
+            if capture:
+                capture(device=self.live.d3d12_device(), context=self.context,
+                    width=master.width, height=master.height, wide=True,
+                    source_ptr=master.device_ptr, source_pitch=master.pitch_bytes,
+                    candidate=composited.as_descriptor(), frame=frame)
             return self._native_post_process(composited, stages, frame)
         mark = time.perf_counter()
         stable = self.temporal_control.process(device=self.live.d3d12_device(),
@@ -1784,6 +1847,10 @@ class HdrChain:
             source_pitch=master.pitch_bytes, width=self.processing_size[0], height=self.processing_size[1],
             candidate={"device_ptr": composited.device_ptr,
                        "pitch_bytes": composited.pitch_bytes}, reset=self._frame_reset)
+        if capture:
+            capture(device=self.live.d3d12_device(), context=self.context,
+                width=self.processing_size[0], height=self.processing_size[1], wide=True,
+                source_ptr=master.device_ptr, source_pitch=master.pitch_bytes, candidate=stable, frame=frame)
         controlled = self.post_control.process(device=self.live.d3d12_device(),
             cuda_context=self.context, source_ptr=master.device_ptr,
             source_pitch=master.pitch_bytes, width=self.processing_size[0], height=self.processing_size[1],
@@ -1836,12 +1903,15 @@ class HdrChain:
         claim that a boundary was crossed zero times and only a bridge may make it.
         """
         out = {}
+        if getattr(self,'truehdr_tail',None): out['truehdr'] = self.truehdr_tail.report()
         if getattr(self, 'framegen', None) is not None:
             out['frame_generation'] = self.framegen.report()
             if hasattr(self, 'framegen_stage_index'):
                 from ordered_vfg import stage_report
                 out['frame_generation']['pipeline'] = stage_report(self)
-        for name in ('decode_bridge', 'encode_bridge', 'framegen_bridge'):
+        if getattr(self, 'export_resize', None):
+            out['export_resize'] = self.export_resize.report()
+        for name in ('decode_bridge', 'encode_bridge', 'framegen_bridge', 'export_resize_bridge'):
             bridge = getattr(self, name, None)
             if bridge is not None:
                 out[name] = bridge.transfer_counters()
@@ -1904,6 +1974,7 @@ class HdrChain:
             code = int(self.b["nvenc"].nvenc_finish(self.encoder))
             if code:
                 self._fail("nvenc_last_error", code)
+        if getattr(self,'truehdr_tail',None): self.truehdr_tail.finish()
 
 
 class HdrMultiScaleChain(HdrChain):
@@ -2107,6 +2178,9 @@ class HdrMultiScaleChain(HdrChain):
         job: this chain never substitutes another layer's motion, another session's
         resident zero motion or another algorithm for the one that refused.
         """
+        if self.multi['fusion'] == 'sequential':
+            from sequential_nr import process_wide
+            return process_wide(self, frame, flow_provider, index, is_discontinuous)
         is_first = self.first
         if is_first:
             self._open_stages(frame)
@@ -2162,15 +2236,19 @@ class HdrMultiScaleChain(HdrChain):
 
         observations = []
         flow = None
+        reused_layers = []
         for entry in layers:
             number = entry["number"]
-            dlss, entry_flow = self._guidance_and_inference(
+            from preview_layer_cache import evaluate
+            (dlss, entry_flow), reused = evaluate(self, number, lambda: self._guidance_and_inference(
                 entry["live"], entry["flow_provider"], entry["proxy"],
                 entry["guidance"], frame, index, reset, is_discontinuous,
                 entry["stages"],
-                counted=self.layer_motion_calls[number])
-            self.layer_calls[number] += 1
-            self.layer_reset_flags[number].append(bool(reset))
+                counted=self.layer_motion_calls[number]))
+            reused_layers.append(reused)
+            if not reused:
+                self.layer_calls[number] += 1
+                self.layer_reset_flags[number].append(bool(reset))
             mark = time.perf_counter()
             observation = entry["bridge"].observe(dlss)
             entry["stages"]["hdr_observe"] = (
@@ -2193,6 +2271,8 @@ class HdrMultiScaleChain(HdrChain):
         fused = None
         if self.multi["fusion"] == "data_consistency_experimental":
             mark = time.perf_counter()
+            if self.fusion is None:
+                self._open_fusion()
             fused = self.fusion.process(cuda_context=self.context, master=master,
                                         observations=observations)
             stages["hdr_fusion"] = (time.perf_counter() - mark) * 1000.0
@@ -2227,8 +2307,8 @@ class HdrMultiScaleChain(HdrChain):
                        "working_master": working_master.as_dict(),
                        "proxy": proxy.as_dict(), "guidance": guidance.as_dict(),
                        "composited": composited.as_dict(),
-                       "encoded_y": planes.y.as_dict(),
-                       "encoded_uv": planes.uv.as_dict()},
+                       "encoded_y": planes.y.as_dict() if planes else None,
+                       "encoded_uv": planes.uv.as_dict() if planes else None},
             "feature18_output": {"width": layers[0]["dlss"].get("width"),
                                  "height": layers[0]["dlss"].get("height"),
                                  "dxgi_format": layers[0]["dlss"].get("dxgi_format")},
@@ -2256,7 +2336,7 @@ class HdrMultiScaleChain(HdrChain):
                            "fence_value_present": bool(fused["fence_value"])},
                 "report": fused["report"]}
         self.frame_reports.append(report)
-        outcome = {"stages": stages, "flow": flow,
+        outcome = {"stages": stages, "flow": flow, "layer_inference_reused": reused_layers,
                 "nvof_timing": (flow_provider.timing()
                                 if self.uses_flow and flow_provider is not None
                                 and hasattr(flow_provider, "timing") else None)}
@@ -2311,6 +2391,9 @@ class HdrMultiScaleChain(HdrChain):
             "layer_scales": list(self.multi["scales"]),
             "layer_working_dims": [list(dims) for dims in self.multi["dims"]],
             "layer_weights": list(self.multi["weights"]),
+            "layer_parameters": [layer_parameters(getattr(owner, 'settings', {}))
+                                 for owner in [self.live] +
+                                 [layer['live'] for layer in self.extra_layers]],
             "layer_session_ids": list(self.layer_session_ids or []),
             "layer_sessions_distinct": (
                 len(set(self.layer_session_ids)) == len(self.layer_session_ids)
@@ -2811,7 +2894,7 @@ def export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
         _remove_intermediate(intermediate)
 
 
-def _open_extra_layers(multi, live, flow_provider, uses_flow, src_w, src_h):
+def _open_extra_layers(multi, live, flow_provider, uses_flow, src_w, src_h, settings=None):
     """One independent Feature 18 session and motion history per layer above the first.
 
     Built before the first frame and before the chain exists, because an extra layer
@@ -2835,8 +2918,10 @@ def _open_extra_layers(multi, live, flow_provider, uses_flow, src_w, src_h):
                      "flow_provider": (flow_provider.new_independent_layer()
                                        if uses_flow else None)}
             layers.append(layer)
+            from layer_settings import resolve_layer_settings
             layer["live"] = dlss_gpu_engine.Live(
-                width, height, live.settings, shared_with=live,
+                width, height, resolve_layer_settings(
+                    dict(live.settings, **(settings or {})), len(layers)), shared_with=live,
                 color_format="rgba16f")
     except Exception as open_error:
         cleanup_errors = []
@@ -2892,7 +2977,7 @@ def _export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
     extra_layers = []
     if multi and len(multi["scales"]) > 1:
         extra_layers = _open_extra_layers(multi, live, flow_provider, uses_flow,
-                                          process_w, process_h)
+                                          process_w, process_h, settings=js)
     strength = float(js.get("residual_strength", 1.0))
     if extra_layers:
         try:
@@ -2929,10 +3014,12 @@ def _export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
                          negotiation["hdr_policy"], dims,
                          flow_provider=flow_provider, residual_strength=strength,
                          uses_flow=uses_flow)
-    chain.post_control = GpuPostControl(post_controls, hdr=True)
+    chain.post_control = GpuPostControl(post_controls, hdr=True, sdr10=sdr10)
     chain.temporal_control = GpuTemporalControl(temporal_controls, hdr=True)
     import native_effects
     native_effects.install(chain, live, js, (src_w, src_h), flow_provider)
+    chain.render_output_size = native_effects.output_size(js, (src_w, src_h))
+    chain.export_scale_algorithm = (transcode_settings or {}).get('scale_algorithm', 'lanczos')
     chain.cancel = cancel
     if sdr10:
         chain.post_control._report["domain"] = "relative_linear_rec709"
@@ -2951,6 +3038,8 @@ def _export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
         chain.open_decoder()
         frame = gtx._DeviceFrame()
         frame.struct_size = C.sizeof(gtx._DeviceFrame)
+        from export_range import SelectedDecoder, validate_range
+        selected_decoder = SelectedDecoder(chain, validate_range(js.get("_frame_range")), negotiation["fps"], cancel)
         while processed < frames:
             if cancel and cancel():
                 raise pipeline.JobCancelled("用户已取消任务")
@@ -2960,7 +3049,7 @@ def _export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
                     f"{gtx.WATCHDOG_TIMEOUT_SEC} 秒无有效帧），NVDEC / Feature18 / "
                     "NVENC 可能已死锁")
             t_decode = time.perf_counter()
-            state = chain.next_frame(frame)
+            state = selected_decoder.next(frame)
             decode_ms = (time.perf_counter() - t_decode) * 1000.0
             if state == 0:
                 break
@@ -3080,14 +3169,20 @@ def _export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
     report["native_input_effect"] = counters.get("native_input_effect")
     report["native_output_effect"] = counters.get("native_output_effect")
     report['frame_generation'] = counters.get('frame_generation')
-    report['extra_colour_bridges'] = {k: counters[k] for k in ('decode_bridge', 'encode_bridge', 'framegen_bridge') if k in counters}
+    report['export_resize'] = counters.get('export_resize')
+    report['truehdr'] = counters.get('truehdr')
+    if js.get('truehdr_enabled'):
+        report['transfer_mode_actual'] = 'gpu_sdr10_truehdr_transfer'
+        report['output_color_contract'] = 'BT.2020 / PQ / limited range / P010 / HEVC Main10'
+        report.setdefault('sdr10_not_claimed',{})['formal_hdr'] = 'TrueHDR HDR10 conversion; no formal conformance certification'
+    report['extra_colour_bridges'] = {k: counters[k] for k in ('decode_bridge', 'encode_bridge', 'framegen_bridge', 'export_resize_bridge') if k in counters}
     report["primary_vendor_feature"] = (counters.get("dlss") or {}).get(
         "vendor_feature", "NGX Feature18 / DLSSNR")
     report["export_backend_requested"] = str(js.get("export_backend", "auto"))
     report["export_backend_actual"] = "gpu_transfer"
     report["export_backend_fallback_reason"] = None
     report["transfer_mode_requested"] = transfer_mode
-    report["transfer_mode_actual"] = transfer_mode
+    report["transfer_mode_actual"] = 'gpu_sdr10_truehdr_transfer' if js.get('truehdr_enabled') else transfer_mode
     report["experimental_hdr_scrgb"] = not sdr10
     report["dlss_backend_actual"] = "gpu_flow_d3d12"
     report["hdr_color_format"] = getattr(live, "color_format", None)
@@ -3152,7 +3247,7 @@ def _export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
                "(ENCODER, BPS, DURATION, frame counts) are never restated as facts "
                "about this run's encode",
         "domains": "HLG, full-range, non-BT.2020 primaries, constant-luminance "
-                   "matrix and 8-bit are refused; resized output requires the explicit native VSR stage",
+                   "matrix and 8-bit are refused; final output resizing uses the GPU export resampler",
         "layers": "one, two or three reconstruction layers are supported; multi_pass "
                   "greater than 1 is not supported. Not every source and scale "
                   "combination has been verified: this run's short fixture evidence "
@@ -3179,6 +3274,10 @@ def _export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
     if cancel and cancel():
         raise pipeline.JobCancelled("用户已取消任务")
 
+    if js.get("_frame_range") and processed != frames:
+        raise RuntimeError(f"选区导出帧数不完整：预期 {frames}，实际 {processed}")
+    if diagnostics_out is not None and js.get("_frame_range"):
+        diagnostics_out["frame_range"] = dict(js["_frame_range"], source_start_seconds=selected_decoder.source_first_seconds, emitted_input_frames=processed)
     if processed < frames:
         shortfall = frames - processed
         tolerance = max(5, int(round(frames * 0.01)))
@@ -3189,6 +3288,9 @@ def _export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
     if intermediate:
         # The encoder is closed by the block above, so what is on disk is a
         # finished file and the copy pass is reading a complete bitstream.
+        transcode_settings = selected_decoder.mux_settings(transcode_settings, pipeline._bundle_ffprobe())
+        if diagnostics_out is not None and js.get('_frame_range'):
+            diagnostics_out['frame_range']['mux_source_start_seconds'] = transcode_settings['_source_range_start_seconds']
         if not os.path.isfile(intermediate):
             raise HdrExportError("the encoder produced no intermediate to wrap")
         ffmpeg = pipeline._bundle_ffmpeg()
@@ -3243,10 +3345,11 @@ def sdr10_report(value):
             name = name.replace("_scrgb", "_relative_linear")
         result[name] = sdr10_report(item)
     if "sdr10_not_claimed" in result:
+        converted = bool(result.get('truehdr'))
         result["sdr10_not_claimed"].update(
-            formal_hdr="not HDR: BT.709 SDR, no PQ or HDR SEI",
-            domains="limited-range 10-bit BT.709 SDR, HEVC Main10 MKV; "
-                    "other SDR domains are not supported; resizing requires the explicit native VSR stage",
+            formal_hdr="TrueHDR HDR10 conversion; no formal conformance certification" if converted else "not HDR: BT.709 SDR, no PQ or HDR SEI",
+            domains="SDR10 input → TrueHDR → linear scRGB → P010 / PQ / BT.2020 / HEVC Main10" if converted else "limited-range 10-bit BT.709 SDR, HEVC Main10 MKV; "
+                    "other SDR domains are not supported; final output resizing uses the GPU export resampler",
             lossless="FP16 and lossy video encoding are not lossless")
     if "sdr10_policy" in result:
         result["sdr10_policy"]["linear_units"] = "relative Rec.709, white=1"

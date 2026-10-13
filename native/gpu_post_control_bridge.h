@@ -12,7 +12,7 @@ extern "C" {
 # define GPU_POST_CONTROL_API __declspec(dllexport)
 #endif
 
-#define GPU_POST_CONTROL_ABI_VERSION 1u
+#define GPU_POST_CONTROL_ABI_VERSION 2u
 #define GPU_POST_CANDIDATE_CUDA 1u
 #define GPU_POST_CANDIDATE_D3D12 2u
 #define GPU_POST_CANDIDATE_D3D12_COMPLETED 3u
@@ -26,7 +26,7 @@ extern "C" {
 
 typedef struct GpuPostControlBridge GpuPostControlBridge;
 
-/* ABI 1 is the independently derived GPU-only post-fusion residual controller.
+/* ABI 2 adds explicit SDR code / linear HDR / linear SDR10 colour mode.
  * The source and CUDA candidate use interop copies; a D3D12 candidate is copied
  * from a producer-fenced COPY_SOURCE texture into the same bridge-owned input
  * transport. Output is bridge-owned RGBA8 UNORM (pixel_bytes=4) or linear
@@ -50,6 +50,7 @@ typedef struct GpuPostControlOptions {
     float roi_bounds[4]; /* normalized x0,y0,x1,y1 */
     float roi_feather;   /* normalized fraction of min(width,height) */
     uint32_t debug_mode;
+    uint32_t color_mode; /* 0 sRGB code, 1 linear scRGB, 2 linear BT.709 SDR */
 } GpuPostControlOptions;
 
 /* On x64 this is exactly 48 bytes. For CUDA kind, d3d_state must be zero and

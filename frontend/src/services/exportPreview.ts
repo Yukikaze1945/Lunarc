@@ -281,7 +281,7 @@ export function buildGpuTransferPreview({
   const interpolation = frameGenerationLines(frameGeneration, frameMultiplier, sourceFps, framegenTargetFps)
   if (renderPipeline.some(stage => stage !== 'nr')) return {
     kind: 'gpu-transfer-chain', command: '', copyable: false, lines: [
-      `渲染顺序：${renderPipeline.map(s => ({nr:'DLSSNR',dlaa:'DLAA',vsr:'RTX VSR',vfg:'NVIDIA VFG'}[s])).join(' → ')}`,
+      `渲染顺序：${renderPipeline.map(s => ({nr:'DLSSNR',dlaa:'DLAA',vsr:'RTX VSR',vfg:'NVIDIA VFG',truehdr:'TrueHDR'}[s])).join(' → ')}`,
       ...(sdr10 ? ['SDR 10-bit：P010 → linear Rec.709 FP16 → 所选阶段 → P010 Main10。',
         ...(renderPipeline.includes('vsr') ? ['VSR 通过 VFX 1.3 RGB10A2；不经过 8-bit 图像。'] : [])] : []),
       ...(renderPipeline.includes('dlaa') ? [`DLAA 模型提示：${({0:'默认',5:'E',6:'F',10:'J',11:'K',12:'L',13:'M'} as Record<number,string>)[dlaaPreset] ?? dlaaPreset}；实际模型由运行库决定。`] : []),
@@ -378,7 +378,7 @@ export function buildHdrTransferPreview(input: HdrPreviewInput): ExportPreview {
     const out = composeJobOutputPath(input.outputDir, input.fileName, input.ts.container, input.fallbackStem)
     return {kind: 'hdr10-transfer-chain', command: '', copyable: false, lines: [
       'HDR10 · GPU Transfer · 实验性',
-      `渲染顺序：${order.map(s => ({nr:'DLSSNR',dlaa:'DLAA',vsr:'RTX VSR',vfg:'NVIDIA VFG'}[s])).join(' → ')}`,
+      `渲染顺序：${order.map(s => ({nr:'DLSSNR',dlaa:'DLAA',vsr:'RTX VSR',vfg:'NVIDIA VFG',truehdr:'TrueHDR'}[s])).join(' → ')}`,
       'P010 / PQ / BT.2020 → 有符号线性 scRGB FP16 → 所选阶段 → PQ / P010 / Main10。',
       ...(order.includes('nr') ? ['NR 使用现有 FP16 代理和线性残差重建；多层融合保持原有算法。'] : []),
       ...(order.includes('dlaa') ? ['DLAA 直接处理线性 FP16 主图像；深度和抖动为零。'] : []),

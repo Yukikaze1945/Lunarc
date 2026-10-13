@@ -1,3 +1,6 @@
+import {jobComparison} from '../services/jobComparison'
+import {DEFAULT_EXPORT_SETTINGS,readTranscodeDraft,TRANSCODE_DRAFT_KEY,TRANSCODE_DRAFT_VERSION} from '../services/exportSettings'
+import {publishExportSettings,useFrameSelection} from '../services/segmentSelection'
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { renderStages, vsrOutputSize, framegenOutputFps, nativeOutputBlockers } from '../services/renderPipeline'
 import {
@@ -48,71 +51,6 @@ import { hasExportControls } from '../services/qualityControls'
 import {exportOptions, normalizeExportOptions} from '../services/exportOptions'
 import { subscribeQueue, refreshQueue } from '../services/queue'
 import './deliver.css'
-
-const TRANSCODE_DRAFT_KEY = 'lunarc.transcodeDraft'
-const TRANSCODE_DRAFT_VERSION = 1
-const DRAFT_ENUMS: Partial<Record<keyof TranscodeSettings, readonly string[]>> = {
-  codec: ['av1_nvenc', 'hevc_nvenc', 'h264_nvenc'],
-  container: ['.mkv', '.mp4', '.mov', '.webm'],
-  rate_mode: ['cq', 'constqp', 'cbr', 'vbr'],
-  peak_policy: ['auto', 'custom'],
-  preset: ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7'],
-  tune: ['auto', 'hq', 'uhq', 'll', 'ull', 'lossless'],
-  multipass: ['auto', 'disabled', 'qres', 'fullres'],
-  decode_mode: ['auto', 'cuda', 'cpu'],
-  finish_action: ['none', 'sleep', 'shutdown'],
-  gop_mode: ['auto', 'manual'],
-  b_frames: ['auto', '0', '1', '2', '3', '4', '5', '6', '7'],
-  b_ref_mode: ['auto', 'disabled', 'middle', 'each'],
-  lookahead: ['auto', '0', '8', '16', '24', '32'],
-  lookahead_level: ['auto', '0', '1', '2', '3'],
-  aq_mode: ['spatial', 'temporal', 'disabled'],
-  temporal_filter: ['auto', '0', '1', '2', '3', '4'],
-  split_encode: ['auto', 'disabled', '2', '3', '4'],
-  profile: ['auto', 'main', 'main10', 'high'],
-  tier: ['auto', 'main', 'high'],
-  resolution_mode: ['original', 'double', 'half', '5120x2880', '3840x2160', '2560x1440', '1920x1080', '1280x720', 'custom_size', 'custom_factor'],
-  scale_algorithm: ['lanczos', 'bicubic', 'bilinear', 'nearest'],
-  pixel_format: ['auto', 'yuv420p', 'nv12', 'p010le', 'p016le', 'nv16', 'p210le', 'p216le', 'yuv444p', 'yuv444p10msble', 'yuv444p16le'],
-  color_preset: ['preserve', 'bt709_limited', 'bt709_full', 'bt2020_sdr', 'bt2020_pq', 'bt2020_hlg', 'hdr_to_sdr', 'custom'],
-  custom_color_range: ['tv', 'pc'],
-  audio_mode: ['copy', 'aac', 'opus', 'flac', 'pcm', 'remove'],
-  audio_bitrate: ['128k', '192k', '256k', '320k', '512k'],
-  subtitle_mode: ['copy', 'convert', 'drop'],
-}
-
-function readTranscodeDraft(defaults: TranscodeSettings): TranscodeSettings {
-  try {
-    const raw = localStorage.getItem(TRANSCODE_DRAFT_KEY)
-    if (!raw) return defaults
-    const parsed = JSON.parse(raw)
-    const saved = parsed?.settings
-    if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return defaults
-    // Merge known, type-compatible fields so a schema upgrade keeps everything it
-    // still understands while new settings inherit safe defaults.
-    const merged = { ...defaults }
-    for (const key of Object.keys(defaults) as (keyof TranscodeSettings)[]) {
-      const value = saved[key]
-      const fallback = defaults[key]
-      const allowed = DRAFT_ENUMS[key]
-      const numericBounds: Partial<Record<keyof TranscodeSettings, [number, number]>> = {
-        cq: [0, 51], qp: [0, 51], gop: [1, 100000], aq_strength: [1, 15],
-        custom_width: [2, 16384], custom_height: [2, 16384], custom_factor: [0.1, 8],
-      }
-      const bounds = numericBounds[key]
-      const invalidNumber = typeof value === 'number' && (!Number.isFinite(value) ||
-        (bounds !== undefined && (value < bounds[0] || value > bounds[1])) ||
-        ((key === 'custom_width' || key === 'custom_height') && value % 2 !== 0))
-      if (typeof value === typeof fallback && !invalidNumber &&
-          !(typeof value === 'string' && allowed && !allowed.includes(value))) {
-        ;(merged as any)[key] = value
-      }
-    }
-    return merged
-  } catch {
-    return defaults
-  }
-}
 
 interface DeliverPageProps {
   isActive?: boolean
@@ -195,60 +133,6 @@ const BUILTIN_PRESETS: { name: string; settings: Partial<TranscodeSettings> }[] 
 // the backend would refuse, and cannot refuse one it would take.
 const RETRYABLE_STATUSES: RenderJob['status'][] = ['failed', 'cancelled', 'skipped']
 
-const DEFAULT_SETTINGS: TranscodeSettings = {
-  codec: 'av1_nvenc',
-  container: '.mkv',
-  suffix: '_AV1_P7_UHQ_Q16',
-  rate_mode: 'cq',
-  cq: 16,
-  video_bitrate: '80M',
-  qp: 20,
-  peak_policy: 'auto',
-  maxrate: '380M',
-  bufsize: '1520M',
-  preset: 'p7',
-  tune: 'uhq',
-  multipass: 'fullres',
-  gpu: '-1',
-  decode_mode: 'auto',
-  finish_action: 'none',
-  gop_mode: 'auto',
-  gop: 240,
-  b_frames: 'auto',
-  b_ref_mode: 'auto',
-  lookahead: 'auto',
-  lookahead_level: 'auto',
-  aq_mode: 'spatial',
-  aq_strength: 8,
-  weighted_prediction: false,
-  temporal_filter: 'auto',
-  split_encode: 'auto',
-  profile: 'auto',
-  level: 'auto',
-  tier: 'auto',
-  resolution_mode: 'original',
-  custom_width: 1920,
-  custom_height: 1080,
-  custom_factor: 1.0,
-  keep_aspect: true,
-  scale_algorithm: 'lanczos',
-  pixel_format: 'auto',
-  color_preset: 'preserve',
-  custom_color_space: 'bt709',
-  custom_color_primaries: 'bt709',
-  custom_color_transfer: 'bt709',
-  custom_color_range: 'tv',
-  audio_mode: 'copy',
-  audio_bitrate: '320k',
-  subtitle_mode: 'copy',
-  copy_attachments: true,
-  copy_metadata: true,
-  copy_chapters: true,
-  overwrite_output: false,
-  skip_existing: true,
-  extra_args: '',
-}
-
 export const DeliverPage: React.FC<DeliverPageProps> = React.memo(({
   isActive = true,
   video,
@@ -256,8 +140,10 @@ export const DeliverPage: React.FC<DeliverPageProps> = React.memo(({
   onStatusChange,
 }) => {
   // Transcode Settings State
-  const [txDraft, setTxSettings] = useState<TranscodeSettings>(() => readTranscodeDraft(DEFAULT_SETTINGS))
+  const [txDraft, setTxSettings] = useState<TranscodeSettings>(() => readTranscodeDraft(DEFAULT_EXPORT_SETTINGS))
   const txSettings = useMemo(() => normalizeExportOptions(txDraft, dlssSettings, video), [txDraft, dlssSettings, video])
+  const selection=useFrameSelection(video?.path)
+  useEffect(()=>publishExportSettings(txSettings),[txSettings])
   const choices = exportOptions(dlssSettings, video, txSettings)
   const [activeSection, setActiveSection] = useState<'basic' | 'video' | 'color' | 'tracks' | 'advanced'>('basic')
   const [fileName, setFileName] = useState<string>('')
@@ -414,9 +300,12 @@ export const DeliverPage: React.FC<DeliverPageProps> = React.memo(({
     }
   }
 
-  // Dynamic Output Dimensions Calculation
+  const renderDimensions = renderStages(dlssSettings).includes('vsr')
+    ? vsrOutputSize(dlssSettings, video ?? {width:1920,height:1080})
+    : {width:video?.width ?? 1920,height:video?.height ?? 1080}
+  // Export resize happens after all selected rendering stages.
   const outputDimensions = useMemo(() => {
-    if (renderStages(dlssSettings).includes('vsr')) {
+    if (txSettings.resolution_mode === 'original' && renderStages(dlssSettings).includes('vsr')) {
       return vsrOutputSize(dlssSettings, video ?? {width:1920,height:1080})
     }
     const origW = video ? video.width : 1920
@@ -430,11 +319,14 @@ export const DeliverPage: React.FC<DeliverPageProps> = React.memo(({
 
     switch (txSettings.resolution_mode) {
       case 'original':
+      case 'source':
         return { width: even(origW), height: even(origH) }
       case 'double':
         return { width: even(origW * 2), height: even(origH * 2) }
       case 'half':
         return { width: even(origW / 2), height: even(origH / 2) }
+      case '7680x4320':
+        return { width: 7680, height: 4320 }
       case '5120x2880':
         return { width: 5120, height: 2880 }
       case '3840x2160':
@@ -466,6 +358,7 @@ export const DeliverPage: React.FC<DeliverPageProps> = React.memo(({
         return { width: origW, height: origH }
     }
   }, [video, dlssSettings, txSettings.resolution_mode, txSettings.custom_width, txSettings.custom_height, txSettings.custom_factor, txSettings.keep_aspect])
+  const needsExportResize = outputDimensions.width !== renderDimensions.width || outputDimensions.height !== renderDimensions.height
 
   // Dynamic Rate Summary calculation
   const rateSummary = useMemo(() => {
@@ -619,7 +512,7 @@ export const DeliverPage: React.FC<DeliverPageProps> = React.memo(({
     // operator was looking at. There is one host to carry and the export chain
     // forces nothing.
     const newJob: Partial<RenderJob> = {
-      name: trimmedName,
+      name: selection?.enabled?`${trimmedName} · ${selection.start_frame+1}–${selection.end_frame}`:trimmedName,
       input_path: video.path,
       output_path: fullOutputPath,
       codec: txSettings.codec,
@@ -627,7 +520,8 @@ export const DeliverPage: React.FC<DeliverPageProps> = React.memo(({
       cq: txSettings.cq,
       preset: txSettings.preset,
       with_audio: txSettings.audio_mode !== 'remove',
-      total_frames: video.frames,
+      total_frames: selection?.enabled?selection.end_frame-selection.start_frame:video.frames,
+      frame_range: selection?.enabled?{start_frame:selection.start_frame,end_frame:selection.end_frame}:undefined,
       settings: { ...dlssSettings },
       transcode_settings: { ...txSettings },
     }
@@ -822,7 +716,7 @@ export const DeliverPage: React.FC<DeliverPageProps> = React.memo(({
                 <span>输出文件与目录</span>
               </span>
               <span className="text-[11px] text-lunarc-dim">
-                目标格式: {outputDimensions.width}×{outputDimensions.height} · {txSettings.container.toUpperCase()}
+                目标格式: {outputDimensions.width}×{outputDimensions.height} · {txSettings.container.toUpperCase()}{selection?.enabled&&` · 选区 ${selection.start_frame+1}–${selection.end_frame} 帧`}
               </span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
@@ -1090,13 +984,14 @@ export const DeliverPage: React.FC<DeliverPageProps> = React.memo(({
                 <label className="text-[11px] text-lunarc-muted mb-1 block">分辨率</label>
                 <select
                   value={txSettings.resolution_mode}
-                  disabled={choices.resolution_mode?.length === 1}
                   onChange={(e) => updateSetting('resolution_mode', e.target.value)}
                   className="w-full bg-lunarc-dark border border-lunarc-border focus:border-lunarc-accent rounded px-3 py-1.5 text-xs text-lunarc-text focus:outline-none"
                 >
-                  <option value="original" disabled={Boolean(choices.resolution_mode && !choices.resolution_mode.includes("original"))}>{choices.gpu || choices.wide ? `渲染链输出 (${video ? `${outputDimensions.width}×${outputDimensions.height}` : '未加载素材'})` : `保持素材分辨率 (${video ? `${video.width}×${video.height}` : '未加载素材'})`}</option>
+                  <option value="original">{choices.gpu || choices.wide ? `渲染链输出 (${video ? `${renderDimensions.width}×${renderDimensions.height}` : '未加载素材'})` : `保持素材分辨率 (${video ? `${video.width}×${video.height}` : '未加载素材'})`}</option>
+                  {(choices.gpu || choices.wide) && <option value="source">素材分辨率 ({video ? `${video.width}×${video.height}` : '未加载素材'})</option>}
                   <option value="double" disabled={Boolean(choices.resolution_mode && !choices.resolution_mode.includes("double"))}>原始 ×2 超分辨率倍乘</option>
                   <option value="half" disabled={Boolean(choices.resolution_mode && !choices.resolution_mode.includes("half"))}>原始 ×0.5 降采倍乘</option>
+                  <option value="7680x4320">7680×4320 (8K UHD)</option>
                   <option value="5120x2880" disabled={Boolean(choices.resolution_mode && !choices.resolution_mode.includes("5120x2880"))}>5120×2880 (5K UHD)</option>
                   <option value="3840x2160" disabled={Boolean(choices.resolution_mode && !choices.resolution_mode.includes("3840x2160"))}>3840×2160 (4K UHD)</option>
                   <option value="2560x1440" disabled={Boolean(choices.resolution_mode && !choices.resolution_mode.includes("2560x1440"))}>2560×1440 (2K QHD)</option>
@@ -1107,8 +1002,8 @@ export const DeliverPage: React.FC<DeliverPageProps> = React.memo(({
                 </select>
               </div>
 
-              <div className={activeSection === 'color' ? 'hidden' : ''}>
-                <label className="text-[11px] text-lunarc-muted mb-1 block">GPU 缩放算法</label>
+              {needsExportResize && <div className={activeSection === 'color' ? 'hidden' : ''}>
+                <label className="text-[11px] text-lunarc-muted mb-1 block">导出缩放算法</label>
                 <select
                   value={txSettings.scale_algorithm}
                   onChange={(e) => updateSetting('scale_algorithm', e.target.value)}
@@ -1119,7 +1014,7 @@ export const DeliverPage: React.FC<DeliverPageProps> = React.memo(({
                   <option value="bilinear">GPU 双线性 (Bilinear · 均衡)</option>
                   <option value="nearest">GPU 最近邻 (Nearest · 像素点对点)</option>
                 </select>
-              </div>
+              </div>}
 
               <div className={activeSection === 'video' ? 'hidden' : ''}>
                 <label className="text-[11px] text-lunarc-muted mb-1 block">像素格式</label>
@@ -1771,7 +1666,7 @@ export const DeliverPage: React.FC<DeliverPageProps> = React.memo(({
                     <div className="deliver-job-actions flex-shrink-0 flex items-center gap-1">
                       {job.status === 'completed' && <button type="button" className="button quiet"
                         onClick={() => window.dispatchEvent(new CustomEvent('lunarc:compare', {
-                          detail: {original: job.input_path, exported: job.output_path}}))}>查看对比</button>}
+                          detail: jobComparison(job)}))}>查看对比</button>}
                       <button type="button" onClick={() => inspectJob(job)}
                         className="rounded border border-zinc-600 px-2 py-1 text-[10px] text-lunarc-text hover:border-lunarc-accent hover:text-lunarc-accent"
                         aria-label={`查看 ${job.name} 的实际运行诊断`}>

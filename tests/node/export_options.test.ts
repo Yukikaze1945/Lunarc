@@ -8,7 +8,7 @@ const tx: any = {codec:'h264_nvenc',container:'.webm',pixel_format:'nv16',profil
 test('GPU SDR restores valid persisted selections before queuing',()=>{
   const next=normalizeExportOptions(tx,settings,null)
   assert.equal(next.container,'.mkv');assert.equal(next.pixel_format,'auto')
-  assert.equal(next.color_preset,'preserve');assert.equal(next.resolution_mode,'original')
+  assert.equal(next.color_preset,'preserve');assert.equal(next.resolution_mode,'custom_size')
   assert.equal(next.custom_color_transfer,'');assert.equal(next.tune,'hq')
   assert.equal(normalizeExportOptions(next,settings,null),next)
 })

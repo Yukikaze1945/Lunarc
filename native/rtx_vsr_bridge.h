@@ -51,6 +51,14 @@ RTX_VSR_API int32_t vfx_framegen_process_time(RtxVsrHandle* handle, uint64_t pre
     uint32_t previous_pitch, uint64_t current, uint32_t current_pitch,
     uint64_t output, uint32_t output_pitch, float timestep, uint32_t reset);
 
+RTX_VSR_API int32_t vfx_truehdr_open(void* context, uint32_t width, uint32_t height,
+    uint32_t contrast, uint32_t saturation, uint32_t middle_gray, uint32_t luminance,
+    uint32_t debanding_off, const wchar_t* runtime_directory, RtxVsrHandle** out_handle);
+RTX_VSR_API int32_t vfx_truehdr_update(RtxVsrHandle* handle, uint32_t contrast,
+    uint32_t saturation, uint32_t middle_gray, uint32_t luminance, uint32_t debanding_off);
+RTX_VSR_API int32_t vfx_truehdr_process(RtxVsrHandle* handle, uint64_t input_rgba8,
+    uint32_t input_pitch, uint64_t output_rgb10a2, uint32_t output_pitch);
+
 #ifdef __cplusplus
 }
 #endif

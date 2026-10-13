@@ -11,7 +11,7 @@ import native_runtime_paths
 @pytest.mark.parametrize('order',list(permutations(('nr','dlaa','vsr','vfg'))))
 def test_every_vfg_position_builds_exact_gpu_graph(monkeypatch,order):
     class Series:
-        def __init__(self,live,settings,size,ordered,provider):
+        def __init__(self,live,settings,size,ordered,provider,**kwargs):
             self.order=list(ordered)
             self.target=effects.output_size(settings,size) if 'vsr' in ordered else tuple(size)
     monkeypatch.setattr(effects,'EffectSeries',Series)
@@ -91,3 +91,23 @@ def test_passthrough_does_not_report_an_ngx_inference_call():
     plane=NS(as_descriptor=lambda:dict(format='rgba16f_cuda',device_ptr=55))
     result,_=chain._guidance_and_inference(live,None,plane,None,NS(),0,True,True,{})
     assert result['device_ptr']==55 and chain.zero_motion_calls==0
+
+
+def test_vsr_vfg_truehdr_nr_decodes_once_and_uses_the_enlarged_passthrough(monkeypatch):
+    class Series:
+        def __init__(self,live,settings,size,ordered,provider,**kwargs):
+            self.order = list(ordered)
+            self.target = effects.output_size(settings,size) if 'vsr' in ordered else tuple(size)
+    monkeypatch.setattr(effects,'EffectSeries',Series)
+    monkeypatch.setattr(ordered_vfg,'EffectSeries',Series)
+    monkeypatch.setattr(native_runtime_paths,'wide_vfx_runtime',lambda *a,**k:'runtime')
+    chain = NS(preview_consumer=None,process=lambda *a:None,working=(320,192),
+        post_control=NS(update_controls=lambda _:None),temporal_control=NS(controls=None))
+    live = NS(bytes_per_pixel=4)
+    settings = dict(render_pipeline=['vsr','vfg','truehdr','nr'],frame_generation='vfg',
+        frame_multiplier=2,vsr_output_mode='scale',vsr_scale=2)
+    effects.install(chain,live,settings,(320,192),None)
+    assert chain.working == chain.processing_size == (640,384)
+    assert (live._w,live._h) == (640,384)
+    assert chain.ordered_framegen.prefix.order == ['vsr']
+    assert chain.output_effect.order == ['truehdr','nr']

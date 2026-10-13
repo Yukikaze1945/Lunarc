@@ -268,7 +268,7 @@ int main() {
     };
     GpuPostControlOptions o{};
     o.struct_size=sizeof(o); o.abi_version=GPU_POST_CONTROL_ABI_VERSION;
-    o.width=width; o.height=height; o.pixel_bytes=bpp;
+    o.width=width; o.height=height; o.pixel_bytes=bpp; o.color_mode=bpp==8 ? 1u : 0u;
     o.total_gain=o.lightness_gain=o.chroma_gain=1.0f;
     o.low_frequency_gain=o.high_frequency_gain=1.0f;
     GpuPostCandidate c{}; c.kind=GPU_POST_CANDIDATE_CUDA;
@@ -334,7 +334,7 @@ int main() {
     for (auto& q:flat_candidate) q.r+=0.2f;
     check(upload_case(flat_source,flat_candidate),"upload lightness/chroma fixture");
     o={}; o.struct_size=sizeof(o); o.abi_version=GPU_POST_CONTROL_ABI_VERSION;
-    o.width=width; o.height=height; o.pixel_bytes=bpp;
+    o.width=width; o.height=height; o.pixel_bytes=bpp; o.color_mode=bpp==8 ? 1u : 0u;
     o.total_gain=o.lightness_gain=o.chroma_gain=1.0f;
     o.low_frequency_gain=o.high_frequency_gain=1.0f;
     o.lightness_gain=0.0f;
@@ -356,7 +356,7 @@ int main() {
     impulse_candidate[12].b+=0.4f;
     check(upload_case(impulse_source,impulse_candidate),"upload frequency impulse fixture");
     o={}; o.struct_size=sizeof(o); o.abi_version=GPU_POST_CONTROL_ABI_VERSION;
-    o.width=width; o.height=height; o.pixel_bytes=bpp;
+    o.width=width; o.height=height; o.pixel_bytes=bpp; o.color_mode=bpp==8 ? 1u : 0u;
     o.total_gain=o.lightness_gain=o.chroma_gain=1.0f;
     o.low_frequency_gain=1.0f; o.high_frequency_gain=0.0f;
     check(process(o,c,&result),"low-frequency-only process");
@@ -458,7 +458,7 @@ int main() {
 
     check(upload_case(source,candidate),"restore baseline CUDA candidate");
     o={}; o.struct_size=sizeof(o); o.abi_version=GPU_POST_CONTROL_ABI_VERSION;
-    o.width=width; o.height=height; o.pixel_bytes=bpp;
+    o.width=width; o.height=height; o.pixel_bytes=bpp; o.color_mode=bpp==8 ? 1u : 0u;
     o.total_gain=o.lightness_gain=o.chroma_gain=1.0f;
     o.low_frequency_gain=o.high_frequency_gain=1.0f;
 

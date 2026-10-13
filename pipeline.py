@@ -1512,12 +1512,14 @@ def resolve_output_dims(src_w, src_h, transcode_settings=None):
     ts = transcode_settings or {}
     mode = str(ts.get("resolution_mode", "original"))
     try:
-        if mode in ("original", "", "none", None):
+        if mode in ("original", "source", "", "none", None):
             return _even(src_w), _even(src_h)
         if mode == "double":
             return _even(src_w * 2), _even(src_h * 2)
         if mode == "half":
             return _even(src_w / 2), _even(src_h / 2)
+        if mode == "7680x4320":
+            return 7680, 4320
         if mode == "5120x2880":
             return 5120, 2880
         if mode == "3840x2160":
@@ -3179,17 +3181,13 @@ def export_gpu_transfer_stream(video, live, frames, fps, cq, with_audio, out_pat
     _, source_fps, w, h = video_info(video)
     import native_effects
     nr_w, nr_h = native_effects.processing_size(js, (w, h))
-    live_w, live_h = resolve_working_dims(nr_w, nr_h, float(js.get("working_scale", 1.0)))
+    live_w, live_h = resolve_working_dims(nr_w, nr_h, native_effects.core_working_scale(js))
     dst_w, dst_h = resolve_output_dims(w, h, transcode_settings)
     dims = {"src_w": w, "src_h": h, "live_w": live_w, "live_h": live_h,
             "dst_w": dst_w, "dst_h": dst_h, "fps": fps or source_fps}
     import native_effects
-    if 'vsr' in native_effects.stages(js):
-        target = native_effects.output_size(js, (w, h))
-        resolution_mode = str((transcode_settings or {}).get('resolution_mode', 'original'))
-        if resolution_mode != 'original' and (dst_w, dst_h) != target:
-            raise ValueError('RTX VSR target conflicts with the selected export resolution')
-        dims['dst_w'], dims['dst_h'] = target
+    if str((transcode_settings or {}).get('resolution_mode', 'original')) == 'original':
+        dims['dst_w'], dims['dst_h'] = native_effects.output_size(js, (w, h))
 
     htx = hdr_module or __import__("gpu_hdr_transfer_export")
     sdr10 = (not htx.hdr_requested(js) and

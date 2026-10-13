@@ -4,10 +4,11 @@ const LEGACY: Record<string, RenderStage[]> = {
   nr: ['nr'], dlaa: ['dlaa'], vsr: ['vsr'], nr_dlaa: ['nr', 'dlaa'], nr_vsr: ['nr', 'vsr'],
 }
 export function renderStages(settings: DLSSSettings): RenderStage[] {
-  const stages = settings.render_pipeline ?? LEGACY[settings.neural_mode ?? 'nr'] ?? ['nr']
+  const stages = [...new Set(settings.render_pipeline ?? LEGACY[settings.neural_mode ?? 'nr'] ?? ['nr'])]
   // Saved projects from before VFG joined the list keep their original tail position.
-  return settings.frame_generation && settings.frame_generation !== 'off' && !stages.includes('vfg')
-    ? [...stages, 'vfg'] : stages
+  if (settings.frame_generation && settings.frame_generation !== 'off' && !stages.includes('vfg')) stages.push('vfg')
+  if (settings.truehdr_enabled && !stages.includes('truehdr')) stages.push('truehdr')
+  return stages
 }
 export function moveStage(stages: RenderStage[], from: number, to: number): RenderStage[] {
   if (from < 0 || to < 0 || from >= stages.length || to >= stages.length) return stages
@@ -17,6 +18,7 @@ export function moveStage(stages: RenderStage[], from: number, to: number): Rend
 }
 export function pipelinePatch(stages: RenderStage[], settings?: DLSSSettings): Partial<DLSSSettings> {
   return { render_pipeline: stages, neural_mode: 'nr',
+    truehdr_enabled: stages.includes('truehdr'),
     frame_generation: stages.includes('vfg') ? (settings?.frame_generation === 'vfg_dynamic' ? 'vfg_dynamic' : 'vfg') : 'off',
     ...(stages.some(s => s !== 'nr') ? { export_backend: 'gpu_transfer' as const } : {}),
     ...(!stages.includes('nr') ? { working_scale: 1, reconstruction_mode: 'single' as const,

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import {foldSections} from './CollapsibleSection'
 import { RotateCcw, Search, SlidersHorizontal } from 'lucide-react'
 import type { DLSSSettings, PostControls, TemporalControls } from '../types'
 import { saveSettings } from '../services/api'
@@ -114,7 +115,7 @@ export const QualityInspector: React.FC<QualityInspectorProps> = ({
     <aside className="quality-inspector" aria-label="DLSS 参数检查器">
       <div className="qi-primary" role="group" aria-label="基础控制">{primary}</div>
       <details className="qi-advanced">
-        <summary>高级<span aria-hidden="true">＋</span></summary>
+        <summary>高级<span className="qi-advanced-sign" aria-hidden="true">＋</span></summary>
       <header className="qi-header">
         <button className="qi-reset" type="button" onClick={resetControls}>
           <RotateCcw size={14} aria-hidden="true" /> 重置画质/时域
@@ -146,10 +147,10 @@ export const QualityInspector: React.FC<QualityInspectorProps> = ({
 
       <div className="qi-panel" role="tabpanel" id={`qi-panel-${tab}`}
         aria-labelledby={`qi-tab-${tab}`} key={tab}>
-        {tab === 'basic' && basic}
-        {tab === 'layers' && layers}
-        {tab === 'hdr' && hdr}
-        {tab === 'quality' && (
+        {tab === 'basic' && foldSections(basic)}
+        {tab === 'layers' && foldSections(layers)}
+        {tab === 'hdr' && foldSections(hdr)}
+        {tab === 'quality' && foldSections(
           <div className="qi-section-stack">
             <div className="qi-export-note"><SlidersHorizontal size={16} />
               <div><strong>预览与 GPU Transfer 导出</strong><span>控制作用于模型残差；中性值保持原结果。</span></div>
@@ -203,7 +204,7 @@ export const QualityInspector: React.FC<QualityInspectorProps> = ({
             </section>
           </div>
         )}
-        {tab === 'temporal' && (
+        {tab === 'temporal' && foldSections(
           <div className="qi-section-stack">
             <div className="qi-export-note"><SlidersHorizontal size={16} />
               <div><strong>预览与 GPU Transfer 导出</strong><span>静态区域低频累积；没有光流重投影。</span></div>

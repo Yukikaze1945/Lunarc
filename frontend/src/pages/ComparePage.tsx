@@ -3,11 +3,12 @@ import type {PointerEvent as ReactPointerEvent} from 'react'
 import {ChevronLeft, ChevronRight, FolderOpen, Pause, Play, Scan, Volume2} from 'lucide-react'
 import {localToken, openNativeFileDialog} from '../services/api'
 import {decodeComparisonPacket} from '../services/comparisonPlayback'
+import type {PlaybackInfo} from '../services/comparisonPlayback'
 import './compare.css'
 
 const API = 'http://127.0.0.1:18923'
 type Side = 'original'|'exported'
-type PairRequest = {original:string;exported:string;label?:string}
+type PairRequest = {original:string;exported:string;label?:string;original_offset_seconds?:number;duration_seconds?:number}
 type MediaInfo = {path:string;name:string;width:number;height:number;codec?:string;profile?:string;
   pixel_format?:string;bit_depth?:number;frame_rate?:number;duration_seconds:number;
   color_range?:string;color_matrix?:string;color_transfer?:string;color_primaries?:string;
@@ -52,6 +53,7 @@ export function ComparePage({initialPair,originalPath,exportedPath,onPairOpened}
   const [playing,setPlaying]=useState(false)
   const [playbackRevision,setPlaybackRevision]=useState(0)
   const [playbackRate,setPlaybackRate]=useState(1)
+  const [playbackInfo,setPlaybackInfo]=useState<PlaybackInfo|null>(null)
   const [audioSide,setAudioSide]=useState<Side>('original')
   const [error,setError]=useState('')
   const [busy,setBusy]=useState(false)
@@ -141,7 +143,7 @@ export function ComparePage({initialPair,originalPath,exportedPath,onPairOpened}
     try {
       const res=await fetch(`${API}/api/compare/open`,{method:'POST',
         headers:localToken()?{'Content-Type':'application/json','X-DLSS-Token':localToken()}:{'Content-Type':'application/json'},
-        body:JSON.stringify({original:source,exported:result}),signal:controller.signal})
+        body:JSON.stringify({original:source,exported:result,original_offset_seconds:initialPair?.original_offset_seconds,duration_seconds:initialPair?.duration_seconds}),signal:controller.signal})
       const body=await res.json().catch(()=>null)
       if(serial!==openSerial.current)return
       if(!res.ok)throw new Error(body?.detail||'无法打开这组媒体文件')
@@ -149,7 +151,7 @@ export function ComparePage({initialPair,originalPath,exportedPath,onPairOpened}
       if(!opened.session||!opened.original||!opened.exported)throw new Error('对比服务未返回完整媒体信息')
       const previous=pairRef.current
       pairRef.current=opened
-      setPair(opened);setFrame({original:null,exported:null});setCurrentTime(0);timeRef.current=0
+      setPair(opened);setPlaybackInfo(null);setFrame({original:null,exported:null});setCurrentTime(0);timeRef.current=0
       if(previous&&previous.session!==opened.session)closeSession(previous.session)
       setAudioSide(opened.original.audio?'original':opened.exported.audio?'exported':'original')
       setStatus('正在读取画面…')
@@ -161,7 +163,7 @@ export function ComparePage({initialPair,originalPath,exportedPath,onPairOpened}
       setError(e?.message||'打开对比失败');setStatus('无法载入对比素材。')
     }}
     finally{if(serial===openSerial.current){if(openAbort.current===controller)openAbort.current=null;setBusy(false)}}
-  },[original,exported,loadFrame,onPairOpened,closeSession])
+  },[original,exported,initialPair?.original_offset_seconds,initialPair?.duration_seconds,loadFrame,onPairOpened,closeSession])
 
   const lastOpened=useRef('')
   useEffect(()=>{
@@ -185,7 +187,7 @@ export function ComparePage({initialPair,originalPath,exportedPath,onPairOpened}
     frameAbort.current?.abort();pendingFrame.current=null;loadSerial.current++;setBusy(false);setError('')
     setPlaying(true);playingRef.current=true
     const audio=audioRef.current
-    if(audio&&audio.src){try{audio.currentTime=timeRef.current;await audio.play()}catch{setStatus('视频画面同步播放；所选音轨不可播放。')}}
+    if(audio&&audio.src){audio.pause();audio.currentTime=timeRef.current}
   }
   const pause=()=>{setPlaying(false);playingRef.current=false;playbackGeneration.current++;playbackSocket.current?.close();audioRef.current?.pause();void loadFrame(timeRef.current)}
   const audioEnded=()=>{
@@ -199,6 +201,7 @@ export function ComparePage({initialPair,originalPath,exportedPath,onPairOpened}
     if(!playing||!pair)return
     const generation=++playbackGeneration.current
     let disposed=false, first=true, drawing=false
+    let lastDecoderInfo=''
     let pending:ArrayBuffer|null=null
     const query=new URLSearchParams({session:pair.session,time:String(timeRef.current),rate:String(playbackRate)})
     const socket=new WebSocket(withToken(`ws://127.0.0.1:18923/ws/compare?${query}`))
@@ -212,6 +215,10 @@ export function ComparePage({initialPair,originalPath,exportedPath,onPairOpened}
           const urls:string[]=[]
           try{
             const packet=decodeComparisonPacket(buffer)
+            if(packet.playback){
+              const key=JSON.stringify([packet.playback.original.decoder,packet.playback.exported.decoder,packet.playback.display_fps])
+              if(key!==lastDecoderInfo){lastDecoderInfo=key;setPlaybackInfo(packet.playback)}
+            }
             const make=async (side:Side):Promise<FrameInfo>=>{
               const source=packet[side],url=URL.createObjectURL(source.blob);urls.push(url)
               const image=new Image();image.src=url;await image.decode()
@@ -303,6 +310,6 @@ export function ComparePage({initialPair,originalPath,exportedPath,onPairOpened}
       <div className="compare-toolbar"><div className="compare-mode-tabs" role="group" aria-label="对比方式"><button className={mode==='side'?'active':''} onClick={()=>setMode('side')}>左右并排</button><button className={mode==='wipe'?'active':''} onClick={()=>setMode('wipe')}>中央滑块</button><button className={mode==='ab'?'active':''} onClick={()=>setMode('ab')}>A / B</button></div><div className="compare-zoom" role="group" aria-label="查看缩放"><button className={zoom==='fit'?'active':''} onClick={()=>setZoom('fit')}>适配</button><button className={zoom==='100'?'active':''} onClick={()=>setZoom('100')}>100%</button><button className={zoom==='200'?'active':''} onClick={()=>setZoom('200')}>200%</button></div></div>
     </section>
     <section className="compare-transport"><div className="compare-transport-buttons"><button className="compare-icon-button" aria-label="后退一帧" disabled={!pair||busy} onClick={()=>void step(-1)}><ChevronLeft/></button><button className="compare-play" aria-label={playing?'暂停':'播放'} disabled={!pair} onClick={()=>playing?pause():void play()}>{playing?<Pause size={17}/>:<Play size={17}/>}</button><button className="compare-icon-button" aria-label="前进一帧" disabled={!pair||busy} onClick={()=>void step(1)}><ChevronRight/></button></div><div className="compare-timeline"><div className="compare-time-labels"><span>{seconds(currentTime)}</span><span>{seconds(duration)}</span></div><input aria-label="同步时间轴" type="range" min="0" max={Math.max(duration,.001)} step="0.001" value={Math.min(currentTime,duration||0)} disabled={!pair} onChange={e=>{const v=Number(e.target.value);setCurrentTime(v);timeRef.current=v}} onPointerUp={e=>seek(Number((e.currentTarget as HTMLInputElement).value))} onKeyUp={e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key))seek(Number(e.currentTarget.value))}}/></div><select aria-label="播放速度" disabled={!pair} value={playbackRate} onChange={e=>{const rate=Number(e.target.value);setPlaybackRate(rate);if(audioRef.current)audioRef.current.playbackRate=rate}}><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1">1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select><label className="compare-audio-choice"><Volume2 size={15}/><span>单音轨</span><select aria-label="播放音轨" value={audioSide} disabled={!pair} onChange={e=>setAudioSide(e.target.value as Side)}><option value="original" disabled={!pair?.original.audio}>原片</option><option value="exported" disabled={!pair?.exported.audio}>导出结果</option></select></label><audio ref={audioRef} preload="none" src={audioUrl||undefined} onEnded={audioEnded}/></section>
-    <footer className="compare-footer"><span role="status" className={error?'error':''}>{error||(busy?'正在读取画面…':status)}</span>{pair&&<details className="compare-media-details"><summary>媒体信息</summary><div className="compare-media-panel"><h2>媒体信息</h2>{(['original','exported'] as Side[]).map(side=><section key={side}><h3>{side==='original'?'原片':'导出结果'}</h3><p>{mediaLabel(pair[side])}</p><p>画面时间 {seconds(frame[side]?.actualTime??0)} · PTS {frame[side]?.actualPts??'—'}</p></section>)}<p>按相对媒体时间定位，使用实际帧时间戳。对齐差 {seconds(Math.abs((frame.original?.actualTime||0)-(frame.exported?.actualTime||0)))}</p>{pair.original.is_hdr||pair.exported.is_hdr?<p>HDR 使用双方一致的固定显示映射；显示链路未经校准。</p>:null}</div></details>}</footer>
+    <footer className="compare-footer"><span role="status" className={error?'error':''}>{error||(busy?'正在读取画面…':status)}</span>{pair&&<details className="compare-media-details"><summary>媒体信息</summary><div className="compare-media-panel"><h2>媒体信息</h2>{(['original','exported'] as Side[]).map(side=><section key={side}><h3>{side==='original'?'原片':'导出结果'}</h3><p>{mediaLabel(pair[side])}</p>{playbackInfo&&<><p>{playbackInfo[side].decoder==='nvdec'?'NVIDIA 硬件解码 · GPU 缩放':'软件解码'} · {playbackInfo[side].display_size.join(' × ')} · {playbackInfo.display_fps.toFixed(0)} fps 显示</p>{playbackInfo[side].fallback_reason&&<p>解码回退原因：{playbackInfo[side].fallback_reason}</p>}</>}<p>画面时间 {seconds(frame[side]?.actualTime??0)} · PTS {frame[side]?.actualPts??'—'}</p></section>)}<p>按相对媒体时间定位，使用实际帧时间戳。对齐差 {seconds(Math.abs((frame.original?.actualTime||0)-(frame.exported?.actualTime||0)))}</p>{pair.original.is_hdr||pair.exported.is_hdr?<p>HDR 使用双方一致的固定显示映射；显示链路未经校准。</p>:null}</div></details>}</footer>
   </main>
 }

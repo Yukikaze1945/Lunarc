@@ -40,11 +40,12 @@ def test_explicit_unknown_settings_error():
 
 
 def test_native_abi_controls_and_geometry():
-    assert ctypes.sizeof(_Options) == 84
+    assert ctypes.sizeof(_Options) == 88
     assert ctypes.sizeof(_Candidate) == 48
     options = native_options(controls_from_settings({"post_controls": {
         "roi_kind": 2, "roi_bounds": [.1, .2, .8, .9], "debug_mode": 3}}), 160, 90, 8)
-    assert options.struct_size == 84 and options.pixel_bytes == 8
+    assert options.struct_size == 88 and options.pixel_bytes == 8 and options.color_mode == 1
+    assert native_options(controls_from_settings({}), 160, 90, 8, sdr10=True).color_mode == 2
     assert options.roi_kind == 2 and options.debug_mode == 3
     assert tuple(options.roi_bounds) == pytest.approx((.1, .2, .8, .9))
 

@@ -29,7 +29,7 @@ class PreviewPlayer:
         self.request_id = None
         self.options = dict(frame=0, view='dlss', split_x=.5, zoom=1.,
                             pan_x=.5, pan_y=.5, display_edge=0)
-        self.binary = self.ack_enabled = False
+        self.binary = self.ack_enabled = self.native = False
         self.awaiting = None
         self.acks = {}
         self.loop = True
@@ -38,9 +38,19 @@ class PreviewPlayer:
         self.play_position = 0
         self.last_sent = None
         self.dropped = self.obsolete = 0
+        self.accept_parameter_frames = False
 
     def command(self, cmd):
         action = cmd.get('action')
+        if action == 'refresh':
+            # Parameter changes keep the same source/view scope and outstanding
+            # presentation ACK. Finish current GPU work, show it, then apply latest.
+            if self.request_id is not None and cmd.get('request_id') != self.request_id:
+                return
+            self.accept_parameter_frames = True
+            self.dirty = True
+            self.wake.set()
+            return
         if action == 'presented':
             if cmd.get('sequence') == self.awaiting:
                 self.acks = {k: float(cmd[k]) for k in ('decode_ms', 'paint_wait_ms',
@@ -61,6 +71,11 @@ class PreviewPlayer:
         self.options['display_edge'] = max(0, min(3840, int(self.options['display_edge'])))
         if cmd.get('transport') == 'binary':
             self.binary = True
+            self.native = False
+            self.ack_enabled = bool(cmd.get('ack'))
+        elif cmd.get('transport') == 'native':
+            self.native = True
+            self.binary = False
             self.ack_enabled = bool(cmd.get('ack'))
         self.loop = bool(cmd.get('loop', self.loop))
         if action == 'play':
@@ -103,6 +118,7 @@ class PreviewPlayer:
             frame = min(total-1, int(opts.pop('frame')))
             revision = self.revision
             service_revision = getattr(self.service, '_preview_revision', 0)
+            source_revision = getattr(self.service, '_preview_source_revision', 0)
             source = self.service.video_path
             request_id = self.request_id
             self.dirty = False
@@ -113,7 +129,8 @@ class PreviewPlayer:
                 future = asyncio.create_task(asyncio.to_thread(self.service.render_preview,
                     frame_idx=frame, view=opts['view'], split_x=float(opts['split_x']),
                     zoom=float(opts['zoom']), pan=(float(opts['pan_x']), float(opts['pan_y'])),
-                    preview_mode=self.playing, display_edge=opts['display_edge']))
+                    preview_mode=self.playing, display_edge=opts['display_edge'],
+                    **({'native':True} if self.native else {})))
                 try:
                     data, message = await asyncio.shield(future)
                 except asyncio.CancelledError:
@@ -123,12 +140,23 @@ class PreviewPlayer:
                 except Exception as error:
                     data, message = None, str(error)
                 diagnostics = self.service.preview_diagnostics()
+            if message=='GPU_EXPORT_BUSY':
+                if not self.closed and revision==self.revision:
+                    self.playing=self.dirty=False
+                    await self._send(dict(type='busy',request_id=request_id,
+                        message='正在导出，预览已暂停'))
+                continue
+            rendered_revision = diagnostics.get('settings_revision', service_revision)
+            settings_current = rendered_revision == getattr(self.service, '_preview_revision', 0)
             if (self.closed or revision != self.revision or source != self.service.video_path or
-                    service_revision != getattr(self.service, '_preview_revision', 0)):
+                    source_revision != getattr(self.service, '_preview_source_revision', 0) or
+                    (not settings_current and not self.accept_parameter_frames)):
                 self.obsolete += 1
                 if not self.closed and revision == self.revision:
                     self.dirty = True
                 continue
+            if not settings_current:
+                self.dirty = True
             if not data:
                 self.playing = False
                 await self._send(dict(type='error', frame=frame, request_id=request_id, message=message))
@@ -140,10 +168,13 @@ class PreviewPlayer:
             prep = time.perf_counter()
             body = dict(type='frame', sequence=self.sequence, request_id=request_id,
                 frame=frame, total=total, source=source, preview=dict(diagnostics,
+                    settings_revision=rendered_revision, settings_current=settings_current,
                     render_request_ms=(prep-started)*1000, stale_results_discarded=self.obsolete,
                     dropped_frames=self.dropped, client_presentation=self.acks,
                     playback_strategy='latest_completed_frame', status='playing' if self.playing else 'still'))
-            if self.binary:
+            if self.native:
+                body.update(encoding='native_fp16',jpeg_bytes=0)
+            elif self.binary:
                 body.update(encoding='jpeg_binary', jpeg_bytes=len(data))
             else:
                 body['image'] = 'data:image/jpeg;base64,'+base64.b64encode(data).decode('ascii')

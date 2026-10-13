@@ -106,11 +106,12 @@ const form = (dlssPatch = {}, tsPatch = {}, overrides = {}) => ({
 
 const ON = { experimental_hdr_scrgb: true, export_backend: 'gpu_transfer' }
 
-test('native VSR target permits its real extent, arbitrary HDR resizing remains refused', () => {
+test('HDR permits final export resizing after VSR', () => {
   const input = form({...ON,render_pipeline:['nr','vsr'],vsr_target:'4k'},
     {codec:'hevc_nvenc'},{video:{...HDR_VIDEO,width:1920,height:1080}})
   assert.ok(!hdrBlockers(input).some(s=>s.includes('输出不能缩放')))
-  assert.ok(hdrBlockers({...input,outputWidth:2560,outputHeight:1440}).some(s=>s.includes('输出不能缩放')))
+  assert.ok(!hdrBlockers({...input,outputWidth:2560,outputHeight:1440}).some(s=>s.includes('输出分辨率')))
+  assert.ok(hdrBlockers({...input,outputWidth:2561,outputHeight:1440}).some(s=>s.includes('输出分辨率')))
 })
 
 // --- the opt-in is a request, not a guess --------------------------------------
@@ -267,8 +268,8 @@ test('the deliverable the chain can write: one name, one extent', () => {
   assert.ok(clauses(hdrBlockers(form(ON, {}, { outPath: 'C:\\Videos\\clip.mp4' })))
     .includes('container'))
 
-  assert.ok(clauses(hdrBlockers(form(ON, {}, { outputWidth: 1920, outputHeight: 1080 })))
-    .includes('output_extent'), 'the encoder is fed the full-size composite')
+  assert.ok(!clauses(hdrBlockers(form(ON, {}, { outputWidth: 1920, outputHeight: 1080 })))
+    .includes('output_extent'), 'final GPU scaling permits a different output extent')
 
   // An empty path means the backend derives one beside the source; the container select
   // is then all the page has.

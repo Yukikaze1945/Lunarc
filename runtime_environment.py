@@ -35,7 +35,7 @@ BRIDGES = {
     'gpu_residual_bridge.dll': ('gpu_residual_abi_version', 1),
     'gpu_low_residual_bridge.dll': ('gpu_low_residual_abi_version', 1),
     'gpu_multiscale_fusion_bridge.dll': ('gpu_fusion_abi_version', 1),
-    'gpu_post_control_bridge.dll': ('gpu_post_control_abi_version', 1),
+    'gpu_post_control_bridge.dll': ('gpu_post_control_abi_version', 2),
     'gpu_temporal_bridge.dll': ('gpu_temporal_abi_version', 1),
     'gpu_hdr_scrgb_bridge.dll': ('gpu_hdr_abi_version', 1),
     'gpu_preview_readback.dll': ('gpu_preview_open', None),
@@ -84,6 +84,42 @@ def driver_device():
     return {'name': name.value.decode('utf-8', errors='replace'), 'bytes': memory.value}
 
 
+_vram_lock = threading.Lock()
+_vram_latest = {'adapter_memory_used_gb': None, 'adapter_memory_total_gb': None}
+_vram_due = 0.
+
+
+def adapter_memory():
+    # Whole-adapter WDDM accounting, including other programs. Never run the
+    # utility on a rendering thread or stall /api/system while it starts.
+    global _vram_due
+    with _vram_lock:
+        snapshot = dict(_vram_latest)
+        if time.monotonic() < _vram_due:
+            return snapshot
+        _vram_due = time.monotonic() + 5
+    def sample():
+        try:
+            result = subprocess.run(['nvidia-smi', '--id=0',
+                '--query-gpu=memory.used,memory.total', '--format=csv,noheader,nounits'],
+                capture_output=True, text=True, timeout=3,
+                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+            values = [float(v.strip()) / 1024 for v in result.stdout.strip().split(',')]
+            if result.returncode != 0 or len(values) != 2:
+                raise ValueError('GPU memory query unavailable')
+            value = dict(adapter_memory_used_gb=round(values[0], 2),
+                adapter_memory_total_gb=round(values[1], 2), adapter_memory_sampled_at=time.time(),
+                adapter_memory_scope='adapter_including_other_processes')
+        except (OSError, ValueError, subprocess.TimeoutExpired):
+            value = dict(adapter_memory_used_gb=None, adapter_memory_total_gb=None,
+                adapter_memory_scope='unavailable')
+        with _vram_lock:
+            _vram_latest.clear()
+            _vram_latest.update(value)
+    threading.Thread(target=sample, name='AdapterMemorySample', daemon=True).start()
+    return snapshot
+
+
 def quick_system_info():
     info = {'gpu': None, 'vram_total_gb': None, 'vram_used_gb': None,
             'gpu_error': None, 'os': sys.platform, 'python_version': platform.python_version(),
@@ -101,6 +137,7 @@ def quick_system_info():
         except Exception:
             pass
     info['vram_scope'] = 'process_reserved' if info['vram_used_gb'] is not None else 'unavailable'
+    info.update(adapter_memory())
     info['service'] = 'lunarc'
     info['backend_api'] = 1
     info['runtime_id'] = runtime_id()

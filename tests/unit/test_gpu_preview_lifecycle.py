@@ -151,6 +151,11 @@ def _inject_open(preview, opened):
         opened.append({"video": video, "settings": dict(settings), "chain": chain,
                        "live": live, "provider": provider, "ids": ids})
         self.chain, self.live, self.provider = chain, live, provider
+        process = chain.process
+        def process_picture(*args):
+            self.result_bgr = np.full((4, 8, 3), 40, np.uint8)
+            return process(*args)
+        chain.process = process_picture
         self.multi = {"scales": scales, "dims": dims, "fusion": "data_consistency"}
         self.bridges = {"nvdec": _Nvdec()}
         self.hdr = self.sdr10 = False

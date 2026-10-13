@@ -18,6 +18,11 @@ extern "C" {
 
 #define GPU_HDR_ABI_VERSION 1u
 typedef struct GpuHdrBridge GpuHdrBridge;
+/* Additive SDR NR colour contract. Does not change the HDR proxy ABI. */
+GPU_HDR_API uint32_t gpu_sdr10_nr_color_abi_version(void);
+GPU_HDR_API int32_t gpu_sdr10_reconstruct(GpuHdrBridge* bridge, void* texture,
+    void* fence, uint64_t fence_value, double strength, uint32_t preserve_detail,
+    uint64_t* out_ptr, uint32_t* out_pitch);
 
 /* Experimental HDR10 stage. One colour pipeline that never lets a main-colour
  * sample be 8-bit and is only ever reached from the HDR10 chain. It carries

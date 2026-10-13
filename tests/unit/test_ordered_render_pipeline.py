@@ -52,6 +52,7 @@ def test_hdr_source_cut_resets_prefix_before_it_consumes_the_picture():
     events = []
     plane = SimpleNamespace(as_descriptor=lambda: dict(format='rgba16f_cuda', device_ptr=7))
     chain = object.__new__(HdrChain)
+    chain.preview_consumer = None
     chain.bridge = SimpleNamespace(decode=lambda **kw: plane, source_report=lambda: {},
         import_master=lambda value: plane, downscale=lambda: plane,
         proxy=lambda: (plane, plane), proxy_report=lambda: {})
@@ -72,8 +73,9 @@ def test_hdr_source_cut_resets_prefix_before_it_consumes_the_picture():
 def test_series_executes_exact_order_with_the_same_reset_and_releases_reverse(monkeypatch):
     calls = []
     class FakeEffect:
-        def __init__(self, live, settings, size, provider, *, kind):
+        def __init__(self, live, settings, size, provider, *, kind, wide=False, hdr=False):
             self.kind, self.size = kind, size
+            self.wide, self.output_hdr = wide, hdr
             self.target = (1920, 1080) if kind == 'vsr' else size
         def process(self, candidate, frame, reset):
             calls.append((self.kind, self.size, reset, candidate['origin']))

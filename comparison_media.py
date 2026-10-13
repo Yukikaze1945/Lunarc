@@ -49,8 +49,8 @@ def linear_rgb_to_display_bgr(rgb: np.ndarray, hdr: bool = False) -> np.ndarray:
         raise ValueError("linear RGB image must have shape HxWx3")
     values = np.nan_to_num(values, nan=0.0, posinf=1.0, neginf=0.0)
     if hdr:
-        luminance = np.maximum(values @ np.array([.2126, .7152, .0722], np.float32), 0)
-        values = values / (1.0 + luminance[..., None])
+        from hdr_display_mapping import hdr_to_sdr_linear
+        values = hdr_to_sdr_linear(values)
     values = np.clip(values, 0.0, 1.0)
     encoded = np.where(values < .018, 4.5 * values,
                        1.099 * np.power(values, .45) - .099)
@@ -270,7 +270,7 @@ class MediaComparisonService:
             raise MediaComparisonError(f"无法读取首帧 PTS：{metadata['name']}")
         return min(pts_values)
 
-    def open_pair(self, original: str, exported: str) -> dict:
+    def open_pair(self, original: str, exported: str, original_offset_seconds=0., duration_seconds=None) -> dict:
         paths = [self._local_path(original), self._local_path(exported)]
         medias = []
         # Metadata is intentionally freshly probed for every open, not read from a
@@ -278,6 +278,16 @@ class MediaComparisonService:
         for path in paths:
             metadata = self._probe_metadata(path)
             medias.append(_Media(path, metadata, self._origin(path, metadata)))
+        offset = _finite(original_offset_seconds)
+        if offset is None or offset < 0 or offset >= medias[0].metadata['duration_seconds']:
+            raise MediaComparisonError('原片对比起点无效')
+        if duration_seconds is not None:
+            duration = _finite(duration_seconds)
+            if duration is None or duration <= 0 or offset + duration > medias[0].metadata['duration_seconds'] + .1:
+                raise MediaComparisonError('原片对比时长无效')
+            medias[0].metadata['duration_seconds'] = duration
+            medias[1].metadata['duration_seconds'] = min(duration, medias[1].metadata['duration_seconds'])
+        medias[0].origin_pts += offset
         session = uuid.uuid4().hex
         with self._lock:
             self._sessions[session] = tuple(medias)

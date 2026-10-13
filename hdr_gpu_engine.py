@@ -1345,3 +1345,28 @@ class GpuSdr10Bridge(GpuHdrBridge):
             except AttributeError as error:
                 raise HdrBridgeError(f"missing SDR10 native entry {symbol}") from error
             entry.argtypes, entry.restype = signatures[original]
+        if not hasattr(self._lib, 'gpu_sdr10_nr_color_abi_version') or self._lib.gpu_sdr10_nr_color_abi_version() != 1:
+            raise HdrBridgeError('SDR10 NR requires the updated BT.709 colour bridge')
+        self._lib.gpu_sdr10_reconstruct.argtypes = [ctypes.c_void_p, ctypes.c_void_p,
+            ctypes.c_void_p, ctypes.c_uint64, ctypes.c_double, ctypes.c_uint32,
+            ctypes.POINTER(ctypes.c_uint64), ctypes.POINTER(ctypes.c_uint32)]
+        self._lib.gpu_sdr10_reconstruct.restype = ctypes.c_int32
+
+    def reconstruct(self, dlss_output, fence=None, fence_value=None,
+                    residual_strength=1.0, *, preserve_source_detail=True):
+        self._require_open()
+        texture, fence_ptr, value = self._producer_texture(dlss_output, fence, fence_value,
+            extent=self._working, extent_name='working', label='Feature 18 output', role='reconstruction')
+        strength = float(residual_strength)
+        if not math.isfinite(strength) or not 0 <= strength <= 1.5:
+            raise HdrBridgeError('SDR10 residual strength must be finite in 0..1.5')
+        pointer, pitch = ctypes.c_uint64(), ctypes.c_uint32()
+        code = self._lib.gpu_sdr10_reconstruct(self._handle,
+            ctypes.c_void_p(_to_int_ptr(texture)), ctypes.c_void_p(_to_int_ptr(fence_ptr)),
+            ctypes.c_uint64(_to_int_ptr(value)), strength, int(preserve_source_detail),
+            ctypes.byref(pointer), ctypes.byref(pitch))
+        if code:
+            raise self._fail('gpu_sdr10_reconstruct', code)
+        return DevicePlane(fmt=FORMAT_RGBA16F_CUDA, pixel_format='linear Rec.709 SDR NR output',
+            width=self._full[0], height=self._full[1], cuda_context=self._cuda_context,
+            device_ptr=pointer.value, pitch_bytes=pitch.value, bytes_per_pixel=8, plane=PLANE_COMPOSITED)

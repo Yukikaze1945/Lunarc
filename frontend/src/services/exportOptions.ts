@@ -5,7 +5,7 @@ import {isHdrRequested} from './hdrExport.ts'
 // These are the formats the existing encoder entries actually consume.
 export function exportOptions(settings: DLSSSettings, video: VideoInfo | null, ts: TranscodeSettings) {
   const gpu = settings.export_backend === 'gpu_transfer'
-  const wide = isHdrRequested(settings) || (gpu && isSdr10Source(video))
+  const wide = !!settings.truehdr_enabled || isHdrRequested(settings) || (gpu && isSdr10Source(video))
   return {
     gpu, wide,
     codec: wide ? ['hevc_nvenc'] : ['av1_nvenc', 'hevc_nvenc', 'h264_nvenc'],
@@ -13,7 +13,7 @@ export function exportOptions(settings: DLSSSettings, video: VideoInfo | null, t
     pixel_format: wide ? ['auto', 'p010le'] : gpu ? ['auto', 'yuv420p'] : ['auto', 'yuv420p', 'nv12', 'nv16', 'yuv444p'],
     profile: wide ? ['auto', 'main10'] : ts.codec === 'h264_nvenc' ? ['auto', 'main', 'high'] : ['auto', 'main'],
     color_preset: gpu || wide ? ['preserve'] : ['preserve', 'bt709_limited', 'bt709_full', 'hdr_to_sdr', 'custom'],
-    resolution_mode: gpu || wide ? ['original'] : null,
+    resolution_mode: null as string[] | null,
     audio_mode: ts.container === '.webm' ? ['opus', 'remove'] : null,
     b_ref_mode: ts.codec === 'av1_nvenc' ? ['auto', 'disabled', 'middle'] : ['auto', 'disabled', 'middle', 'each'],
   }

@@ -21,14 +21,31 @@ def stages(settings):
         if selected not in LEGACY_STAGES:
             raise ValueError('Unknown native processing mode: ' + selected)
         value = list(LEGACY_STAGES[selected])
-    if not isinstance(value, (list, tuple)) or not value:
+    if not isinstance(value, (list, tuple)) or (not value and not (settings.get('truehdr_enabled') or settings.get('_truehdr_input_pipeline'))):
         raise ValueError('Render pipeline must contain at least one stage')
-    if any(stage not in ('nr', 'dlaa', 'vsr', 'vfg') for stage in value) or len(set(value)) != len(value):
-        raise ValueError('Render pipeline stages must be unique NR, DLAA, VSR or VFG')
+    if any(stage not in ('nr', 'dlaa', 'vsr', 'vfg', 'truehdr') for stage in value) or len(set(value)) != len(value):
+        raise ValueError('Render pipeline stages must be unique NR, DLAA, VSR, VFG or TrueHDR')
     ordered = list(value)
     if settings.get('frame_generation', 'off') != 'off' and 'vfg' not in ordered:
         ordered.append('vfg')
+    if settings.get('truehdr_enabled') and 'truehdr' not in ordered:
+        ordered.append('truehdr')
     return ordered
+
+
+def nr_as_effect(settings):
+    ordered = stages(settings)
+    return 'nr' in ordered and 'truehdr' in ordered and ordered.index('truehdr') < ordered.index('nr')
+
+
+def nr_effect_settings(settings):
+    # The outer chain only decodes SDR. The NR stage after TrueHDR owns its
+    # independent FP16 reconstruction, with the user's original layer settings.
+    return dict(settings, _inline_hdr_nr=True)
+
+
+def core_working_scale(settings):
+    return 1.0 if nr_as_effect(settings) and not settings.get('_inline_hdr_nr') else float(settings.get('working_scale', 1.0))
 
 
 def mode(settings):
@@ -53,6 +70,12 @@ def validate(settings, source):
         from native_runtime_paths import wide_vfx_runtime
         wide_vfx_runtime(settings.get('vsr_runtime_path'), framegen=True)
     ordered = stages(settings)
+    if 'truehdr' in ordered:
+        from truehdr_engine import parameters, runtime_directory
+        parameters(settings)
+        if source.get('color_transfer') in ('smpte2084','arib-std-b67'):
+            raise ValueError('TrueHDR converts SDR input; an HDR source already has HDR colour')
+        runtime_directory(settings)
     if ordered == ['nr']:
         return
     wide = source.get('pix_fmt') in ('yuv420p10le', 'p010le', 'p010')
@@ -60,7 +83,7 @@ def validate(settings, source):
         raise ValueError('HLG is unsupported by the existing native HDR10/PQ chain')
     if source.get('color_transfer') == 'smpte2084' and not wide:
         raise ValueError('HDR10 native stages require a 10-bit P010 source')
-    if 'vsr' in ordered and wide:
+    if 'vsr' in ordered and (wide or ('truehdr' in ordered and ordered.index('truehdr') < ordered.index('vsr'))):
         from native_runtime_paths import wide_vfx_runtime
         wide_vfx_runtime(settings.get('vsr_runtime_path'))
     if source.get('pix_fmt') not in ('yuv420p', 'nv12', 'yuv420p10le', 'p010le', 'p010'):
@@ -121,6 +144,8 @@ def output_size(settings, size):
 def processing_size(settings, size):
     """Extent entering NR (or passthrough when NR is absent)."""
     ordered = stages(settings)
+    if nr_as_effect(settings) and not settings.get('_inline_hdr_nr'):
+        return tuple(size)
     if 'nr' in ordered and 'vsr' in ordered[:ordered.index('nr')]:
         return output_size(settings, size)
     return tuple(size)
@@ -134,6 +159,18 @@ def frame_at_size(frame, size):
 
 def make_live(width, height, settings, *, wide=False):
     ordered = stages(settings)
+    if nr_as_effect(settings):
+        from gpu_transfer_export import multi_scale_config
+        from dlss_gpu_engine import Live
+        nr_settings = nr_effect_settings(settings)
+        size = output_size(settings, (width, height)) if 'vsr' in ordered[:ordered.index('nr')] else (width, height)
+        multi = multi_scale_config(nr_settings, *size)
+        owner = Live(*multi['dims'][0], settings, color_format='rgba16f')
+        try:
+            return Passthrough(width, height, settings, owner=owner, wide=wide)
+        except Exception:
+            owner.close()
+            raise
     if wide and ordered == ['dlaa']:
         from dlaa_gpu_engine import Live
         return Live(width, height, settings, dll_path=settings.get('dlss_dll_path'), is_hdr=True)
@@ -142,7 +179,8 @@ def make_live(width, height, settings, *, wide=False):
         if 'dlaa' in ordered:
             from dlaa_gpu_engine import Live
             size = output_size(settings, (width, height)) if 'vsr' in ordered[:ordered.index('dlaa')] else (width, height)
-            owner = Live(*size, settings, dll_path=settings.get('dlss_dll_path'), is_hdr=wide)
+            hdr_at_dlaa = 'truehdr' in ordered[:ordered.index('dlaa')]
+            owner = Live(*size, settings, dll_path=settings.get('dlss_dll_path'), is_hdr=wide or hdr_at_dlaa)
         try:
             return Passthrough(width, height, settings, owner=owner, wide=wide)
         except Exception:
@@ -253,6 +291,7 @@ class Passthrough:
         self.color_format, self.bytes_per_pixel = ('rgba16f', 8) if wide else ('rgba8', 4)
         self.lib, self.device, self.exchange = _library(), C.c_void_p(), None
         self.owner = owner
+        self.stage_providers = []
         if owner:
             self.device = C.c_void_p(owner.d3d12_device())
         else:
@@ -287,11 +326,14 @@ class Passthrough:
             else:
                 self.lib.gpu_effect_device_close(self.device)
             self.device = None
+        for provider in self.stage_providers:
+            provider.close_independent_layer()
+        self.stage_providers.clear()
 
 
 class OutputEffect:
     """Runs only after the final NR composite; returns a borrowed GPU texture."""
-    def __init__(self, live, settings, source_size, flow_provider=None, *, kind=None):
+    def __init__(self, live, settings, source_size, flow_provider=None, *, kind=None, wide=None, hdr=False):
         self.live, self.settings, self.source_size = live, dict(settings), tuple(source_size)
         self.selected = ('nr_dlaa' if kind == 'dlaa' else 'vsr') if kind else mode(settings)
         self.target = self.source_size if self.selected == 'nr_dlaa' else output_size(settings, source_size)
@@ -299,7 +341,8 @@ class OutputEffect:
         self.input = self.output = self.effect = self.guidance = None
         self.calls, self.resets = 0, []
         self.owns_effect = True
-        self.wide = getattr(live, 'bytes_per_pixel', 4) == 8
+        self.wide = getattr(live, 'bytes_per_pixel', 4) == 8 if wide is None else wide
+        self.output_hdr = hdr
         self.guide_bridge = None
         self.input_codec = self.output_codec = None
 
@@ -309,11 +352,11 @@ class OutputEffect:
             if self.selected == 'nr_dlaa':
                 from dlaa_gpu_engine import Live
                 owner = getattr(self.live, 'owner', None)
-                if owner:
+                if owner and getattr(owner, 'native_dlaa', False) and owner.bytes_per_pixel == (8 if self.wide else 4):
                     self.effect, self.owns_effect = owner, False
                 else:
                     self.effect = Live(*self.source_size, self.settings,
-                        dll_path=self.settings.get('dlss_dll_path'), shared_with=self.live, is_hdr=self.wide)
+                        dll_path=self.settings.get('dlss_dll_path'), shared_with=owner or self.live, is_hdr=self.wide)
                 if int(self.settings.get('guidance_mode', 0)):
                     if not callable(getattr(self.flow_provider, 'new_independent_layer', None)):
                         raise ValueError('DLAA guidance requires an independent device-flow history')
@@ -328,7 +371,7 @@ class OutputEffect:
                     from native_runtime_paths import wide_vfx_runtime
                     from vfx_rgb10 import Codec
                     wide_vfx_runtime(runtime)
-                    hdr_picture = int(getattr(frame, 'color_transfer', 0)) == 16
+                    hdr_picture = self.output_hdr or int(getattr(frame, 'color_transfer', 0)) == 16
                     self.input_codec = Codec(frame.cuda_context, self.source_size, runtime, hdr=hdr_picture)
                     self.output_codec = Codec(frame.cuda_context, self.target, runtime, hdr=hdr_picture)
                 self.effect = RtxVsr(bundle_paths.require_native('rtx_vsr_bridge.dll', 'RTX VSR'),
@@ -369,6 +412,8 @@ class OutputEffect:
         self.calls += 1
         self.resets.append(bool(reset))
         self.resets = self.resets[-16:]
+        if self.output_hdr:
+            result['output_hdr'] = True
         return result
 
     def report(self):
@@ -399,35 +444,71 @@ class OutputEffect:
         self.effect = self.guidance = self.output = self.input = None
 
 
-class EffectSeries:
-    """Ordered borrowed GPU textures. Owns stages, never the shared device owner."""
-    def __init__(self, live, settings, source_size, ordered, provider):
-        self.effects, self.order = [], list(ordered)
-        size = tuple(source_size)
-        for kind in ordered:
-            effect = OutputEffect(live, settings, size, provider, kind=kind)
-            self.effects.append(effect)
-            size = effect.target
-        self.target = size
+class TrueHDRStage:
+    def __init__(self, live, settings, size, wide, tail):
+        self.live, self.target, self.input_wide = live, tuple(size), wide
+        self.wide, self.output_hdr = True, True
+        self.tail = tail
 
     def process(self, candidate, frame, reset):
+        return self.tail.process(candidate, frame, at_stage=True)
+
+    def report(self):
+        return self.tail.effect.report() if self.tail.effect else dict(stage='truehdr', calls=0)
+
+    def close(self):
+        pass  # The chain owns the conversion and final HDR encoder together.
+
+
+class EffectSeries:
+    """Ordered borrowed GPU textures. Owns stages, never the shared device owner."""
+    def __init__(self, live, settings, source_size, ordered, provider, *, wide=None, hdr=False, truehdr_tail=None):
+        self.effects, self.order = [], list(ordered)
+        self.input_wide = getattr(live, 'bytes_per_pixel', 4) == 8 if wide is None else wide
+        self.live = live
+        wide = self.input_wide
+        size = tuple(source_size)
+        for kind in ordered:
+            if kind == 'truehdr':
+                effect = TrueHDRStage(live, settings, size, wide, truehdr_tail)
+            elif kind == 'nr':
+                if not hdr:
+                    raise ValueError('Inline NR requires the preceding TrueHDR FP16 output')
+                from truehdr_pipeline import HdrNRStage
+                effect = HdrNRStage(live, settings, size, provider)
+            else:
+                effect = OutputEffect(live, settings, size, provider, kind=kind, wide=wide, hdr=hdr)
+            self.effects.append(effect)
+            size = effect.target
+            wide, hdr = effect.wide, effect.output_hdr
+        self.target = size
+        self.wide, self.output_hdr = wide, hdr
+
+    def process(self, candidate, frame, reset):
+        import time
         for effect in self.effects:
+            started = time.perf_counter()
             candidate = effect.process(candidate, frame, reset)
+            effect.last_process_ms = (time.perf_counter() - started) * 1000
         return candidate
 
     def color(self, color, frame, reset):
         # Enter from NV12 conversion, and exit back to a CUDA RGBA plane for NR.
         if not hasattr(self, 'entry'):
-            self.entry = Exchange(self.effects[0].live.d3d12_device(), frame.cuda_context,
-                                  (color['width'], color['height']), wide=self.effects[0].wide)
+            self.entry = Exchange(self.live.d3d12_device(), frame.cuda_context,
+                                  (color['width'], color['height']), wide=self.input_wide)
         result = self.process(self.entry.texture(color['device_ptr'], color['pitch_bytes']), frame, reset)
         if not hasattr(self, 'exit'):
             self.exit = Exchange(result['d3d12_device'], frame.cuda_context, self.target, wide=self.effects[-1].wide)
-        return self.exit.color(result)
+        color = self.exit.color(result)
+        if self.output_hdr:
+            color['output_hdr'] = True
+        return color
 
     def report(self):
         return dict(order=self.order, output_size=self.target,
-                    stages=[effect.report() for effect in self.effects], host_image_bytes=0)
+                    stages=[dict(effect.report(), stage=kind, process_ms=getattr(effect, "last_process_ms", None))
+                            for kind, effect in zip(self.order, self.effects)], host_image_bytes=0)
 
     def close(self):
         for item in (getattr(self, 'exit', None), *reversed(self.effects), getattr(self, 'entry', None)):
@@ -436,13 +517,18 @@ class EffectSeries:
 
 
 def install(chain, live, settings, source_size, provider):
+    ordered = stages(settings)
+    truehdr = 'truehdr' in ordered
+    settings = dict(settings, truehdr_enabled=truehdr)
+    if truehdr:
+        from truehdr_pipeline import Tail
+        chain.truehdr_tail = Tail(live, settings, ordered=True)
     from vfx_framegen import config
     multiplier, _ = config(settings)
     if multiplier != 1 and getattr(chain, 'preview_consumer', None) is None:
         from native_runtime_paths import wide_vfx_runtime
         wide_vfx_runtime(settings.get('vsr_runtime_path'), framegen=True)
         chain.framegen_settings = dict(settings)
-    ordered = stages(settings)
     active_vfg = multiplier != 1 and getattr(chain, 'preview_consumer', None) is None
     spatial = [s for s in ordered if s != 'vfg']
     if active_vfg:
@@ -452,15 +538,37 @@ def install(chain, live, settings, source_size, provider):
         from native_runtime_paths import wide_vfx_runtime
         wide_vfx_runtime(settings.get('vsr_runtime_path'))
     # A legacy standalone DLAA remains the core itself, preserving saved sessions.
-    if ordered == ['dlaa'] and (settings.get('render_pipeline') is None or getattr(live, 'bytes_per_pixel', 4) == 8):
+    if ordered == ['dlaa'] and settings.get('render_pipeline') is None:
         return
-    split = spatial.index('nr') if 'nr' in spatial else 0
-    before = spatial[:split] if 'nr' in spatial else []
-    after = spatial[split + 1:] if 'nr' in spatial else spatial
+    core_nr = 'nr' in spatial and not nr_as_effect(settings)
+    split = spatial.index('nr') if core_nr else 0
+    before = spatial[:split] if core_nr else []
+    after = spatial[split + 1:] if core_nr else spatial
     chain.processing_size = (getattr(chain, 'ordered_input_size', source_size)
-        if active_vfg and 'nr' not in spatial else processing_size(settings, source_size))
+        if active_vfg and not core_nr else processing_size(settings, source_size))
     chain.render_order = ordered
+    if active_vfg and getattr(getattr(chain, 'ordered_framegen', None), 'hdr_direct', False):
+        return  # The VFG driver executes its HDR suffix on every emitted frame.
+    tail = getattr(chain, 'truehdr_tail', None)
     if before:
-        chain.input_effect = EffectSeries(live, settings, getattr(chain, 'ordered_input_size', source_size), before, provider)
+        chain.input_effect = EffectSeries(live, settings, getattr(chain, 'ordered_input_size', source_size), before, provider, truehdr_tail=tail)
     if after:
-        chain.output_effect = EffectSeries(live, settings, chain.processing_size, after, provider)
+        chain.output_effect = EffectSeries(live, settings, chain.processing_size, after, provider,
+            hdr=bool(active_vfg and 'truehdr' in ordered[:ordered.index('vfg')]),
+            wide=True if active_vfg and 'truehdr' in ordered[:ordered.index('vfg')] else None, truehdr_tail=tail)
+    if nr_as_effect(settings):
+        # Post-NR controls belong to the HDR NR stage, not the SDR passthrough.
+        from post_control import controls_from_settings
+        chain.post_control.update_controls(controls_from_settings({}))
+        from temporal_control import temporal_from_settings
+        chain.temporal_control.controls = temporal_from_settings({})
+
+
+def inline_nr_stage(chain):
+    series = [getattr(chain, name, None) for name in ('input_effect', 'output_effect', 'framegen_tail')]
+    driver = getattr(chain, 'ordered_framegen', None)
+    if driver:
+        series.append(driver.prefix)
+        series.append(driver.suffix)
+    return next((effect for group in series if group for effect in group.effects
+                 if getattr(effect, 'stage', None) == 'nr'), None)

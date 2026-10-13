@@ -68,3 +68,32 @@ def test_seek_starts_at_requested_relative_time_and_invalid_rate_is_refused(serv
     for at, rate in ((float('nan'), 1), (0, float('inf')), (-1, 1), (0, 0)):
         with pytest.raises(ValueError):
             ComparisonPlayback(service, pair['session'], at, rate)
+
+
+def test_failed_gpu_startup_reports_software_fallback_and_keeps_pts(service_pair, monkeypatch):
+    service, pair = service_pair
+    # Force the GPU branch; the failed process must be replaced before any
+    # pictures are published, without leaking the old pipe readers.
+    for media in service._pair(pair['session']):
+        media.metadata.update(codec='h264',pixel_format='yuv420p',bit_depth=8)
+    real_popen = subprocess.Popen
+    failed = []
+    def launch(command, **options):
+        if '-hwaccel_output_format' in command:
+            proc = real_popen([service.ffmpeg,'-v','error','-invalid_gpu_startup_probe'],**options)
+            failed.append(proc)
+            return proc
+        return real_popen(command,**options)
+    monkeypatch.setattr('comparison_playback.subprocess.Popen',launch)
+    player = ComparisonPlayback(service,pair['session'],.5,1.)
+    try:
+        row = unpack(player.packet(.5))
+        assert len(failed)==2
+        for side in ('original','exported'):
+            assert row['playback'][side]['decoder']=='software'
+            assert row['playback'][side]['fallback_reason']
+            assert row[side]['actualTime']==pytest.approx(.5,abs=1/12)
+    finally:
+        player.close()
+    assert all(proc.poll() is not None for proc in failed)
+    assert not any(thread.is_alive() for decoder in player.decoders for thread in decoder.threads)

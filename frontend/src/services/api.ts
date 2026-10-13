@@ -136,7 +136,8 @@ export async function fetchFlowProviders(): Promise<{ providers: any[]; nvof_pro
   return res.json()
 }
 
-async function writeSettings(settings: Partial<DLSSSettings>): Promise<DLSSSettings> {
+async function writeSettings(settings: Partial<DLSSSettings>, inputAt: number): Promise<DLSSSettings> {
+  const started = performance.now()
   const res = await fetch(`${API_BASE}/api/settings`, {
     method: 'POST',
     headers: authHeaders({ 'Content-Type': 'application/json' }),
@@ -151,17 +152,22 @@ async function writeSettings(settings: Partial<DLSSSettings>): Promise<DLSSSetti
       ? detail.detail : 'Failed to update settings')
   }
   const data = await res.json()
+  window.dispatchEvent(new CustomEvent('lunarc:settings-applied', {detail:{
+    revision:data.preview_revision, inputAt, settings_apply_ms:performance.now()-inputAt,
+    settings_http_ms:performance.now()-started}}))
   return data.settings
 }
 
 let settingsInFlight = false
 let pendingSettings: Partial<DLSSSettings> = {}
 let settingsWaiters: {resolve: (s: DLSSSettings) => void; reject: (e: unknown) => void}[] = []
+let latestSettingsInput = 0
 
 export function saveSettings(settings: Partial<DLSSSettings>): Promise<DLSSSettings> {
   // One request plus one merged pending patch. Slider input cannot create an
   // arbitrarily long HTTP queue or let older patches overtake newer ones.
   pendingSettings = {...pendingSettings, ...settings}
+  latestSettingsInput = performance.now()
   window.dispatchEvent(new Event('lunarc:settings-pending'))
   const result = new Promise<DLSSSettings>((resolve, reject) => settingsWaiters.push({resolve, reject}))
   if (!settingsInFlight) {
@@ -169,10 +175,10 @@ export function saveSettings(settings: Partial<DLSSSettings>): Promise<DLSSSetti
     queueMicrotask(async () => {
       try {
         while (settingsWaiters.length) {
-          const patch = pendingSettings, waiters = settingsWaiters
+          const patch = pendingSettings, waiters = settingsWaiters, inputAt = latestSettingsInput
           pendingSettings = {}; settingsWaiters = []
           try {
-            const saved = await writeSettings(patch)
+            const saved = await writeSettings(patch, inputAt)
             waiters.forEach(waiter => waiter.resolve(saved))
           } catch (error) {waiters.forEach(waiter => waiter.reject(error))}
         }

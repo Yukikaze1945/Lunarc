@@ -6,7 +6,7 @@ remaining spatial stages consume every emitted picture, including EOF holds.
 """
 import ctypes as C
 import time
-from native_effects import EffectSeries, frame_at_size, output_size
+from native_effects import EffectSeries, frame_at_size, output_size, nr_as_effect
 from vfx_framegen import Interpolator, encoder_timing
 
 
@@ -16,13 +16,16 @@ def install_ordered_vfg(chain, live, settings, source_size, provider, order):
     size = output_size(settings, source_size) if 'vsr' in before else tuple(source_size)
     chain.framegen_stage_index = boundary
     chain.framegen_stage_size = size
+    chain.framegen_hdr = 'truehdr' in before
+    tail = getattr(chain, 'truehdr_tail', None)
     if 'nr' in before:
-        chain.framegen_tail = EffectSeries(live, settings, size, after, provider) if after else None
+        chain.framegen_tail = EffectSeries(live, settings, size, after, provider,
+            wide=True if chain.framegen_hdr else None, hdr=chain.framegen_hdr, truehdr_tail=tail) if after else None
         return before
-    driver = BeforeReconstruction(chain, live, settings, source_size, size, before, provider)
+    driver = BeforeReconstruction(chain, live, settings, source_size, size, before, provider, after)
     chain.ordered_framegen = driver
     chain.ordered_input_size = size
-    if 'nr' not in after:
+    if 'nr' not in after or nr_as_effect(settings):
         chain.processing_size = size
         chain.working = size
         live._w, live._h = size
@@ -36,14 +39,20 @@ def stage_report(chain):
                 render_order=chain.render_order,
                 prefix=chain.ordered_framegen.prefix.report()
                     if getattr(chain, 'ordered_framegen', None) and chain.ordered_framegen.prefix else None,
-                suffix=chain.framegen_tail.report() if getattr(chain, 'framegen_tail', None) else None)
+                suffix=(chain.ordered_framegen.suffix.report()
+                    if getattr(getattr(chain, 'ordered_framegen', None), 'suffix', None)
+                    else chain.framegen_tail.report() if getattr(chain, 'framegen_tail', None) else None))
 
 
 class BeforeReconstruction:
-    def __init__(self, chain, live, settings, source_size, size, before, provider):
+    def __init__(self, chain, live, settings, source_size, size, before, provider, after=None):
         self.chain, self.live, self.settings = chain, live, dict(settings)
         self.source_size, self.size = tuple(source_size), tuple(size)
-        self.prefix = EffectSeries(live, settings, source_size, before, provider) if before else None
+        self.prefix = EffectSeries(live, settings, source_size, before, provider,
+            truehdr_tail=getattr(chain, 'truehdr_tail', None)) if before else None
+        self.hdr_direct = chain.framegen_hdr
+        self.suffix = EffectSeries(live, settings, size, after, provider,
+            wide=True, hdr=True, truehdr_tail=getattr(chain, 'truehdr_tail', None)) if self.hdr_direct and after else None
         self.core_process = chain.process
         self.wide = getattr(live, 'bytes_per_pixel', 4) == 8
         self.emitted = 0
@@ -96,7 +105,8 @@ class BeforeReconstruction:
             color = self.prefix.color(color, frame, self.reset)
         if chain.framegen is None:
             chain.framegen = Interpolator(frame.cuda_context, self.size, self.settings, chain.fps,
-                wide=self.wide, hdr=self.wide and not chain.sdr10, cancel=getattr(chain, 'cancel', None))
+                wide=self.wide or chain.framegen_hdr,
+                hdr=chain.framegen_hdr or (self.wide and not chain.sdr10), cancel=getattr(chain, 'cancel', None))
         self.rate, self.tb = encoder_timing(self.settings, chain.fps,
             (int(frame.time_base_num), int(frame.time_base_den)))
         chain._encoder_fps = self.rate
@@ -111,6 +121,18 @@ class BeforeReconstruction:
         # A scene/discontinuity boundary resets downstream history on the new
         # original picture. The very first emission also starts fresh history.
         reset = self.emitted == 0 or (kind == 'original' and self.reset)
+        if getattr(self, 'hdr_direct', False):
+            from native_effects import Exchange
+            if not hasattr(self, 'hdr_output'):
+                self.hdr_output = Exchange(self.live.d3d12_device(), frame.cuda_context, self.size, wide=True)
+            texture = self.hdr_output.texture(color['device_ptr'], color['pitch_bytes'])
+            texture['output_hdr'] = True
+            if self.suffix:
+                texture = self.suffix.process(texture, frame, reset)
+            self.chain.truehdr_tail.encode(self.chain, texture, frame, pts)
+            self.last_outcome = {}
+            self.emitted += 1
+            return
         self.chain._ordered_color = color
         try:
             self.last_outcome = self.core_process(frame, self.provider, self.emitted, reset) or {}
@@ -119,6 +141,8 @@ class BeforeReconstruction:
         self.emitted += 1
 
     def close(self):
+        for item in (self.suffix, getattr(self, 'hdr_output', None)):
+            if item: item.close()
         if self.scene_observer:
             self.scene_observer.close()
             self.scene_observer = None

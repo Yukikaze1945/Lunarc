@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Per-launch backend token (P0-01). Main process sets process.env first.
   localToken: process.env.DLSS_LOCAL_TOKEN || '',
   getToken: () => ipcRenderer.invoke('auth:getToken'),
+  getPreviewWindow: () => ipcRenderer.invoke('preview:window'),
   getBackendStartup: () => ipcRenderer.invoke('backend:getStartup'),
   getComponents: () => ipcRenderer.invoke('components:get'),
   installComponent: (id: string) => ipcRenderer.invoke('components:install', id),

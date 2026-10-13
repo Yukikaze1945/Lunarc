@@ -129,6 +129,12 @@ if(WIN32)
         RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}"
         RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_SOURCE_DIR}")
 
+    add_library(gpu_native_presenter SHARED gpu_native_presenter.cpp)
+    target_link_libraries(gpu_native_presenter PRIVATE nvof_d3d12_interop d3d12 dxgi d3dcompiler user32)
+    set_target_properties(gpu_native_presenter PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}")
+
     add_library(dlss_gpu_resources SHARED
         dlss_gpu_resources.cpp
         dlss_gpu_resources.h

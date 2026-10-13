@@ -2,7 +2,6 @@ import type { DLSSSettings, TranscodeSettings, VideoInfo } from '../types'
 // Extension required: node --test loads this module directly, and its resolver wants
 // the real file name where the bundler would take either.
 import { WORKING_PERCENT_MAX, WORKING_PERCENT_MIN, workingPercent } from './workingScale.ts'
-import { renderStages, vsrOutputSize } from './renderPipeline.ts'
 
 // The client-side mirror of the part of gpu_hdr_transfer_export.negotiate_hdr that a
 // form can answer for itself, and a list of the parts it cannot.
@@ -288,11 +287,8 @@ export function hdrBlockers({
     reasons.push(`aq_mode=${aqMode}：编码入口不接受该自适应量化模式`)
   }
 
-  const stages = renderStages(settings)
-  const vsrSize = vsrOutputSize(settings, video ?? {width:1920,height:1080})
-  const nativeResize = stages.includes('vsr') && outputWidth === vsrSize.width && outputHeight === vsrSize.height
-  if (video && !nativeResize && (outputWidth !== video.width || outputHeight !== video.height)) {
-    reasons.push(`编码器收到的是全幅合成，因此输出不能缩放到 ${outputWidth}x${outputHeight}`)
+  if ([outputWidth, outputHeight].some(v => !Number.isInteger(v) || v < 2 || v > 16384 || v % 2 !== 0)) {
+    reasons.push(`输出分辨率必须为 2–16384 范围内的偶数宽高`)
   }
 
   return reasons
@@ -391,7 +387,7 @@ export function buildHdrExportPreset({ settings, ts }: HdrFormInput): HdrPreset 
       + 'gtx.build_mux_command copy pass 在编码结束后以 -c:v copy 重封装为同一个 .mkv（不再编一次）',
     '映射：audio_mode、subtitle_mode、copy_attachments、copy_metadata、copy_chapters '
       + '保持当前选择，交给那次 copy pass 携带；本点击不改写它们',
-    '输出幅面：resolution_mode=original，源素材全幅（被拒的是输出缩放；工作缩放 25%–100% 整数百分比仍可用）',
+    '输出分辨率：resolution_mode=original，采用渲染链输出；也可在导出设置中选择其他分辨率',
     '色彩：color_preset=preserve（写回源素材自己的 HDR10 声明，不做色调映射）；'
       + '清空与之冲突的 custom_color_space、custom_color_primaries、custom_color_transfer、'
       + 'custom_color_range',

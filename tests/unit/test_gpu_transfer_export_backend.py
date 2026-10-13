@@ -324,10 +324,9 @@ def test_a_source_the_colour_contract_does_not_cover_is_refused(source_change, f
     assert any(fragment in reason for reason in negotiation["reasons"]), fragment
 
 
-def test_a_resized_output_is_refused_because_the_encoder_gets_the_full_residual():
+def test_a_resized_output_is_accepted_for_final_gpu_scaling():
     negotiation = _negotiate(dims=dict(DIMS, dst_w=1920, dst_h=1080))
-    assert not negotiation["supported"]
-    assert any("cannot be resized" in reason for reason in negotiation["reasons"])
+    assert negotiation["supported"], negotiation["reasons"]
 
 
 # The panel's own DEFAULT_SETTINGS (frontend/src/pages/DeliverPage.tsx), verbatim: the
@@ -366,20 +365,13 @@ def test_an_encoder_setting_this_codec_cannot_be_given_is_still_a_refusal():
                for reason in negotiation["reasons"])
 
 
-def test_a_custom_factor_the_panel_would_act_on_is_refused_by_its_resolved_size():
-    """The key is exempt; a request that reads it is not.
-
-    ``custom_factor`` only means anything once ``resolution_mode`` selects it, and
-    what the chain refuses on is the size that choice resolves to -- the same route a
-    resolution_mode change already takes. So exempting the key cannot turn a real
-    resize into a silently ignored one.
-    """
+def test_a_custom_factor_is_accepted_at_its_resolved_size():
+    """The factor resolves the final encoder size instead of being ignored."""
     ts = {"resolution_mode": "custom_factor", "custom_factor": 2.0}
     dst_w, dst_h = pipeline.resolve_output_dims(3840, 2160, ts)
     assert (dst_w, dst_h) == (7680, 4320)
     negotiation = _negotiate(transcode=ts, dims=dict(DIMS, dst_w=dst_w, dst_h=dst_h))
-    assert not negotiation["supported"]
-    assert any("cannot be resized" in reason for reason in negotiation["reasons"])
+    assert negotiation["supported"], negotiation["reasons"]
     assert not any("has no equivalent" in reason for reason in negotiation["reasons"])
 
 

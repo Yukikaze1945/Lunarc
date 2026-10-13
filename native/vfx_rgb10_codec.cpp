@@ -16,7 +16,7 @@ using Program = void*;
 struct Contract { float to2020[9], to709[9], m1,m2,c1,c2,c3,scale; };
 struct Codec {
     HMODULE cuda{},rtc{},builtins{}; CUcontext context{}; CUmodule module{};
-    CUfunction pack{},unpack{}; CUdeviceptr packed{},counts{};
+    CUfunction pack{},pack8{},unpack{}; CUdeviceptr packed{},counts{};
     unsigned w{},h{},hdr{}; Contract colour{};
     uint64_t calls{},clipped{},scalar_bytes{};
     CUresult (CUDAAPI* push)(CUcontext){};
@@ -90,6 +90,22 @@ extern "C" __global__ void unpack10(const unsigned char* input,unsigned pitch,
  for(unsigned k=0;k<3;k++)p[k]=float_half(hdr ? c.to709[k*3]*a[0]+c.to709[k*3+1]*a[1]+c.to709[k*3+2]*a[2]:a[k]);
  p[3]=float_half(1.f);
 }
+extern "C" __global__ void pack_sdr8(const unsigned char* input, unsigned pitch,
+ unsigned char* output,unsigned w,unsigned h,unsigned* counters) {
+ unsigned x=blockIdx.x*blockDim.x+threadIdx.x,y=blockIdx.y*blockDim.y+threadIdx.y;
+ if(x>=w||y>=h)return;
+ const unsigned short* p=(const unsigned short*)(input+y*pitch)+x*4;
+ unsigned char* out=output+(y*w+x)*4;
+ for(unsigned k=0;k<3;k++) {
+  float l=half_float(p[k]);
+  if(!isfinite(l)){atomicAdd(counters+1,1u);l=0.f;}
+  if(l<0.f||l>1.f)atomicAdd(counters,1u);
+  l=fminf(fmaxf(l,0.f),1.f);
+  float e=l<.018f?4.5f*l:1.099f*powf(l,.45f)-.099f;
+  out[k]=(unsigned char)__float2uint_rn(fminf(fmaxf(e,0.f),1.f)*255.f);
+ }
+ out[3]=255;
+}
 )cuda";
 }
 API const char* vfx_rgb10_last_error(){return error.c_str();}
@@ -136,6 +152,7 @@ API int vfx_rgb10_open(void* context,unsigned w,unsigned h,unsigned hdr,
  auto rc=c->load(&c->module,data.data());
  if(rc==CUDA_SUCCESS)rc=c->function(&c->pack,c->module,"pack10");
  if(rc==CUDA_SUCCESS)rc=c->function(&c->unpack,c->module,"unpack10");
+ if(rc==CUDA_SUCCESS)rc=c->function(&c->pack8,c->module,"pack_sdr8");
  if(rc==CUDA_SUCCESS)rc=c->alloc(&c->packed,size_t(w)*h*4);
  if(rc==CUDA_SUCCESS)rc=c->alloc(&c->counts,8);
  c->pop(&old);
@@ -164,6 +181,20 @@ API int vfx_rgb10_unpack(Codec* c,uint64_t input,unsigned pitch,uint64_t output,
  if(rc==CUDA_SUCCESS)rc=c->sync(nullptr);c->pop(&old);
  if(rc!=CUDA_SUCCESS)return fail("CUDA RGB10 unpack failed: "+std::to_string(rc));
  error.clear();return 0;
+}
+API int vfx_sdr8_pack(Codec* c,uint64_t input,unsigned pitch,uint64_t* output,unsigned* opitch) {
+ if(!c||c->hdr||!input||pitch<c->w*8||!output||!opitch)return fail("TrueHDR input must be linear SDR");
+ CUcontext old{};if(c->push(c->context)!=CUDA_SUCCESS)return fail("codec context activation failed");
+ auto rc=c->zero(c->counts,0,2);
+ void* args[]={&input,&pitch,&c->packed,&c->w,&c->h,&c->counts};
+ if(rc==CUDA_SUCCESS)rc=c->launch(c->pack8,(c->w+15)/16,(c->h+15)/16,1,16,16,1,0,nullptr,args,nullptr);
+ unsigned counts[2]{};
+ if(rc==CUDA_SUCCESS)rc=c->sync(nullptr);
+ if(rc==CUDA_SUCCESS){rc=c->read(counts,c->counts,8);c->scalar_bytes+=8;}
+ c->pop(&old);
+ if(rc!=CUDA_SUCCESS)return fail("TrueHDR SDR input conversion failed: "+std::to_string(rc));
+ if(counts[1])return fail("nonfinite SDR input for TrueHDR");
+ c->calls++;c->clipped+=counts[0];*output=c->packed;*opitch=c->w*4;error.clear();return 0;
 }
 API int vfx_rgb10_counters(Codec* c,uint64_t* values) {
  if(!c||!values)return fail("invalid codec counters");

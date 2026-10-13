@@ -292,6 +292,12 @@ if (process.env.E2E_TEST === '1') {
 }
 
 // IPC handlers for native file dialogs
+ipcMain.handle('preview:window', event => {
+  if (process.platform !== 'win32' || !win || event.sender !== win.webContents) return null
+  const handle = win.getNativeWindowHandle()
+  return {parent: (handle.length === 8 ? handle.readBigUInt64LE() : BigInt(handle.readUInt32LE())).toString()}
+})
+
 ipcMain.handle('dialog:openRuntime', async event => {
   if (!win || event.sender !== win.webContents) return null
   const result = await dialog.showOpenDialog(win, {

@@ -1,3 +1,5 @@
+import {publishPreviewMetrics} from '../services/previewMetrics'
+import {SegmentTimeline} from '../components/SegmentTimeline'
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Play,
@@ -12,7 +14,11 @@ import {
 import { ParameterHelp } from '../components/ParameterHelp'
 import { FLOW_QUALITY_LABELS } from '../services/parameterHelp'
 import { QualityInspector } from '../components/QualityInspector'
+import { LayerNRControls } from '../components/LayerNRControls'
+import {useNativePreview} from '../services/useNativePreview'
 import { RenderPipeline } from '../components/RenderPipeline'
+import {PresetPicker} from '../components/PresetPicker'
+import {CollapsibleSection} from '../components/CollapsibleSection'
 import { renderStages, vsrOutputSize } from '../services/renderPipeline'
 import { VideoInfo, DLSSSettings } from '../types'
 import { saveSettings, wsUrl, fetchFlowProviders, fetchJobDiagnostics } from '../services/api'
@@ -23,7 +29,7 @@ import {
   hdrPaperWhiteReason, hdrSettingsBlockers, isHdrRequested, paperWhiteLabel,
 } from '../services/hdrExport'
 import { activeLayerCount, chooseLayerScale, chooseReconstructionMode,
-  chooseWorkingScale } from '../services/multiScaleSettings'
+  chooseWorkingScale, chooseFusionMode, changeLayerNR, type LayerNRKey } from '../services/multiScaleSettings'
 
 interface DLSSPageProps {
   video: VideoInfo | null
@@ -55,13 +61,25 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
   const [loop, setLoop] = useState<boolean>(true)
   const [activeFrameUrl, setActiveFrameUrl] = useState<string>('')
   const [playerError, setPlayerError] = useState<string | null>(null)
+  const [playerBusy,setPlayerBusy]=useState('')
   const [previewStats, setPreviewStats] = useState<any>(null)
+  useEffect(()=>{publishPreviewMetrics(previewStats?{...previewStats,playing:isPlaying}:null)},[previewStats,isPlaying])
   const [previewPending, setPreviewPending] = useState(false)
   const [isDraggingSplit, setIsDraggingSplit] = useState<boolean>(false)
   const [isPanning, setIsPanning] = useState<boolean>(false)
   const [panStart, setPanStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
 
   const canvasRef = useRef<HTMLDivElement>(null)
+  const splitRef=useRef(splitX)
+  const viewControls=useRef({view,zoom,pan});viewControls.current={view,zoom,pan}
+  const nativeVideo=Boolean(video&&!/\.(png|jpe?g|bmp|webp|tiff?)$/i.test(video.path))
+  const nativeRequired=Boolean(nativeVideo&&window.electronAPI?.getPreviewWindow)
+  const nativePanel=useNativePreview(canvasRef,Boolean(nativeRequired&&isActive),view,zoom,pan)
+  const nativeReadyRef=useRef(false);nativeReadyRef.current=nativePanel.ready&&view!=='flow'
+  const nativeRequiredRef=useRef(false);nativeRequiredRef.current=nativeRequired&&view!=='flow'
+  const renderScope=view==='flow'?'flow':nativeRequired?'native':'image'
+  const fullImagePreview=(!nativeRequired||view==='flow')&&(zoom>1||pixelPreview)
+  const pendingNativeCommand=useRef<Record<string,unknown>|null>(null)
   const wsRef = useRef<WebSocket | null>(null)
   // P1-10: desired playback state, separate from what the socket confirmed.
   // Lets onopen (re)send play after drops instead of freezing on "playing".
@@ -73,6 +91,11 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
   const [nvofProbe, setNvofProbe] = useState<any>(null)
   const [recentFusionJob, setRecentFusionJob] = useState<{name:string;status:string;report:any}|null>(null)
   const inspectedJobId = useRef('')
+  const [selectedLayer, setSelectedLayer] = useState(0)
+  const [expandedLayer, setExpandedLayer] = useState<number | null>(null)
+  const activeLayer = Math.min(selectedLayer, activeLayerCount(settings.reconstruction_mode || 'single') - 1)
+  const changeNR = (key: LayerNRKey, value: number) =>
+    handleParamsBatchChange(changeLayerNR(settings, activeLayer, key, value))
 
   useEffect(() => {
     fetchFlowProviders()
@@ -113,20 +136,31 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
   }, [isActive])
 
   const requestRevisionRef = useRef(0)
+  const settingsRevisionRef = useRef(0)
+  const settingsPendingRef = useRef(false)
+  const settingsTimingRef = useRef<{inputAt:number; settings_apply_ms?:number; settings_http_ms?:number}>({inputAt:0})
   const lastSeekRef = useRef<Record<string, unknown> | null>(null)
   const displayedBlobRef = useRef('')
   const sendPlayer = useCallback((command: Record<string, unknown>) => {
     setPreviewPending(command.action !== 'pause')
     const bounds = canvasRef.current?.getBoundingClientRect()
-    const edge = pixelPreview || Number(command.zoom ?? zoom) > 1 ? 0 : Math.max(512,
+    const controls=viewControls.current
+    const native=nativeRequiredRef.current
+    const edge = pixelPreview || Number(command.zoom ?? controls.zoom) > 1 ? 0 : Math.max(512,
       Math.min(1920, Math.ceil(Math.max(bounds?.width || 1280, bounds?.height || 720) * devicePixelRatio)))
-    const payload = {...command, request_id: ++requestRevisionRef.current,
-      transport: 'binary', ack: true, display_edge: edge}
+    const payload = {...command, request_id: command.action === 'refresh' ? requestRevisionRef.current : ++requestRevisionRef.current,
+      view:command.view??controls.view,
+      transport: native ? 'native' : 'binary', ack: true, display_edge: edge}
     if (command.action === 'seek') lastSeekRef.current = payload
     if (command.action === 'play') lastPlayRef.current = payload
+    if (command.action === 'pause') pendingNativeCommand.current=null
     if (command.action === 'set_view' && lastPlayRef.current) lastPlayRef.current = {...lastPlayRef.current, ...payload}
+    if (native&&!nativeReadyRef.current&&command.action!=='pause') {
+      if(command.action!=='refresh')pendingNativeCommand.current=command
+      return
+    }
     if (wsRef.current?.readyState === WebSocket.OPEN) wsRef.current.send(JSON.stringify(payload))
-  }, [zoom, pixelPreview])
+  }, [fullImagePreview,nativePanel.ready,nativeRequired,view==='flow'])
 
   useEffect(() => {
     let ws: WebSocket | null = null, stopped = false, header: any = null
@@ -155,14 +189,18 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
           if (stale()) {if (jpeg) URL.revokeObjectURL(url); return}
           const previous = displayedBlobRef.current
           displayedBlobRef.current = jpeg ? url : ''
-          setPlayerError(null); setCurrentFrame(data.frame); setActiveFrameUrl(url)
+          setPlayerError(null);setPlayerBusy(''); setCurrentFrame(data.frame); setActiveFrameUrl(url)
           // Presentation opportunity after React commits, not physical scanout.
           raf = requestAnimationFrame(() => {
             if (previous) URL.revokeObjectURL(previous)
             if (stale()) return
             const painted = performance.now()
-            setPreviewPending(false)
+            const latestSettings = !settingsPendingRef.current && data.preview?.settings_current !== false
+              && (data.preview?.settings_revision ?? 0) >= settingsRevisionRef.current
+            setPreviewPending(!latestSettings)
             const metrics = {decode_ms: decoded-received, paint_wait_ms: painted-decoded,
+              ...(latestSettings && settingsTimingRef.current.inputAt ? {
+                ...settingsTimingRef.current, parameter_to_present_ms:painted-settingsTimingRef.current.inputAt} : {}),
               receive_to_present_ms: painted-received,
               presentation_interval_ms: lastPresented ? painted-lastPresented : 0}
             lastPresented = painted
@@ -175,10 +213,11 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
         })
       }
       ws.onopen = () => {
+        if(nativeRequiredRef.current&&!nativeReadyRef.current)return
         if (wantPlayingRef.current && lastPlayRef.current) {
           socket.send(JSON.stringify({action: 'play', ...lastPlayRef.current,
-            transport: 'binary', ack: true, request_id: requestRevisionRef.current})); setIsPlaying(true)
-        } else if (lastSeekRef.current) socket.send(JSON.stringify(lastSeekRef.current))
+            transport: nativeReadyRef.current ? 'native' : 'binary', ack: true, request_id: requestRevisionRef.current})); setIsPlaying(true)
+        } else if (lastSeekRef.current) socket.send(JSON.stringify({...lastSeekRef.current, request_id:requestRevisionRef.current}))
       }
       ws.onmessage = event => {
         if (event.data instanceof Blob) {
@@ -189,13 +228,27 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
         try {
           const data = JSON.parse(event.data)
           if (data.type === 'frame') {
-            if (data.encoding === 'jpeg_binary') header = data
+            if(data.encoding==='native_fp16'){
+              if(data.request_id!==requestRevisionRef.current)return
+              ++latestSequence;const now=performance.now()
+              setCurrentFrame(data.frame);setPlayerError(null);setPlayerBusy('')
+              const latest=!settingsPendingRef.current&&data.preview?.settings_current!==false
+              setPreviewPending(!latest)
+              setPreviewStats({...data.preview,display_sequence:data.sequence,
+                presentation_fps:lastPresented?1000/(now-lastPresented):null})
+              lastPresented=now
+              if(socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify({action:'presented',sequence:data.sequence}))
+            }else if (data.encoding === 'jpeg_binary') header = data
             else void present(data)
           } else if (data.request_id === requestRevisionRef.current && data.type === 'frame_timing') {
             transportTiming.set(data.sequence, data.ws_send_ms)
             if (transportTiming.size > 8) transportTiming.delete(transportTiming.keys().next().value!)
             setPreviewStats((previous: any) => previous?.display_sequence === data.sequence
               ? {...previous, ws_send_ms: data.ws_send_ms} : previous)
+          } else if(data.request_id===requestRevisionRef.current&&data.type==='busy'){
+            wantPlayingRef.current=false;setIsPlaying(false);setPreviewPending(false)
+            setPlayerError(null);setPlayerBusy(data.message);setPreviewStats(null)
+            onStatusChange?.(data.message)
           } else if (data.request_id === requestRevisionRef.current && data.type === 'error') {
             setPreviewPending(false)
             wantPlayingRef.current = false; setPlayerError(data.message); setIsPlaying(false); onStatusChange?.(`预览失败：${data.message}`)
@@ -233,30 +286,43 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
     ) => {
       if (!video) return
       const f = targetFrame !== undefined ? targetFrame : currentFrameRef.current
-      const v = targetView !== undefined ? targetView : view
-      const sx = targetSplit !== undefined ? targetSplit : splitX
-      const zm = targetZoom !== undefined ? targetZoom : zoom
-      const p = targetPan !== undefined ? targetPan : pan
+      const controls=viewControls.current
+      const v = targetView !== undefined ? targetView : controls.view
+      const sx = targetSplit !== undefined ? targetSplit : splitRef.current
+      const zm = targetZoom !== undefined ? targetZoom : controls.zoom
+      const p = targetPan !== undefined ? targetPan : controls.pan
 
       sendPlayer({action: 'seek', frame: f, view: v, split_x: sx, zoom: zm, pan_x: p.x, pan_y: p.y})
 
     },
-    [video, view, splitX, zoom, pan, sendPlayer]
+    [video, sendPlayer]
   )
 
   useEffect(() => {
-    const pending = () => {++requestRevisionRef.current; setPlayerError(null); setPreviewPending(true)}
+    const pending = () => {
+      settingsPendingRef.current = true
+      settingsTimingRef.current = {inputAt:performance.now()}
+      setPlayerError(null); setPreviewPending(true)
+    }
+    const applied = (event: Event) => {
+      const detail = (event as CustomEvent).detail
+      settingsRevisionRef.current = detail.revision ?? settingsRevisionRef.current
+      settingsTimingRef.current = detail
+      if (video) sendPlayer({action:'refresh'})
+    }
     const settled = () => {
-      if (wantPlayingRef.current) sendPlayer({action: 'set_view'})
-      else requestFrame(currentFrameRef.current)
+      settingsPendingRef.current = false
+      if (video) sendPlayer({action:'refresh'})
     }
     window.addEventListener('lunarc:settings-pending', pending)
+    window.addEventListener('lunarc:settings-applied', applied)
     window.addEventListener('lunarc:settings-settled', settled)
     return () => {
       window.removeEventListener('lunarc:settings-pending', pending)
+      window.removeEventListener('lunarc:settings-applied', applied)
       window.removeEventListener('lunarc:settings-settled', settled)
     }
-  }, [requestFrame, sendPlayer])
+  }, [video, sendPlayer])
 
   useEffect(() => {
     clearTimeout(seekTimerRef.current)
@@ -265,28 +331,41 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
     lastPlayRef.current = null
     setIsPlaying(false)
     setActiveFrameUrl('')
+    pendingNativeCommand.current=null
     setPreviewStats(null)
     setPreviewPending(false)
   }, [video?.path])
 
-  // Update view/zoom/split dynamically
+  // The native window already holds both GPU pictures. View, wipe and pan
+  // changes redraw there, without sending a new frame through the backend.
   useEffect(() => {
     if (!video) return
+    if(nativeRequired&&viewControls.current.view!=='flow'&&!nativePanel.ready)return
+    if(pendingNativeCommand.current) {
+      const command=pendingNativeCommand.current;pendingNativeCommand.current=null
+      sendPlayer(command);return
+    }
     if (isPlaying) {
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         sendPlayer({
             action: 'set_view',
-            view,
-            split_x: splitX,
-            zoom,
-            pan_x: pan.x,
-            pan_y: pan.y,
+            view:viewControls.current.view,
+            split_x:splitRef.current,
+            zoom:viewControls.current.zoom,
+            pan_x:viewControls.current.pan.x,
+            pan_y:viewControls.current.pan.y,
           })
       }
     } else {
-      requestFrame(currentFrameRef.current, view, splitX, zoom, pan)
+      requestFrame(currentFrameRef.current)
     }
-  }, [video, isPlaying, requestFrame, view, splitX, zoom, pan, sendPlayer])
+  }, [video, isPlaying, requestFrame, renderScope, sendPlayer])
+
+  useEffect(()=>{
+    if(!video||(nativeRequired&&view!=='flow'))return
+    if(isPlaying)sendPlayer({action:'set_view',view,split_x:splitX,zoom,pan_x:pan.x,pan_y:pan.y})
+    else requestFrame(currentFrameRef.current,view,splitX,zoom,pan)
+  },[view,splitX,zoom,pan,nativeRequired])
 
   // Play / Pause handling (P1-08 sends loop; P1-10 never claims playing
   // without an open socket — disconnected play becomes buffered intent)
@@ -509,17 +588,21 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
   }
 
   // Split Wipe mouse drag
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (view === 'split' && e.button === 0) {
+  const handleMouseDown = (e: React.PointerEvent<HTMLElement>) => {
+    if (nativeRequiredRef.current) return
+    const rect=canvasRef.current?.getBoundingClientRect()
+    if (view === 'split' && e.button === 0 && rect && Math.abs(e.clientX-rect.left-splitRef.current*rect.width)<18) {
+      e.currentTarget.setPointerCapture(e.pointerId)
       setIsDraggingSplit(true)
       handleSplitMove(e)
     } else if (e.button === 2 || (e.button === 0 && zoom > 1.0)) {
+      e.currentTarget.setPointerCapture(e.pointerId)
       setIsPanning(true)
       setPanStart({ x: e.clientX, y: e.clientY })
     }
   }
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleMouseMove = (e: React.PointerEvent<HTMLElement>) => {
     if (isDraggingSplit && canvasRef.current) {
       handleSplitMove(e)
     } else if (isPanning && zoom > 1.0) {
@@ -533,14 +616,17 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
     }
   }
 
-  const handleSplitMove = (e: React.MouseEvent) => {
+  const handleSplitMove = (e: React.PointerEvent<HTMLElement>) => {
     if (!canvasRef.current) return
     const rect = canvasRef.current.getBoundingClientRect()
     const frac = (e.clientX - rect.left) / rect.width
-    setSplitX(Math.max(0.01, Math.min(0.99, frac)))
+    splitRef.current=Math.max(0.01, Math.min(0.99, frac))
+    setSplitX(splitRef.current)
   }
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.PointerEvent<HTMLElement>) => {
+    if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId)
+    if(isDraggingSplit)setSplitX(splitRef.current)
     setIsDraggingSplit(false)
     setIsPanning(false)
   }
@@ -553,6 +639,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
             {id:'split',label:'对比'},{id:'dual',label:'双画面'},{id:'dlss',label:'增强'},{id:'orig',label:'原图'},{id:'flow',label:'光流'},
           ] as const).map(item=><button key={item.id} type="button" aria-pressed={view===item.id} onClick={()=>setView(item.id)}>{item.label}</button>)}</div>
           <div className="dlss-zoom-tools">
+            {nativeRequired&&<span className="native-preview-status">GPU 预览</span>}
             <select aria-label="预览缩放" value={pixelPreview?'native':zoom} onChange={e=>{if(e.target.value==='native')return;setPixelPreview(false);setZoom(Number(e.target.value));setPan({x:.5,y:.5})}}>
               {pixelPreview&&<option value="native">原像素</option>}<option value={1}>适配</option><option value={.5}>缩小</option><option value={2}>放大 2×</option><option value={3}>放大 3×</option>
             </select>
@@ -567,23 +654,24 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
             <button className="icon-button" title="全屏预览" aria-label="全屏预览" onClick={()=>{const action=document.fullscreenElement?document.exitFullscreen():canvasRef.current?.requestFullscreen();action?.catch(e=>onStatusChange?.(`无法全屏：${e.message}`))}}><Maximize size={17}/></button>
           </div>
         </div>
-        <section ref={canvasRef} className="dlss-monitor" aria-label="视频预览画布" title="实际处理层数和模式显示在画面中" onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onContextMenu={event=>event.preventDefault()}>
+        <section ref={canvasRef} className="dlss-monitor" aria-label="视频预览画布" title="实际处理层数和模式显示在画面中" onPointerDown={handleMouseDown} onPointerMove={handleMouseMove} onPointerUp={handleMouseUp} onPointerCancel={handleMouseUp} onContextMenu={event=>event.preventDefault()}>
 
-          {playerError&&<div className="dlss-player-error" role="alert"><AlertTriangle size={15}/><span>{playerError}</span><button type="button" aria-label="关闭错误" onClick={()=>setPlayerError(null)}>×</button></div>}
-          {activeFrameUrl?<img src={activeFrameUrl} alt="当前预览帧" className="dlss-preview-image" draggable={false}
+          {(playerError||nativePanel.error)&&<div className="dlss-player-error" role="alert"><AlertTriangle size={15}/><span>{playerError||nativePanel.error}</span><button type="button" aria-label="关闭错误" onClick={()=>setPlayerError(null)}>×</button></div>}
+          {nativeRequired&&view!=='flow'?<div className="dlss-empty-preview" aria-label="原生 GPU 显示区域">{!previewStats?.native_display&&<strong>{playerBusy||playerError||nativePanel.error||'正在准备原生预览…'}</strong>}</div>:activeFrameUrl?<img src={activeFrameUrl} alt="当前预览帧" className="dlss-preview-image" draggable={false}
             onLoad={event=>setPreviewImageSize({width:event.currentTarget.naturalWidth,height:event.currentTarget.naturalHeight})}
             style={pixelPreview&&previewImageSize?{width:previewImageSize.width/devicePixelRatio,height:previewImageSize.height/devicePixelRatio}:undefined}/>:<div className="dlss-empty-preview"><div className="empty-glyph"><span/><span/><span/></div><strong>{video?'正在准备预览…':'导入素材，开始重建。'}</strong></div>}
-          {view==='split'&&activeFrameUrl&&<div className="split-marker" aria-hidden="true" style={{left:`${splitX*100}%`}}/>}
           {zoom>1.01&&<div className="pan-hint"><Move size={13}/>右键拖动画布以查看细节</div>}
-          {video?.is_hdr&&<div className="preview-warning"><AlertTriangle size={13}/>HDR 显示用映射 · 未校准</div>}
+          {!nativeRequired&&view==='split'&&activeFrameUrl&&<div className="split-marker" aria-hidden="true" style={{left:`${splitX*100}%`}}/>}
+          {!nativePanel.ready&&(video?.is_hdr||settings.truehdr_enabled)&&<div className="preview-warning" title="当前预览将 HDR 映射到 SDR 显示，不改变 HDR 导出结果。"><AlertTriangle size={13}/>HDR → SDR 预览</div>}
           {previewPending && activeFrameUrl && <div className="preview-execution" role="status">更新预览…</div>}
           {!previewPending && previewStats?.layer_count && <div className="preview-execution" aria-label="预览实际执行" title={`实际尺寸 ${previewStats.preview_resolution?.join(' × ')} · 处理 ${Number(previewStats.processing_fps).toFixed(1)} FPS · 播放 ${Number(previewStats.presentation_fps||0).toFixed(1)} FPS · 跳过 ${previewStats.dropped_frames||0} 帧${previewStats.solver?` · GPU 融合 ${previewStats.solver.converged===false?'未收敛':'已执行'}`:''}`}>
-            {previewStats.render_pipeline?.includes('nr') ? `${previewStats.layer_count} 层` : previewStats.render_pipeline?.includes('vsr') ? 'VSR' : previewStats.render_pipeline?.includes('dlaa') ? 'DLAA' : '原帧预览'}
+            {previewStats.render_pipeline?.includes('nr') ? `${previewStats.layer_count} 层` : previewStats.render_pipeline?.includes('vsr') ? 'VSR' : previewStats.render_pipeline?.includes('dlaa') ? 'DLAA' : settings.truehdr_enabled ? 'TrueHDR' : '原帧预览'}
             {previewStats.render_pipeline?.includes('vsr') && <>{(() => {
               const stages=[...(previewStats.native_input_effect?.stages||[]),...(previewStats.native_output_effect?.stages||[])]
               const vsr=stages.find((stage:any)=>stage.stage==='vsr')
               return vsr?.counters?.model_loaded ? ` · ${['低','中','高','极高'][vsr.counters.quality_level-1]} · ${vsr.output_size.join('×')}` : ''
             })()}</>}
+            {previewStats.layer_count > 1 && <> · {previewStats.fusion_mode_actual?.startsWith('sequential') ? '顺序堆叠' : previewStats.fusion_mode_actual?.includes('data_consistency') ? '多尺度融合' : '仅第一层'}</>}
             {isPlaying && <> · {Number(previewStats.presentation_fps || previewStats.processing_fps).toFixed(1)} fps</>}
             {previewStats.solver?.converged === false && <> · 未收敛</>}
           </div>}
@@ -591,26 +679,31 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
         </section>
         <div className="dlss-material"><strong title={video?.path}>{video?.filename||'未载入素材'}</strong><span>{video?`${video.width} × ${video.height} · ${video.is_hdr?'HDR10':'SDR'}`:''}</span></div>
         <div className="dlss-transport">
-          <div className="transport-scrub"><span>{String(video?currentFrame+1:0).padStart(3,'0')}</span><input aria-label="时间轴帧位置" type="range" min={0} max={Math.max(1,(video?.frames||1)-1)} value={currentFrame} onChange={event=>handleSeek(Number(event.target.value))}/><span>{String(video?.frames||0).padStart(3,'0')}</span></div>
+          <SegmentTimeline video={video} settings={settings} currentFrame={currentFrame} onSeek={handleSeek} onSettingsChange={handleParamsBatchChange} onStatus={onStatusChange} onPause={()=>{wantPlayingRef.current=false;lastPlayRef.current=null;setIsPlaying(false);sendPlayer({action:"pause"})}}/>
           <div className="transport-buttons"><button type="button" aria-label="跳至首帧" onClick={()=>handleSeek(0)}><SkipBack size={16}/></button><button type="button" aria-label="后退一帧" onClick={()=>handleSeek(currentFrame-1)}>−1</button><button type="button" className="transport-play" onClick={togglePlay} aria-label={isPlaying?'暂停播放':'开始播放'}>{isPlaying?<Pause size={16}/>:<Play size={16} />}</button><button type="button" aria-label="前进一帧" onClick={()=>handleSeek(currentFrame+1)}>+1</button><button type="button" aria-label="跳至末帧" onClick={()=>handleSeek((video?.frames||1)-1)}><SkipForward size={16}/></button><button type="button" aria-pressed={loop} aria-label="循环播放" onClick={()=>setLoop(!loop)}><RotateCcw size={15}/></button></div>
           <div className="transport-meta">{video?`${video.fps||30} fps · ${video.duration_seconds.toFixed(2)} s`:'—'}</div>
         </div>
       </main>
       <QualityInspector settings={settings} onSettingsChange={onSettingsChange} onStatusChange={onStatusChange}
         primary={<>
+          <PresetPicker settings={settings} onChange={handleParamsBatchChange} onStatus={onStatusChange}/>
           <RenderPipeline settings={settings} onChange={handleParamsBatchChange}/>
           {renderStages(settings).includes('nr')&&<>
-          <div className="style-switch" role="group" aria-label="画面风格">
-            {([{value:0,label:'默认'},{value:2,label:'电影'},{value:1,label:'自然'}] as const).map(item=><button type="button" key={item.value} aria-pressed={settings.style===item.value} onClick={()=>handleParamChange('style',item.value)}>{item.label}</button>)}
-          </div>
-          {([['intensity','NR 强度'],['local_tone','局部色调强度'],['local_struct','局部结构强度'],['skin_struct','皮肤结构强度']] as const).map(([key,label])=><label className="primary-slider" key={key}><span>{label}<ParameterHelp name={key} label={label} /><output>{Number(settings[key].toFixed(2))}</output></span><input aria-label={label} type="range" min={0} max={2} step={.05} value={settings[key]} style={{'--range-fill':`${settings[key]/2*100}%`} as React.CSSProperties} onChange={e=>handleParamChange(key,Number(e.target.value))}/></label>)}
-          <label className="primary-check"><input type="checkbox" aria-label="自动遮罩" checked={settings.use_auto_mask===1} onChange={e=>handleParamChange('use_auto_mask',e.target.checked?1:0)}/>自动遮罩<ParameterHelp name="use_auto_mask" label="自动遮罩" /></label>
+          <CollapsibleSection title="DLSSNR 参数">
+          {activeLayerCount(settings.reconstruction_mode || 'single') > 1 &&
+            <div className="nr-layer-tabs" role="group" aria-label="图层参数">
+              {Array.from({length:activeLayerCount(settings.reconstruction_mode)}, (_, index) =>
+                <button type="button" key={index} aria-pressed={activeLayer === index}
+                  onClick={() => setSelectedLayer(index)}>第 {index + 1} 层</button>)}
+            </div>}
+          <LayerNRControls settings={settings} index={activeLayer} onChange={changeNR}/>
+          </CollapsibleSection>
           </>}
         </>}
         basic={<div className="dlss-inspector-content">
           <section className="dlss-control-card"><h3>运行库</h3>
             <p className="dlss-note">默认自动查找本机运行库。留空即可。</p>
-            {(renderStages(settings).includes('vsr')||(settings.frame_generation && settings.frame_generation!=='off'))&&<label className="dlss-control-label">VFX 目录覆盖<input aria-label="VFX运行库目录" placeholder="自动查找" value={settings.vsr_runtime_path||''} onChange={e=>handleParamChange('vsr_runtime_path',e.target.value)}/></label>}
+            {(settings.truehdr_enabled||renderStages(settings).includes('vsr')||(settings.frame_generation && settings.frame_generation!=='off'))&&<label className="dlss-control-label">VFX 目录覆盖<input aria-label="VFX运行库目录" placeholder="自动查找" value={settings.vsr_runtime_path||''} onChange={e=>handleParamChange('vsr_runtime_path',e.target.value)}/></label>}
             {renderStages(settings).includes('dlaa')&&<label className="dlss-control-label">DLSS DLL 覆盖<input aria-label="DLSS DLL路径" placeholder="自动查找" value={settings.dlss_dll_path||''} onChange={e=>handleParamChange('dlss_dll_path',e.target.value)}/></label>}
             {renderStages(settings).includes('dlaa')&&<p className="dlss-note">DLAA 支持 SDR 8/10-bit 与 HDR10；视频输入的深度和抖动为零。</p>}
             {renderStages(settings).includes('vsr')&&<p className="dlss-note">VSR 10-bit / HDR 使用 VFX 1.3 RGB10A2，运行库自动检测。</p>}
@@ -635,12 +728,12 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
         </div>}
         layers={<div className="dlss-inspector-content">
           <section className="dlss-control-card"><div className="dlss-card-head"><div><h3>工作分辨率</h3></div><span className="dlss-chip">{Math.round(settings.working_scale*100)}%</span></div><label className="dlss-slider"><span>工作缩放<output>{Math.round(settings.working_scale*100)}%</output></span><input aria-label="工作分辨率缩放" type="range" min={25} max={100} step={1} value={Math.round(settings.working_scale*100)} onChange={e=>handleWorkingScaleChange(Number(e.target.value)/100)}/></label><div className="scale-presets">{[1,.75,.67,.63,.5,.25].map(s=><button type="button" key={s} aria-pressed={Math.abs(settings.working_scale-s)<.005} onClick={()=>handleWorkingScaleChange(s)}>{Math.round(s*100)}%</button>)}</div>{(()=>{const [w,h]=resolveWorkingDims(video?.width||3840,video?.height||2160,settings.working_scale);return <div className="dimension-row"><span>源 {video?.width||3840} × {video?.height||2160}</span><strong>请求 {w} × {h}</strong></div>})()}</section>
-          <p className="dlss-note">工作缩放支持 25%–100% 的整数百分比；显示尺寸由共享解析器按 GPU 对齐规则计算。</p><section className="dlss-control-card"><div className="dlss-card-head"><div><h3>残差重构</h3></div><span className="dlss-chip">{settings.residual_pyramid?'已请求':'关闭'}</span></div><label className="dlss-check-row"><input type="checkbox" checked={settings.residual_pyramid} onChange={e=>handleParamChange('residual_pyramid',e.target.checked)}/>保留源细节残差</label><label className="dlss-slider"><span>残差倍率<output>{settings.residual_strength.toFixed(2)}×</output></span><input aria-label="残差倍率" type="range" min={0} max={1.5} step={.05} value={settings.residual_strength} onChange={e=>handleParamChange('residual_strength',Number(e.target.value))}/></label></section>
-          <section className="dlss-control-card"><div className="dlss-card-head"><div><h3>尺度与融合</h3></div><span className="dlss-chip">导出请求</span></div><label className="dlss-control-label">重建层数<select value={settings.reconstruction_mode||'single'} onChange={e=>handleParamsBatchChange(chooseReconstructionMode(settings,e.target.value as DLSSSettings['reconstruction_mode']))}><option value="single">单层</option><option value="dual">双层</option><option value="triple">三层</option></select></label>
+          <p className="dlss-note">工作缩放支持 25%–100% 的整数百分比；显示尺寸由共享解析器按 GPU 对齐规则计算。</p><section className="dlss-control-card"><div className="dlss-card-head"><div><h3>残差重构</h3></div><span className="dlss-chip">{settings.residual_pyramid?'已请求':'关闭'}</span></div><label className="dlss-check-row"><input type="checkbox" checked={settings.residual_pyramid} disabled={settings.experimental_hdr_scrgb || settings.reconstruction_mode !== 'single'} title="仅控制低分辨率重构时的源细节保留，不关闭 DLSSNR。HDR 与多层融合始终保留源细节。" onChange={e=>handleParamChange('residual_pyramid',e.target.checked)}/>保留源细节残差</label><label className="dlss-slider"><span>残差倍率<output>{settings.residual_strength.toFixed(2)}×</output></span><input aria-label="残差倍率" type="range" min={0} max={1.5} step={.05} value={settings.residual_strength} onChange={e=>handleParamChange('residual_strength',Number(e.target.value))}/></label></section>
+          <section className="dlss-control-card"><div className="dlss-card-head"><div><h3>尺度与融合</h3></div><span className="dlss-chip">预览 / 导出</span></div><label className="dlss-control-label">重建层数<select value={settings.reconstruction_mode||'single'} onChange={e=>handleParamsBatchChange(chooseReconstructionMode(settings,e.target.value as DLSSSettings['reconstruction_mode']))}><option value="single">单层</option><option value="dual">双层</option><option value="triple">三层</option></select></label>
             <div className="layer-diagram" aria-label="请求的独立层尺寸与融合权重">{Array.from({length:activeLayerCount(settings.reconstruction_mode||'single')},(_,i)=>{const scale=i===0?settings.working_scale:settings.layer_scales?.[i]??settings.working_scale;const [w,h]=resolveWorkingDims(video?.width||3840,video?.height||2160,scale);return <div className="layer-node" key={i}><span className="layer-index">L{i+1}</span><div><strong>{w} × {h}</strong><small>{Math.round(scale*100)}% · weight {(settings.layer_weights?.[i]||1).toFixed(2)}</small></div>{i<activeLayerCount(settings.reconstruction_mode||'single')-1&&<span className="layer-link">→</span>}</div>})}</div><p className="dlss-note">以上为当前请求值；下面的最近任务实际状态来自该任务的后端诊断，不代表实时预览。</p>
             <div className="dlss-control-card"><div className="dlss-card-head"><div><h3>最近任务实际</h3></div><span className="dlss-chip">{recentFusionJob?.status||'暂无报告'}</span></div>{recentFusionJob?<><p className="dlss-note">{recentFusionJob.name}</p>{recentFusionJob.report?.fusion_mode&&<div className="dimension-row"><span>后端报告模式</span><strong>{recentFusionJob.report.fusion_mode}</strong></div>}{Array.isArray(recentFusionJob.report?.layer_working_dims)&&<div className="dimension-row"><span>实际层尺寸</span><strong>{recentFusionJob.report.layer_working_dims.map((d:number[])=>`${d[0]}×${d[1]}`).join(' / ')}</strong></div>}{Array.isArray(recentFusionJob.report?.layer_dlss_calls)&&<div className="dimension-row"><span>各层 DLSS 调用数</span><strong>{recentFusionJob.report.layer_dlss_calls.join(' / ')}</strong></div>}{Array.isArray(recentFusionJob.report?.fusion_solver_frames)&&recentFusionJob.report.fusion_solver_frames.length>0?<div className="dimension-row"><span>CG 求解帧数 / 收敛</span><strong>{recentFusionJob.report.fusion_solver_frames.length} / {recentFusionJob.report.fusion_solver_frames.every((r:{converged?:boolean})=>r.converged)?'全部':'部分或无'}</strong></div>:recentFusionJob.report?.fusion_solver_frames?.details_omitted?<div className="dimension-row"><span>CG 求解帧数 / 收敛</span><strong>{recentFusionJob.report.fusion_solver_frames.item_count} / {recentFusionJob.report.fusion_solver_frames.all_converged?"全部":"部分或无"}</strong></div>:<p className="dlss-note">该任务诊断未包含 CG 求解帧记录；不推断实际求解状态。</p>}</>:<p className="dlss-note">尚无可读取的终态任务诊断。导出任务完成后，此处读取最新任务报告。</p>}</div>
-            {(settings.reconstruction_mode||'single')!=='single'&&Array.from({length:activeLayerCount(settings.reconstruction_mode)},(_,i)=>{const scale=i===0?settings.working_scale:settings.layer_scales?.[i]??settings.working_scale;return <div className="layer-inputs" key={i}><strong>第 {i+1} 层 · {Math.round(scale*100)}%</strong>{i>0&&<label>独立输入比例<select value={Math.round(scale*100)} onChange={e=>handleLayerScaleChange(i,Number(e.target.value)/100)}>{Array.from({length:76},(_,at)=>at+25).map(v=><option key={v} value={v} disabled={settings.layer_scales?.some((item,at)=>at!==i&&Math.round(item*100)===v)||Math.round(settings.working_scale*100)===v}>{v}%</option>)}</select></label>}<label className="dlss-slider"><span>观测权重<output>{(settings.layer_weights?.[i]||1).toFixed(2)}</output></span><input aria-label={`第 ${i+1} 层观测权重`} type="range" min={.05} max={3} step={.05} value={settings.layer_weights?.[i]||1} onChange={e=>handleLayerWeightChange(i,Number(e.target.value))}/></label></div>})}
-            {(settings.reconstruction_mode||'single')!=='single'&&<><label className="dlss-control-label">融合输出<select value={settings.fusion_mode||'catmull_baseline'} onChange={e=>handleParamChange('fusion_mode',e.target.value)}><option value="catmull_baseline">Catmull 基线</option><option value="data_consistency_experimental">数据一致性 · 实验性 GPU CG</option></select></label>{settings.fusion_mode==='data_consistency_experimental'&&<details className="solver-details"><summary>GPU CG 求解器参数</summary><div className="dlss-control-grid"><label>β<select value={settings.fusion_beta??.1} onChange={e=>handleParamChange('fusion_beta',Number(e.target.value))}>{[.01,.05,.1,.2,.5,1].map(v=><option key={v} value={v}>{v}</option>)}</select></label><label>迭代<select value={settings.fusion_max_iterations??128} onChange={e=>handleParamChange('fusion_max_iterations',Number(e.target.value))}>{[32,64,128,256,512].map(v=><option key={v} value={v}>{v}</option>)}</select></label><label>相对阈值<select value={settings.fusion_relative_tolerance??.001} onChange={e=>handleParamChange('fusion_relative_tolerance',Number(e.target.value))}>{[.01,.001,.0001,.00001].map(v=><option key={v} value={v}>{v}</option>)}</select></label></div></details>}<p className="dlss-note">各层为独立 Feature；Data Consistency 执行 GPU 融合，Baseline 输出第一层。预览与导出运行同一多层处理核心；图片流程仍为单层。</p></>}
+            {(settings.reconstruction_mode||'single')!=='single'&&Array.from({length:activeLayerCount(settings.reconstruction_mode)},(_,i)=>{const scale=i===0?settings.working_scale:settings.layer_scales?.[i]??settings.working_scale;return <div className="layer-inputs" key={i}><strong>第 {i+1} 层 · {Math.round(scale*100)}%</strong><button type="button" className="button quiet" aria-expanded={expandedLayer===i} aria-controls={`nr-layer-${i}`} onClick={()=>{setSelectedLayer(i);setExpandedLayer(expandedLayer===i?null:i)}}>{expandedLayer===i?"收起本层参数":"调整本层参数"}</button>{i>0&&<label>独立输入比例<select value={Math.round(scale*100)} onChange={e=>handleLayerScaleChange(i,Number(e.target.value)/100)}>{Array.from({length:76},(_,at)=>at+25).map(v=><option key={v} value={v} disabled={settings.fusion_mode!=="sequential"&&(settings.layer_scales?.some((item,at)=>at!==i&&Math.round(item*100)===v)||Math.round(settings.working_scale*100)===v)}>{v}%</option>)}</select></label>}{settings.fusion_mode!=="sequential"&&<label className="dlss-slider"><span>观测权重<output>{(settings.layer_weights?.[i]||1).toFixed(2)}</output></span><input aria-label={`第 ${i+1} 层观测权重`} type="range" min={.05} max={3} step={.05} value={settings.layer_weights?.[i]||1} onChange={e=>handleLayerWeightChange(i,Number(e.target.value))}/></label>}{expandedLayer===i&&<div id={`nr-layer-${i}`} className="layer-inline-params"><LayerNRControls settings={settings} index={i} onChange={(key,value)=>handleParamsBatchChange(changeLayerNR(settings,i,key,value))}/></div>}</div>})}
+            {(settings.reconstruction_mode||'single')!=='single'&&<><label className="dlss-control-label">融合输出<select value={settings.fusion_mode||'catmull_baseline'} onChange={e=>handleParamsBatchChange(chooseFusionMode(settings,e.target.value as DLSSSettings['fusion_mode']))}><option value="sequential">顺序堆叠</option><option value="catmull_baseline">仅第一层 · 对照</option><option value="data_consistency_experimental">多层融合 · 实验性</option></select></label>{settings.fusion_mode==='data_consistency_experimental'&&<details className="solver-details"><summary>GPU CG 求解器参数</summary><div className="dlss-control-grid"><label>β<select value={settings.fusion_beta??.1} onChange={e=>handleParamChange('fusion_beta',Number(e.target.value))}>{[.01,.05,.1,.2,.5,1].map(v=><option key={v} value={v}>{v}</option>)}</select></label><label>迭代<select value={settings.fusion_max_iterations??128} onChange={e=>handleParamChange('fusion_max_iterations',Number(e.target.value))}>{[32,64,128,256,512].map(v=><option key={v} value={v}>{v}</option>)}</select></label><label>相对阈值<select value={settings.fusion_relative_tolerance??.001} onChange={e=>handleParamChange('fusion_relative_tolerance',Number(e.target.value))}>{[.01,.001,.0001,.00001].map(v=><option key={v} value={v}>{v}</option>)}</select></label></div></details>}<p className="dlss-note">顺序堆叠逐层处理上一层结果。多尺度融合为独立分支；“仅第一层”用于对照。</p></>}
           </section>
         </div>}
         hdr={<div className="dlss-inspector-content"><section className="dlss-control-card"><div className="dlss-card-head"><div><h3>HDR / scRGB</h3></div><span className="dlss-chip dlss-chip-export">仅导出</span></div><label className="dlss-check-row"><input type="checkbox" aria-label="实验性 HDR/scRGB" checked={hdrOn} onChange={e=>saveHdrPatch({[HDR_SETTING]:e.target.checked})}/>请求实验性 HDR/scRGB 导出</label><label className="dlss-control-label">纸白 · scRGB<input type="text" inputMode="decimal" aria-label="HDR 纸白 (scRGB)" value={paperWhiteInput} onChange={e=>handlePaperWhiteChange(e.target.value)}/></label>{paperWhiteRefusal?<p className="dlss-warning">{paperWhiteRefusal}</p>:<p className="dlss-note">{paperWhiteLabel(Number(paperWhiteInput))} · 1 scRGB = 80 cd/m²</p>}{hdrOn&&hdrRefusals.length>0&&<ul className="dlss-refusals" aria-label="HDR 拒绝项">{hdrRefusals.map(reason=><li key={reason}><AlertTriangle size={13}/>{reason}</li>)}</ul>}<div className="hdr-preview-warning"><AlertTriangle size={16}/><p>HDR10 以 FP16 处理，再统一映射为 8-bit 显示；未校准，不作 HDR 色彩参考。HDR 开关控制导出。</p></div><p className="dlss-note">兼容性由后端能力闸门决定；不满足条件会拒绝，不会自动回退。HDR10 输出约束由服务端校验。</p><ul className="dlss-limitations">{HDR_LIMITATIONS.map(item=><li key={item}>{item}</li>)}</ul></section></div>}

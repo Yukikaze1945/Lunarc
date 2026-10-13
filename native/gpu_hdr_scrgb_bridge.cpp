@@ -607,6 +607,16 @@ uint sortable(float value) {
 /* The bounded proxy, in one place, so the code Feature 18 receives and the
  * slope the reconstruction divides by are the same curve. */
 const char* proxy_functions = R"hlsl(
+#ifdef SDR10_NR
+// SDR NR receives the original BT.709 RGB code values, stored in FP16.
+// This is not the bounded HDR display proxy and has no shoulder/dead zone.
+float sdr_nr_encode(float x) {
+    return x < 0.018f ? 4.5f*x : 1.099f*pow(x,0.45f)-0.099f;
+}
+float sdr_nr_decode(float x) {
+    return x < 0.081f ? x/4.5f : pow((x+0.099f)/1.099f,1.0f/0.45f);
+}
+#endif
 /* finite_nonnegative of the reference module: a negative or non-finite scene
  * value codes as zero. The master is never touched by this; only its proxy. */
 float proxy_relative_input(float value, float paperWhite) {
@@ -626,7 +636,11 @@ float proxy_encode(float x) {
     return half_round(coded);
 }
 float proxy_code(float value, float paperWhite) {
+#ifdef SDR10_NR
+    return half_round(sdr_nr_encode(value));
+#else
     return proxy_encode(proxy_relative_input(value, paperWhite));
+#endif
 }
 /* The measured quantized advance per stop, exactly as the reference module
  * measures it: the perturbation is applied to the scene value and both arms go
@@ -875,6 +889,10 @@ void main_proxy(uint3 id : SV_DispatchThreadID) {
         uint(master.b >= 0.0f && codes.b < 1.0f &&
              abs(proxy_slope(master.b, PaperWhite)) <
              MIN_SLOPE_PER_STOP);
+#ifdef SDR10_NR
+    pinned = 0.0f;
+    dead = 0.0f;
+#endif
     InterlockedAdd(Counters[10], uint(negatives));
     InterlockedAdd(Counters[11], uint(pinned));
     InterlockedAdd(Counters[12], uint(dead));
@@ -899,7 +917,7 @@ RWByteAddressBuffer Residual : register(u0);
 RWBuffer<uint> Counters : register(u1);
 cbuffer Frame : register(b0) {
     uint LowWidth, LowHeight, NeuralPitch, ProxyPitch;
-    uint WorkingPitch, ResidualPitch, Unused0, Unused1;
+    uint WorkingPitch, ResidualPitch, PreserveDetail, Unused1;
     float PaperWhite, MaxStops, MinSlope;
 };
 /* One channel of the audited reconstruction: the proxy-domain change divided
@@ -923,6 +941,17 @@ float reconstruct_channel(float value, float delta, float slope,
 float3 reconstruct3(float3 master, float3 input_code, float3 neural_code,
                     out uint3 disposition, out float max_stops,
                     out float max_residual) {
+#ifdef SDR10_NR
+    // Convert the output back through the source transfer function exactly.
+    // In particular, never divide by a quantized per-channel slope in shadows.
+    float3 decoded = float3(sdr_nr_decode(neural_code.r),sdr_nr_decode(neural_code.g),sdr_nr_decode(neural_code.b));
+    float3 input_linear = float3(sdr_nr_decode(input_code.r),sdr_nr_decode(input_code.g),sdr_nr_decode(input_code.b));
+    float3 delta = decoded-input_linear;
+    disposition = uint3(0,0,0);
+    max_stops = 0.0f;
+    max_residual = max(abs(delta.r),max(abs(delta.g),abs(delta.b)));
+    return PreserveDetail != 0 ? delta : decoded;
+#else
     /* 0 applied, 1 gain cap, 2 pinned, 3 dead zone, 4 negative, 5 nonfinite */
     precise float3 delta = clamp(neural_code, 0.0f, 1.0f) -
         clamp(input_code, 0.0f, 1.0f);
@@ -940,6 +969,7 @@ float3 reconstruct3(float3 master, float3 input_code, float3 neural_code,
             abs(reconstructed.g - master.g)),
         abs(reconstructed.b - master.b));
     return reconstructed - master;
+#endif
 }
 )hlsl";
 
@@ -995,6 +1025,7 @@ cbuffer Frame : register(b0) {
     uint FullWidth, FullHeight, LowWidth, LowHeight;
     uint ResidualPitch, MasterPitch, DestinationPitch, Taps;
     float Strength, Ceiling;
+    uint PreserveDetail;
 };
 [numthreads(8, 8, 1)]
 void main_composite(uint3 id : SV_DispatchThreadID) {
@@ -1018,7 +1049,7 @@ void main_composite(uint3 id : SV_DispatchThreadID) {
     }
     precise float3 residual = up * Strength;
     precise float3 master = load16(Master, id.y, id.x, MasterPitch).rgb;
-    precise float3 composite = master + residual;
+    precise float3 composite = PreserveDetail != 0 ? master + residual : lerp(master,up,Strength);
     /* The composite is not clamped. The master is signed, and the negatives a
      * gamut conversion produces are part of the picture: flattening them here
      * would silently alter the source the job was asked to correct, and the
@@ -1615,7 +1646,7 @@ void layout_passes(Bridge* b) {
                           {kPlaneTaps, kTapsSrv, rec_v, b->full_h},
                           {kPlaneTaps, kTapsSrv, rec_h, b->full_w}}, 4,
                          {{kPlaneComposited, kRawUav, 0, 0},
-                          {kPlaneCounters, kCountersUav, 0, 0}}, 2, 10,
+                          {kPlaneCounters, kCountersUav, 0, 0}}, 2, 11,
                          "main_composite"};
     d[kPassEncode] = {{{kPlaneComposited, kRawSrv, 0, 0}}, 1,
                       {{kPlaneEncodeY, kRawUav, 0, 0},
@@ -1795,6 +1826,7 @@ std::string pass_source(PassId pass, bool sdr10_mode) {
     std::string text = colour_header();
     text += numeric_header;
     text += sample_header;
+    if (sdr10_mode && (pass == kPassProxy || pass == kPassResidual)) text += "#define SDR10_NR 1\n";
     if (pass == kPassProxy || pass == kPassResidual) text += proxy_header();
     if (pass == kPassResidual) text += half_stops_helper;
     switch (pass) {
@@ -2773,14 +2805,14 @@ bool copy_neural(Bridge* b, void* raw_texture, void* raw_fence,
  * same three inputs, the same owned residual plane, the same constants and the
  * same dispatch extents, so an observation is the same number the single-layer
  * path computes rather than a second opinion of it. */
-bool run_residual_pass(Bridge* b) {
+bool run_residual_pass(Bridge* b, bool preserve_detail = true) {
     Constants r;
     r.put(b->low_w); r.put(b->low_h);
     r.put(b->planes[kPlaneNeural].pitch);
     r.put(b->planes[kPlaneProxy].pitch);
     r.put(b->planes[kPlaneWorking].pitch);
     r.put(b->planes[kPlaneResidual].pitch);
-    r.put(0u); r.put(0u);
+    r.put(preserve_detail ? 1u : 0u); r.put(0u);
     r.put(float(b->paper_white)); r.put(float(kMaxStops));
     r.put(float(kMinSlopePerStop));
     if (!run_pass(b, kPassResidual, r, groups(b->low_w, 8u),
@@ -2791,20 +2823,20 @@ bool run_residual_pass(Bridge* b) {
     return true;
 }
 
-extern "C" GPU_HDR_API int32_t gpu_hdr_reconstruct(
+int32_t reconstruct_picture(
     GpuHdrBridge* handle, void* dlss_texture, void* dlss_fence,
     uint64_t dlss_fence_value, double residual_strength,
-    uint64_t* out_composited_ptr, uint32_t* out_composited_pitch) {
+    uint64_t* out_composited_ptr, uint32_t* out_composited_pitch, bool preserve_detail) {
     Bridge* b = reinterpret_cast<Bridge*>(handle);
     error_reset();
     if (!b) { say("gpu_hdr_reconstruct on a closed bridge"); return -1; }
     if (!std::isfinite(residual_strength) || residual_strength < 0.0 ||
-        residual_strength > 1.0) {
-        say("residual strength must be a finite value between 0 and 1");
+        residual_strength > (b->sdr10_mode ? 1.5 : 1.0)) {
+        say("residual strength is outside the bridge's supported range");
         return -1;
     }
     if (!copy_neural(b, dlss_texture, dlss_fence, dlss_fence_value)) return -1;
-    if (!run_residual_pass(b)) return -1;
+    if (!run_residual_pass(b, preserve_detail)) return -1;
     Constants c;
     c.put(b->full_w); c.put(b->full_h); c.put(b->low_w); c.put(b->low_h);
     c.put(b->planes[kPlaneResidual].pitch);
@@ -2812,6 +2844,7 @@ extern "C" GPU_HDR_API int32_t gpu_hdr_reconstruct(
     c.put(b->planes[kPlaneComposited].pitch);
     c.put(b->rec_taps);
     c.put(float(residual_strength)); c.put(float(composite_ceiling(b)));
+    c.put(preserve_detail ? 1u : 0u);
     if (!run_pass(b, kPassComposite, c, groups(b->full_w, 8u),
                   groups(b->full_h, 8u)))
         return -1;
@@ -2821,6 +2854,22 @@ extern "C" GPU_HDR_API int32_t gpu_hdr_reconstruct(
     if (out_composited_pitch)
         *out_composited_pitch = b->planes[kPlaneComposited].pitch;
     return 0;
+}
+
+extern "C" GPU_HDR_API int32_t gpu_hdr_reconstruct(
+    GpuHdrBridge* handle, void* texture, void* fence, uint64_t value,
+    double strength, uint64_t* pointer, uint32_t* pitch) {
+    return reconstruct_picture(handle, texture, fence, value, strength, pointer, pitch, true);
+}
+extern "C" GPU_HDR_API uint32_t gpu_sdr10_nr_color_abi_version(void) { return 1u; }
+extern "C" GPU_HDR_API int32_t gpu_sdr10_reconstruct(
+    GpuHdrBridge* handle, void* texture, void* fence, uint64_t value,
+    double strength, uint32_t preserve_detail, uint64_t* pointer, uint32_t* pitch) {
+    Bridge* b = reinterpret_cast<Bridge*>(handle);
+    if (!b || !b->sdr10_mode || preserve_detail > 1u) {
+        say("gpu_sdr10_reconstruct needs an SDR10 bridge and a boolean detail mode"); return -1;
+    }
+    return reconstruct_picture(handle, texture, fence, value, strength, pointer, pitch, preserve_detail != 0);
 }
 
 extern "C" GPU_HDR_API int32_t gpu_hdr_encode(

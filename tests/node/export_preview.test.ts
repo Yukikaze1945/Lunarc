@@ -173,11 +173,11 @@ test('independent layer controls keep unique scales and preview the real fusion 
   const settings = { working_scale: 0.5, layer_scales: [0.5],
     layer_weights: [1], reconstruction_mode: 'single', export_backend: 'auto' }
   const dual = chooseReconstructionMode(settings, 'dual')
-  assert.deepEqual(dual.layer_scales, [0.5, 0.75])
+  assert.deepEqual(dual.layer_scales, [0.5, 0.5])
   assert.equal(dual.export_backend, 'gpu_transfer')
   const changed = chooseWorkingScale({ ...settings, ...dual }, 0.75)
   assert.deepEqual(changed.layer_scales, [0.75, 0.5])
-  assert.throws(() => chooseLayerScale({ ...settings, ...dual }, 1, 0.5), /不同/)
+  assert.deepEqual(chooseLayerScale({ ...settings, ...dual }, 1, 0.5),[0.5,0.5])
   const text = gpuLines({ reconstructionMode: 'dual', layerScales: [0.5, 0.75],
     layerWeights: [1, 0.8], fusionMode: 'data_consistency_experimental',
     fusionBeta: 0.1, fusionMaxIterations: 128,

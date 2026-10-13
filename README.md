@@ -7,9 +7,9 @@
 
 **Windows x64** &nbsp; · &nbsp; **GPL-3.0-or-later**
 
-Lunarc 是一款视频增强软件，支持 DLSSNR、DLAA、RTX VSR 和 NVIDIA VFG，可调整处理顺序、预览画面并批量导出。
+Lunarc 是一款视频增强软件，支持 DLSSNR、DLAA、RTX VSR、TrueHDR 和 NVIDIA VFG，可调整处理顺序、预览画面并批量导出。
 
-[下载安装版](https://github.com/Yukikaze1945/Lunarc/releases/tag/v2.1.2) &nbsp; / &nbsp; [安装说明](docs/installing.md) &nbsp; / &nbsp; [源码运行](docs/getting-started.md)
+[下载安装版](https://github.com/Yukikaze1945/Lunarc/releases/tag/v1.0.0-beta) &nbsp; / &nbsp; [安装说明](docs/installing.md) &nbsp; / &nbsp; [源码运行](docs/getting-started.md)
 
 ## 01 / 界面
 
@@ -25,17 +25,19 @@ Lunarc 是一款视频增强软件，支持 DLSSNR、DLAA、RTX VSR 和 NVIDIA V
 
 | 功能 | 说明 |
 | :--- | :--- |
-| DLSSNR | 单层、双层和三层处理，可调整各层分辨率与权重。多尺度数据一致性融合为实验性功能。 |
+| DLSSNR | 单层、双层和三层处理，各层参数可单独调整；支持顺序处理和实验性多尺度数据一致性融合。 |
 | DLAA / RTX VSR | DLAA 模型预设；RTX VSR 质量档位，按倍率或指定分辨率输出。 |
 | 光流 | NVIDIA NVOF、AMD FidelityFX Optical Flow 和 RAFT-Large。RAFT 分析尺寸可选长边 512、720、1080。 |
 | NVIDIA VFG | 按固定倍率或目标帧率插帧，支持镜头切换检测。仅用于导出；5×–8× 为实验性选项。 |
 | 色彩 | SDR 8-bit、SDR 10-bit 和 HDR10。HDR10 为实验性功能，支持保留静态 HDR 元数据。 |
+| TrueHDR | SDR 转 HDR10，可调整对比度、饱和度、中灰亮度和目标峰值，支持 AI 去色带；需要外部 NVIDIA 运行库。 |
+| 工作台 | 预设选择与保存、参数差异查看、可折叠卡片、区间导出和预渲染缓存。已完成且参数匹配的缓存区间显示绿条。 |
 | 素材与封装 | 拖入视频或图片；导出时保留音轨、字幕、章节、附件与元数据，具体取决于输出容器。 |
 | 运行库管理 | 下载、导入和切换 DLSSNR 版本，检查文件摘要、数字签名和版本。 |
 
 ## 03 / 安装
 
-1. 在 [Releases](https://github.com/Yukikaze1945/Lunarc/releases/tag/v2.1.2) 下载并运行 `Lunarc-2.1.2-x64-Setup.exe`，约 140 MB。
+1. 在 [Releases](https://github.com/Yukikaze1945/Lunarc/releases/tag/v1.0.0-beta) 下载并运行 `Lunarc-1.0.0-beta-x64-Setup.exe`，约 140 MB。
 2. 首次启动按提示安装基础运行环境和视频处理组件。
 3. 在 **运行与诊断 → DLSSNR 运行库** 中下载或导入运行库，再选择“使用”。
 
@@ -46,7 +48,7 @@ RAFT 光流需要另外安装 PyTorch/CUDA 和模型，可以在 **软件设置 
 - Windows x64、支持所选功能的 NVIDIA 显卡及驱动。
 - DLSSNR、DLAA、RTX VSR 和 VFG 需要对应的 NVIDIA 运行库，安装包不包含这些文件。
 - 首次安装组件需要联网；RAFT 下载量为数 GB，安装后需重启软件。
-- HDR 预览经过显示映射，不能作为最终 HDR 亮度的判断依据。
+- Windows 工作台使用原生 GPU 视频预览。启用 Windows HDR 时通过 FP16/scRGB 显示 HDR；未启用时映射为 SDR。文件对比页仍使用 SDR 映射。
 - 处理速度取决于显卡、素材分辨率和所选设置。已测试的环境与功能见 [测试记录](docs/public-release.md)。
 
 ## 04 / 源码运行
@@ -68,6 +70,8 @@ cd Lunarc
 | [AMD 光流](docs/AMD_FLOW_DEPENDENCIES.md) | 编译依赖与 SDK 版本。 |
 | [软件更新](docs/app-updates.md) | 检查和下载新版安装程序。 |
 | [多尺度融合](docs/multiscale-solver.md) | 求解方法、实测耗时与限制。 |
+| [GPU 预览](docs/native-hdr-preview.md) | SDR/HDR 显示与中央滑块对比。 |
+| [预设与区间预览](docs/workbench-presets.md) | 预设管理、区间导出和缓存绿条。 |
 | [构建安装包](packaging/README.md) | 打包方法与依赖。 |
 | [测试记录](docs/public-release.md) | 测试环境、结果和未覆盖的项目。 |
 

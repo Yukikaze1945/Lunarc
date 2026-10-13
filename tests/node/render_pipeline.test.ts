@@ -41,3 +41,15 @@ test('VFG is movable and independently usable; adding and removing controls acti
   assert.equal(pipelinePatch(['nr'],old).frame_generation,'off')
   assert.equal(pipelinePatch(['vfg']).frame_generation,'vfg')
 })
+
+test('TrueHDR is one named sortable stage; legacy flags and explicit order agree', () => {
+  const legacy = {render_pipeline:['dlaa','nr'],truehdr_enabled:true} as DLSSSettings
+  assert.deepEqual(renderStages(legacy), ['dlaa','nr','truehdr'])
+  const moved = moveStage(renderStages(legacy),2,0)
+  assert.deepEqual(moved, ['truehdr','dlaa','nr'])
+  const patch = pipelinePatch(moved,legacy)
+  assert.equal(patch.truehdr_enabled,true)
+  assert.deepEqual(renderStages({...legacy,...patch}), moved)
+  assert.equal(pipelinePatch(['nr'],legacy).truehdr_enabled,false)
+  assert.deepEqual(renderStages({render_pipeline:['nr','truehdr'],truehdr_enabled:true} as DLSSSettings), ['nr','truehdr'])
+})

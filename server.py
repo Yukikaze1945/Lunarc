@@ -142,7 +142,13 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
-        _cleanup_session_token()
+        try:
+            engine=getattr(dlss_service,'_gpu_preview',None)
+            if engine is not None:
+                await asyncio.to_thread(engine.shutdown)
+                dlss_service._gpu_preview=None
+        finally:
+            _cleanup_session_token()
 
 
 app = FastAPI(title="DLSS 5 Studio Backend API", version="2.0.0", lifespan=lifespan)
@@ -182,7 +188,8 @@ async def compare_open(request: Request):
         raise HTTPException(400, 'Comparison request must contain two file paths')
     try:
         return await asyncio.to_thread(comparison_service().open_pair,
-                                       data.get('original'), data.get('exported'))
+                                       data.get('original'), data.get('exported'),
+                                       data.get('original_offset_seconds', 0), data.get('duration_seconds'))
     except ValueError as error:
         raise HTTPException(400, str(error)) from error
 
@@ -544,10 +551,12 @@ def update_settings(new_settings: dict):
     # HTTP 500 with no body, and the setting the caller named is the one thing the
     # answer has to make a migration out of - same reason /api/queue/add catches this.
     try:
-        updated = dlss_service.update_settings(new_settings)
+        with dlss_service._settings_lock:
+            updated = dlss_service.update_settings(new_settings)
+            revision = dlss_service._preview_revision
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    return {"status": "ok", "settings": updated}
+    return {"status": "ok", "settings": updated, "preview_revision": revision}
 
 
 # ---------------- Queue Endpoints ----------------
@@ -569,6 +578,32 @@ def _queue_state():
 @app.get("/api/queue")
 async def get_queue():
     return _queue_state()
+
+
+from preview_segments import PreviewSegments
+_preview_segments = PreviewSegments(dlss_service)
+
+
+@app.post('/api/preview/segments/list')
+async def preview_segments_list(data: dict):
+    try:
+        return {'segments': await asyncio.to_thread(_preview_segments.list,
+            data.get('source'), data.get('settings') or {}, data.get('transcode_settings') or {})}
+    except (ValueError, OSError) as error:
+        raise HTTPException(400, str(error)) from error
+
+
+@app.post('/api/preview/segments')
+async def preview_segments_create(data: dict):
+    try:
+        record = await asyncio.to_thread(_preview_segments.create, data.get('source'),
+            data.get('settings') or {}, data.get('transcode_settings') or {}, data.get('frame_range'))
+    except (ValueError, OSError) as error:
+        raise HTTPException(400, str(error)) from error
+    if not record.get('ready'):
+        dlss_service.start_preview_queue(progress_callback=broadcast_queue_update_from_thread)
+    await broadcast_queue_update({'type': 'update', **_queue_state()})
+    return record
 
 
 @app.post("/api/queue/add")
@@ -665,6 +700,24 @@ def get_job_diagnostic(job_id: str, summary: bool = False):
     raise HTTPException(status_code=404, detail="Job not found")
 
 
+@app.post('/api/preview/native')
+async def configure_native_preview(request: Request):
+    data = await request.json()
+    try:
+        engine = await asyncio.to_thread(dlss_service._get_gpu_preview)
+        return await asyncio.to_thread(engine.configure_native,data)
+    except (ValueError,RuntimeError) as error:
+        raise HTTPException(400,str(error)) from error
+
+
+@app.get('/api/preview/native')
+async def native_preview_status():
+    engine=getattr(dlss_service,'_gpu_preview',None)
+    if engine is None:return dict(native=False,pending=False)
+    try:return await asyncio.to_thread(engine.native_status)
+    except RuntimeError as error:raise HTTPException(400,str(error)) from error
+
+
 # ---------------- WebSocket Player ----------------
 @app.websocket('/ws/compare')
 async def websocket_comparison(websocket: WebSocket, session: str,
@@ -697,7 +750,7 @@ async def websocket_comparison(websocket: WebSocket, session: str,
             if at >= player.duration:
                 await websocket.send_json({'type': 'ended', 'time': player.duration})
                 break
-            wait = max(0., 1 / (player.fps * rate) - (asyncio.get_running_loop().time() - started - elapsed))
+            wait = max(0., 1 / min(60., player.fps * rate) - (asyncio.get_running_loop().time() - started - elapsed))
             try:
                 await asyncio.wait_for(asyncio.shield(disconnect), timeout=wait)
             except asyncio.TimeoutError:

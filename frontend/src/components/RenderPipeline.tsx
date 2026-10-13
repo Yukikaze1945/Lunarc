@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { ArrowUp, ArrowDown, GripVertical, X, Plus } from 'lucide-react'
+import { ArrowUp, ArrowDown, GripVertical, X, Plus, Minus } from 'lucide-react'
 import type { DLSSSettings, RenderStage } from '../types'
 import { moveStage, pipelinePatch, renderStages } from '../services/renderPipeline'
 import './renderPipeline.css'
 import { ParameterHelp } from './ParameterHelp'
 import { useStageSort } from './useStageSort'
+import { TrueHDRTile } from './TrueHDRTile'
 
 function VsrScale({ value, onChange }: { value: number; onChange: (value: number) => void }) {
   const [custom, setCustom] = useState(value !== 2 && value !== 4)
@@ -38,15 +39,18 @@ function VsrScale({ value, onChange }: { value: number; onChange: (value: number
   </>
 }
 
-const NAMES: Record<RenderStage, string> = { nr: 'DLSSNR', dlaa: 'DLAA', vsr: 'RTX VSR', vfg: 'NVIDIA VFG' }
+const NAMES: Record<RenderStage, string> = { nr: 'DLSSNR', dlaa: 'DLAA', vsr: 'RTX VSR', vfg: 'NVIDIA VFG', truehdr: 'TrueHDR' }
 export function RenderPipeline({ settings, onChange }: {
   settings: DLSSSettings; onChange: (patch: Partial<DLSSSettings>) => void
 }) {
   const stages = renderStages(settings)
+  const [open,setOpen]=useState(true)
+  const [closed,setClosed]=useState<Partial<Record<RenderStage,boolean>>>({})
   const save = (value: RenderStage[]) => onChange(pipelinePatch(value, settings))
   const sort = useStageSort(stages, save)
   return <section className="render-pipeline" aria-label="渲染顺序">
-    <header><h3>渲染顺序</h3><span>从上到下</span></header>
+    <header><h3>渲染顺序</h3><span>从上到下</span><button type="button" aria-label={open?'收起渲染顺序':'展开渲染顺序'} aria-expanded={open} onClick={()=>setOpen(!open)}>{open?<Minus size={15}/>:<Plus size={15}/>}</button></header>
+    <div hidden={!open}>
     <ol ref={sort.list} className={sort.active ? 'render-sorting' : ''}>{stages.map((stage, i) => <li key={stage}
       data-stage={stage} ref={node => { if (node) sort.nodes.current.set(stage, node); else sort.nodes.current.delete(stage) }}
       className={`render-card${sort.active === stage ? ' render-dragging' : ''}`} style={sort.style(stage)}>
@@ -54,7 +58,10 @@ export function RenderPipeline({ settings, onChange }: {
         <button type="button" aria-label={`${NAMES[stage]} 上移`} disabled={i === 0} onClick={() => sort.animateSave(moveStage(stages, i, i - 1))}><ArrowUp size={14}/></button>
         <button type="button" aria-label={`${NAMES[stage]} 下移`} disabled={i === stages.length - 1} onClick={() => sort.animateSave(moveStage(stages, i, i + 1))}><ArrowDown size={14}/></button>
         <button type="button" aria-label={`移除 ${NAMES[stage]}`} disabled={stages.length === 1} onClick={() => save(stages.filter(s => s !== stage))}><X size={14}/></button>
+        {stage!=='nr'&&<button type="button" aria-label={`${closed[stage]?'展开':'收起'} ${NAMES[stage]} 参数`} aria-expanded={!closed[stage]} onClick={()=>setClosed(value=>({...value,[stage]:!value[stage]}))}>{closed[stage]?<Plus size={14}/>:<Minus size={14}/>}</button>}
       </div>
+      <div hidden={closed[stage]}>
+      {stage === 'truehdr' && <TrueHDRTile settings={settings} onChange={onChange}/>}
       {stage === 'dlaa' && <div className="render-stage-options render-stage-single">
         <label>模型<ParameterHelp name="dlaa_preset" label="DLAA 模型预设"/><select aria-label="DLAA 模型预设" value={settings.dlaa_preset ?? 0} onChange={e => onChange({dlaa_preset:Number(e.target.value) as DLSSSettings['dlaa_preset']})}>
           <option value={0}>默认</option><option value={10}>J</option><option value={11}>K</option><option value={12}>L</option><option value={13}>M</option><option value={5}>E · 旧版</option><option value={6}>F · 旧版</option>
@@ -82,7 +89,8 @@ export function RenderPipeline({ settings, onChange }: {
         <label className="render-full render-check"><input aria-label="VFG 自动镜头切换检测" type="checkbox" checked={settings.framegen_scene_detection ?? true} onChange={e=>onChange({framegen_scene_detection:e.target.checked})}/>镜头切换检测<ParameterHelp name="framegen_scene_detection" label="镜头切换检测"/></label>
       </>}
     </div></div>}
-    </li>)}</ol>
-    <div className="render-add">{(['dlaa','nr','vsr','vfg'] as RenderStage[]).filter(s => !stages.includes(s)).map(stage => <button key={stage} type="button" onClick={() => save([...stages,stage])}><Plus size={13}/>{NAMES[stage]}</button>)}</div>
+    </div></li>)}</ol>
+    <div className="render-add">{(['dlaa','nr','vsr','vfg','truehdr'] as RenderStage[]).filter(s => !stages.includes(s)).map(stage => <button key={stage} type="button" onClick={() => save([...stages,stage])}><Plus size={13}/>{NAMES[stage]}</button>)}</div>
+    </div>
   </section>
 }

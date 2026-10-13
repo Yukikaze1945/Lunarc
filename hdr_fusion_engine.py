@@ -438,6 +438,19 @@ class HdrFusionBridge:
 
     # -- introspection ------------------------------------------------------
 
+    def update_parameters(self, config, strength):
+        self._require_open()
+        from fusion_runtime import update_parameters
+        if not update_parameters(self._lib, self._handle, config, strength):
+            return False
+        for index, weight in enumerate(config['weights']):
+            self._options.layers[index].weight = weight
+        self._options.beta = config['beta']
+        self._options.residual_strength = strength
+        self._options.relative_tolerance = config['relative_tolerance']
+        self._options.max_iterations = config['max_iterations']
+        return True
+
     @property
     def full_extent(self):
         return self._full

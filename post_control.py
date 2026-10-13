@@ -3,6 +3,7 @@
 HDR is signed linear scRGB (1 = 80 nits). SDR is normalized RGB code values;
 this module does not pretend that the SDR code domain is linear light. Neutral
 configuration does not load a DLL, allocate, copy, round or change a descriptor.
+Lightness and chroma controls use Oklab; FP16 inputs are linear Rec.709.
 The model and CG objective are outside this module.
 """
 from __future__ import annotations
@@ -93,7 +94,7 @@ class _Options(C.Structure):
                 ("pixel_bytes", C.c_uint32)] + [
                     (key, C.c_float) for key in GAIN_FIELDS + PROTECTION_FIELDS
                 ] + [("roi_kind", C.c_uint32), ("roi_bounds", C.c_float * 4),
-                     ("roi_feather", C.c_float), ("debug_mode", C.c_uint32)]
+                     ("roi_feather", C.c_float), ("debug_mode", C.c_uint32), ("color_mode", C.c_uint32)]
 
 
 class _Candidate(C.Structure):
@@ -125,10 +126,11 @@ def candidate_descriptor(candidate):
     return desc
 
 
-def native_options(controls, width, height, pixel_bytes):
+def native_options(controls, width, height, pixel_bytes, *, sdr10=False):
     options = _Options()
-    options.struct_size, options.abi_version = C.sizeof(options), 1
+    options.struct_size, options.abi_version = C.sizeof(options), 2
     options.width, options.height, options.pixel_bytes = width, height, pixel_bytes
+    options.color_mode = 2 if sdr10 else 1 if pixel_bytes == 8 else 0
     for key in GAIN_FIELDS + PROTECTION_FIELDS + ("roi_kind", "roi_feather", "debug_mode"):
         setattr(options, key, getattr(controls, key))
     options.roi_bounds[:] = controls.roi_bounds
@@ -137,15 +139,17 @@ def native_options(controls, width, height, pixel_bytes):
 
 class GpuPostControl:
     """Lazy, per-export owner. Output borrowed until next call; close before CUDA."""
-    def __init__(self, controls=None, *, hdr=False, library=None):
+    def __init__(self, controls=None, *, hdr=False, sdr10=False, library=None):
         self.controls = controls or PostControls()
         self.hdr = bool(hdr)
+        self.sdr10 = bool(sdr10)
         self._lib = library
         self._handle = None
         self._identity = None
         self._closed = False
         self._report = {"enabled": not self.controls.neutral,
-                        "domain": "linear_scrgb" if hdr else "normalized_sdr_code",
+                        "lightness_chroma_space": "Oklab",
+                        "domain": "relative_linear_rec709" if sdr10 else "linear_scrgb" if hdr else "normalized_sdr_code",
                         "neutral_bypass": self.controls.neutral,
                         "host_image_bytes": 0, "controls": self.controls.as_dict()}
 
@@ -164,7 +168,7 @@ class GpuPostControl:
             self._lib = C.CDLL(path)
         lib = self._lib
         lib.gpu_post_control_abi_version.restype = C.c_uint32
-        if lib.gpu_post_control_abi_version() != 1:
+        if lib.gpu_post_control_abi_version() != 2:
             raise PostControlError("GPU post control ABI is incompatible")
         lib.gpu_post_control_last_error.restype = C.c_char_p
         lib.gpu_post_control_open.argtypes = [C.c_void_p, C.c_void_p, C.c_uint32,
@@ -193,10 +197,10 @@ class GpuPostControl:
                 height, identity[4], C.byref(handle)), "open")
             self._handle, self._identity = handle, identity
         desc = candidate_descriptor(candidate)
-        options = native_options(self.controls, width, height, identity[4])
+        options = native_options(self.controls, width, height, identity[4], sdr10=self.sdr10)
         texture, fence, value = C.c_void_p(), C.c_void_p(), C.c_uint64()
         counters = _Counters()
-        counters.struct_size, counters.abi_version = C.sizeof(counters), 1
+        counters.struct_size, counters.abi_version = C.sizeof(counters), 2
         self._check(self._lib.gpu_post_control_process(self._handle, source_ptr,
             source_pitch, C.byref(desc), C.byref(options), C.byref(texture),
             C.byref(fence), C.byref(value), C.byref(counters)), "process")

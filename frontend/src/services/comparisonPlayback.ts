@@ -1,5 +1,7 @@
 export type PlaybackFrame = {blob:Blob;actualTime:number;actualPts:number}
-export type PlaybackPair = {time:number;original:PlaybackFrame;exported:PlaybackFrame}
+export type PlaybackDecoderInfo = {decoder:string;gpu_scale:boolean;fallback_reason?:string|null;display_size:number[];display_fps:number;jpeg_mean_ms:number}
+export type PlaybackInfo = {original:PlaybackDecoderInfo;exported:PlaybackDecoderInfo;display_fps:number}
+export type PlaybackPair = {time:number;original:PlaybackFrame;exported:PlaybackFrame;playback?:PlaybackInfo}
 
 export function decodeComparisonPacket(buffer:ArrayBuffer):PlaybackPair {
   if(buffer.byteLength<4)throw new Error('对比播放数据不完整')
@@ -15,5 +17,5 @@ export function decodeComparisonPacket(buffer:ArrayBuffer):PlaybackPair {
     return {blob:new Blob([buffer.slice(offset,offset+size)],{type:'image/jpeg'}),
       actualTime:header[side].actualTime,actualPts:header[side].actualPts}
   }
-  return {time:header.time,original:frame('original',start,aSize),exported:frame('exported',start+aSize,bSize)}
+  return {time:header.time,original:frame('original',start,aSize),exported:frame('exported',start+aSize,bSize),playback:header.playback}
 }

@@ -77,6 +77,7 @@ import numpy as np
 
 import bundle_paths
 import pipeline
+from layer_settings import layer_parameters, resolve_layer_settings
 import transfer_profiler
 
 # native/ as the running layout put it. A frozen build's contents directory is not the
@@ -106,7 +107,7 @@ MUX_ONLY_KEYS = frozenset({
 # acts on finish_action after the run and suffix names the file before it. They are
 # not encoding choices, so refusing them made the panel's own default payload a job
 # this backend would not take.
-QUEUE_ONLY_KEYS = frozenset({"suffix", "finish_action"})
+QUEUE_ONLY_KEYS = frozenset({"suffix", "finish_action", "_source_range_start_seconds", "_source_range_duration_seconds"})
 # Every transcode_settings key plan_encoder is known to turn into an encoder
 # setting. Anything outside this and outside MUX_ONLY_KEYS is refused rather
 # than dropped, because a silently ignored encoding choice is worse than a job
@@ -1234,8 +1235,13 @@ def build_mux_command(ffmpeg: str, encoded_video: str, source: str,
     # one file on both sides would be truncated while still being read for the
     # streams the bridge cannot carry.
     pipeline.assert_output_not_input(source, out_path)
-    cmd = [ffmpeg, "-y", "-loglevel", "warning", "-i", encoded_video,
-           "-i", source, "-map", "0:v:0", "-c:v", "copy"]
+    cmd = [ffmpeg, "-y", "-loglevel", "warning", "-i", encoded_video]
+    if "_source_range_start_seconds" in ts:
+        start, duration = float(ts["_source_range_start_seconds"]), float(ts["_source_range_duration_seconds"])
+        if not math.isfinite(start) or start < 0 or not math.isfinite(duration) or duration <= 0:
+            raise BridgeError("invalid source selection timeline")
+        cmd += ["-ss", f"{start:.9f}", "-t", f"{duration:.9f}"]
+    cmd += ["-i", source, "-map", "0:v:0", "-c:v", "copy"]
     # The same precedence the encoder plan is held to above: a job that asked for no
     # audio gets no audio, whatever the mode field defaults to.
     audio_mode = ("remove" if not with_audio else
@@ -1259,6 +1265,10 @@ def build_mux_command(ffmpeg: str, encoded_video: str, source: str,
     shortest = [] if video_authoritative else ["-shortest"]
     if audio_mode == "copy":
         cmd += ["-c:a", "copy"] + shortest
+        if "_source_range_start_seconds" in ts:
+            # A demux seek starts at a preceding video keyframe. Audio packets
+            # before the selected time must not shift the encoded video forward.
+            cmd += ["-copypriorss:a", "0"]
     elif audio_mode == "aac":
         cmd += ["-c:a", "aac", "-b:a", bitrate] + shortest
     elif audio_mode == "opus":
@@ -1280,6 +1290,10 @@ def build_mux_command(ffmpeg: str, encoded_video: str, source: str,
                 "srt" if out_path.lower().endswith(".mkv") else "mov_text"]
     elif subtitle_mode == "drop":
         cmd += ["-sn"]
+    if subtitle_mode != 'drop' and "_source_range_start_seconds" in ts:
+        duration = float(ts['_source_range_duration_seconds'])
+        # Clip packet display intervals while preserving copied subtitle bytes.
+        cmd += ['-bsf:s', f"setts=pts='max(PTS,0)':duration='max(0,min(PTS+DURATION,{duration:.9f}/TB)-max(PTS,0))'"]
     if attachments and out_path.lower().endswith(".mkv"):
         cmd += ["-c:t", "copy"]
 
@@ -1306,6 +1320,8 @@ def build_mux_command(ffmpeg: str, encoded_video: str, source: str,
         if not math.isfinite(duration) or duration <= 0:
             raise BridgeError("encoded video duration must be a positive number")
         cmd += ["-t", str(video_duration)]
+    if "_source_range_start_seconds" in ts:
+        cmd += ["-avoid_negative_ts", "disabled"]
     return cmd + [out_path]
 
 
@@ -1378,6 +1394,9 @@ def run_copy_pass(ffmpeg: str, encoded_video: str, source: str,
 def multi_scale_config(settings, full_width, full_height):
     """Validate an opt-in layer vector against the sealed 1% scale contract."""
     settings = dict(settings or {})
+    from native_effects import nr_as_effect
+    if not settings.get('_inline_hdr_nr') and nr_as_effect(settings):
+        settings.update(reconstruction_mode='single', working_scale=1.0)
     mode = str(settings.get("reconstruction_mode", "single"))
     if mode not in ("single", "dual", "triple"):
         raise ValueError("reconstruction_mode must be single, dual, or triple")
@@ -1393,7 +1412,7 @@ def multi_scale_config(settings, full_width, full_height):
     percents = [working_percent(float(value)) for value in scales]
     if any(value is None for value in percents):
         raise ValueError("each layer scale must be an integer percent 25..100")
-    if len(set(percents)) != count:
+    if len(set(percents)) != count and settings.get('fusion_mode') != 'sequential':
         raise ValueError("layer scales must be distinct")
     if percents[0] != working_percent(float(settings.get("working_scale", 1.0))):
         raise ValueError("first layer scale must match working_scale")
@@ -1406,7 +1425,7 @@ def multi_scale_config(settings, full_width, full_height):
         raise ValueError("layer weights must be finite and positive")
     fusion = ("catmull_baseline" if count == 1 else
               str(settings.get("fusion_mode", "catmull_baseline")))
-    if fusion not in ("catmull_baseline", "data_consistency_experimental"):
+    if fusion not in ("catmull_baseline", "data_consistency_experimental", "sequential"):
         raise ValueError("unknown fusion_mode")
     beta = float(settings.get("fusion_beta", 0.1)) if count > 1 else 0.1
     tolerance = (float(settings.get("fusion_relative_tolerance", 0.001))
@@ -1546,7 +1565,7 @@ def negotiate(dims: dict, source: dict, job_settings, transcode_settings,
             if width > capacity:
                 reasons.append(f"layer {layer_scale:g} needs {width} Lanczos "
                                f"taps but loaded bridge has {capacity}")
-    scale = float(js.get("working_scale", 1.0))
+    scale = native_effects.core_working_scale(js)
     # Three chain shapes over one served range. 100% is the identity chain: the
     # full RGBA is the working colour and the DLSS output is the encoder input,
     # which is what the CPU plan does there - no working downsample and no
@@ -1645,8 +1664,11 @@ def negotiate(dims: dict, source: dict, job_settings, transcode_settings,
     except ValueError as exc:
         reasons.append(str(exc))
     if (dst_w, dst_h) != expected_output:
-        reasons.append(f"the encoder is fed the full-size residual, so the "
-                       f"output cannot be resized to {dst_w}x{dst_h}")
+        from export_resize import validate
+        try:
+            validate((dst_w, dst_h), ts.get('scale_algorithm', 'lanczos'))
+        except ValueError as exc:
+            reasons.append(str(exc))
     if src_w % 2 or src_h % 2:
         reasons.append("source dimensions must both be even")
 
@@ -1677,7 +1699,8 @@ def negotiate(dims: dict, source: dict, job_settings, transcode_settings,
     if not fps:
         reasons.append("frame rate is not a positive rational, so the encoder "
                        "cannot be told a time base")
-    plan = plan_encoder(ts, cq, source, option_available, tune_available,
+    plan = plan_encoder(dict(ts,pixel_format='auto',profile='auto') if js.get('truehdr_enabled') else ts,
+                        cq, source, option_available, tune_available,
                         color_matrix=color_matrix)
     plan["decoder_color_matrix"] = (NV12_COLOR_MATRIX_BT709
                                     if source_matrix == "bt709" else COLOR_MATRIX_BT601)
@@ -1850,9 +1873,9 @@ class Chain:
 
         # Preview consumers own the final texture themselves. Keep the residual
         # stage above, but never open an encoder for a preview-only chain.
-        if self.preview_consumer is not None or self.output_effect is not None or getattr(self, 'framegen_tail', None):
+        if self.preview_consumer is not None or self.output_effect is not None or getattr(self, 'truehdr_tail',None) or getattr(self, 'framegen_tail', None) or getattr(self, '_defer_layer_output', False):
             return
-        self._open_encoder(dlss, frame, (frame.width, frame.height))
+        self._open_encoder(dlss, frame, getattr(self, 'export_size', (frame.width, frame.height)))
 
     def _open_encoder(self, dlss, frame, size):
         struct = self.plan["struct"]
@@ -1883,6 +1906,8 @@ class Chain:
         if self.preview_consumer is not None:
             if self._defer_preview_consumer:
                 return None
+            if getattr(self,'truehdr_tail',None):
+                return self.preview_consumer(self.truehdr_tail.process(candidate,frame),frame)
             descriptor = dict(candidate)
             descriptor.update({
                 "format": "rgba8_unorm",
@@ -1899,17 +1924,23 @@ class Chain:
             if self.framegen is None:
                 from vfx_framegen import Interpolator
                 size = (candidate.get('width', frame.width), candidate.get('height', frame.height))
-                self.framegen_input = Exchange(candidate['d3d12_device'], frame.cuda_context, size)
-                self.framegen_output = Exchange(candidate['d3d12_device'], frame.cuda_context, size)
+                wide = candidate.get('dxgi_format') == 10
+                self.framegen_input = Exchange(candidate['d3d12_device'], frame.cuda_context, size, wide=wide)
+                self.framegen_output = Exchange(candidate['d3d12_device'], frame.cuda_context, size, wide=wide)
                 self.framegen = Interpolator(frame.cuda_context, size, self.framegen_settings,
-                    self.fps, wide=False, cancel=getattr(self, 'cancel', None))
+                    self.fps, wide=wide, hdr=bool(candidate.get('output_hdr')), cancel=getattr(self, 'cancel', None))
             mark = time.perf_counter()
             color = self.framegen_input.color(candidate)
+            if candidate.get('output_hdr'): color['output_hdr'] = True
             self._framegen_frame = frame_at_size(frame, (frame.width, frame.height))
             self.framegen.submit(color, frame, self._frame_reset, self._emit_generated)
             stages['vfg_and_nvenc_submit'] = (time.perf_counter()-mark)*1000
             return None
-        if self.encoder is None and self.output_effect is not None:
+        if getattr(self,'truehdr_tail',None):
+            self.truehdr_tail.encode(self,candidate,frame)
+            return None
+        candidate = self._resize_output(candidate, frame, stages)
+        if self.encoder is None and (self.output_effect is not None or getattr(self, 'export_resize', None) is not None or getattr(self,'_defer_layer_output',False)):
             self._open_encoder(candidate, frame, (candidate.get('width', frame.width), candidate.get('height', frame.height)))
         mark = time.perf_counter() if started is None else started
         code = self.b["nvenc"].nvenc_encode_texture(
@@ -1959,16 +1990,22 @@ class Chain:
                 source_pitch=full_pitch.value, width=supplied['width'] if supplied else frame.width,
                 height=supplied['height'] if supplied else frame.height,
                 reset=self.first or is_discontinuous)
+        self._preview_original_color = dict(format='rgba8_cuda',width=frame.width,height=frame.height,
+            cuda_context=int(frame.cuda_context),device_ptr=full_ptr.value,pitch_bytes=full_pitch.value)
         is_discontinuous = bool(is_discontinuous or scene["scene_cut"])
         self._frame_reset = self.first or is_discontinuous
 
         if self.input_effect is not None:
             mark = time.perf_counter()
-            color = self.input_effect.color(supplied or dict(width=frame.width, height=frame.height,
-                device_ptr=full_ptr.value, pitch_bytes=full_pitch.value,
-                cuda_context=frame.cuda_context), frame, self._frame_reset)
+            if getattr(self,'_preview_reuse_prefix',False):
+                color = self._preview_prefix_color
+            else:
+                color = self.input_effect.color(supplied or dict(width=frame.width,height=frame.height,
+                    device_ptr=full_ptr.value,pitch_bytes=full_pitch.value,cuda_context=frame.cuda_context),frame,self._frame_reset)
+                if self.preview_consumer is not None: self._preview_prefix_color = dict(color)
             full_ptr, full_pitch = C.c_uint64(color['device_ptr']), C.c_uint32(color['pitch_bytes'])
             stages['native_input_effect'] = (time.perf_counter() - mark) * 1000
+            stages['native_input_reused'] = bool(getattr(self,'_preview_reuse_prefix',False))
         frame = self._processing_frame(frame)
         if self.input_effect is not None and self.temporal_control.controls.enabled:
             self.temporal_control.observe(device=self.live.d3d12_device(),
@@ -2002,25 +2039,30 @@ class Chain:
                        "pitch_bytes": full_pitch.value}
 
         mark = time.perf_counter()
-        if self.uses_flow:
-            flow = flow_provider.get_flow_device_rgba(index, working,
-                frame.cuda_context, is_discontinuous=is_discontinuous)
-            stages["nvof_flow"] = (time.perf_counter() - mark) * 1000.0
-            self.flow_calls += 1
-            mark = time.perf_counter()
-            dlss = self.live.process_device_color_flow_resource(working, flow,
-                reset=self.first or is_discontinuous)
-        else:
-            # Nothing to fetch and nothing to upload: DLSSNR.MVec is bound to the
-            # texture the host zeroed at open, so the frame that arrives here is
-            # the only device resource this stage reads besides the colour.
-            flow = None
-            if self.settings_native_mode() != 'vsr':
-                self.zero_motion_calls += 1
-            dlss = self.live.process_device_color_zero_motion_resource(
-                working, reset=self.first or is_discontinuous)
+        def infer_primary():
+            nonlocal mark
+            if self.uses_flow:
+                flow = flow_provider.get_flow_device_rgba(index, working,
+                    frame.cuda_context, is_discontinuous=is_discontinuous)
+                stages["nvof_flow"] = (time.perf_counter() - mark) * 1000.0
+                self.flow_calls += 1
+                mark = time.perf_counter()
+                dlss = self.live.process_device_color_flow_resource(working, flow,
+                    reset=self.first or is_discontinuous)
+            else:
+                # Nothing to fetch and nothing to upload: DLSSNR.MVec is bound to the
+                # texture the host zeroed at open, so the frame that arrives here is
+                # the only device resource this stage reads besides the colour.
+                flow = None
+                if self.settings_native_mode() != 'vsr':
+                    self.zero_motion_calls += 1
+                dlss = self.live.process_device_color_zero_motion_resource(
+                    working, reset=self.first or is_discontinuous)
+            return dlss, flow
+        from preview_layer_cache import evaluate
+        (dlss, flow), dlss_reused = evaluate(self, 0, infer_primary)
         stage = 'vsr_input_device_copy' if self.settings_native_mode() == 'vsr' else 'dlss_inference'
-        stages[stage] = (time.perf_counter() - mark) * 1000.0
+        stages[stage] = 0.0 if dlss_reused else (time.perf_counter() - mark) * 1000.0
         if self.first:
             self._open_residual_and_encoder(dlss, frame)
             self.first = False
@@ -2050,18 +2092,20 @@ class Chain:
         output_candidate = None
         preview_output = None
         if not self.defer_encode:
-            controlled = self._post_process(frame, full_ptr.value, full_pitch.value,
-                {"d3d12_resource": encode_texture, "d3d12_fence": encode_fence,
+            candidate = {"d3d12_resource": encode_texture, "d3d12_fence": encode_fence,
                  "fence_value": encode_value, "d3d12_device": dlss["d3d12_device"],
-                 "producer_completed": self.downscaled})
+                 "producer_completed": self.downscaled}
+            controlled = (candidate if getattr(self, '_defer_layer_output', False) else
+                          self._post_process(frame, full_ptr.value, full_pitch.value, candidate))
             output_candidate = controlled
-            preview_output = self._submit_output(frame, controlled, stages)
+            if not getattr(self, '_defer_layer_output', False):
+                preview_output = self._submit_output(frame, controlled, stages)
         stages["decode_pts"] = frame.pts
         outcome = {"stages": stages, "flow": flow,
                 "_processing_frame": frame,
                 "_is_discontinuous": is_discontinuous, "_scene": scene,
                 "_full_color": (full_ptr.value, full_pitch.value),
-                "_working_color": working, "_dlss_resource": dlss,
+                "_working_color": working, "_dlss_resource": dlss, "_dlss_reused": dlss_reused,
                 "nvof_timing": (flow_provider.timing()
                                 if self.uses_flow and flow_provider is not None
                                 else None)}
@@ -2078,6 +2122,11 @@ class Chain:
             cuda_context=frame.cuda_context, source_ptr=source_ptr,
             source_pitch=source_pitch, width=frame.width, height=frame.height,
             candidate=candidate, reset=self._frame_reset)
+        capture = getattr(self, '_preview_post_capture', None)
+        if capture:
+            capture(device=self.live.d3d12_device(), context=frame.cuda_context,
+                width=frame.width, height=frame.height, wide=False,
+                source_ptr=source_ptr, source_pitch=source_pitch, candidate=stable, frame=frame)
         return self.post_control.process(device=candidate["d3d12_device"],
             cuda_context=frame.cuda_context, source_ptr=source_ptr,
             source_pitch=source_pitch, width=frame.width, height=frame.height,
@@ -2085,10 +2134,15 @@ class Chain:
 
     def _emit_generated(self, color, pts, kind):
         texture = self.framegen_output.texture(color['device_ptr'], color['pitch_bytes'])
+        if color.get('output_hdr'): texture['output_hdr'] = True
         tail = getattr(self, 'framegen_tail', None)
         frame = self._framegen_frame
         if tail:
             texture = tail.process(texture, frame, self.framegen.emitted == 0 or (kind == 'original' and self._frame_reset))
+        if getattr(self,'truehdr_tail',None):
+            self.truehdr_tail.encode(self,texture,frame,pts)
+            return
+        texture = self._resize_output(texture, frame, {})
         if self.encoder is None:
             self._open_encoder(texture, frame, (texture['width'], texture['height']))
         code = self.b['nvenc'].nvenc_encode_texture(self.encoder, texture['d3d12_resource'],
@@ -2096,8 +2150,25 @@ class Chain:
         if code:
             _bridge_error(self.b['nvenc'], 'nvenc_last_error', code)
 
+    def _resize_output(self, texture, frame, stages):
+        size = (texture.get('width', frame.width), texture.get('height', frame.height))
+        target = getattr(self, 'export_size', size)
+        if size == target:
+            return texture
+        if getattr(self, 'export_resize', None) is None:
+            from export_resize import Resize
+            self.export_resize = Resize(texture['d3d12_device'], frame.cuda_context,
+                size, target, self.export_scale_algorithm)
+        start = time.perf_counter()
+        result = self.export_resize.texture(texture)
+        stages['export_resize'] = (time.perf_counter()-start)*1000
+        return result
+
     def counters(self):
         out = {}
+        if getattr(self,'truehdr_tail',None): out['truehdr'] = self.truehdr_tail.report()
+        if getattr(self, 'export_resize', None):
+            out['export_resize'] = self.export_resize.report()
         if getattr(self, 'framegen', None) is not None:
             out['frame_generation'] = self.framegen.report()
             if hasattr(self, 'framegen_stage_index'):
@@ -2161,6 +2232,7 @@ class Chain:
             code = self.b["nvenc"].nvenc_finish(self.encoder)
             if code:
                 _bridge_error(self.b["nvenc"], "nvenc_last_error", code)
+        if getattr(self,'truehdr_tail',None): self.truehdr_tail.finish()
 
     def close(self):
         # Reverse creation order: each bridge borrows the device or context of
@@ -2172,7 +2244,7 @@ class Chain:
         # is idempotent, so the session owner may still call it afterwards.
         self.post_control.close()
         self.temporal_control.close()
-        for name in ('framegen_tail', 'ordered_framegen', 'framegen', 'framegen_output', 'framegen_input'):
+        for name in ('truehdr_tail','export_resize', 'framegen_tail', 'ordered_framegen', 'framegen', 'framegen_output', 'framegen_input'):
             item = getattr(self, name, None)
             if item:
                 item.close()
@@ -2222,6 +2294,7 @@ class MultiScaleObservationChain(Chain):
             defer_encode=config["fusion"] == "data_consistency_experimental",
             **kwargs)
         self.extra_layers = extra_layers
+        self._defer_layer_output = config['fusion'] == 'sequential'
         # The base call still builds layer 0's final candidate. A preview must
         # consume only after every independent layer and optional solve has run.
         self._defer_preview_consumer = self.preview_consumer is not None
@@ -2299,12 +2372,17 @@ class MultiScaleObservationChain(Chain):
             layer["lanczos"] = handle
 
     def process(self, frame, flow_provider, index, is_discontinuous):
+        if self.config['fusion'] == 'sequential':
+            from sequential_nr import process_sdr
+            return process_sdr(self, frame, flow_provider, index, is_discontinuous)
         outcome = super().process(frame, flow_provider, index, is_discontinuous)
         frame = outcome.get('_processing_frame', frame)
         is_discontinuous = outcome.get("_is_discontinuous", is_discontinuous)
         reset = index == 0 or is_discontinuous
-        self.layer_calls[0] += 1
-        self.layer_reset_flags[0].append(bool(reset))
+        reused_layers = [outcome["_dlss_reused"]]
+        if not reused_layers[0]:
+            self.layer_calls[0] += 1
+            self.layer_reset_flags[0].append(bool(reset))
         self.base_low_residual, first_observation = self._observe(
             self.base_low_residual, outcome["_dlss_resource"],
             outcome["_working_color"], frame)
@@ -2323,24 +2401,31 @@ class MultiScaleObservationChain(Chain):
             working = {"format": "rgba8_cuda", "width": width,
                        "height": height, "cuda_context": frame.cuda_context,
                        "device_ptr": pointer.value, "pitch_bytes": pitch.value}
-            if self.uses_flow:
-                flow = layer["flow_provider"].get_flow_device_rgba(
-                    index, working, frame.cuda_context,
-                    is_discontinuous=is_discontinuous)
-                inference_start = time.perf_counter()
-                dlss = layer["live"].process_device_color_flow_resource(
-                    working, flow, reset=reset)
-            else:
-                inference_start = time.perf_counter()
-                dlss = layer["live"].process_device_color_zero_motion_resource(
-                    working, reset=reset)
-            nr_times.append((time.perf_counter()-inference_start)*1000.0)
+            def infer_extra():
+                if self.uses_flow:
+                    flow = layer["flow_provider"].get_flow_device_rgba(
+                        index, working, frame.cuda_context,
+                        is_discontinuous=is_discontinuous)
+                    inference_start = time.perf_counter()
+                    dlss = layer["live"].process_device_color_flow_resource(
+                        working, flow, reset=reset)
+                else:
+                    inference_start = time.perf_counter()
+                    dlss = layer["live"].process_device_color_zero_motion_resource(
+                        working, reset=reset)
+                return dlss, flow if self.uses_flow else None, (time.perf_counter()-inference_start)*1000.0
+            from preview_layer_cache import evaluate
+            (dlss, _, inference_ms), reused = evaluate(self, number, infer_extra)
+            reused_layers.append(reused)
+            nr_times.append(0.0 if reused else inference_ms)
             layer["low_residual"], observed = self._observe(
                 layer["low_residual"], dlss, working, frame)
             observations.append(observed)
-            self.layer_calls[number] += 1
-            self.layer_reset_flags[number].append(bool(reset))
+            if not reused:
+                self.layer_calls[number] += 1
+                self.layer_reset_flags[number].append(bool(reset))
         outcome["_observations"] = observations
+        outcome["layer_inference_reused"] = reused_layers
         self.layer_inference_ms = nr_times
         outcome["stages"]["nr_total_ms"] = sum(nr_times)
         if self.preview_consumer is not None:
@@ -2389,6 +2474,9 @@ class MultiScaleObservationChain(Chain):
 
     def layer_diagnostics(self):
         return {"layer_count": len(self.layer_calls),
+                "layer_parameters": [layer_parameters(getattr(owner, 'settings', {}))
+                                     for owner in [self.live] +
+                                     [layer['live'] for layer in self.extra_layers]],
                 "layer_inference_ms": list(getattr(self, "layer_inference_ms", [])),
                 "layer_working_dims": [list(self.working)] +
                                       [list(layer["dims"]) for layer in self.extra_layers],
@@ -2433,6 +2521,9 @@ class MultiScaleObservationChain(Chain):
             self.b["fusion"].gpu_fusion_close(self.fusion_handle)
             self.fusion_handle = None
         for layer in reversed(self.extra_layers):
+            if layer.get('sequential_residual'):
+                self.b['residual'].gpu_residual_close(layer['sequential_residual'])
+                layer['sequential_residual'] = None
             if layer["low_residual"]:
                 self.b["low_residual"].gpu_low_residual_close(
                     layer["low_residual"])
@@ -2447,6 +2538,9 @@ class MultiScaleObservationChain(Chain):
             self.b["low_residual"].gpu_low_residual_close(
                 self.base_low_residual)
             self.base_low_residual = None
+        if getattr(self, 'sequential_exchange', None):
+            self.sequential_exchange.close()
+            self.sequential_exchange = None
         super().close()
 
 
@@ -2688,8 +2782,9 @@ def _export_gpu_transfer(video, live, flow_provider, out_path, dims, frames,
                                        (width, height) == (process_w // 2, process_h // 2)
                                        else TapPlans(process_w, process_h, width, height))}
                 extra_layers.append(layer)
+                from layer_settings import resolve_layer_settings
                 layer["live"] = dlss_gpu_engine.Live(
-                    width, height, live.settings, shared_with=live)
+                    width, height, resolve_layer_settings(dict(live.settings, **js), len(extra_layers)), shared_with=live)
         except Exception:
             for layer in reversed(extra_layers):
                 if layer["live"]:
@@ -2711,6 +2806,8 @@ def _export_gpu_transfer(video, live, flow_provider, out_path, dims, frames,
     chain.temporal_control = GpuTemporalControl(temporal_controls)
     import native_effects
     native_effects.install(chain, live, js, (src_w, src_h), flow_provider)
+    chain.export_size = (int(dims['dst_w']), int(dims['dst_h']))
+    chain.export_scale_algorithm = (transcode_settings or {}).get('scale_algorithm', 'lanczos')
     chain.cancel = cancel
     # ``is None``, not ``or``: TransferProfiler defines __len__, so a caller's
     # collector that has recorded nothing yet is falsy, and ``or`` would replace
@@ -2729,6 +2826,8 @@ def _export_gpu_transfer(video, live, flow_provider, out_path, dims, frames,
         chain.open_decoder()
         frame = _DeviceFrame()
         frame.struct_size = C.sizeof(_DeviceFrame)
+        from export_range import SelectedDecoder, validate_range
+        selected_decoder = SelectedDecoder(chain, validate_range(js.get("_frame_range")), fps, cancel)
         while processed < frames:
             if cancel and cancel():
                 raise pipeline.JobCancelled("用户已取消任务")
@@ -2737,7 +2836,7 @@ def _export_gpu_transfer(video, live, flow_provider, out_path, dims, frames,
                     f"GPU 转码管线在第 {processed} 帧严重停滞（超过 {WATCHDOG_TIMEOUT_SEC} "
                     f"秒无有效帧），NVDEC / Feature18 / NVENC 可能已死锁")
             t_decode = time.perf_counter()
-            state = chain.next_frame(frame)
+            state = selected_decoder.next(frame)
             decode_ms = (time.perf_counter() - t_decode) * 1000.0
             if state == 0:
                 break
@@ -2843,6 +2942,8 @@ def _export_gpu_transfer(video, live, flow_provider, out_path, dims, frames,
     report['render_pipeline'] = native_effects.stages(js)
     report['nr_input_size'] = [process_w, process_h]
     report['frame_generation'] = counters.get('frame_generation')
+    report['export_resize'] = counters.get('export_resize')
+    report['truehdr'] = counters.get('truehdr')
     report['neural_mode'] = job_settings.get('neural_mode', 'nr')
     report["temporal_control"] = counters.get("temporal_control")
     report["export_backend_requested"] = str(js.get("export_backend", "auto"))
@@ -2909,6 +3010,10 @@ def _export_gpu_transfer(video, live, flow_provider, out_path, dims, frames,
     if cancel and cancel():
         raise pipeline.JobCancelled("用户已取消任务")
 
+    if js.get("_frame_range") and processed != frames:
+        raise RuntimeError(f"选区导出帧数不完整：预期 {frames}，实际 {processed}")
+    if diagnostics_out is not None and js.get("_frame_range"):
+        diagnostics_out["frame_range"] = dict(js["_frame_range"], source_start_seconds=selected_decoder.source_first_seconds, emitted_input_frames=processed)
     if processed < frames:
         shortfall = frames - processed
         tolerance = max(5, int(round(frames * 0.01)))
@@ -2917,6 +3022,9 @@ def _export_gpu_transfer(video, live, flow_provider, out_path, dims, frames,
                                f"{processed} 帧（输入文件可能损坏或解码中断）")
 
     if intermediate:
+        transcode_settings = selected_decoder.mux_settings(transcode_settings, pipeline._bundle_ffprobe())
+        if diagnostics_out is not None and js.get('_frame_range'):
+            diagnostics_out['frame_range']['mux_source_start_seconds'] = transcode_settings['_source_range_start_seconds']
         if not os.path.isfile(intermediate):
             raise BridgeError("the encoder produced no intermediate to wrap")
         ffmpeg = pipeline._bundle_ffmpeg()

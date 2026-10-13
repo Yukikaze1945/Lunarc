@@ -58,3 +58,37 @@ def test_notification_failure_does_not_strand_running_task():
     assert job['status'] == 'completed'
     service.remove_job(job['id'])
     assert service.get_jobs() == []
+
+
+def test_preview_start_leaves_unrelated_pending_exports_untouched():
+    service = DLSSService()
+    normal, preview = add(service, 'normal'), add(service, 'preview')
+    preview['preview_segment'] = True
+    executed = []
+    service._execute_job = lambda job, callback: executed.append(job['name'])
+    assert service.start_preview_queue()
+    service._queue_thread.join(5)
+    assert executed == ['preview']
+    assert normal['status'] == 'pending' and preview['status'] == 'completed'
+
+
+def test_preview_arriving_during_final_notification_is_resumed():
+    service = DLSSService()
+    first = add(service, 'first')
+    first['preview_segment'] = True
+    resumed = threading.Event()
+    late = []
+    def notify(data):
+        if data.get('type') == 'queue_finished' and not late:
+            job = add(service, 'late')
+            job['preview_segment'] = True
+            late.append(job)
+            service.start_preview_queue()
+    def execute(job, callback):
+        if job['name'] == 'late':
+            resumed.set()
+    service._execute_job = execute
+    service.start_preview_queue(notify)
+    assert resumed.wait(5)
+    service._queue_thread.join(5)
+    assert late[0]['status'] == 'completed'

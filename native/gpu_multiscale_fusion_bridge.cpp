@@ -1418,6 +1418,45 @@ extern "C" GPU_FUSION_API int32_t gpu_fusion_open(void* device,
     return create_bridge(device, options, false, out);
 }
 
+extern "C" GPU_FUSION_API int32_t gpu_fusion_update_parameters(GpuFusionBridge* bridge,
+    const float* weights, uint32_t layer_count, float beta, float strength,
+    float tolerance, uint32_t max_iterations) {
+    last_error[0] = 0;
+    if (!bridge || bridge->failed || !weights || layer_count != bridge->options.layer_count ||
+        !std::isfinite(beta) || beta <= 0 || !std::isfinite(strength) || strength < 0 ||
+        !std::isfinite(tolerance) || tolerance <= 0 || tolerance >= 1 ||
+        max_iterations < 1 || max_iterations > 1000) {
+        fail("invalid fusion runtime parameters", 0); return 1;
+    }
+    for (uint32_t i = 0; i < layer_count; ++i) {
+        if (!std::isfinite(weights[i]) || weights[i] <= 0) {
+            fail("invalid fusion runtime weight", i); return 1;
+        }
+    }
+    bridge->options.beta = beta;
+    bridge->options.residual_strength = strength;
+    bridge->options.relative_tolerance = tolerance;
+    bridge->options.max_iterations = max_iterations;
+    bridge->control_tolerance = tolerance;
+    double row_bound = 0, column_bound = 0, max_diagonal = bridge->jacobi ? 0 : 1;
+    for (uint32_t i = 0; i < layer_count; ++i) {
+        auto& layer = bridge->layers[i];
+        layer.weight = bridge->options.layers[i].weight = weights[i];
+        if (bridge->observation_space) {
+            const double weight = std::sqrt(double(layer.weight));
+            row_bound = (std::max)(row_bound, weight*layer.x.max_row_abs*layer.y.max_row_abs);
+            column_bound += weight*layer.x.max_column_abs*layer.y.max_column_abs;
+            if (bridge->jacobi) max_diagonal = (std::max)(max_diagonal,
+                double(beta)+layer.weight*layer.x.max_norm_square*layer.y.max_norm_square);
+        }
+    }
+    if (bridge->observation_space) {
+        const double bound = (std::max)(1e-30, std::sqrt(row_bound*column_bound*max_diagonal));
+        bridge->control_tolerance = static_cast<float>(tolerance / bound);
+    }
+    return 0;
+}
+
 extern "C" GPU_FUSION_API int32_t gpu_fusion_process(GpuFusionBridge* bridge,
     void* cuda_context, uint64_t full_rgba_ptr, size_t full_pitch,
     const GpuFusionObservation* observations, uint32_t observation_count,

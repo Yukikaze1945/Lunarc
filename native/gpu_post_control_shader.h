@@ -8,11 +8,10 @@
  * normalized 3x3 [1,2,1]x[1,2,1]/16 binomial neighborhood, with each spatial
  * weight multiplied by exp(-dot(neighbor-source,neighbor-source) /
  * (0.0004 + 0.04*dot(source,source))). high = raw-low. Lightness is
- * dot(residual,[.2126,.7152,.0722]) replicated to RGB; chroma is residual
- * minus that replicated value. Hue protection projects chroma onto the
- * source-chroma axis when its squared length exceeds 1e-6, then interpolates
- * toward that projection. Frequency and lightness/chroma gains are applied
- * before total gain. ROI is a protected region: its interior attenuates the
+ * controlled in Oklab, with source a/b retained when chroma gain is zero.
+ * Hue protection uses the source's Oklab hue direction and fades near gray.
+ * Total gain and frequency controls act on RGB residuals before the Oklab
+ * lightness/chroma controls. ROI is a protected region: its interior attenuates the
  * residual to zero, the outside retains the full residual, and feathering
  * transitions from full residual at the boundary to zero inside. Dark and
  * highlight weights also attenuate the residual.
@@ -46,9 +45,55 @@ cbuffer Options : register(b0) {
     float RoiX0, RoiY0, RoiX1, RoiY1;
     float RoiFeather;
     uint DebugMode;
+    uint ColorMode;
 };
 
 static const float3 Y709 = float3(0.2126, 0.7152, 0.0722);
+// Oklab transform from Bjorn Ottosson's published 2021 matrices (public domain).
+// https://bottosson.github.io/posts/oklab/
+// Extended signed transfer and cube roots keep wide masters unclipped.
+float decode_srgb(float x) {
+    float a=abs(x);return sign(x)*(a<=.04045 ? a/12.92 : pow((a+.055)/1.055,2.4));
+}
+float encode_srgb(float x) {
+    float a=abs(x);return sign(x)*(a<=.0031308 ? a*12.92 : 1.055*pow(a,1./2.4)-.055);
+}
+float decode_bt709(float x) { return x<.081 ? x/4.5 : pow((x+.099)/1.099,1./.45); }
+float encode_bt709(float x) { return x<.018 ? x*4.5 : 1.099*pow(x,.45)-.099; }
+float3 to_oklab(float3 rgb) {
+    // SDR perceptual controls operate on the displayed code colours, matching
+    // the capture path's sRGB interpretation. The SDR10 master itself stays linear.
+    float3 code=ColorMode==2u ? float3(encode_bt709(rgb.r),encode_bt709(rgb.g),encode_bt709(rgb.b)) : rgb;
+    float3 linear_rgb=ColorMode==1u ? rgb : float3(decode_srgb(code.r),decode_srgb(code.g),decode_srgb(code.b));
+    float3 lms=mul(float3x3(.4122214708,.5363325363,.0514459929,
+        .2119034982,.6806995451,.1073969566,.0883024619,.2817188376,.6299787005),linear_rgb);
+    lms=sign(lms)*pow(abs(lms),1./3.);
+    return mul(float3x3(.2104542553,.7936177850,-.0040720468,
+        1.9779984951,-2.4285922050,.4505937099,.0259040371,.7827717662,-.8086757660),lms);
+}
+float3 from_oklab(float3 lab) {
+    float3 lms=mul(float3x3(1.,.3963377774,.2158037573,
+        1.,-.1055613458,-.0638541728,1.,-.0894841775,-1.2914855480),lab);
+    float3 linear_rgb=mul(float3x3(4.0767416621,-3.3077115913,.2309699292,
+        -1.2684380046,2.6097574011,-.3413193965,-.0041960863,-.7034186147,1.7076147010),lms*lms*lms);
+    if(ColorMode==1u)return linear_rgb;
+    float3 code=float3(encode_srgb(linear_rgb.r),encode_srgb(linear_rgb.g),encode_srgb(linear_rgb.b));
+    return ColorMode==2u ? float3(decode_bt709(code.r),decode_bt709(code.g),decode_bt709(code.b)) : code;
+}
+float3 mapped_oklab(float3 lab) {
+    if(ColorMode==1u)return from_oklab(lab);
+    lab.x=saturate(lab.x);
+    float3 rgb=from_oklab(lab);
+    if(all(rgb>=-1e-6)&&all(rgb<=1.000001))return rgb;
+    float lo=0,hi=1;
+    // Reduce chroma along a fixed hue ray rather than clipping RGB channels.
+    [loop] for(uint i=0;i<16u;++i){
+        float mid=(lo+hi)*.5;
+        float3 trial=from_oklab(float3(lab.x,lab.yz*mid));
+        if(all(trial>=0)&&all(trial<=1))lo=mid;else hi=mid;
+    }
+    return from_oklab(float3(lab.x,lab.yz*lo));
+}
 static const float3x3 To2020 = float3x3(
     0.6274040, 0.3292820, 0.0433136,
     0.0690970, 0.9195400, 0.0113612,
@@ -177,16 +222,22 @@ void Apply(uint3 id : SV_DispatchThreadID) {
     float3 low = low_residual(id.xy,source);
     float3 controlled = LowFrequencyGain * low +
                         HighFrequencyGain * (raw-low);
-    float raw_y = dot(controlled,Y709);
-    float3 light = raw_y.xxx;
-    float3 chroma = controlled - light;
-    float3 source_chroma = source - dot(source,Y709).xxx;
-    float3 projected = chroma;
-    float source_chroma_sq = dot(source_chroma,source_chroma);
-    if (source_chroma_sq > 1.0e-6)
-        projected = (dot(chroma,source_chroma)/source_chroma_sq)*source_chroma;
-    chroma = lerp(chroma,projected,HueProtection);
-    controlled = TotalGain * (LightnessGain*light + ChromaGain*chroma);
+    float3 source_lab = to_oklab(source);
+    float3 lab_delta = to_oklab(source + TotalGain*controlled)-source_lab;
+    lab_delta.x *= LightnessGain;
+    lab_delta.yz *= ChromaGain;
+    float source_chroma = length(source_lab.yz);
+    if (HueProtection > 0.0 && source_chroma > 1.0e-12) {
+        float2 axis = source_lab.yz/source_chroma;
+        float2 target = source_lab.yz+lab_delta.yz;
+        float2 protected_target = axis*max(dot(target,axis),0.0);
+        lab_delta.yz = lerp(target,protected_target,
+            HueProtection*smoothstep(0.0,0.02,source_chroma))-source_lab.yz;
+    }
+    // A luma/gray RGB offset changes perceived chroma in shadows. Oklab does not
+    // substitute a gray RGB residual for a requested chroma-preserving correction.
+    bool perceptual = LightnessGain != 1.0 || ChromaGain != 1.0 || HueProtection != 0.0;
+    controlled = perceptual ? mapped_oklab(source_lab+lab_delta)-source : TotalGain*controlled;
 
     float peak = asfloat(Analysis.Load(0));
     float unit_floor = PixelBytes == 8u ? 0.0125 : 1.0e-4;
@@ -201,7 +252,8 @@ void Apply(uint3 id : SV_DispatchThreadID) {
     if (dot(controlled,Y709) > 0.0)
         highlight_weight = 1.0 - HighlightProtection*near_peak;
     float protection_weight = roi_weight(id.xy)*dark_weight*highlight_weight;
-    controlled *= protection_weight;
+    lab_delta *= protection_weight;
+    controlled = perceptual ? mapped_oklab(source_lab+lab_delta)-source : controlled*protection_weight;
 
     if (PixelBytes == 8u && HighlightProtection > 0.0) {
         float3 source2020 = mul(To2020,source);
@@ -214,7 +266,9 @@ void Apply(uint3 id : SV_DispatchThreadID) {
                 outward_scale = min(outward_scale,allowed/delta2020[channel]);
             }
         }
-        controlled *= lerp(1.0,saturate(outward_scale),HighlightProtection);
+        float factor=lerp(1.0,saturate(outward_scale),HighlightProtection);
+        lab_delta*=factor;
+        controlled = perceptual ? mapped_oklab(source_lab+lab_delta)-source : controlled*factor;
     }
 
     if (SoftCompression > 0.0) {
@@ -224,7 +278,9 @@ void Apply(uint3 id : SV_DispatchThreadID) {
         if (magnitude > knee) {
             float compressed = knee + (magnitude-knee) /
                 (1.0+(magnitude-knee)/reference);
-            controlled *= lerp(1.0,compressed/magnitude,SoftCompression);
+            float factor=lerp(1.0,compressed/magnitude,SoftCompression);
+            lab_delta*=factor;
+            controlled = perceptual ? mapped_oklab(source_lab+lab_delta)-source : controlled*factor;
         }
     }
     if (DebugMode == 1u) {

@@ -70,6 +70,7 @@ struct RtxVsrHandle {
     uint32_t iw{}, ih{}, ow{}, oh{}, quality{};
     uint32_t component_type = NVCV_U8;
     bool loaded{};
+    bool true_hdr{};
     RtxVsrCounters counters{};
 };
 
@@ -109,7 +110,8 @@ static bool load_runtime(const wchar_t* root) {
     base = normalized_path(base.c_str());
     if (base.empty()) { fail("could not resolve VFX runtime directory"); return false; }
     const wchar_t* dirs[] = { L"", L"\\bin", L"\\lib", L"\\models", L"\\effects",
-        L"\\features\\nvvfxvideosuperres\\bin", L"\\features\\nvvfxvideoframegeneration\\bin" };
+        L"\\features\\nvvfxvideosuperres\\bin", L"\\features\\nvvfxvideoframegeneration\\bin",
+        L"\\features\\nvvfxtruehdr\\bin", L"\\features\\nvvfxdldebander\\bin" };
     for (auto suffix : dirs) {
         auto cookie = AddDllDirectory((base + suffix).c_str());
         if (cookie) g_directory_cookies.push_back(cookie);
@@ -325,4 +327,92 @@ extern "C" RTX_VSR_API int32_t vfx_framegen_process_time(RtxVsrHandle* h,uint64_
     uint64_t current,uint32_t cpitch,uint64_t output,uint32_t opitch,float timestep,uint32_t reset) {
     std::lock_guard<std::mutex> lock(g_mutex);
     return framegen_process(h,previous,ppitch,current,cpitch,output,opitch,0,timestep,reset,true);
+}
+
+static NvCV_Status set_true_hdr(RtxVsrHandle* h, uint32_t contrast, uint32_t saturation,
+    uint32_t middle_gray, uint32_t luminance, uint32_t debanding_off) {
+    auto status = g_set_u32(h->effect, "Contrast", contrast);
+    if (status == NVCV_SUCCESS) status = g_set_u32(h->effect, "Saturation", saturation);
+    if (status == NVCV_SUCCESS) status = g_set_u32(h->effect, "MiddleGray", middle_gray);
+    if (status == NVCV_SUCCESS) status = g_set_u32(h->effect, "Luminance", luminance);
+    if (status == NVCV_SUCCESS) status = g_set_u32(h->effect, "DebandingOff", debanding_off);
+    return status;
+}
+static bool valid_true_hdr(uint32_t contrast, uint32_t saturation, uint32_t gray,
+    uint32_t luminance, uint32_t off) {
+    return contrast <= 200 && saturation <= 200 && gray >= 10 && gray <= 100 &&
+        luminance >= 400 && luminance <= 2000 && off <= 1;
+}
+extern "C" RTX_VSR_API int32_t vfx_truehdr_open(void* context, uint32_t w, uint32_t height,
+    uint32_t contrast, uint32_t saturation, uint32_t gray, uint32_t luminance,
+    uint32_t debanding_off, const wchar_t* runtime, RtxVsrHandle** out) {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    if (!out) return fail("null TrueHDR output handle");
+    *out = nullptr;
+    if (!context || w < 64 || height < 64 || w > 16384 || height > 16384 ||
+        !valid_true_hdr(contrast, saturation, gray, luminance, debanding_off))
+        return fail("invalid TrueHDR context, dimensions or tunables");
+    const auto path = normalized_path(runtime);
+    if (g_effects && path != g_runtime_path) {
+        if (g_runtime_users) return fail("a different VFX runtime is active", -2);
+        unload_runtime();
+    }
+    if (!g_effects && !load_runtime(runtime)) { unload_runtime(); return -2; }
+    HMODULE feature = nullptr;
+    for (const auto* suffix : {L"\\features\\nvvfxtruehdr\\bin", L"\\bin", L""}) {
+        feature = LoadLibraryExW((path + suffix + L"\\nvVFXTrueHDR.dll").c_str(), nullptr,
+            LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+        if (feature) break;
+    }
+    if (!feature) { if (!g_runtime_users) unload_runtime(); return fail("NVIDIA TrueHDR feature DLL is missing", -2); }
+    g_feature_modules.push_back(feature);
+    CUcontext old{};
+    if (g_push(static_cast<CUcontext>(context)) != CUDA_SUCCESS) return fail("could not activate TrueHDR CUDA context");
+    auto* h = new (std::nothrow) RtxVsrHandle{};
+    if (!h) { g_pop(&old); return fail("allocate TrueHDR handle"); }
+    h->context = static_cast<CUcontext>(context); h->iw = h->ow = w; h->ih = h->oh = height; h->true_hdr = true;
+    auto status = g_create("TrueHDR", &h->effect);
+    if (status == NVCV_SUCCESS) status = set_true_hdr(h, contrast, saturation, gray, luminance, debanding_off);
+    if (status != NVCV_SUCCESS) {
+        if (h->effect) g_destroy(h->effect);
+        g_pop(&old); delete h; if (!g_runtime_users) unload_runtime();
+        return fail("create/configure NVIDIA TrueHDR", static_cast<int>(status));
+    }
+    g_pop(&old); ++g_runtime_users;
+    h->counters.input_width = h->counters.output_width = w;
+    h->counters.input_height = h->counters.output_height = height;
+    *out = h; g_error.clear(); return 0;
+}
+extern "C" RTX_VSR_API int32_t vfx_truehdr_update(RtxVsrHandle* h, uint32_t contrast,
+    uint32_t saturation, uint32_t gray, uint32_t luminance, uint32_t off) {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    if (!h || !h->true_hdr || !valid_true_hdr(contrast,saturation,gray,luminance,off))
+        return fail("invalid TrueHDR runtime options");
+    CUcontext old{};
+    if (g_push(h->context) != CUDA_SUCCESS) return fail("activate TrueHDR context");
+    const auto status = set_true_hdr(h,contrast,saturation,gray,luminance,off);
+    g_pop(&old);
+    return status == NVCV_SUCCESS ? 0 : fail("update TrueHDR tunables",static_cast<int>(status));
+}
+extern "C" RTX_VSR_API int32_t vfx_truehdr_process(RtxVsrHandle* h, uint64_t input,
+    uint32_t ipitch, uint64_t output, uint32_t opitch) {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    if (!h || !h->true_hdr || !input || !output || ipitch < h->iw*4 || opitch < h->ow*4 ||
+        ipitch > INT32_MAX || opitch > INT32_MAX) return fail("invalid TrueHDR RGBA8/RGB10A2 buffers");
+    CUcontext old{};
+    if (g_push(h->context) != CUDA_SUCCESS) return fail("activate TrueHDR CUDA context");
+    NvCVImage src{},dst{};
+    const char* stage = "TrueHDR input image";
+    auto status = g_image_init(&src,h->iw,h->ih,static_cast<int>(ipitch),reinterpret_cast<void*>(input),
+        NVCV_RGBA,NVCV_U8,NVCV_INTERLEAVED,NVCV_CUDA);
+    if (status == NVCV_SUCCESS) { stage="TrueHDR output image"; status=g_image_init(&dst,h->ow,h->oh,static_cast<int>(opitch),reinterpret_cast<void*>(output),NVCV_RGB10A2,NVCV_P32,NVCV_INTERLEAVED,NVCV_CUDA); }
+    if (status == NVCV_SUCCESS) { stage="TrueHDR source"; status=g_set_image(h->effect,"SrcImage0",&src); }
+    if (status == NVCV_SUCCESS) { stage="TrueHDR destination"; status=g_set_image(h->effect,"DstImage0",&dst); }
+    if (status == NVCV_SUCCESS) { stage="TrueHDR stream"; status=g_set_stream(h->effect,"CudaStream",nullptr); }
+    ++h->counters.process_calls;
+    if (status == NVCV_SUCCESS && !h->loaded) { stage="TrueHDR model load"; status=g_load(h->effect); h->loaded=status==NVCV_SUCCESS; h->counters.model_loaded=h->loaded?1u:0u; }
+    if (status == NVCV_SUCCESS) { stage="TrueHDR inference"; status=g_run(h->effect,0); }
+    g_pop(&old);
+    if (status != NVCV_SUCCESS) return fail(stage,static_cast<int>(status));
+    ++h->counters.successful_runs; g_error.clear(); return 0;
 }

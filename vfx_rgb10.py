@@ -42,6 +42,13 @@ class Codec:
         self._check(self.lib.vfx_rgb10_pointer(self.handle, C.byref(ptr), C.byref(pitch)))
         return ptr.value, pitch.value
 
+    def sdr8(self, ptr, pitch):
+        self.lib.vfx_sdr8_pack.argtypes = [C.c_void_p, C.c_uint64, C.c_uint32,
+            C.POINTER(C.c_uint64), C.POINTER(C.c_uint32)]
+        output, row = C.c_uint64(), C.c_uint32()
+        self._check(self.lib.vfx_sdr8_pack(self.handle, ptr, pitch, C.byref(output), C.byref(row)))
+        return output.value, row.value
+
     def unpack(self, ptr, pitch, output, opitch):
         self._check(self.lib.vfx_rgb10_unpack(self.handle, ptr, pitch, output, opitch))
 

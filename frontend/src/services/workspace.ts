@@ -1,5 +1,7 @@
 import type { DLSSSettings } from "../types"
-import { DEFAULT_POST, DEFAULT_TEMPORAL } from "./qualityControls"
+import { DEFAULT_POST, DEFAULT_TEMPORAL } from "./qualityControls.ts"
+import { chooseReconstructionMode } from './multiScaleSettings.ts'
+import { renderStages } from './renderPipeline.ts'
 export const DEFAULT_SETTINGS: DLSSSettings = {
   neural_mode: 'nr',
   vsr_quality: 2,
@@ -47,11 +49,22 @@ export const DEFAULT_SETTINGS: DLSSSettings = {
 }
 
 export function completeSettings(raw: Partial<DLSSSettings>): DLSSSettings {
-  return {...DEFAULT_SETTINGS, ...raw,
+  const settings = {...DEFAULT_SETTINGS, ...raw,
     // Retire the unsupported style from saved workspace and imported presets.
     style: raw.style === 3 ? DEFAULT_SETTINGS.style : (raw.style ?? DEFAULT_SETTINGS.style),
     post_controls: {...DEFAULT_POST, ...raw.post_controls},
     temporal_controls: {...DEFAULT_TEMPORAL, ...raw.temporal_controls}}
+  if (raw.render_pipeline || raw.truehdr_enabled) {
+    settings.render_pipeline = renderStages(settings)
+    settings.truehdr_enabled = settings.render_pipeline.includes('truehdr')
+  }
+  // Migrate old stacking presets which inherited the single-layer comparison.
+  // New settings have an independent parameter vector, so an explicitly chosen
+  // comparison remains a comparison on later launches.
+  if (settings.reconstruction_mode !== 'single' && raw.layer_execution === undefined) {
+    return {...settings, ...chooseReconstructionMode(settings, settings.reconstruction_mode)}
+  }
+  return settings
 }
 export const WORKSPACE_KEY = 'lunarc.workspace.v1'
 export interface WorkspaceDraft { version: 1; settings: DLSSSettings; recent: string[] }

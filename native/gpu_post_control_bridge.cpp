@@ -18,7 +18,7 @@
 #include <new>
 
 using Microsoft::WRL::ComPtr;
-static_assert(sizeof(GpuPostControlOptions) == 84, "ABI options layout changed");
+static_assert(sizeof(GpuPostControlOptions) == 88, "ABI options layout changed");
 static_assert(sizeof(GpuPostCandidate) == 48, "ABI candidate layout changed");
 static_assert(sizeof(GpuPostControlCounters) == 48, "ABI counters layout changed");
 static_assert(sizeof(size_t) == 8, "ABI 1 is Windows x64");
@@ -54,6 +54,8 @@ void uav_barrier(ID3D12GraphicsCommandList* list, ID3D12Resource* resource) {
     list->ResourceBarrier(1, &b);
 }
 bool finite_options(const GpuPostControlOptions& o) {
+    if (o.color_mode > 2u || (o.pixel_bytes == 4u && o.color_mode != 0u) ||
+        (o.pixel_bytes == 8u && o.color_mode == 0u)) return false;
     const float gains[] = {o.total_gain,o.lightness_gain,o.chroma_gain,
         o.low_frequency_gain,o.high_frequency_gain};
     for (float v : gains) if (!std::isfinite(v) || std::abs(v) > 32.0f) return false;

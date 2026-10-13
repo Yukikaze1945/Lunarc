@@ -38,6 +38,8 @@ def run():
     parser.add_argument('--no-framegen-scene-detection', action='store_true')
     parser.add_argument('--vsr-scale', type=float)
     parser.add_argument('--dlaa-preset', type=int, default=11)
+    parser.add_argument('--output-size', type=int, nargs=2)
+    parser.add_argument('--scale-algorithm', choices=['nearest','bilinear','bicubic','lanczos'], default='lanczos')
     a = parser.parse_args()
     a.directory.mkdir(parents=True, exist_ok=True)
     out = a.directory / 'output.mkv'
@@ -75,6 +77,9 @@ def run():
         gop_mode='auto', decode_mode='cuda', audio_mode='copy',
         subtitle_mode='copy', copy_attachments=True, copy_metadata=True, copy_chapters=True)
     working = pipeline.resolve_working_dims(*native_effects.processing_size(settings, (w,h)), scales[0])
+    if a.output_size:
+        tx.update(resolution_mode='custom_size', custom_width=a.output_size[0], custom_height=a.output_size[1],
+            keep_aspect=False, scale_algorithm=a.scale_algorithm)
     live = None if a.recheck else native_effects.make_live(*working, settings, wide=a.mode != 'sdr8')
     service = optical_flow.get_frame_guidance_service('nvof', '4M') if a.flow and not a.recheck else None
     provider = pipeline.GuidanceServiceFlowProvider(service, guidance_mode=1) if service else None
@@ -117,7 +122,11 @@ def run():
         assert fg['model']['successful_runs'] == fg['generated_frames']
         assert fg['host_image_bytes'] == 0
         assert abs(float(Fraction(video['avg_frame_rate'])) - float(rate)) < .001
-    assert (video['width'], video['height']) == native_effects.output_size(settings, (w,h))
+    assert (video['width'], video['height']) == (tuple(a.output_size) if a.output_size else native_effects.output_size(settings, (w,h)))
+    if a.output_size and tuple(a.output_size) != native_effects.output_size(settings, (w,h)):
+        assert diagnostics['export_resize']['calls'] == count
+        assert diagnostics['export_resize']['algorithm'] == a.scale_algorithm
+        assert diagnostics['export_resize']['host_image_bytes'] == 0
     pts = [int(f['best_effort_timestamp']) for f in video_frames]
     assert pts == sorted(set(pts)), pts
     if a.mode != 'sdr8':

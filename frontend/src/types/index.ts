@@ -1,4 +1,4 @@
-export type RenderStage = 'nr' | 'dlaa' | 'vsr' | 'vfg'
+export type RenderStage = 'nr' | 'dlaa' | 'vsr' | 'vfg' | 'truehdr'
 
 export interface VideoInfo {
   path: string
@@ -26,7 +26,7 @@ export type ExportBackend = 'auto' | 'legacy' | 'gpu_transfer'
 // Absent still means the service's own default, which is the same host.
 export type DlssBackend = 'gpu_flow_d3d12'
 export type ReconstructionMode = 'single' | 'dual' | 'triple'
-export type FusionMode = 'catmull_baseline' | 'data_consistency_experimental'
+export type FusionMode = 'catmull_baseline' | 'data_consistency_experimental' | 'sequential'
 
 export interface PostControls {
   total_gain: number; lightness_gain: number; chroma_gain: number
@@ -83,6 +83,15 @@ export interface DLSSSettings {
   reconstruction_mode: ReconstructionMode
   layer_scales: number[]
   layer_weights: number[]
+  layer_execution?: 'sequential' | 'multiscale'
+  truehdr_enabled?: boolean
+  truehdr_contrast?: number
+  truehdr_saturation?: number
+  truehdr_middle_gray?: number
+  truehdr_peak_nits?: number
+  truehdr_debanding?: boolean
+  layer_settings?: Partial<Pick<DLSSSettings, 'style' | 'intensity' | 'local_tone' |
+    'local_struct' | 'skin_struct' | 'use_auto_mask' | 'ui_correction'>>[]
   fusion_mode: FusionMode
   fusion_beta: number
   fusion_max_iterations: number
@@ -165,6 +174,9 @@ export interface RenderJob {
   preset: string
   with_audio: boolean
   settings: DLSSSettings
+  frame_range?: {start_frame:number;end_frame:number}
+  source_fps?: number
+  preview_segment?: boolean
   transcode_settings?: TranscodeSettings
   // 'skipped' is its own outcome, not a synonym for 'completed': the destination was
   // left untouched because it already existed, so nothing was rendered or overwritten.
@@ -204,6 +216,9 @@ export interface DiagnosticLogEntry {
 }
 
 export interface SystemInfo {
+  adapter_memory_used_gb?: number | null
+  adapter_memory_total_gb?: number | null
+  adapter_memory_scope?: string
   gpu: string | null
   vram_total_gb: number | null
   vram_used_gb: number | null
@@ -226,6 +241,7 @@ declare global {
       openFileDialog: () => Promise<string | null>
       openDirDialog: () => Promise<string | null>
       getPathForFile: (file: File) => string
+      getPreviewWindow?: () => Promise<{parent:string}|null>
       windowOverlay?: boolean
       setWindowTheme?: (theme: 'dark' | 'light') => Promise<void>
       localToken?: string

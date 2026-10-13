@@ -3,6 +3,32 @@ chcp 65001 >nul
 title Lunarc
 cd /d "%~dp0"
 
+rem Apply successfully compiled DLLs deferred while a running backend held them.
+if exist "%~dp0native\build\display\pending.txt" (
+    copy /y "%~dp0native\build\display\gpu_preview_display.dll" "%~dp0native\gpu_preview_display.dll" >nul
+    if errorlevel 1 (
+        echo [ERROR] Close the existing Lunarc window and backend before restarting.
+        goto :FAILED
+    )
+    del "%~dp0native\build\display\pending.txt"
+)
+if exist "%~dp0native\build\vfx\pending.txt" (
+    copy /y "%~dp0native\build\vfx\rtx_vsr_bridge.dll" "%~dp0native\rtx_vsr_bridge.dll" >nul
+    if errorlevel 1 (
+        echo [ERROR] Close the existing Lunarc window and backend before restarting.
+        goto :FAILED
+    )
+    del "%~dp0native\build\vfx\pending.txt"
+)
+if exist "%~dp0native\build\fusion\pending.txt" (
+    copy /y "%~dp0native\build\fusion\gpu_multiscale_fusion_bridge.dll" "%~dp0native\gpu_multiscale_fusion_bridge.dll" >nul
+    if errorlevel 1 (
+        echo [ERROR] Close the existing Lunarc window and backend before restarting.
+        goto :FAILED
+    )
+    del "%~dp0native\build\fusion\pending.txt"
+)
+
 echo ================================================================
 echo   Lunarc
 echo ================================================================

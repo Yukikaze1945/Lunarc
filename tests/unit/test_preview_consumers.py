@@ -135,12 +135,14 @@ def test_multiscale_preview_consumes_postprocessed_fusion_output(monkeypatch):
     chain.layer_reset_flags = [[]]
     chain.uses_flow = False
     chain.defer_encode = True
+    chain.config = {'fusion':'data_consistency_experimental'}
     chain.fusion_handle = object()
     chain.fusion_reports = []
     chain.b = {"fusion": Fusion()}
     chain._observe = lambda *args: (object(), (0x51, 0x52, 5))
 
     base_outcome = {
+        "_dlss_reused": False,
         "_is_discontinuous": False,
         "_dlss_resource": {"d3d12_device": 0xD3D},
         "_working_color": {"width": 16, "height": 8},
@@ -166,7 +168,7 @@ def test_multiscale_preview_consumes_postprocessed_fusion_output(monkeypatch):
     assert frame.pts == 7
 
 
-def test_hdr_preview_still_runs_color_encode_but_never_nvenc():
+def test_hdr_preview_skips_p010_conversion_and_nvenc():
     class Bridge:
         def encode(self, *, clip_ceiling_scrgb):
             assert clip_ceiling_scrgb == 1.0
@@ -186,8 +188,8 @@ def test_hdr_preview_still_runs_color_encode_but_never_nvenc():
 
     _, report = chain._encode(_frame(), stages)
 
-    assert report == {"encoded": True}
-    assert "hdr_encode" in stages
+    assert report is None
+    assert "hdr_encode" not in stages
     assert "nvenc_submit" not in stages
     assert nvenc.encoded == []
 

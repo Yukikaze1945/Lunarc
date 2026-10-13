@@ -391,9 +391,10 @@ def test_a_tonemap_or_colour_preset_is_refused_because_the_master_is_unclamped()
         assert any("color_preset" in reason for reason in negotiation["reasons"])
 
 
-def test_an_output_the_encoder_was_not_fed_at_is_refused():
+def test_final_output_resize_is_accepted_and_wrong_container_remains_refused():
     negotiation = _negotiate(dims=dict(HDR_DIMS, dst_w=1280, dst_h=720))
-    assert any("cannot be resized" in reason for reason in negotiation["reasons"])
+    assert negotiation["supported"], negotiation["reasons"]
+    assert negotiation['hdr_policy']['output_resize'] is True
     negotiation = _negotiate(out_path="out.mp4")
     assert any("output container" in reason for reason in negotiation["reasons"])
 
@@ -2978,8 +2979,11 @@ def test_every_extra_layer_is_its_own_session_on_the_anchor_and_its_own_history(
         [(480, 272), (1920, 1080)]
     assert [session.color_format_given for session in LayerSession.created] == \
         ["rgba16f", "rgba16f"]
-    assert [session.settings_given is live.settings for session in
-            LayerSession.created] == [True, True]
+    # Each layer receives a resolved snapshot, so later per-layer changes do not
+    # mutate the anchor's settings object. Sharing the device is independent.
+    assert all(session.settings_given is not live.settings for session in LayerSession.created)
+    assert all(session.settings_given.get('intensity') == live.settings.get('intensity', 1.)
+               for session in LayerSession.created)
     assert [session.shared_with is live for session in LayerSession.created] == \
         [True, True]
     # The motion each layer was guided by came from an engine of its own, at its own

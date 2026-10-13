@@ -53,7 +53,9 @@ float3 sample(uint x,uint y) {
     }
     float3 rgb=sum/max(weight,1e-8);
     if(Bytes==8){
-        if(HDR!=0)rgb/=1.+max(dot(rgb,float3(.2126,.7152,.0722)),0.);
+        // Display only: fixed 203-nit reference, scRGB=80 nit/unit. Match the
+        // CPU comparison transform; no frame-dependent exposure adjustment.
+        if(HDR!=0)rgb/=2.5375+max(dot(rgb,float3(.2126,.7152,.0722)),0.);
         rgb=saturate(rgb);
         rgb=float3(rgb.r<.018?4.5*rgb.r:1.099*pow(rgb.r,.45)-.099,
                    rgb.g<.018?4.5*rgb.g:1.099*pow(rgb.g,.45)-.099,

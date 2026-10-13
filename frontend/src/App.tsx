@@ -32,10 +32,11 @@ function WorkspaceApp() {
   const importRevision = useRef(0)
   const importQueue = useRef<Promise<void>>(Promise.resolve())
   const [activeTab,setActiveTab]=useState<TabType>('dlss')
-  const [comparePair,setComparePair]=useState<{original:string;exported:string}|null>(null)
+  const [comparePair,setComparePair]=useState<{original:string;exported:string;original_offset_seconds?:number;duration_seconds?:number}|null>(null)
   useEffect(()=>{const open=(event:Event)=>{const pair=(event as CustomEvent).detail;
     if(pair?.original&&pair?.exported){setComparePair(pair);setActiveTab('compare')}};
     window.addEventListener('lunarc:compare',open);return()=>window.removeEventListener('lunarc:compare',open)},[])
+  useEffect(()=>{const open=()=>setActiveTab('deliver');window.addEventListener('lunarc:open-deliver',open);return()=>window.removeEventListener('lunarc:open-deliver',open)},[])
   const [theme,setTheme]=useState(readTheme)
   useEffect(()=>applyTheme(theme),[theme])
   const [video,setVideo]=useState<VideoInfo|null>(null)
@@ -75,7 +76,7 @@ function WorkspaceApp() {
     return()=>{cancelled=true;clearInterval(timer);unsubscribe?.()}
   },[])
   useEffect(()=>{const q=queue;if(!q)return;try{
-    const terminal=q.jobs.filter(j=>['completed','failed','cancelled','skipped'].includes(j.status)).map(j=>({id:j.id,name:j.name,status:j.status,input_path:j.input_path,output_path:j.output_path,error:j.error,recorded:new Date().toISOString()}))
+    const terminal=q.jobs.filter(j=>['completed','failed','cancelled','skipped'].includes(j.status)).map(j=>({id:j.id,name:j.name,status:j.status,input_path:j.input_path,output_path:j.output_path,frame_range:j.frame_range,source_fps:j.source_fps,error:j.error,recorded:new Date().toISOString()}))
     if(terminal.length){let history:any[]=[];try{const h=JSON.parse(localStorage.getItem('lunarc.history.v1')||'[]');if(Array.isArray(h))history=h}catch{}
       const merged=[...terminal.map(j=>({...j,recorded:history.find(h=>h.id===j.id)?.recorded||j.recorded})),...history.filter(h=>!terminal.some(j=>j.id===h.id))].slice(0,100);const serialized=JSON.stringify(merged);if(serialized!==localStorage.getItem('lunarc.history.v1'))localStorage.setItem('lunarc.history.v1',serialized)}
     }catch{}},[queue])
@@ -117,7 +118,7 @@ function WorkspaceApp() {
       {activeTab==='compare'&&<ComparePage initialPair={comparePair}/>}
       {activeTab==='guide'&&<Guide/>}
       {!['dlss','deliver','compare','guide'].includes(activeTab)&&<WorkspacePages page={activeTab} video={video} system={system} settings={settings} recent={recent} onImport={importFile} onNavigate={setActiveTab} onApply={applySettings} onStatus={setStatusText}/>}
-    </main><BottomBar statusText={statusText} queueSummary={queueSummary} onQueueClick={()=>setActiveTab('deliver')}/></div>
+    </main><BottomBar system={system} statusText={statusText} queueSummary={queueSummary} onQueueClick={()=>setActiveTab('deliver')}/></div>
   </div>
 }
 export function App(){return <RuntimeGate><WorkspaceApp/></RuntimeGate>}
