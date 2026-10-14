@@ -28,6 +28,7 @@ export function SegmentTimeline({video,settings,currentFrame,onSeek,onSettingsCh
   const [submitting,setSubmitting]=useState(false),[error,setError]=useState('')
   const [startDraft,setStartDraft]=useState<string|null>(null),[endDraft,setEndDraft]=useState<string|null>(null)
   const requestRevision=useRef(0),signatureRef=useRef(signature);signatureRef.current=signature
+  const selectionHead=useRef<0|1>(0)
   const total=Math.max(1,video?.frames||1),fps=video?.fps||30
   const range=selection&&selection.end_frame<=total?selection:{enabled:false,start_frame:0,end_frame:total}
   const records=cache.signature===signature?cache.records:[]
@@ -73,8 +74,13 @@ export function SegmentTimeline({video,settings,currentFrame,onSeek,onSettingsCh
     duration_seconds:record.duration_seconds}}))}
   const updateValues=(values:number[])=>{
     setStartDraft(null);setEndDraft(null)
-    if(values[0]===values[1]){if(values[0]!==range.start_frame)values[0]=Math.max(0,values[1]-1);else values[1]=Math.min(total,values[0]+1)}
-    save(values[0],values[1])
+    const side=values[0]!==range.start_frame?0:values[1]!==range.end_frame?1:selectionHead.current
+    selectionHead.current=side
+    let [start,end]=values
+    if(start===end){if(side===0)start=Math.max(0,end-1);else end=Math.min(total,start+1)}
+    save(start,end)
+    // The stored end is exclusive; preview the final frame inside the selection.
+    onSeek(side===0?start:end-1)
   }
   const commit=(side:'start'|'end')=>{
     const draft=side==='start'?startDraft:endDraft
@@ -84,6 +90,7 @@ export function SegmentTimeline({video,settings,currentFrame,onSeek,onSettingsCh
     if(!draft||!Number.isInteger(frame)||frame<1||frame>total){setError('帧号须为素材范围内的整数');return}
     if(side==='start')save(frame-1,Math.max(range.end_frame,frame))
     else save(Math.min(range.start_frame,frame-1),frame)
+    onSeek(frame-1)
   }
   return <div className="segment-timeline">
     <div className="transport-scrub"><span>{String(video?currentFrame+1:0).padStart(3,'0')}</span>
@@ -106,9 +113,9 @@ export function SegmentTimeline({video,settings,currentFrame,onSeek,onSettingsCh
       {range.enabled&&<div className="segment-selection">
         <label>起始帧<input type="number" min={1} max={total} value={startDraft??range.start_frame+1} onChange={e=>setStartDraft(e.target.value)} onBlur={()=>commit('start')} onKeyDown={e=>{if(e.key==='Enter'){e.currentTarget.blur()}}}/></label>
         <Range min={0} max={total} step={1} values={[range.start_frame,range.end_frame]} onChange={updateValues}
-          onFinalChange={values=>onSeek(Math.min(total-1,values[0]))}
+          onFinalChange={values=>onSeek(selectionHead.current===0?values[0]:values[1]-1)}
           renderTrack={({props,children})=><div {...props} className="segment-range-track"><div className="segment-range-fill" style={{left:`${range.start_frame/total*100}%`,width:`${(range.end_frame-range.start_frame)/total*100}%`}}/>{children}</div>}
-          renderThumb={({props,index})=>{const {key,...rest}=props;return <div key={key} {...rest} aria-label={index?'选区结束帧':'选区起始帧'} className="segment-range-handle"/>}}/>
+          renderThumb={({props,index})=>{const {key,...rest}=props;return <div key={key} {...rest} onFocus={()=>{selectionHead.current=index?1:0;onSeek(index?range.end_frame-1:range.start_frame)}} aria-label={index?'选区结束帧':'选区起始帧'} className="segment-range-handle"/>}}/>
         <label>结束帧<input type="number" min={1} max={total} value={endDraft??range.end_frame} onChange={e=>setEndDraft(e.target.value)} onBlur={()=>commit('end')} onKeyDown={e=>{if(e.key==='Enter'){e.currentTarget.blur()}}}/></label>
       </div>}
       {(error||current?.status==='failed')&&<p className="segment-error" role="alert">{error||current?.error}</p>}

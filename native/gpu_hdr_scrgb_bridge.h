@@ -297,6 +297,21 @@ GPU_HDR_API void gpu_hdr_fill_contract(GpuHdrContract* out_contract);
  * The bridge allocates its planes from the extents and the plans' tap counts at
  * open, so a call later never allocates; a plan wider than GPU_HDR_MAX_TAPS is
  * refused here rather than truncated. */
+/* Additive resource-purpose API; old open entries retain full-pipeline ABI 1. */
+enum GpuHdrPurpose {
+    GPU_HDR_PURPOSE_FULL = 0, GPU_HDR_PURPOSE_GUIDANCE = 1,
+    GPU_HDR_PURPOSE_DECODE = 2, GPU_HDR_PURPOSE_ENCODE = 3
+};
+GPU_HDR_API int32_t gpu_hdr_open_purpose(void* device, void* context,
+    uint32_t width, uint32_t height, uint32_t low_width, uint32_t low_height,
+    const GpuHdrTapTable* down, const GpuHdrTapTable* up, double white,
+    uint32_t purpose, GpuHdrBridge** out);
+GPU_HDR_API int32_t gpu_sdr10_open_purpose(void* device, void* context,
+    uint32_t width, uint32_t height, uint32_t low_width, uint32_t low_height,
+    const GpuHdrTapTable* down, const GpuHdrTapTable* up, double white,
+    uint32_t purpose, GpuHdrBridge** out);
+GPU_HDR_API uint64_t gpu_hdr_allocated_device_bytes(GpuHdrBridge* bridge);
+
 GPU_HDR_API int32_t gpu_hdr_open(void* d3d12_device, void* cuda_context,
     uint32_t full_width, uint32_t full_height, uint32_t working_width,
     uint32_t working_height, const GpuHdrTapTable* downscale_plan,

@@ -1,0 +1,236 @@
+{
+  "per_scenario": {
+    "quick:B": {
+      "residual_backend": "cpu_reference_native",
+      "residual_backend_version": "api-0x00010000",
+      "plan_create_count": 1,
+      "plan_destroy_count": 0,
+      "scratch_alloc_count": 1,
+      "scratch_alloc_bytes": 158653440,
+      "native_scratch_bytes": 158653440,
+      "axis_plan_count": 4,
+      "downsample_call_count": 60,
+      "reconstruct_call_count": 60,
+      "downsample_pixel_count": 279244800,
+      "reconstruct_pixel_count": 497664000,
+      "worker_create_count": 8,
+      "worker_count": 9,
+      "closed": false
+    },
+    "quick:C": {
+      "residual_backend": "cpu_reference_native",
+      "residual_backend_version": "api-0x00010000",
+      "plan_create_count": 1,
+      "plan_destroy_count": 0,
+      "scratch_alloc_count": 1,
+      "scratch_alloc_bytes": 122227200,
+      "native_scratch_bytes": 122227200,
+      "axis_plan_count": 4,
+      "downsample_call_count": 60,
+      "reconstruct_call_count": 60,
+      "downsample_pixel_count": 197145600,
+      "reconstruct_pixel_count": 497664000,
+      "worker_create_count": 8,
+      "worker_count": 9,
+      "closed": false
+    },
+    "quick:D": {
+      "residual_backend": "cpu_reference_native",
+      "residual_backend_version": "api-0x00010000",
+      "plan_create_count": 1,
+      "plan_destroy_count": 0,
+      "scratch_alloc_count": 1,
+      "scratch_alloc_bytes": 87505920,
+      "native_scratch_bytes": 87505920,
+      "axis_plan_count": 4,
+      "downsample_call_count": 60,
+      "reconstruct_call_count": 60,
+      "downsample_pixel_count": 124416000,
+      "reconstruct_pixel_count": 497664000,
+      "worker_create_count": 8,
+      "worker_count": 9,
+      "closed": false
+    },
+    "quick:E": {
+      "residual_backend": "cpu_reference_native",
+      "residual_backend_version": "api-0x00010000",
+      "plan_create_count": 1,
+      "plan_destroy_count": 0,
+      "scratch_alloc_count": 1,
+      "scratch_alloc_bytes": 34882560,
+      "native_scratch_bytes": 34882560,
+      "axis_plan_count": 4,
+      "downsample_call_count": 60,
+      "reconstruct_call_count": 60,
+      "downsample_pixel_count": 31334400,
+      "reconstruct_pixel_count": 497664000,
+      "worker_create_count": 8,
+      "worker_count": 9,
+      "closed": false
+    },
+    "sustained:D": {
+      "residual_backend": "cpu_reference_native",
+      "residual_backend_version": "api-0x00010000",
+      "plan_create_count": 1,
+      "plan_destroy_count": 0,
+      "scratch_alloc_count": 1,
+      "scratch_alloc_bytes": 87505920,
+      "native_scratch_bytes": 87505920,
+      "axis_plan_count": 4,
+      "downsample_call_count": 300,
+      "reconstruct_call_count": 300,
+      "downsample_pixel_count": 622080000,
+      "reconstruct_pixel_count": 2488320000,
+      "worker_create_count": 8,
+      "worker_count": 9,
+      "closed": false
+    }
+  },
+  "microbenchmark_diagnostics": [
+    {
+      "requested": "python",
+      "actual": "cpu_reference_python",
+      "working_scale": 0.75,
+      "diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 229847040,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    },
+    {
+      "requested": "python",
+      "actual": "cpu_reference_python",
+      "working_scale": 0.63,
+      "diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 201630720,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    },
+    {
+      "requested": "python",
+      "actual": "cpu_reference_python",
+      "working_scale": 0.5,
+      "diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 174182400,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    },
+    {
+      "requested": "python",
+      "actual": "cpu_reference_python",
+      "working_scale": 0.25,
+      "diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 130867200,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    },
+    {
+      "requested": "native",
+      "actual": "cpu_reference_native",
+      "working_scale": 0.75,
+      "diagnostics": {
+        "residual_backend": "cpu_reference_native",
+        "residual_backend_version": "api-0x00010000",
+        "plan_create_count": 1,
+        "plan_destroy_count": 0,
+        "scratch_alloc_count": 1,
+        "scratch_alloc_bytes": 158653440,
+        "native_scratch_bytes": 158653440,
+        "axis_plan_count": 4,
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "downsample_pixel_count": 60503040,
+        "reconstruct_pixel_count": 107827200,
+        "worker_create_count": 8,
+        "worker_count": 9,
+        "closed": false
+      }
+    },
+    {
+      "requested": "native",
+      "actual": "cpu_reference_native",
+      "working_scale": 0.63,
+      "diagnostics": {
+        "residual_backend": "cpu_reference_native",
+        "residual_backend_version": "api-0x00010000",
+        "plan_create_count": 3,
+        "plan_destroy_count": 2,
+        "scratch_alloc_count": 3,
+        "scratch_alloc_bytes": 439534080,
+        "native_scratch_bytes": 122227200,
+        "axis_plan_count": 4,
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "downsample_pixel_count": 42714880,
+        "reconstruct_pixel_count": 107827200,
+        "worker_create_count": 24,
+        "worker_count": 9,
+        "closed": false
+      }
+    },
+    {
+      "requested": "native",
+      "actual": "cpu_reference_native",
+      "working_scale": 0.5,
+      "diagnostics": {
+        "residual_backend": "cpu_reference_native",
+        "residual_backend_version": "api-0x00010000",
+        "plan_create_count": 5,
+        "plan_destroy_count": 4,
+        "scratch_alloc_count": 5,
+        "scratch_alloc_bytes": 649267200,
+        "native_scratch_bytes": 87505920,
+        "axis_plan_count": 4,
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "downsample_pixel_count": 26956800,
+        "reconstruct_pixel_count": 107827200,
+        "worker_create_count": 40,
+        "worker_count": 9,
+        "closed": false
+      }
+    },
+    {
+      "requested": "native",
+      "actual": "cpu_reference_native",
+      "working_scale": 0.25,
+      "diagnostics": {
+        "residual_backend": "cpu_reference_native",
+        "residual_backend_version": "api-0x00010000",
+        "plan_create_count": 7,
+        "plan_destroy_count": 6,
+        "scratch_alloc_count": 7,
+        "scratch_alloc_bytes": 771655680,
+        "native_scratch_bytes": 34882560,
+        "axis_plan_count": 4,
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "downsample_pixel_count": 6789120,
+        "reconstruct_pixel_count": 107827200,
+        "worker_create_count": 56,
+        "worker_count": 9,
+        "closed": false
+      }
+    }
+  ],
+  "interpretation": "plan_create_count, scratch_alloc_count and worker_create_count stay at their one-time values while the call counts rise with frames"
+}

@@ -1,0 +1,498 @@
+{
+  "kind": "e2e_quick_benchmark",
+  "code_under_test_sha": "b1668d39b08e7974de5806443732a7ea96f1681d",
+  "environment": {
+    "cuda_version": "13.4",
+    "native_libraries": {
+      "dlssnr_host.dll": {
+        "sha256": "9ec879388e573bebbf7886dccbdc885641d945420fdf4bb80bac6c657094160c",
+        "bytes": 54272
+      },
+      "nvngx_dlssnr.dll": {
+        "sha256": "e16bcf15e16e13f527491cdf7845b2fe6521a738d8f7c9c721866a8496e1fc8e",
+        "bytes": 165840496
+      },
+      "native/nvof_bridge.dll": {
+        "sha256": "16fafec0de798001818c59994b74dbe6eb096553c4ff931503f0473f443bb98c",
+        "bytes": 156672
+      },
+      "native/residual_bridge.dll": {
+        "sha256": "6a064f98ec1eab9e72c3d5a3ee1df80fe168373da1a03cea28eb5e8e03ec3ded",
+        "bytes": 197120
+      }
+    },
+    "utc_timestamp": "2026-09-19T22:56:35Z",
+    "platform": "win32",
+    "os": "Windows-10-10.0.26220-SP0",
+    "cpu_model": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+    "cpu_arch": "AMD64",
+    "cpu_logical_cores": 16,
+    "ram_total_bytes": 42852945920,
+    "python": "3.11.15",
+    "numpy": "2.4.6",
+    "opencv": "5.0.0",
+    "ffmpeg": "8.1.2-full_build-www.gyan.dev",
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "driver_version": "616.92",
+      "memory_total_bytes": 17103323136
+    },
+    "rss_bytes": 42553344,
+    "peak_rss_bytes": 44339200,
+    "gpu_total_memory_used_bytes": 952107008,
+    "process_gpu_memory_bytes": null,
+    "process_gpu_memory_source": "unavailable: this pid is not listed by nvidia-smi --query-compute-apps",
+    "fixture_path": "bench_out\\fixture_4k_300.mp4",
+    "fixture_sha256": "1500839c8ef50e2bcd4d8d0c974041af1a17178921213222c78f958208bcca9f",
+    "fixture_width": 3840,
+    "fixture_height": 2160,
+    "fixture_fps": 60.0,
+    "fixture_frame_count": 300,
+    "fixture_codec": "h264",
+    "encoder": "av1_nvenc (pipeline default; codec actually written is reported by ffprobe)",
+    "cq": 18,
+    "flow_engine": "nvof",
+    "flow_preset": "4M"
+  },
+  "config": {
+    "mode": "quick",
+    "frames": 60,
+    "scenarios": [
+      {
+        "id": "A",
+        "name": "100% working, NVOF 4M",
+        "scale": 1.0,
+        "residual_backend": null
+      },
+      {
+        "id": "D",
+        "name": "50% working, NVOF 4M + native residual",
+        "scale": 0.5,
+        "residual_backend": "native"
+      }
+    ]
+  },
+  "results": [
+    {
+      "id": "A",
+      "name": "100% working, NVOF 4M",
+      "working_scale": 1.0,
+      "working_dims": [
+        3840,
+        2160
+      ],
+      "frames": 60,
+      "elapsed_sec": 12.492,
+      "fps": 4.803,
+      "stages_ms": {
+        "frame_total": {
+          "mean": 177.9925883320781,
+          "p50": 171.0112000000663,
+          "p95": 198.30960500257788,
+          "min": 150.87599999969825,
+          "max": 374.5238999836147
+        },
+        "working_color_prepare_ms": {
+          "mean": 0.0006500015539738039,
+          "p50": 0.000500003807246685,
+          "p95": 0.001400010660290718,
+          "min": 0.000200001522898674,
+          "max": 0.0025999906938523054
+        },
+        "guidance_total": {
+          "mean": 40.797538332117256,
+          "p50": 38.230449994443916,
+          "p95": 43.45273999060737,
+          "min": 32.6762999757193,
+          "max": 170.25680001825094
+        },
+        "dlss_process": {
+          "mean": 119.61904000054346,
+          "p50": 118.07014999794774,
+          "p95": 136.60616500274045,
+          "min": 103.49089998635463,
+          "max": 145.05009999265894
+        },
+        "residual_pyramid": {
+          "mean": 3.9779833333644397,
+          "p50": 3.9816000062273815,
+          "p95": 4.422815018915571,
+          "min": 3.47140000667423,
+          "max": 4.502900002989918
+        },
+        "output_convert": {
+          "mean": 0.008096665260381997,
+          "p50": 0.006999995093792677,
+          "p95": 0.014399991778191174,
+          "min": 0.0051000097300857306,
+          "max": 0.025800021830946207
+        },
+        "pipe_write": {
+          "mean": 13.315871665933324,
+          "p50": 10.37799999176059,
+          "p95": 12.321105007140432,
+          "min": 7.929799990961328,
+          "max": 190.93820001580752
+        },
+        "decode_wait": {
+          "mean": 0.4034900024028805,
+          "p50": 0.027350004529580474,
+          "p95": 0.050365003698971116,
+          "min": 0.012900010915473104,
+          "max": 22.491400013677776
+        },
+        "nvof_submit_cpu_ms": {
+          "mean": 0.7088666666666668,
+          "p50": 0.59795,
+          "p95": 1.11663,
+          "min": 0.2949,
+          "max": 7.244400000000001
+        },
+        "nvof_postprocess_wait_inclusive_ms": {
+          "mean": 4.018928333333333,
+          "p50": 3.8873,
+          "p95": 4.690765,
+          "min": 2.8773,
+          "max": 5.3288
+        },
+        "nvof_upload_ms": {
+          "mean": 7.874358333333334,
+          "p50": 7.66915,
+          "p95": 10.25557,
+          "min": 5.5567,
+          "max": 14.799000000000001
+        },
+        "nvof_download_ms": {
+          "mean": 12.73121,
+          "p50": 12.547550000000001,
+          "p95": 15.341585,
+          "min": 10.216000000000001,
+          "max": 17.735500000000002
+        },
+        "nvof_total_native_ms": {
+          "mean": 25.339545,
+          "p50": 24.88605,
+          "p95": 28.76078,
+          "min": 21.611800000000002,
+          "max": 42.6623
+        }
+      },
+      "per_frame_counters": {
+        "nvof_h2d_bytes_delta": {
+          "mean": 33730560.0,
+          "p50": 33177600.0,
+          "p95": 33177600.0,
+          "min": 33177600.0,
+          "max": 66355200.0
+        },
+        "nvof_d2h_bytes_delta": {
+          "mean": 66355200.0,
+          "p50": 66355200.0,
+          "p95": 66355200.0,
+          "min": 66355200.0,
+          "max": 66355200.0
+        },
+        "nvof_h2d_copy_count_delta": {
+          "mean": 1.0166666666666666,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 2.0
+        },
+        "nvof_d2h_copy_count_delta": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "nvof_execute_count_delta": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "nvof_native_history": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "cpu_previous_frame_copy_bytes": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "depth_missing_frames": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "filter_plan_build_count": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      },
+      "residual_diagnostics": {},
+      "peak_rss_bytes": 1181540352,
+      "peak_gpu_total_memory_used_bytes": 2293235712,
+      "peak_gpu_total_memory_source": "nvidia-smi memory.used, whole card",
+      "process_gpu_memory_bytes": null,
+      "process_gpu_memory_source": "unavailable: nvidia-smi lists this pid but reports its memory as '[N/A]', so no per-process GPU footprint exists on this driver",
+      "thread_count_end": 62,
+      "child_process_count_end": 4,
+      "frame_samples": [],
+      "ffprobe": {
+        "ok": true,
+        "checks": {
+          "packets": true,
+          "resolution": true,
+          "duration_within_1pct": true,
+          "fps_matches_source": true
+        },
+        "packets": 60,
+        "expected_frames": 60,
+        "duration_sec": 1.0,
+        "fps": 60.0,
+        "codec": "av1",
+        "width": 3840,
+        "height": 2160
+      },
+      "output_path": "F:\\dlss5standaloneV2\\bench_out\\e2e_A_100.mkv"
+    },
+    {
+      "id": "D",
+      "name": "50% working, NVOF 4M + native residual",
+      "working_scale": 0.5,
+      "working_dims": [
+        1920,
+        1080
+      ],
+      "frames": 60,
+      "elapsed_sec": 9.991,
+      "fps": 6.006,
+      "stages_ms": {
+        "frame_total": {
+          "mean": 106.98520833151026,
+          "p50": 98.28710000147112,
+          "p95": 126.70791498239836,
+          "min": 90.68190000834875,
+          "max": 395.35419997991994
+        },
+        "working_color_prepare_ms": {
+          "mean": 15.064448334063249,
+          "p50": 14.709650000440888,
+          "p95": 16.969770014111415,
+          "min": 13.78769997972995,
+          "max": 22.152100020321086
+        },
+        "guidance_total": {
+          "mean": 11.487045000831131,
+          "p50": 9.267200002796017,
+          "p95": 14.643460005754601,
+          "min": 7.420100009767339,
+          "max": 123.15050000324845
+        },
+        "dlss_process": {
+          "mean": 38.06792666728143,
+          "p50": 36.223750008502975,
+          "p95": 44.587430001411114,
+          "min": 31.937799998559058,
+          "max": 112.85450001014397
+        },
+        "residual_pyramid": {
+          "mean": 27.273683331926197,
+          "p50": 27.065699992817827,
+          "p95": 29.969369992613792,
+          "min": 25.088399997912347,
+          "max": 31.028500001411885
+        },
+        "output_convert": {
+          "mean": 0.006528331626517077,
+          "p50": 0.006350019248202443,
+          "p95": 0.010105017281603068,
+          "min": 0.0041000021155923605,
+          "max": 0.011900003300979733
+        },
+        "pipe_write": {
+          "mean": 15.036971666268073,
+          "p50": 10.0570499926107,
+          "p95": 13.527985011751298,
+          "min": 8.067099988693371,
+          "max": 291.01210000226274
+        },
+        "decode_wait": {
+          "mean": 30.765343335709378,
+          "p50": 37.701699999161065,
+          "p95": 44.57195500144735,
+          "min": 0.01719998545013368,
+          "max": 45.73290000553243
+        },
+        "nvof_submit_cpu_ms": {
+          "mean": 0.78247,
+          "p50": 0.68045,
+          "p95": 1.033885,
+          "min": 0.4451,
+          "max": 5.6718
+        },
+        "nvof_postprocess_wait_inclusive_ms": {
+          "mean": 0.9232066666666667,
+          "p50": 0.9046000000000001,
+          "p95": 1.0436699999999999,
+          "min": 0.7785000000000001,
+          "max": 1.2116
+        },
+        "nvof_upload_ms": {
+          "mean": 1.6652850000000001,
+          "p50": 1.6148500000000001,
+          "p95": 2.206855,
+          "min": 1.1354,
+          "max": 3.3741000000000003
+        },
+        "nvof_download_ms": {
+          "mean": 3.648228333333334,
+          "p50": 3.52145,
+          "p95": 5.002354999999999,
+          "min": 2.7197,
+          "max": 6.181500000000001
+        },
+        "nvof_total_native_ms": {
+          "mean": 7.024945,
+          "p50": 6.8069500000000005,
+          "p95": 8.875604999999997,
+          "min": 5.3260000000000005,
+          "max": 15.338000000000001
+        }
+      },
+      "per_frame_counters": {
+        "nvof_h2d_bytes_delta": {
+          "mean": 8432640.0,
+          "p50": 8294400.0,
+          "p95": 8294400.0,
+          "min": 8294400.0,
+          "max": 16588800.0
+        },
+        "nvof_d2h_bytes_delta": {
+          "mean": 16588800.0,
+          "p50": 16588800.0,
+          "p95": 16588800.0,
+          "min": 16588800.0,
+          "max": 16588800.0
+        },
+        "nvof_h2d_copy_count_delta": {
+          "mean": 1.0166666666666666,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 2.0
+        },
+        "nvof_d2h_copy_count_delta": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "nvof_execute_count_delta": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "nvof_native_history": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "cpu_previous_frame_copy_bytes": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "depth_missing_frames": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "filter_plan_build_count": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      },
+      "residual_diagnostics": {
+        "residual_backend": "cpu_reference_native",
+        "residual_backend_version": "api-0x00020000",
+        "this_plan_create_count": 1,
+        "this_plan_destroy_count": 0,
+        "this_plan_scratch_alloc_count": 1,
+        "this_plan_scratch_alloc_bytes": 87505920,
+        "this_plan_worker_create_count": 8,
+        "this_plan_worker_count": 9,
+        "native_scratch_bytes": 87505920,
+        "axis_plan_count": 4,
+        "downsample_call_count": 60,
+        "reconstruct_call_count": 60,
+        "downsample_pixel_count": 124416000,
+        "reconstruct_pixel_count": 497664000,
+        "process_plan_create_total": 1,
+        "process_plan_destroy_total": 0,
+        "process_scratch_alloc_total": 1,
+        "process_scratch_bytes_total": 87505920,
+        "process_worker_create_total": 8,
+        "process_plan_open_total": 1,
+        "closed": false
+      },
+      "peak_rss_bytes": 1033752576,
+      "peak_gpu_total_memory_used_bytes": 1593835520,
+      "peak_gpu_total_memory_source": "nvidia-smi memory.used, whole card",
+      "process_gpu_memory_bytes": null,
+      "process_gpu_memory_source": "unavailable: nvidia-smi lists this pid but reports its memory as '[N/A]', so no per-process GPU footprint exists on this driver",
+      "thread_count_end": 61,
+      "child_process_count_end": 6,
+      "frame_samples": [],
+      "ffprobe": {
+        "ok": true,
+        "checks": {
+          "packets": true,
+          "resolution": true,
+          "duration_within_1pct": true,
+          "fps_matches_source": true
+        },
+        "packets": 60,
+        "expected_frames": 60,
+        "duration_sec": 1.0,
+        "fps": 60.0,
+        "codec": "av1",
+        "width": 3840,
+        "height": 2160
+      },
+      "output_path": "F:\\dlss5standaloneV2\\bench_out\\e2e_D_50.mkv"
+    }
+  ],
+  "performance_gate": {
+    "fps_100_percent": 4.803,
+    "fps_50_percent_native": 6.006,
+    "requirement": "fps_50_percent_native > fps_100_percent",
+    "passed": true,
+    "ratio": 1.25
+  }
+}

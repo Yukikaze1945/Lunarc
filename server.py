@@ -319,7 +319,21 @@ def broadcast_queue_update_from_thread(job_or_data):
 @app.get("/api/system")
 def get_system_info(request: Request):
     """Return GPU, VRAM and platform status."""
-    return {**quick_system_info(), "client_origin": request.headers.get("origin")}
+    health=dlss_service.backend_health()
+    return {**quick_system_info(), "client_origin": request.headers.get("origin"),
+            "backend_ready":health['healthy'], 'queue_storage_error':health['queue_storage_error']}
+
+
+@app.get('/api/backend/health')
+async def backend_health():
+    # Does not acquire the GPU lock or enter a native library, even after a hang.
+    return dlss_service.backend_health()
+
+
+@app.get('/api/gpu/memory')
+async def gpu_memory():
+    from gpu_memory import snapshot
+    return {'memory': snapshot()}
 
 
 @app.get('/api/environment')
@@ -615,6 +629,8 @@ async def add_to_queue(job_data: dict):
         job = dlss_service.add_job(job_data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     await broadcast_queue_update({"type": "job_added", "job": job, **_queue_state()})
     return {"status": "ok", "job": queue_job(job)}
 
@@ -627,6 +643,8 @@ async def remove_from_queue(req: dict):
     try:
         dlss_service.remove_job(job_id)
     except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+    except RuntimeError as exc:
         raise HTTPException(status_code=409, detail=str(exc))
     state = _queue_state()
     await broadcast_queue_update({"type": "job_removed", "id": job_id, **state})
@@ -651,6 +669,8 @@ async def retry_queue_job(req: dict):
         raise HTTPException(status_code=404, detail=f"作业 [{job_id}] 已不在渲染队列中")
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     state = _queue_state()
     await broadcast_queue_update({
         "type": "job_retried", "job": job, "jobs": state["jobs"],
@@ -661,7 +681,10 @@ async def retry_queue_job(req: dict):
 
 @app.post("/api/queue/start")
 async def start_queue():
-    started = dlss_service.start_queue(progress_callback=broadcast_queue_update_from_thread)
+    try:
+        started = dlss_service.start_queue(progress_callback=broadcast_queue_update_from_thread)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
     if started:
         # Says the round has begun before the first row turns running, so a client that
         # did not press the button reaches the same locked state as the one that did.
@@ -852,6 +875,9 @@ def preflight_check():
 
 
 def main():
+    dlss_service.enable_queue_storage(os.path.join(
+        os.environ.get('LUNARC_DATA_DIR') or os.path.join(os.environ.get('APPDATA') or os.path.expanduser('~'),
+            'DaVinci_DLSS5_Studio'), 'render-queue.json'))
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=18923)

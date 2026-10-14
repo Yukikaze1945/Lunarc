@@ -198,7 +198,7 @@ class DLSSService:
     # Layout requests and render workers may arrive together during startup.
     # Protect construction separately from GPU work, so layout stays responsive.
     _preview_engine_creation_lock = threading.Lock()
-    def __init__(self):
+    def __init__(self, *, queue_path=None):
         self.video_path = None
         self.video_info = None  # (total_frames, fps, width, height)
         self._cap = None
@@ -233,6 +233,8 @@ class DLSSService:
             "export_backend": "auto",   # "auto", "legacy", "gpu_transfer"
             "neural_mode": "nr",
             "vsr_quality": 2,
+            "vsr_mode": "standard",
+            "vsr_strength": None,
             "vsr_target": "1080p",
             "vsr_output_mode": "resolution",
             "vsr_scale": 2,
@@ -294,7 +296,11 @@ class DLSSService:
         self.active_job_id = None
         self._cancel_requested = False
         self._queue_thread = None
-        self._queue_lock = threading.Lock()
+        self._queue_lock = threading.RLock()
+        self._queue_store = None
+        self._queue_storage_error = None
+        if queue_path:
+            self.enable_queue_storage(queue_path)
         # Subprocesses owned by the running job (export FFmpeg). Killed on cancel
         # so “终止任务” really stops a stuck job instead of only setting a flag.
         self._active_procs = []
@@ -303,11 +309,52 @@ class DLSSService:
         # still touch global DLL/D3D12 state later. Stop reusing the poisoned
         # process for new DLSS work until the backend is restarted.
         self._native_degraded = None
+        self._native_incident_id = None
 
     def _mark_native_degraded(self, what):
         if not self._native_degraded:
             self._native_degraded = what
+            self._native_incident_id = str(uuid.uuid4())
+            self._preview_kick_cancelled = True
+            with self._queue_lock:
+                self._persist_queue()
+            if self._queue_store:
+                try:
+                    from gpu_memory import snapshot
+                    self._queue_store.save_fault({**self.backend_health(), 'last_memory_sample':snapshot()})
+                except Exception as error:
+                    diagnostic_logger.log('WARN','DLSS',f'故障记录保存失败：{error}')
             diagnostic_logger.log("FATAL", "DLSS", f"原生层疑似污染，已熔断新任务：{what}。请重启后端后再试。")
+
+    def backend_health(self):
+        return dict(service='lunarc', pid=os.getpid(), healthy=not bool(self._native_degraded),
+                    incident_id=self._native_incident_id, reason=self._native_degraded,
+                    queue_storage_error=self._queue_storage_error)
+
+    def enable_queue_storage(self, path):
+        from queue_store import QueueStore
+        with self._queue_lock:
+            if self._queue_store is not None:
+                return
+            self._queue_store = QueueStore(path)
+            try:
+                restored = self._queue_store.load()
+                self._queue_store.save(restored)
+                self.jobs = restored
+            except Exception as error:
+                # Preserve unreadable archives; imports/tests never touch app state.
+                self._queue_storage_error = str(error)
+                diagnostic_logger.log('ERROR', 'Queue', f'队列存档读取失败：{error}')
+
+    def _persist_queue(self):
+        # Called under _queue_lock at mutations/claim/completion, never every frame.
+        if self._queue_store and not self._queue_storage_error:
+            try:
+                self._queue_store.save(self.jobs)
+            except Exception as error:
+                self._queue_storage_error = str(error)
+                diagnostic_logger.log('ERROR', 'Queue', f'队列存档写入失败：{error}')
+        return not bool(self._queue_storage_error)
 
     def _ensure_native_healthy(self):
         if self._native_degraded:
@@ -451,15 +498,26 @@ class DLSSService:
 
     def _update_settings_locked(self, new_settings: dict):
         new_settings = dict(new_settings)
+        if {'vsr_mode','vsr_quality','vsr_strength'} & new_settings.keys():
+            from vsr_config import configuration
+            configuration(dict(self.settings, **new_settings))
         if 'dlaa_preset' in new_settings:
             from native_effects import DLAA_PRESETS
             if isinstance(new_settings['dlaa_preset'], bool) or new_settings['dlaa_preset'] not in DLAA_PRESETS:
                 raise ValueError('DLAA preset must be Default, E, F, J, K, L or M')
-        if 'render_pipeline' in new_settings:
+        if 'render_pipeline' in new_settings or 'render_stage_enabled' in new_settings:
             import native_effects
-            if new_settings['render_pipeline'] is not None:
-                new_settings['render_pipeline'] = native_effects.stages(new_settings)
-                new_settings['truehdr_enabled'] = 'truehdr' in new_settings['render_pipeline']
+            merged = {**self.settings, **new_settings}
+            ordered = native_effects.configured_stages(merged)
+            active = native_effects.stages(merged)
+            new_settings['render_pipeline'] = ordered
+            new_settings['truehdr_enabled'] = 'truehdr' in active
+            if 'vfg' not in active:
+                if merged.get('frame_generation') in ('vfg','vfg_dynamic'):
+                    new_settings['frame_generation_saved_mode'] = merged['frame_generation']
+                new_settings['frame_generation'] = 'off'
+            elif merged.get('frame_generation') == 'off':
+                new_settings['frame_generation'] = merged.get('frame_generation_saved_mode','vfg')
         for key, allowed in (('raft_analysis_edge', (512, 720, 1080)),
                              ('raft_iterations', range(1, 25))):
             if key in new_settings:
@@ -796,8 +854,16 @@ class DLSSService:
             diagnostics['settings_revision'] = settings_revision
             self._preview_diagnostics = diagnostics
         except Exception as error:
-            self._preview_diagnostics = dict(status='failed', message=str(error), frame=frame_idx)
-            diagnostic_logger.log('ERROR', 'Preview', 'GPU preview failed', str(error))
+            phase = getattr(getattr(self, '_gpu_preview', None), 'lifecycle_phase', 'preview setup')
+            self._preview_diagnostics = dict(status='failed', message=str(error), frame=frame_idx,
+                                            lifecycle_phase=phase)
+            diagnostic_logger.log('ERROR', 'Preview', f'GPU preview failed ({phase})', traceback.format_exc())
+            # ctypes reports a Windows access violation as OSError. Its global
+            # NGX state cannot be assumed healthy after partial native teardown.
+            from gpu_faults import recovery_reason
+            reason = recovery_reason(error)
+            if reason:
+                self._mark_native_degraded(f'{reason} ({phase})')
             return None, str(error)
         finally:
             self._live_lock.release()
@@ -1150,7 +1216,12 @@ class DLSSService:
             "dlss_host_error": None,
         }
         with self._queue_lock:
+            if self._queue_storage_error:
+                raise RuntimeError(f'队列存档不可用：{self._queue_storage_error}')
             self.jobs.append(job)
+            if not self._persist_queue():
+                self.jobs.pop()
+                raise RuntimeError(f'任务未添加，队列存档写入失败：{self._queue_storage_error}')
         diagnostic_logger.log("INFO", "Queue", f"作业 [{job['id']}] 已加入渲染队列: {job['name']} -> {out_path}")
         return job
 
@@ -1159,7 +1230,11 @@ class DLSSService:
             job = next((j for j in self.jobs if j['id'] == job_id), None)
             if job and (job['status'] == 'running' or self.active_job_id == job_id):
                 raise ValueError('任务正在导出，请先停止，结束后即可删除')
+            previous = self.jobs
             self.jobs = [j for j in self.jobs if j["id"] != job_id]
+            if not self._persist_queue():
+                self.jobs = previous
+                raise RuntimeError(f'任务未删除，队列存档写入失败：{self._queue_storage_error}')
         diagnostic_logger.log("INFO", "Queue", f"作业 [{job_id}] 已从队列移除")
         return True
 
@@ -1201,6 +1276,7 @@ class DLSSService:
                 raise ValueError(
                     f"作业 [{job_id}] 状态为 {job['status']}，只有失败/已取消/已跳过的任务可以重试")
             retried_from = job["status"]
+            previous = dict(job)
             job["status"] = "pending"
             job["progress"] = 0.0
             job["fps"] = 0.0
@@ -1214,6 +1290,11 @@ class DLSSService:
             job["dlss_host"] = None
             job["dlss_host_error"] = None
             job["residual_backend_diagnostics"] = {}
+            job.pop('interrupted', None)
+            if not self._persist_queue():
+                job.clear()
+                job.update(previous)
+                raise RuntimeError(f'任务未重置，队列存档写入失败：{self._queue_storage_error}')
         diagnostic_logger.log(
             "INFO", "Queue",
             f"作业 [{job_id}] 已按操作者请求从 {retried_from} 重置为待渲染：{job['name']}")
@@ -1234,6 +1315,9 @@ class DLSSService:
 
     def start_queue(self, progress_callback=None, *, preview_only=False):
         with self._queue_lock:
+            self._ensure_native_healthy()
+            if self._queue_storage_error:
+                raise RuntimeError(f'队列存档不可用：{self._queue_storage_error}')
             if self._queue_thread and self._queue_thread.is_alive():
                 return False
             self._cancel_requested = False
@@ -1300,7 +1384,7 @@ class DLSSService:
             # Select and claim under the same lock as removal. Iterating the old
             # list used to render removed jobs and lose jobs added after removal.
             with self._queue_lock:
-                if self._cancel_requested:
+                if self._cancel_requested or self._native_degraded or self._queue_storage_error:
                     break
                 job = next((j for j in self.jobs if j['status'] == 'pending' and
                             (not preview_only or j.get('preview_segment'))), None)
@@ -1308,6 +1392,11 @@ class DLSSService:
                     break
                 job['status'] = 'running'
                 self.active_job_id = job['id']
+                if not self._persist_queue():
+                    job['status'] = 'pending'
+                    self.active_job_id = None
+                    run_had_failure = True
+                    break
             diagnostic_logger.log("INFO", "Queue", f"开始处理作业 [{job['id']}] {job['name']}")
             if progress_callback: progress_callback(job)
 
@@ -1342,6 +1431,9 @@ class DLSSService:
                 else:
                     job["status"] = "failed"
                     job["error"] = str(e)
+                    if self._native_degraded:
+                        job['interrupted'] = True
+                        job['error'] = f'GPU 故障导致导出中断：{e}'
                     job["error_traceback"] = traceback.format_exc()
                     # Nothing is attached here on purpose. This used to append the
                     # tail of dlssnr_run.log - the retired dlssnr_host.dll's own log
@@ -1356,7 +1448,9 @@ class DLSSService:
                     diagnostic_logger.log("ERROR", "Queue", f"作业 [{job['id']}] 致命失败: {e}", traceback.format_exc())
                     traceback.print_exc()
             finally:
-                self.active_job_id = None
+                with self._queue_lock:
+                    self.active_job_id = None
+                    self._persist_queue()
                 self._cancel_requested = False
                 if progress_callback:
                     progress_callback(job)
@@ -1429,7 +1523,15 @@ class DLSSService:
     def _execute_job(self, job, progress_callback):
         try:
             return self._execute_job_owned(job,progress_callback)
+        except Exception as error:
+            from gpu_faults import recovery_reason
+            reason = recovery_reason(error)
+            if reason:
+                self._mark_native_degraded(reason)
+            raise
         finally:
+            from gpu_memory import inactive
+            inactive('export')
             # Guidance/encoder setup can fail before the frame-loop finally.
             # Keep export ownership protected until its host is really closed.
             if getattr(self,'_live_session_owner',None)=='export':
@@ -1528,8 +1630,8 @@ class DLSSService:
         # job) and opens one sized and configured for this job. The reuse that does
         # exist is per-frame: preview keeps the session it opened while the kind, the
         # extents and the baked options still match.
-        job_settings = job["settings"]
         import native_effects
+        job_settings = native_effects.execution_settings(job["settings"])
         native_effects.validate(job_settings, dict(source_precision, width=w, height=h, r_frame_rate=str(v_fps)))
         # Re-read off the job rather than off the service: a job queued before the
         # operator moved the setting runs with the host it was queued on. A job that

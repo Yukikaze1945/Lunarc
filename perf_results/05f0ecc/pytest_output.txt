@@ -1,0 +1,322 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: F:\dlss5standaloneV2
+plugins: anyio-4.12.1
+collected 129 items
+
+tests\unit\test_cancellation_contract.py .........[16:56:39.219][WARN][Queue] 收到主动取消当前渲染作业请求（已置位并杀死编码子进程）
+.[16:56:39.420][WARN][Queue] 收到主动取消当前渲染作业请求（已置位并杀死编码子进程）
+[16:56:39.420][WARN][Queue] 收到主动取消当前渲染作业请求（已置位并杀死编码子进程）
+.
+tests\unit\test_cancellation_e2e.py [16:56:41.430][INFO][Queue] 开始处理作业 [cancel-e2e] cancel e2e
+[16:56:41.430][INFO][Queue] 后台渲染队列线程已启动
+[16:56:45.328][WARN][Queue] 收到主动取消当前渲染作业请求（已置位并杀死编码子进程）
+=====================================================================================
+ DLSS STREAM EXPORT PROFILER (41 FRAMES) (Frames: 41, FPS: 17.78)
+=====================================================================================
+Stage                    | Mean (ms)  | P50 (ms)   | P95 (ms)   | Min (ms)  | Max (ms) 
+-------------------------------------------------------------------------------------
+source_width             | 1920.00    | 1920.00    | 1920.00    | 1920.00   | 1920.00  
+source_height            | 1080.00    | 1080.00    | 1080.00    | 1080.00   | 1080.00  
+requested_working_scale  | 0.50       | 0.50       | 0.50       | 0.50      | 0.50     
+actual_working_width     | 960.00     | 960.00     | 960.00     | 960.00    | 960.00   
+actual_working_height    | 544.00     | 544.00     | 544.00     | 544.00    | 544.00   
+actual_dlss_feature_width | 960.00     | 960.00     | 960.00     | 960.00    | 960.00   
+actual_dlss_feature_height | 544.00     | 544.00     | 544.00     | 544.00    | 544.00   
+depth_missing_frames     | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+flow_missing_frames      | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+filter_plan_build_count  | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+flow_grid                | 4.00       | 4.00       | 4.00       | 4.00      | 4.00     
+decode_wait              | 2.46       | 0.03       | 0.05       | 0.02      | 99.46    
+working_color_prepare_ms | 6.36       | 5.67       | 9.34       | 4.59      | 9.62     
+guidance_total           | 1.06       | 0.94       | 2.43       | 0.63      | 3.22     
+nvof_upload              | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_submit_cpu_ms       | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_dependency_wait_ms  | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_upscale             | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_download            | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+dlss_process             | 14.48      | 14.64      | 15.73      | 12.04     | 20.70    
+residual_pyramid         | 8.38       | 8.06       | 11.73      | 6.27      | 12.18    
+output_convert           | 0.01       | 0.01       | 0.02       | 0.01      | 0.02     
+cpu_previous_frame_copy_bytes | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_h2d_bytes_delta     | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_d2h_bytes_delta     | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_h2d_copy_count_delta | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_d2h_copy_count_delta | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_execute_count_delta | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_native_history      | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+pipe_write               | 8.81       | 2.37       | 3.32       | 1.81      | 264.52   
+frame_total              | 39.15      | 31.76      | 40.40      | 27.61     | 299.99   
+=====================================================================================
+[residual backend] {"residual_backend": "cpu_reference_native", "residual_backend_version": "api-0x00010000", "plan_create_count": 2, "plan_destroy_count": 1, "scratch_alloc_count": 2, "scratch_alloc_bytes": 22145856, "native_scratch_bytes": 22141440, "axis_plan_count": 4, "downsample_call_count": 42, "reconstruct_call_count": 42, "downsample_pixel_count": 21934080, "reconstruct_pixel_count": 87091200, "worker_create_count": 16, "worker_count": 9, "closed": false}
+[16:56:45.467][WARN][Queue] 作业 [cancel-e2e] 已被用户中止
+[16:56:45.469][INFO][Queue] 本轮存在失败/取消的任务，已禁止睡眠/关机完成动作
+[16:56:45.469][WARN][Queue] 收到主动取消当前渲染作业请求（已置位并杀死编码子进程）
+CANCEL_E2E:{"code_under_test_sha": "05f0ecc3e47809078b946f4302c9331a240746fc", "fixture_sha256": "787afb83fe88f2fc89e3697daeac351dfda6c9e2d8f83a54da0c89275ca50d08", "frames_requested": 600, "frames_at_cancel": 41, "decoder_encoder_pids": [43520, 47600], "cancel_latency_ms": 141.94, "job_status": "cancelled", "job_error": "None", "job_error_tail": "", "producer_threads_alive": [], "queue_thread_alive": false, "registry_after": 0, "pids_still_running": [], "output_exists": true, "output_bytes": 0, "written_packets": null, "job_elapsed_sec": 4.038}
+.
+tests\unit\test_depth_provider.py ..................
+tests\unit\test_export_guidance_counts.py ====================================================================
+  测试：DLSS 导出链路 guidance_mode 0/1/2/3 光流执行计数严格验证
+====================================================================
+
+[1/4] 测试 guidance_mode=0 (关闭引导)...
+  guidance_mode=0: NVOF execute count = 0
+  -> PASSED: guidance_mode=0 绝对未计算 NVOF，执行次数确为 0
+
+[2/4] 测试 guidance_mode=2 (仅深度)...
+  guidance_mode=2: NVOF execute count = 0
+  -> PASSED: guidance_mode=2 仅处理深度，光流执行次数确为 0
+
+[3/4] 测试 guidance_mode=1 (仅光流)...
+[flow] engine='nvof' quality='1F' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=1280x720 grid=1 output=1280x720 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+  guidance_mode=1: NVOF execute count = 5 (frames = 5)
+  -> PASSED: guidance_mode=1 准确执行了指定帧数的光流计算
+
+[4/4] 测试 guidance_mode=3 (深度 + 光流)...
+  guidance_mode=3: NVOF execute count = 5 (frames = 5)
+  -> PASSED: guidance_mode=3 准确执行了指定帧数的光流计算
+
+====================================================================
+  ALL GUIDANCE MODE COUNT TESTS PASSED (4/4 100%)
+====================================================================
+.
+tests\unit\test_export_pipeline.py .[flow] engine='dis' quality='FAST' provider=opencv-dis-cpu (hardware=False, device=cpu)
+......[flow] engine='nvof' quality='4M' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=1920x1080 grid=4 output=480x270 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=10)
+.=====================================================================================
+ DLSS STREAM EXPORT PROFILER (2 FRAMES) (Frames: 2, FPS: 8.59)
+=====================================================================================
+Stage                    | Mean (ms)  | P50 (ms)   | P95 (ms)   | Min (ms)  | Max (ms) 
+-------------------------------------------------------------------------------------
+source_width             | 1920.00    | 1920.00    | 1920.00    | 1920.00   | 1920.00  
+source_height            | 1080.00    | 1080.00    | 1080.00    | 1080.00   | 1080.00  
+requested_working_scale  | 1.00       | 1.00       | 1.00       | 1.00      | 1.00     
+actual_working_width     | 1920.00    | 1920.00    | 1920.00    | 1920.00   | 1920.00  
+actual_working_height    | 1080.00    | 1080.00    | 1080.00    | 1080.00   | 1080.00  
+actual_dlss_feature_width | 1920.00    | 1920.00    | 1920.00    | 1920.00   | 1920.00  
+actual_dlss_feature_height | 1080.00    | 1080.00    | 1080.00    | 1080.00   | 1080.00  
+depth_missing_frames     | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+flow_missing_frames      | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+filter_plan_build_count  | 16.00      | 16.00      | 16.00      | 16.00     | 16.00    
+flow_grid                | 4.00       | 4.00       | 4.00       | 4.00      | 4.00     
+decode_wait              | 54.97      | 54.97      | 92.79      | 12.95     | 96.99    
+working_color_prepare_ms | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+guidance_total           | 6.03       | 6.03       | 8.24       | 3.58      | 8.48     
+nvof_upload              | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_submit_cpu_ms       | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_dependency_wait_ms  | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_upscale             | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_download            | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+dlss_process             | 1.58       | 1.58       | 1.63       | 1.52      | 1.64     
+residual_pyramid         | 0.90       | 0.90       | 0.91       | 0.89      | 0.92     
+output_convert           | 0.00       | 0.00       | 0.01       | 0.00      | 0.01     
+cpu_previous_frame_copy_bytes | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_h2d_bytes_delta     | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_d2h_bytes_delta     | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_h2d_copy_count_delta | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_d2h_copy_count_delta | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_execute_count_delta | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_native_history      | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+pipe_write               | 2.13       | 2.13       | 2.39       | 1.85      | 2.41     
+frame_total              | 10.70      | 10.70      | 12.69      | 8.49      | 12.91    
+=====================================================================================
+.
+tests\unit\test_final_production.py [NVOF init] input=1920x1080 grid=4 output=480x270 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=10)
+NVOF frame A: nvof_execute_count_delta=1 nvof_h2d_copy_count_delta=2 nvof_h2d_bytes_delta=16588800 nvof_d2h_copy_count_delta=1 nvof_d2h_bytes_delta=16588800 cpu_previous_frame_copy_bytes=0
+NVOF frame B: nvof_execute_count_delta=1 nvof_h2d_copy_count_delta=1 nvof_h2d_bytes_delta=8294400 nvof_d2h_copy_count_delta=1 nvof_d2h_bytes_delta=16588800 cpu_previous_frame_copy_bytes=0
+NVOF frame C: nvof_execute_count_delta=1 nvof_h2d_copy_count_delta=1 nvof_h2d_bytes_delta=8294400 nvof_d2h_copy_count_delta=1 nvof_d2h_bytes_delta=16588800 cpu_previous_frame_copy_bytes=0
+...........
+tests\unit\test_guidance_contracts.py .......
+tests\unit\test_native_residual.py ......................
+tests\unit\test_optical_flow_hardware.py [NVOF init] input=1280x720 grid=1 output=1280x720 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+
+--- TEST A: 静止画面测试 ---
+Static flow: mean magnitude = 0.0016 px, max = 0.1326 px
+TEST A PASSED: 静止画面光流趋于零
+.[NVOF init] input=1280x720 grid=1 output=1280x720 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+
+--- TEST B: 已知水平平移测试 (+16px) ---
+Horizontal +16px shift: patch backward flow x = -16.000 px, y = 0.000 px
+TEST B PASSED: 水平平移后向位移精确匹配 -16px
+.[NVOF init] input=1280x720 grid=1 output=1280x720 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+
+--- TEST C: 已知垂直平移测试 (+12px) ---
+Vertical +12px shift: patch backward flow x = 0.000 px, y = -11.999 px
+TEST C PASSED: 垂直平移后向位移精确匹配 -12px
+.[NVOF init] input=1280x720 grid=1 output=1280x720 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[NVOF init] input=1920x1080 grid=1 output=1920x1080 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+
+--- TEST D: 多分辨率 (720p / 1080p) 与尺度测试 ---
+Resolution 1280x720 (+20px shift): patch flow x = -20.000
+Resolution 1920x1080 (+20px shift): patch flow x = -20.000
+TEST D PASSED: 720p 与 1080p 分辨率及位移尺度均正确
+.[NVOF init] input=1280x720 grid=1 output=1280x720 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+
+--- TEST E: 后向光流方向性与移动目标位移测试 ---
+Moving object backward displacement: x = -50.00 px (expected ~ -50.0)
+Occluded/disoccluded area mean motion x: 100.00 px
+TEST E PASSED: 证实移动目标后向光流求解为精确 -50px 且遮挡区未错误继承目标位移
+.[NVOF init] input=640x480 grid=1 output=640x480 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+
+--- TEST F: 生命周期与防重关压力测试 (10 次连续 create/execute/destroy) ---
+  Cycle 1/10 passed
+  Cycle 2/10 passed
+  Cycle 3/10 passed
+  Cycle 4/10 passed
+  Cycle 5/10 passed
+  Cycle 6/10 passed
+  Cycle 7/10 passed
+  Cycle 8/10 passed
+  Cycle 9/10 passed
+  Cycle 10/10 passed
+TEST F PASSED: 10 次连续创建、执行、销毁均平稳无泄漏
+.[NVOF init] input=1920x1080 grid=1 output=1920x1080 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[NVOF init] input=1920x1080 grid=1 output=1920x1080 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=10)
+[NVOF init] input=1920x1080 grid=1 output=1920x1080 preset=SLOW (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=5)
+[NVOF init] input=1920x1080 grid=2 output=960x540 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=2, perfLevel=20)
+[NVOF init] input=1920x1080 grid=2 output=960x540 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=2, perfLevel=10)
+[NVOF init] input=1920x1080 grid=2 output=960x540 preset=SLOW (NV_OF_INIT_PARAMS.outGridSize=2, perfLevel=5)
+[NVOF init] input=1920x1080 grid=4 output=480x270 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=20)
+[NVOF init] input=1920x1080 grid=4 output=480x270 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=10)
+[NVOF init] input=1920x1080 grid=4 output=480x270 preset=SLOW (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=5)
+[NVOF init] input=3840x2160 grid=1 output=3840x2160 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[NVOF init] input=3840x2160 grid=1 output=3840x2160 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=10)
+[NVOF init] input=3840x2160 grid=1 output=3840x2160 preset=SLOW (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=5)
+[NVOF init] input=3840x2160 grid=2 output=1920x1080 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=2, perfLevel=20)
+[NVOF init] input=3840x2160 grid=2 output=1920x1080 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=2, perfLevel=10)
+[NVOF init] input=3840x2160 grid=2 output=1920x1080 preset=SLOW (NV_OF_INIT_PARAMS.outGridSize=2, perfLevel=5)
+[NVOF init] input=3840x2160 grid=4 output=960x540 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=20)
+[NVOF init] input=3840x2160 grid=4 output=960x540 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=10)
+[NVOF init] input=3840x2160 grid=4 output=960x540 preset=SLOW (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=5)
+
+====================================================================
+  TEST G: 全矩阵分段硬件基准测试 (1080p & 4K · Grid & Preset 完整覆盖)
+====================================================================
+Resolution   | Grid | Preset | bgr_to_abgr | upload  | nvof_exec | download | convert | upscale | native_tot | python_tot | FPS   
+----------------------------------------------------------------------------------------------------------------------------------
+1080p        | 1x1  | FAST   |      1.72ms |  2.53ms |    3.46ms |   2.62ms |  0.00ms |  0.12ms |     8.72ms |    10.53ms |   95.0
+1080p        | 1x1  | MEDIUM |      1.92ms |  2.83ms |   10.08ms |   2.59ms |  0.00ms |  0.14ms |    15.65ms |    17.66ms |   56.6
+1080p        | 1x1  | SLOW   |      1.68ms |  2.31ms |   10.55ms |   2.30ms |  0.00ms |  0.09ms |    15.25ms |    17.01ms |   58.8
+1080p        | 2x2  | FAST   |      1.40ms |  2.36ms |    1.37ms |   2.38ms |  0.00ms |  0.05ms |     6.17ms |     7.64ms |  130.9
+1080p        | 2x2  | MEDIUM |      1.57ms |  2.38ms |    3.36ms |   2.35ms |  0.00ms |  0.06ms |     8.16ms |     9.80ms |  102.1
+1080p        | 2x2  | SLOW   |      1.77ms |  2.41ms |    5.42ms |   2.51ms |  0.00ms |  0.07ms |    10.41ms |    12.26ms |   81.6
+1080p        | 4x4  | FAST   |      1.54ms |  2.44ms |    1.08ms |   2.63ms |  0.00ms |  0.07ms |     6.21ms |     7.82ms |  127.9
+1080p        | 4x4  | MEDIUM |      1.41ms |  2.26ms |    1.30ms |   2.44ms |  0.00ms |  0.06ms |     6.06ms |     7.53ms |  132.8
+1080p        | 4x4  | SLOW   |      1.61ms |  2.34ms |    2.82ms |   2.39ms |  0.00ms |  0.06ms |     7.61ms |     9.30ms |  107.6
+4K           | 1x1  | FAST   |      7.63ms | 10.13ms |   12.63ms |  10.79ms |  0.00ms |  0.29ms |    33.83ms |    41.57ms |   24.1
+4K           | 1x1  | MEDIUM |      7.60ms |  9.55ms |   38.40ms |   8.92ms |  0.00ms |  0.30ms |    57.18ms |    64.87ms |   15.4
+4K           | 1x1  | SLOW   |      7.56ms | 10.00ms |   40.02ms |  10.43ms |  0.00ms |  0.28ms |    60.73ms |    68.40ms |   14.6
+4K           | 2x2  | FAST   |      8.08ms | 10.21ms |    3.85ms |  10.00ms |  0.00ms |  0.23ms |    24.30ms |    32.49ms |   30.8
+4K           | 2x2  | MEDIUM |      7.50ms | 10.09ms |   11.65ms |   9.96ms |  0.00ms |  0.23ms |    31.93ms |    39.59ms |   25.3
+4K           | 2x2  | SLOW   |      7.54ms | 10.12ms |   19.10ms |   8.76ms |  0.00ms |  0.23ms |    38.22ms |    45.85ms |   21.8
+4K           | 4x4  | FAST   |      7.65ms | 11.01ms |    2.59ms |   9.90ms |  0.00ms |  0.17ms |    23.68ms |    31.43ms |   31.8
+4K           | 4x4  | MEDIUM |      7.56ms |  9.78ms |    3.65ms |   9.42ms |  0.00ms |  0.18ms |    23.02ms |    30.67ms |   32.6
+4K           | 4x4  | SLOW   |      8.11ms | 10.94ms |    8.84ms |   9.83ms |  0.00ms |  0.22ms |    29.83ms |    38.07ms |   26.3
+----------------------------------------------------------------------------------------------------------------------------------
+TEST G COMPLETED: 全矩阵分段性能评测完成
+.
+--- TEST H: 失败行为与严禁静默 Fallback 校验 ---
+Correctly caught unknown engine error: Unknown optical flow engine: 'invalid_engine_name'. Supported engines: 'nvof', 'dis', 'raft'
+Correctly caught unsupported resolution error: NVIDIA Optical Flow 会话创建失败 (16x16, grid=1): nvOFInit failed (status 5): Internal interface initialization failed
+DIS provider info verified: {'engine': 'dis', 'provider': 'opencv-dis-cpu', 'hardware': False, 'device': 'cpu', 'available': True}
+NVOF provider info verified: {'engine': 'nvof', 'provider': 'nvidia-optical-flow', 'hardware': True, 'device': 'NVIDIA GeForce RTX 5060 Ti', 'available': True, 'grid_size': 1, 'perf_level': 'fast', 'device_index': 0, 'cuda_context': '0x0', 'thread_owner_id': 0, 'sync_mode': 'CRITICAL_SECTION + cuCtxPushCurrent'}
+TEST H PASSED: 错误处理与真实非 Fallback 验证通过
+.
+--- TEST I: Engine Cache 有界生命周期与切换压力测试 (32 次循环) ---
+[flow] engine='nvof' quality='1F' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[flow] engine='nvof' quality='4F' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=4 output=160x120 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=20)
+[flow] engine='nvof' quality='1M' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=10)
+[flow] engine='nvof' quality='4M' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=4 output=160x120 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=10)
+[flow] engine='nvof' quality='1F' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[flow] engine='nvof' quality='4F' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=4 output=160x120 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=20)
+[flow] engine='nvof' quality='1M' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=10)
+[flow] engine='nvof' quality='4M' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=4 output=160x120 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=10)
+[flow] engine='nvof' quality='1F' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[flow] engine='nvof' quality='4F' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=4 output=160x120 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=20)
+[flow] engine='nvof' quality='1M' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=10)
+[flow] engine='nvof' quality='4M' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=4 output=160x120 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=10)
+[flow] engine='nvof' quality='1F' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[flow] engine='nvof' quality='4F' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=4 output=160x120 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=20)
+[flow] engine='nvof' quality='1M' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=10)
+[flow] engine='nvof' quality='4M' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=4 output=160x120 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=10)
+[flow] engine='nvof' quality='1F' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[flow] engine='nvof' quality='4F' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=4 output=160x120 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=20)
+[flow] engine='nvof' quality='1M' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=10)
+[flow] engine='nvof' quality='4M' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=4 output=160x120 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=10)
+[flow] engine='nvof' quality='1F' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[flow] engine='nvof' quality='4F' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=4 output=160x120 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=20)
+[flow] engine='nvof' quality='1M' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=10)
+[flow] engine='nvof' quality='4M' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=4 output=160x120 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=10)
+[flow] engine='nvof' quality='1F' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[flow] engine='nvof' quality='4F' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=4 output=160x120 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=20)
+[flow] engine='nvof' quality='1M' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=10)
+[flow] engine='nvof' quality='4M' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=4 output=160x120 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=10)
+[flow] engine='nvof' quality='1F' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[flow] engine='nvof' quality='4F' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=4 output=160x120 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=20)
+[flow] engine='nvof' quality='1M' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=1 output=640x480 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=10)
+[flow] engine='nvof' quality='4M' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=640x480 grid=4 output=160x120 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=10)
+  Ran 32 consecutive switches across 1F / 4F / 1M / 4M smoothly.
+TEST I PASSED: 30+ 次循环预设切换生命周期有界且稳定
+.[NVOF init] input=1279x719 grid=1 output=1279x719 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[NVOF init] input=1279x719 grid=2 output=640x360 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=2, perfLevel=20)
+[NVOF init] input=1279x719 grid=4 output=320x180 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=20)
+[NVOF init] input=1921x1081 grid=1 output=1921x1081 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=1, perfLevel=20)
+[NVOF init] input=1921x1081 grid=2 output=961x541 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=2, perfLevel=20)
+[NVOF init] input=1921x1081 grid=4 output=481x271 preset=FAST (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=20)
+
+--- TEST J: Output Descriptor 尺寸与非整除分辨率边界测试 ---
+  Dims 1279x719 (Grid 1x1 -> output 1279x719): upload=1.34ms, submit_cpu=7.65ms, download=1.99ms, upscale=0.04ms
+  Dims 1279x719 (Grid 2x2 -> output 640x360): upload=0.99ms, submit_cpu=6.18ms, download=2.54ms, upscale=0.03ms
+  Dims 1279x719 (Grid 4x4 -> output 320x180): upload=1.42ms, submit_cpu=4.44ms, download=2.10ms, upscale=0.03ms
+  Dims 1921x1081 (Grid 1x1 -> output 1921x1081): upload=2.39ms, submit_cpu=8.67ms, download=3.64ms, upscale=0.65ms
+  Dims 1921x1081 (Grid 2x2 -> output 961x541): upload=2.20ms, submit_cpu=5.69ms, download=3.63ms, upscale=0.05ms
+  Dims 1921x1081 (Grid 4x4 -> output 481x271): upload=2.51ms, submit_cpu=5.26ms, download=3.59ms, upscale=0.08ms
+TEST J PASSED: 奇数与非整除尺寸在 1x1/2x2/4x4 下均严格匹配规范无越界
+.
+tests\unit\test_preview_export_parity.py .......
+tests\unit\test_resampler_numeric.py .................
+tests\unit\test_residual_backend.py ...............
+
+============================ 129 passed in 36.39s =============================

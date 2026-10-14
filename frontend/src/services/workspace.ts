@@ -1,10 +1,10 @@
 import type { DLSSSettings } from "../types"
 import { DEFAULT_POST, DEFAULT_TEMPORAL } from "./qualityControls.ts"
 import { chooseReconstructionMode } from './multiScaleSettings.ts'
-import { renderStages } from './renderPipeline.ts'
+import { configuredRenderStages, renderStages } from './renderPipeline.ts'
 export const DEFAULT_SETTINGS: DLSSSettings = {
   neural_mode: 'nr',
-  vsr_quality: 2,
+  vsr_quality: 2, vsr_mode: 'standard', vsr_strength: null,
   vsr_target: '1080p', vsr_output_mode: 'resolution', vsr_scale: 2, vsr_width:1920, vsr_height:1080,
   frame_generation: 'off', frame_multiplier: 2, framegen_quality: 1,
   framegen_target_fps: 60, framegen_scene_detection: true,
@@ -55,8 +55,8 @@ export function completeSettings(raw: Partial<DLSSSettings>): DLSSSettings {
     post_controls: {...DEFAULT_POST, ...raw.post_controls},
     temporal_controls: {...DEFAULT_TEMPORAL, ...raw.temporal_controls}}
   if (raw.render_pipeline || raw.truehdr_enabled) {
-    settings.render_pipeline = renderStages(settings)
-    settings.truehdr_enabled = settings.render_pipeline.includes('truehdr')
+    settings.render_pipeline = configuredRenderStages(settings)
+    settings.truehdr_enabled = renderStages(settings).includes('truehdr')
   }
   // Migrate old stacking presets which inherited the single-layer comparison.
   // New settings have an independent parameter vector, so an explicitly chosen

@@ -4,7 +4,7 @@
 
 ## 构建
 
-构建机需要 Python、`pefile`、`zstandard`、Node.js 与已编译桥接库。`--native-runtime-prefix` 指向含匹配共享 FFmpeg DLL 和 VC runtime 的 Conda 环境；它仅用于解析原生 PE 依赖，不收集该 Python 环境。
+构建机需要 Python、`pefile`、`zstandard`、Node.js 与已编译桥接库。`--native-runtime-prefix` 指向含 VC runtime 等最小原生依赖的 Conda 环境；它仅用于解析原生 PE 依赖，不收集该 Python 环境。FFmpeg 共享 DLL 随视频处理组件下载，不再从开发环境单独打进安装器。
 
 ```powershell
 python packaging/build_small_resources.py --output build/small-resources --native-runtime-prefix "<原生依赖环境目录>"
@@ -18,7 +18,7 @@ npm run electron:installer
 ## 组件
 
 - 基础：uv 管理的 CPython 3.10.18；`components/base.lock` 固定基础包版本与 wheel SHA-256。
-- 视频：Gyan FFmpeg 8.1.2 essentials，固定归档大小与 SHA-256。解压后执行实际工具与必要过滤器检查。
+- 视频：Gyan FFmpeg 8.1.2 full shared，固定归档大小与 SHA-256；命令行工具和共享 DLL 来自同一归档。使用 Windows 自带 tar 解压，检查完整 DLL 集合、实际工具及必要过滤器。旧的 CLI-only 组件需更新。
 - 可选 RAFT：`components/raft.lock` 固定 PyTorch 2.10.0+cu128、torchvision 0.25.0+cu128 及依赖；独立 site overlay。主包按 `raft-wheel.json` 校验并续传，安装时仅允许该 Windows wheel 的精确摘要；模型来自 PyTorch 官方源，完整 SHA-256 在 `raft-model.json`。
 - uv 0.13.0：固定官方发行归档摘要，执行前再次核对工具摘要；MIT/Apache 许可证保留。
 

@@ -68,6 +68,28 @@ class Live(nr.Live):
         return dict(zip(('creates', 'successful_evaluates', 'release_calls'), values),
                     preset_requested=self.render_preset, preset_effective=None)
 
+    def recreate_preset(self, settings):
+        from native_effects import DLAA_PRESETS
+        preset = settings.get('dlaa_preset', 0)
+        if isinstance(preset, bool) or preset not in DLAA_PRESETS:
+            raise ValueError('Unsupported DLAA model preset')
+        fn = getattr(self._lib, 'dlss_gpu_host_recreate_dlaa', None)
+        if fn is None:
+            return False
+        if not self.is_alive():
+            raise RuntimeError('DLAA session is closed')
+        options = self._options()
+        options.preset = int(preset)
+        fn.argtypes = [ctypes.c_void_p, ctypes.POINTER(nr._Options)]
+        fn.restype = ctypes.c_int32
+        code = fn(self._handle, ctypes.byref(options))
+        if code:
+            raise RuntimeError(self._error('Recreate DLAA model', code))
+        self.render_preset = preset
+        self.settings = dict(settings)
+        self.session_id = int(self._lib.dlss_gpu_host_session_id(self._handle))
+        return True
+
     def transfer_counters(self):
         result = super().transfer_counters()
         result.update(vendor_feature='NGX SuperSampling / DLAA (equal extent)',

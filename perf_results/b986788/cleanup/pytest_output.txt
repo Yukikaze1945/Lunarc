@@ -1,0 +1,24 @@
+== GATE 1: compile and import ==
+compiled files: 34 | failures: []
+RR ABI: 0x00020000
+avx2_available: True | native backend usable: True
+
+== GATE 2: native numeric, backend contract, preview/export parity ==
+.............................................................            [100%]
+61 passed in 4.07s
+
+== GATE 3: residual_bridge thread safety ==
+.........                                                                [100%]
+9 passed in 4.64s
+
+== GATE 4: NVOF timing semantics on hardware + AVX2 capability probe ==
+.............                                                            [100%]
+13 passed in 3.87s
+
+== GATE claims: retired misleading claims must not return ==
+.....                                                                    [100%]
+5 passed in 0.45s
+
+== GATE 5: full unit suite ==
+............                                                             [100%]
+156 passed in 40.48s

@@ -2,6 +2,27 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { moveStage, pipelinePatch, renderStages, vsrOutputSize, framegenOutputFps, nativeOutputBlockers } from '../../frontend/src/services/renderPipeline.ts'
 import type { DLSSSettings } from '../../frontend/src/types/index.ts'
+import {configuredRenderStages,toggleStagePatch} from '../../frontend/src/services/renderPipeline.ts'
+import {presetSettings} from '../../frontend/src/services/presets.ts'
+
+test('eye switches keep every card, order and parameters through preset saving',()=>{
+  const original={render_pipeline:['nr','vsr','truehdr','vfg'],working_scale:.5,
+    reconstruction_mode:'triple',intensity:1.7,vsr_scale:2,frame_generation:'vfg_dynamic',
+    framegen_target_fps:'120',truehdr_enabled:true} as DLSSSettings
+  let value=original
+  for(const stage of ['nr','vsr','truehdr','vfg'] as const)value={...value,...toggleStagePatch(stage,value)}
+  assert.deepEqual(configuredRenderStages(value),original.render_pipeline)
+  assert.deepEqual(renderStages(value),[])
+  assert.equal(value.intensity,1.7);assert.equal(value.working_scale,.5)
+  assert.equal(value.reconstruction_mode,'triple');assert.equal(value.vsr_scale,2)
+  assert.equal(value.frame_generation,'off');assert.equal(value.truehdr_enabled,false)
+  assert.equal(framegenOutputFps(value,25),25)
+  const saved=presetSettings(value)
+  assert.deepEqual(configuredRenderStages(saved),original.render_pipeline)
+  value={...saved,...toggleStagePatch('vfg',saved)}
+  assert.equal(value.frame_generation,'vfg_dynamic');assert.equal(framegenOutputFps(value,25),120)
+  assert.deepEqual(renderStages(value),['vfg'])
+})
 
 test('migrate legacy order and honor explicit order', () => {
   assert.deepEqual(renderStages({neural_mode:'nr_dlaa'} as DLSSSettings), ['nr','dlaa'])

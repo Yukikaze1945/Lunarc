@@ -1,0 +1,627 @@
+{
+  "window_rule": {
+    "start_fraction": 0.2,
+    "end_fraction": 0.9,
+    "for_300_frames": [
+      60,
+      270
+    ],
+    "minimum_samples": 5,
+    "threshold_fraction_of_peak": 0.1,
+    "method": "least_squares_over_steady_state_frame_window"
+  },
+  "cases": {
+    "A_warmup_plateau_teardown": {
+      "description": "ramp, flat interior, one teardown sample 500 MB below the plateau",
+      "input_frames": [
+        0,
+        30,
+        60,
+        90,
+        120,
+        150,
+        180,
+        210,
+        240,
+        270,
+        300
+      ],
+      "input_rss_bytes": [
+        900000000,
+        1100000000,
+        1100000000,
+        1100030000,
+        1100060000,
+        1100090000,
+        1100120000,
+        1100150000,
+        1100180000,
+        1100210000,
+        600000000
+      ],
+      "fit": {
+        "rss_fit_method": "least_squares_over_steady_state_frame_window",
+        "rss_fit_frame_start": 60,
+        "rss_fit_frame_end": 270,
+        "rss_fit_frames": [
+          60,
+          90,
+          120,
+          150,
+          180,
+          210,
+          240,
+          270
+        ],
+        "rss_fit_sample_count": 8,
+        "rss_fit_total_frames": 300,
+        "rss_fit_excludes_warmup": true,
+        "rss_fit_excludes_teardown": true,
+        "rss_fit_excluded_frames_before_window": [
+          0,
+          30
+        ],
+        "rss_fit_excluded_frames_after_window": [
+          300
+        ],
+        "rss_slope_bytes_per_frame": 1000.0,
+        "rss_predicted_growth_over_fit_window_bytes": 210000.0,
+        "rss_predicted_signed_growth_bytes": 210000.0,
+        "rss_predicted_positive_growth_bytes": 210000.0,
+        "rss_fit_frame_span": 210,
+        "rss_fit_status": "ok",
+        "rss_fit_reason": ""
+      },
+      "gate": {
+        "status": "DONE_PROVEN",
+        "reason": "steady-state RSS shows no sustained positive growth",
+        "rss_predicted_positive_growth_bytes": 210000.0,
+        "rss_predicted_signed_growth_bytes": 210000.0,
+        "of_peak": 0.000191,
+        "threshold_fraction_of_peak": 0.1,
+        "rss_fit_sample_count": 8,
+        "rss_fit_frames": [
+          60,
+          90,
+          120,
+          150,
+          180,
+          210,
+          240,
+          270
+        ]
+      },
+      "replaced_whole_range_fit": {
+        "rss_slope_bytes_per_frame": -454036.4,
+        "rss_fit_sample_count": 11,
+        "rss_frame_range": [
+          0,
+          300
+        ],
+        "rss_predicted_growth_over_range_bytes": -136210909.1
+      },
+      "replaced_gate_verdict_on_the_same_numbers": "NOT_READY"
+    },
+    "B_true_growth": {
+      "description": "RSS rising 2000000 bytes per frame inside the window",
+      "input_frames": [
+        0,
+        30,
+        60,
+        90,
+        120,
+        150,
+        180,
+        210,
+        240,
+        270,
+        300
+      ],
+      "input_rss_bytes": [
+        1000000000,
+        1060000000,
+        1120000000,
+        1180000000,
+        1240000000,
+        1300000000,
+        1360000000,
+        1420000000,
+        1480000000,
+        1540000000,
+        1600000000
+      ],
+      "fit": {
+        "rss_fit_method": "least_squares_over_steady_state_frame_window",
+        "rss_fit_frame_start": 60,
+        "rss_fit_frame_end": 270,
+        "rss_fit_frames": [
+          60,
+          90,
+          120,
+          150,
+          180,
+          210,
+          240,
+          270
+        ],
+        "rss_fit_sample_count": 8,
+        "rss_fit_total_frames": 300,
+        "rss_fit_excludes_warmup": true,
+        "rss_fit_excludes_teardown": true,
+        "rss_fit_excluded_frames_before_window": [
+          0,
+          30
+        ],
+        "rss_fit_excluded_frames_after_window": [
+          300
+        ],
+        "rss_slope_bytes_per_frame": 2000000.0,
+        "rss_predicted_growth_over_fit_window_bytes": 420000000.0,
+        "rss_predicted_signed_growth_bytes": 420000000.0,
+        "rss_predicted_positive_growth_bytes": 420000000.0,
+        "rss_fit_frame_span": 210,
+        "rss_fit_status": "ok",
+        "rss_fit_reason": ""
+      },
+      "gate": {
+        "status": "NOT_READY",
+        "reason": "steady-state RSS projects positive growth above the threshold",
+        "rss_predicted_positive_growth_bytes": 420000000.0,
+        "rss_predicted_signed_growth_bytes": 420000000.0,
+        "of_peak": 0.2625,
+        "threshold_fraction_of_peak": 0.1,
+        "rss_fit_sample_count": 8,
+        "rss_fit_frames": [
+          60,
+          90,
+          120,
+          150,
+          180,
+          210,
+          240,
+          270
+        ]
+      },
+      "replaced_whole_range_fit": {
+        "rss_slope_bytes_per_frame": 2000000.0,
+        "rss_fit_sample_count": 11,
+        "rss_frame_range": [
+          0,
+          300
+        ],
+        "rss_predicted_growth_over_range_bytes": 600000000.0
+      },
+      "replaced_gate_verdict_on_the_same_numbers": "NOT_READY"
+    },
+    "C_negative_slope": {
+      "description": "RSS falling 1 MB per frame across the window",
+      "input_frames": [
+        60,
+        90,
+        120,
+        150,
+        180,
+        210,
+        240,
+        270
+      ],
+      "input_rss_bytes": [
+        1440000000,
+        1410000000,
+        1380000000,
+        1350000000,
+        1320000000,
+        1290000000,
+        1260000000,
+        1230000000
+      ],
+      "fit": {
+        "rss_fit_method": "least_squares_over_steady_state_frame_window",
+        "rss_fit_frame_start": 60,
+        "rss_fit_frame_end": 270,
+        "rss_fit_frames": [
+          60,
+          90,
+          120,
+          150,
+          180,
+          210,
+          240,
+          270
+        ],
+        "rss_fit_sample_count": 8,
+        "rss_fit_total_frames": 300,
+        "rss_fit_excludes_warmup": true,
+        "rss_fit_excludes_teardown": true,
+        "rss_fit_excluded_frames_before_window": [],
+        "rss_fit_excluded_frames_after_window": [],
+        "rss_slope_bytes_per_frame": -1000000.0,
+        "rss_predicted_growth_over_fit_window_bytes": -210000000.0,
+        "rss_predicted_signed_growth_bytes": -210000000.0,
+        "rss_predicted_positive_growth_bytes": 0.0,
+        "rss_fit_frame_span": 210,
+        "rss_fit_status": "ok",
+        "rss_fit_reason": ""
+      },
+      "gate": {
+        "status": "DONE_PROVEN",
+        "reason": "steady-state RSS shows no sustained positive growth",
+        "rss_predicted_positive_growth_bytes": 0.0,
+        "rss_predicted_signed_growth_bytes": -210000000.0,
+        "of_peak": 0.0,
+        "threshold_fraction_of_peak": 0.1,
+        "rss_fit_sample_count": 8,
+        "rss_fit_frames": [
+          60,
+          90,
+          120,
+          150,
+          180,
+          210,
+          240,
+          270
+        ]
+      },
+      "replaced_whole_range_fit": {
+        "rss_slope_bytes_per_frame": -1000000.0,
+        "rss_fit_sample_count": 8,
+        "rss_frame_range": [
+          60,
+          270
+        ],
+        "rss_predicted_growth_over_range_bytes": -210000000.0
+      },
+      "replaced_gate_verdict_on_the_same_numbers": "NOT_READY"
+    },
+    "D_insufficient": {
+      "0_samples_in_window": {
+        "description": "0 samples inside the window",
+        "input_frames": [],
+        "input_rss_bytes": [],
+        "fit": {
+          "rss_fit_method": "least_squares_over_steady_state_frame_window",
+          "rss_fit_frame_start": 60,
+          "rss_fit_frame_end": 270,
+          "rss_fit_frames": [],
+          "rss_fit_sample_count": 0,
+          "rss_fit_total_frames": 300,
+          "rss_fit_excludes_warmup": true,
+          "rss_fit_excludes_teardown": true,
+          "rss_fit_excluded_frames_before_window": [],
+          "rss_fit_excluded_frames_after_window": [],
+          "rss_slope_bytes_per_frame": null,
+          "rss_predicted_growth_over_fit_window_bytes": null,
+          "rss_predicted_signed_growth_bytes": null,
+          "rss_predicted_positive_growth_bytes": null,
+          "rss_fit_frame_span": 0,
+          "rss_fit_status": "insufficient_samples",
+          "rss_fit_reason": "0 samples inside frames 60..270, 5 are the minimum"
+        },
+        "gate": {
+          "status": "NOT_READY",
+          "reason": "insufficient steady-state RSS samples",
+          "rss_fit_sample_count": 0,
+          "rss_fit_detail_reason": "0 samples inside frames 60..270, 5 are the minimum"
+        },
+        "replaced_whole_range_fit": null,
+        "replaced_gate_verdict_on_the_same_numbers": "NOT_READY"
+      },
+      "1_samples_in_window": {
+        "description": "1 samples inside the window",
+        "input_frames": [
+          60
+        ],
+        "input_rss_bytes": [
+          1000000000
+        ],
+        "fit": {
+          "rss_fit_method": "least_squares_over_steady_state_frame_window",
+          "rss_fit_frame_start": 60,
+          "rss_fit_frame_end": 270,
+          "rss_fit_frames": [
+            60
+          ],
+          "rss_fit_sample_count": 1,
+          "rss_fit_total_frames": 300,
+          "rss_fit_excludes_warmup": true,
+          "rss_fit_excludes_teardown": true,
+          "rss_fit_excluded_frames_before_window": [],
+          "rss_fit_excluded_frames_after_window": [],
+          "rss_slope_bytes_per_frame": null,
+          "rss_predicted_growth_over_fit_window_bytes": null,
+          "rss_predicted_signed_growth_bytes": null,
+          "rss_predicted_positive_growth_bytes": null,
+          "rss_fit_frame_span": 0,
+          "rss_fit_status": "insufficient_samples",
+          "rss_fit_reason": "1 samples inside frames 60..270, 5 are the minimum"
+        },
+        "gate": {
+          "status": "NOT_READY",
+          "reason": "insufficient steady-state RSS samples",
+          "rss_fit_sample_count": 1,
+          "rss_fit_detail_reason": "1 samples inside frames 60..270, 5 are the minimum"
+        },
+        "replaced_whole_range_fit": null,
+        "replaced_gate_verdict_on_the_same_numbers": "NOT_READY"
+      },
+      "2_samples_in_window": {
+        "description": "2 samples inside the window",
+        "input_frames": [
+          60,
+          70
+        ],
+        "input_rss_bytes": [
+          1000000000,
+          1040000000
+        ],
+        "fit": {
+          "rss_fit_method": "least_squares_over_steady_state_frame_window",
+          "rss_fit_frame_start": 60,
+          "rss_fit_frame_end": 270,
+          "rss_fit_frames": [
+            60,
+            70
+          ],
+          "rss_fit_sample_count": 2,
+          "rss_fit_total_frames": 300,
+          "rss_fit_excludes_warmup": true,
+          "rss_fit_excludes_teardown": true,
+          "rss_fit_excluded_frames_before_window": [],
+          "rss_fit_excluded_frames_after_window": [],
+          "rss_slope_bytes_per_frame": null,
+          "rss_predicted_growth_over_fit_window_bytes": null,
+          "rss_predicted_signed_growth_bytes": null,
+          "rss_predicted_positive_growth_bytes": null,
+          "rss_fit_frame_span": 10,
+          "rss_fit_status": "insufficient_samples",
+          "rss_fit_reason": "2 samples inside frames 60..270, 5 are the minimum"
+        },
+        "gate": {
+          "status": "NOT_READY",
+          "reason": "insufficient steady-state RSS samples",
+          "rss_fit_sample_count": 2,
+          "rss_fit_detail_reason": "2 samples inside frames 60..270, 5 are the minimum"
+        },
+        "replaced_whole_range_fit": {
+          "rss_slope_bytes_per_frame": 4000000.0,
+          "rss_fit_sample_count": 2,
+          "rss_frame_range": [
+            60,
+            70
+          ],
+          "rss_predicted_growth_over_range_bytes": 40000000.0
+        },
+        "replaced_gate_verdict_on_the_same_numbers": "DONE_PROVEN"
+      },
+      "3_samples_in_window": {
+        "description": "3 samples inside the window",
+        "input_frames": [
+          60,
+          70,
+          80
+        ],
+        "input_rss_bytes": [
+          1000000000,
+          1040000000,
+          1080000000
+        ],
+        "fit": {
+          "rss_fit_method": "least_squares_over_steady_state_frame_window",
+          "rss_fit_frame_start": 60,
+          "rss_fit_frame_end": 270,
+          "rss_fit_frames": [
+            60,
+            70,
+            80
+          ],
+          "rss_fit_sample_count": 3,
+          "rss_fit_total_frames": 300,
+          "rss_fit_excludes_warmup": true,
+          "rss_fit_excludes_teardown": true,
+          "rss_fit_excluded_frames_before_window": [],
+          "rss_fit_excluded_frames_after_window": [],
+          "rss_slope_bytes_per_frame": null,
+          "rss_predicted_growth_over_fit_window_bytes": null,
+          "rss_predicted_signed_growth_bytes": null,
+          "rss_predicted_positive_growth_bytes": null,
+          "rss_fit_frame_span": 20,
+          "rss_fit_status": "insufficient_samples",
+          "rss_fit_reason": "3 samples inside frames 60..270, 5 are the minimum"
+        },
+        "gate": {
+          "status": "NOT_READY",
+          "reason": "insufficient steady-state RSS samples",
+          "rss_fit_sample_count": 3,
+          "rss_fit_detail_reason": "3 samples inside frames 60..270, 5 are the minimum"
+        },
+        "replaced_whole_range_fit": {
+          "rss_slope_bytes_per_frame": 4000000.0,
+          "rss_fit_sample_count": 3,
+          "rss_frame_range": [
+            60,
+            80
+          ],
+          "rss_predicted_growth_over_range_bytes": 80000000.0
+        },
+        "replaced_gate_verdict_on_the_same_numbers": "DONE_PROVEN"
+      },
+      "4_samples_in_window": {
+        "description": "4 samples inside the window",
+        "input_frames": [
+          60,
+          70,
+          80,
+          90
+        ],
+        "input_rss_bytes": [
+          1000000000,
+          1040000000,
+          1080000000,
+          1120000000
+        ],
+        "fit": {
+          "rss_fit_method": "least_squares_over_steady_state_frame_window",
+          "rss_fit_frame_start": 60,
+          "rss_fit_frame_end": 270,
+          "rss_fit_frames": [
+            60,
+            70,
+            80,
+            90
+          ],
+          "rss_fit_sample_count": 4,
+          "rss_fit_total_frames": 300,
+          "rss_fit_excludes_warmup": true,
+          "rss_fit_excludes_teardown": true,
+          "rss_fit_excluded_frames_before_window": [],
+          "rss_fit_excluded_frames_after_window": [],
+          "rss_slope_bytes_per_frame": null,
+          "rss_predicted_growth_over_fit_window_bytes": null,
+          "rss_predicted_signed_growth_bytes": null,
+          "rss_predicted_positive_growth_bytes": null,
+          "rss_fit_frame_span": 30,
+          "rss_fit_status": "insufficient_samples",
+          "rss_fit_reason": "4 samples inside frames 60..270, 5 are the minimum"
+        },
+        "gate": {
+          "status": "NOT_READY",
+          "reason": "insufficient steady-state RSS samples",
+          "rss_fit_sample_count": 4,
+          "rss_fit_detail_reason": "4 samples inside frames 60..270, 5 are the minimum"
+        },
+        "replaced_whole_range_fit": {
+          "rss_slope_bytes_per_frame": 4000000.0,
+          "rss_fit_sample_count": 4,
+          "rss_frame_range": [
+            60,
+            90
+          ],
+          "rss_predicted_growth_over_range_bytes": 120000000.0
+        },
+        "replaced_gate_verdict_on_the_same_numbers": "NOT_READY"
+      }
+    },
+    "E_irregular_frames": {
+      "description": "frames 0, 31, 62, 93, 127, 181, 229, 268, 300, selected by frame number",
+      "input_frames": [
+        0,
+        31,
+        62,
+        93,
+        127,
+        181,
+        229,
+        268,
+        300
+      ],
+      "input_rss_bytes": [
+        1000000000,
+        1000046500,
+        1000093000,
+        1000139500,
+        1000190500,
+        1000271500,
+        1000343500,
+        1000402000,
+        1000450000
+      ],
+      "fit": {
+        "rss_fit_method": "least_squares_over_steady_state_frame_window",
+        "rss_fit_frame_start": 60,
+        "rss_fit_frame_end": 270,
+        "rss_fit_frames": [
+          62,
+          93,
+          127,
+          181,
+          229,
+          268
+        ],
+        "rss_fit_sample_count": 6,
+        "rss_fit_total_frames": 300,
+        "rss_fit_excludes_warmup": true,
+        "rss_fit_excludes_teardown": true,
+        "rss_fit_excluded_frames_before_window": [
+          0,
+          31
+        ],
+        "rss_fit_excluded_frames_after_window": [
+          300
+        ],
+        "rss_slope_bytes_per_frame": 1500.0,
+        "rss_predicted_growth_over_fit_window_bytes": 309000.0,
+        "rss_predicted_signed_growth_bytes": 309000.0,
+        "rss_predicted_positive_growth_bytes": 309000.0,
+        "rss_fit_frame_span": 206,
+        "rss_fit_status": "ok",
+        "rss_fit_reason": ""
+      },
+      "gate": {
+        "status": "DONE_PROVEN",
+        "reason": "steady-state RSS shows no sustained positive growth",
+        "rss_predicted_positive_growth_bytes": 309000.0,
+        "rss_predicted_signed_growth_bytes": 309000.0,
+        "of_peak": 0.000309,
+        "threshold_fraction_of_peak": 0.1,
+        "rss_fit_sample_count": 6,
+        "rss_fit_frames": [
+          62,
+          93,
+          127,
+          181,
+          229,
+          268
+        ]
+      },
+      "replaced_whole_range_fit": {
+        "rss_slope_bytes_per_frame": 1500.0,
+        "rss_fit_sample_count": 9,
+        "rss_frame_range": [
+          0,
+          300
+        ],
+        "rss_predicted_growth_over_range_bytes": 450000.0
+      },
+      "replaced_gate_verdict_on_the_same_numbers": "DONE_PROVEN"
+    }
+  },
+  "checks": {
+    "A_frame_300_excluded": true,
+    "A_warmup_excluded": true,
+    "A_steady_slope_flat": true,
+    "A_fits_disagree_in_sign": true,
+    "A_replaced_gate_failed_this_run": true,
+    "A_new_gate_passed_this_run": true,
+    "B_injected_rate_recovered": true,
+    "B_gated_not_ready": true,
+    "C_signed_negative_positive_zero": true,
+    "C_over_the_threshold_on_magnitude": true,
+    "D_every_count_below_five_not_ready": true,
+    "E_selected_by_frame_number": true
+  },
+  "pytest": {
+    "command": "C:\\Users\\18392\\AppData\\Local\\hermes\\hermes-agent\\venv\\Scripts\\python.exe -m pytest -q tests/unit/test_rss_steady_state_fit.py",
+    "exit_code": 0,
+    "seconds": 1.09,
+    "pytest_summary": "28 passed in 0.14s",
+    "passed": true
+  },
+  "status": "DONE_PROVEN",
+  "gate4": {
+    "command": "C:\\Users\\18392\\AppData\\Local\\hermes\\hermes-agent\\venv\\Scripts\\python.exe -m pytest -q tests/unit/test_rss_steady_state_fit.py",
+    "group": {
+      "command": "C:\\Users\\18392\\AppData\\Local\\hermes\\hermes-agent\\venv\\Scripts\\python.exe -m pytest -q tests/unit/test_rss_steady_state_fit.py",
+      "exit_code": 0,
+      "seconds": 1.06,
+      "pytest_summary": "28 passed in 0.15s",
+      "passed": true
+    },
+    "counts": {
+      "passed": 28,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "status": "DONE_PROVEN"
+  }
+}

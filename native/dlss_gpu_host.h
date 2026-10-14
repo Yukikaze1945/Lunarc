@@ -35,8 +35,26 @@ typedef struct DlssGpuHostOptions {
 } DlssGpuHostOptions;
 
 DLSS_GPU_HOST_API uint32_t dlss_gpu_host_abi_version(void);
+/* Diagnostic additions; existing session ABI remains unchanged. Owner thread only. */
+typedef struct DlssGpuMemoryInfo {
+    uint32_t struct_size;
+    uint64_t adapter_luid, local_usage, local_budget, nonlocal_usage, nonlocal_budget;
+} DlssGpuMemoryInfo;
+typedef struct DlssGpuResourceInfo {
+    uint32_t struct_size;
+    uint64_t color_bytes, depth_bytes, motion_bytes, output_bytes, staging_bytes;
+} DlssGpuResourceInfo;
+DLSS_GPU_HOST_API int32_t dlss_gpu_memory_query(void* device, DlssGpuMemoryInfo* info);
+DLSS_GPU_HOST_API int32_t dlss_gpu_host_resource_info(DlssGpuHost* host, DlssGpuResourceInfo* info);
 /* Serialized with processing by the owning thread. Preset stays create-only. */
 DLSS_GPU_HOST_API int32_t dlss_gpu_host_update_options(
+    DlssGpuHost* host, const DlssGpuHostOptions* options);
+/* Allocated CPU upload/readback and host-motion staging buffer capacities.
+ * Logical buffer bytes only; excludes model resources and physical residency. */
+DLSS_GPU_HOST_API uint64_t dlss_gpu_host_staging_bytes(DlssGpuHost* host);
+/* Owner-thread DLAA model change: recreate only the feature and its parameters.
+ * Device, input/output textures, CUDA imports and other shared features survive. */
+DLSS_GPU_HOST_API int32_t dlss_gpu_host_recreate_dlaa(
     DlssGpuHost* host, const DlssGpuHostOptions* options);
 DLSS_GPU_HOST_API int32_t dlss_gpu_host_open(
     uint32_t width, uint32_t height, const wchar_t* signed_snippet_path,

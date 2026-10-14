@@ -1,0 +1,173 @@
+{
+  "py_compile": {
+    "exit_code": 0,
+    "files": [
+      "residual_native.py",
+      "tests/unit/collect_artifacts.py",
+      "tests/unit/residual_fault_probe.py",
+      "tests/unit/resource_metrics.py",
+      "tests/unit/test_residual_bridge_failure_paths.py",
+      "tests/unit/test_rss_steady_state_fit.py"
+    ],
+    "passed": true
+  },
+  "fault_injection_build": {
+    "command": "cmd /c F:\\dlss5standaloneV2\\native\\build_residual_test.bat F:\\dlss5standaloneV2\\scratch\\native_test",
+    "exit_code": 0,
+    "seconds": 3.32,
+    "pytest_summary": "",
+    "passed": true
+  },
+  "production_copy_build": {
+    "command": "cmd /c F:\\dlss5standaloneV2\\scratch\\native_prod\\build_copy.bat",
+    "exit_code": 0,
+    "seconds": 3.7,
+    "pytest_summary": "",
+    "passed": true
+  },
+  "production_dll_path": "native/residual_bridge.dll",
+  "production_dll_sha256": "31945afa323f932b1e11589ef432f580cc04c5dca68d1ae0e024d8b0491ccca7",
+  "production_dll_git_blob": "cf6d538c247c66a6279f8918d56da65bfe8dcd07",
+  "production_dll_committed_blob": "cf6d538c247c66a6279f8918d56da65bfe8dcd07",
+  "shipped_dll_is_the_committed_one": true,
+  "shipped_dll_was_not_rebuilt_over": true,
+  "fresh_build_of_the_shipped_configuration_sha256": "bb079d4db735757d62f996eb1cb79da26dc7bd3feccef08c248d0f291c89095d",
+  "build_is_byte_reproducible": false,
+  "why_the_two_binaries_differ": {
+    "sizes_equal": true,
+    "differing_byte_count": 19,
+    "differing_runs_of_offsets": [
+      [
+        "0x108",
+        "0x109"
+      ],
+      [
+        "0x28704",
+        "0x28705"
+      ],
+      [
+        "0x2be38",
+        "0x2be46"
+      ]
+    ],
+    "coff_file_header_timedatestamp": [
+      "0x6aaf213f",
+      "0x6aaf2ef9"
+    ],
+    "sections": {
+      ".text": {
+        "raw_size": 122368,
+        "raw_offset": [
+          1024,
+          1024
+        ],
+        "identical": true,
+        "differing_bytes": 0
+      },
+      ".rdata": {
+        "raw_size": 59392,
+        "raw_offset": [
+          123392,
+          123392
+        ],
+        "identical": false,
+        "differing_bytes": 17
+      },
+      ".data": {
+        "raw_size": 4608,
+        "raw_offset": [
+          182784,
+          182784
+        ],
+        "identical": true,
+        "differing_bytes": 0
+      },
+      ".pdata": {
+        "raw_size": 7680,
+        "raw_offset": [
+          187392,
+          187392
+        ],
+        "identical": true,
+        "differing_bytes": 0
+      },
+      ".fptable": {
+        "raw_size": 512,
+        "raw_offset": [
+          195072,
+          195072
+        ],
+        "identical": true,
+        "differing_bytes": 0
+      },
+      ".reloc": {
+        "raw_size": 2560,
+        "raw_offset": [
+          195584,
+          195584
+        ],
+        "identical": true,
+        "differing_bytes": 0
+      }
+    },
+    "code_sections_identical": true,
+    "note": "the linker stamps each build with the time it ran and an identifier for its PDB, so two builds of one source are not byte-equal; what has to be equal is the code, and the section comparison is that check"
+  },
+  "exports_committed_dll": [
+    "rr_cpu_has_avx2",
+    "rr_create_plan",
+    "rr_destroy_plan",
+    "rr_downsample_bgr8",
+    "rr_get_api_version",
+    "rr_get_counters",
+    "rr_get_last_error",
+    "rr_reconstruct_bgr8"
+  ],
+  "exports_fresh_build": [
+    "rr_cpu_has_avx2",
+    "rr_create_plan",
+    "rr_destroy_plan",
+    "rr_downsample_bgr8",
+    "rr_get_api_version",
+    "rr_get_counters",
+    "rr_get_last_error",
+    "rr_reconstruct_bgr8"
+  ],
+  "exports_match": true,
+  "fault_test_dll_sha256": "fcf7620e0636eb4d3af3de2db3bc83b3b40ffc77c261d7af65ba64da1b2bdaa0",
+  "fault_test_dll_committed": false,
+  "bridge_source_sha256": "0edae8593dae5341594560d8c802cbf751fb2783f45b9e96571854582ce91647",
+  "bridge_header_sha256": "5fabfc06dda3453f804256beb758e5681a153c9d6e6986a411aca2171ed7b527",
+  "api_version_constant_in_header": "00020001",
+  "production_dll_contains_test_hooks": false,
+  "fault_test_dll_contains_test_hooks": true,
+  "fault_test_dll_contains_injected_failure_text": true,
+  "production_dll_contains_injected_failure_text": false,
+  "api_version_reported_by_the_production_dll": "0x20001",
+  "avx2_available": "True",
+  "dll_the_python_loader_actually_loaded": "native/residual_bridge.dll",
+  "status": "DONE_PROVEN",
+  "address_sanitizer_bonus": {
+    "bonus": true,
+    "asan_dir": "scratch/asan",
+    "tracked_build_script": false,
+    "note": "the normal gates already catch a crash: every probe runs in a child process whose exit code is checked, and the ASan build of the pre-fix code fails it the same way",
+    "fixed_code_under_asan": {
+      "point": "after_row_pool_create",
+      "reps": 20,
+      "observed_codes": [
+        -9
+      ],
+      "observed_handles": [
+        0
+      ],
+      "all_checks_passed": true,
+      "asan_error_in_output": false
+    },
+    "pre_fix_double_free_under_asan": {
+      "detected": true,
+      "first_error_line": "==6744==ERROR: AddressSanitizer: heap-use-after-free on address 0x121428da30a4 at pc 0x7ffc85a3cec3 bp 0x00c9a6bee750 sp 0x00c9a6bee758",
+      "frame_in_rr_create_plan": true
+    }
+  }
+}

@@ -4,6 +4,7 @@
 #include "gpu_temporal_bridge.h"
 #include "gpu_temporal_shader.h"
 #include "nvof_d3d12_interop.h"
+#include "gpu_dred_diagnostics.h"
 
 #include <windows.h>
 #include <d3d12.h>
@@ -113,11 +114,23 @@ struct GpuTemporalBridge {
 
 namespace {
 bool wait_gpu(GpuTemporalBridge* b) {
-    if (b->fence->GetCompletedValue()>=b->fence_value) return true;
+    const uint64_t completed = b->fence->GetCompletedValue();
+    if (completed == UINT64_MAX || FAILED(b->device->GetDeviceRemovedReason())) {
+        describe_gpu_removal(b->device.Get(), "temporal fence device removed",
+                             DXGI_ERROR_DEVICE_REMOVED, last_error, sizeof(last_error));
+        return false;
+    }
+    if (completed>=b->fence_value) return true;
     HRESULT hr=b->fence->SetEventOnCompletion(b->fence_value,b->event);
     if (FAILED(hr)) { fail("temporal fence event",hr); return false; }
     if (WaitForSingleObject(b->event,30000)!=WAIT_OBJECT_0) {
         fail("temporal fence timeout",ERROR_TIMEOUT); return false;
+    }
+    const HRESULT removed = b->device->GetDeviceRemovedReason();
+    if (FAILED(removed) || b->fence->GetCompletedValue() == UINT64_MAX) {
+        describe_gpu_removal(b->device.Get(), "temporal wait device removed",
+                             removed, last_error, sizeof(last_error));
+        return false;
     }
     return true;
 }
@@ -261,15 +274,11 @@ bool make_root_and_pipeline(GpuTemporalBridge* b) {
     return true;
 }
 bool make_resources(GpuTemporalBridge* b) {
-    HRESULT hr=make_texture(b->device.Get(),b->width,b->height,
-        pixel_format(b->pixel_bytes),&b->output);
-    const uint64_t pixels=uint64_t(b->width)*b->height;
+    HRESULT hr=S_OK;
     for (auto& r:b->guide) if (SUCCEEDED(hr)) hr=make_buffer(b->device.Get(),
         uint64_t(kGuideCount)*16,D3D12_HEAP_TYPE_DEFAULT,
         D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,D3D12_RESOURCE_STATE_COMMON,&r);
-    for (auto& r:b->history) if (SUCCEEDED(hr)) hr=make_buffer(b->device.Get(),
-        pixels*32,D3D12_HEAP_TYPE_DEFAULT,D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-        D3D12_RESOURCE_STATE_COMMON,&r);
+
     if (SUCCEEDED(hr)) hr=make_buffer(b->device.Get(),32,D3D12_HEAP_TYPE_DEFAULT,
         D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,D3D12_RESOURCE_STATE_COMMON,&b->stats);
     if (SUCCEEDED(hr)) hr=make_buffer(b->device.Get(),32,D3D12_HEAP_TYPE_READBACK,
@@ -288,13 +297,34 @@ bool make_resources(GpuTemporalBridge* b) {
             D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     for (auto& r:b->guide) barrier(b->list.Get(),r.Get(),
         D3D12_RESOURCE_STATE_COMMON,D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    for (auto& r:b->history) barrier(b->list.Get(),r.Get(),
-        D3D12_RESOURCE_STATE_COMMON,D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
     if (FAILED(b->list->Close())) return false;
     ID3D12CommandList* lists[]={b->list.Get()};
     b->queue->ExecuteCommandLists(1,lists);
     hr=b->queue->Signal(b->fence.Get(),++b->fence_value);
     return SUCCEEDED(hr) && wait_gpu(b);
+}
+// Only temporal stabilization needs full-size histories and a candidate copy.
+bool ensure_processing_resources(GpuTemporalBridge* b) {
+    if (b->output) return true;
+    ComPtr<ID3D12Resource> output, history[2];
+    HRESULT hr=make_texture(b->device.Get(),b->width,b->height,
+        pixel_format(b->pixel_bytes),&output);
+    for (auto& r:history) if (SUCCEEDED(hr)) hr=make_buffer(b->device.Get(),
+        uint64_t(b->width)*b->height*32,D3D12_HEAP_TYPE_DEFAULT,
+        D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,D3D12_RESOURCE_STATE_COMMON,&r);
+    if (FAILED(hr)) { fail("allocate temporal processing resources",hr); return false; }
+    if (cuda_d3d12_color_create2(b->device.Get(),b->cuda_context,b->width,b->height,
+        b->pitch,b->pixel_bytes,0,&b->candidate_bridge)) {
+        std::snprintf(last_error,sizeof(last_error),"temporal candidate interop: %s",nvof_d3d12_last_error());
+        return false;
+    }
+    if (!reset_list(b)) return false;
+    for (auto& r:history) barrier(b->list.Get(),r.Get(),D3D12_RESOURCE_STATE_COMMON,
+        D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    // Hold ownership even if execution fails: cleanup must precede resource release.
+    b->output=output; b->history[0]=history[0]; b->history[1]=history[1];
+    return execute_wait(b,"initialize temporal histories");
 }
 bool get_transport_resources(CudaD3D12ColorBridge* bridge,
     ID3D12Resource** resource,ID3D12Fence** fence) {
@@ -320,10 +350,8 @@ bool read_stats(GpuTemporalBridge* b,uint32_t bytes,uint32_t* words) {
     void* mapped=nullptr; D3D12_RANGE range{0,bytes};
     HRESULT hr=b->readback->Map(0,&range,&mapped);
     if (FAILED(hr)) {
-        const HRESULT removed=b->device->GetDeviceRemovedReason();
-        std::snprintf(last_error,sizeof(last_error),
-            "map temporal scalar readback: 0x%08lx (removed reason 0x%08lx)",
-            static_cast<unsigned long>(hr),static_cast<unsigned long>(removed));
+        describe_gpu_removal(b->device.Get(), "map temporal scalar readback", hr,
+                             last_error, sizeof(last_error));
         return false;
     }
     std::memcpy(words,mapped,bytes);
@@ -355,6 +383,22 @@ extern "C" GPU_TEMPORAL_API void gpu_temporal_close(GpuTemporalBridge* b) {
     delete b;
 }
 
+extern "C" GPU_TEMPORAL_API uint64_t gpu_temporal_allocated_device_bytes(GpuTemporalBridge* b) {
+    if (!b) return 0;
+    std::lock_guard<std::mutex> guard(b->mutex);
+    uint64_t bytes=0;
+    const auto add=[&](ID3D12Resource* r) {
+        if (r) { auto desc=r->GetDesc(); bytes+=b->device->GetResourceAllocationInfo(0,1,&desc).SizeInBytes; }
+    };
+    add(b->output.Get()); add(b->stats.Get());
+    for (auto& r:b->guide) add(r.Get());
+    for (auto& r:b->history) add(r.Get());
+    for (auto* bridge : {b->source_bridge,b->candidate_bridge}) if (bridge) {
+        ID3D12Resource* r=nullptr; ID3D12Fence* f=nullptr;
+        if (get_transport_resources(bridge,&r,&f)) add(r);
+    }
+    return bytes;
+}
 extern "C" GPU_TEMPORAL_API int32_t gpu_temporal_open(void* raw_device,
     void* cuda_context,uint32_t width,uint32_t height,uint32_t pixel_bytes,
     GpuTemporalBridge** out) {
@@ -371,6 +415,9 @@ extern "C" GPU_TEMPORAL_API int32_t gpu_temporal_open(void* raw_device,
     b->device=static_cast<ID3D12Device*>(raw_device); b->cuda_context=cuda_context;
     b->width=width; b->height=height; b->pixel_bytes=pixel_bytes;
     b->pitch=row_pitch(width,pixel_bytes);
+    b->event=CreateEventW(nullptr,FALSE,FALSE,nullptr);
+    if (!b->event) { fail("temporal CreateEvent",GetLastError());
+        gpu_temporal_close(b); return 5; }
     D3D12_COMMAND_QUEUE_DESC q{}; q.Type=D3D12_COMMAND_LIST_TYPE_DIRECT;
     HRESULT hr=b->device->CreateCommandQueue(&q,IID_PPV_ARGS(b->queue.GetAddressOf()));
     if (SUCCEEDED(hr)) hr=b->device->CreateCommandAllocator(
@@ -381,6 +428,10 @@ extern "C" GPU_TEMPORAL_API int32_t gpu_temporal_open(void* raw_device,
     if (SUCCEEDED(hr)) hr=b->list->Close();
     if (SUCCEEDED(hr)) hr=b->device->CreateFence(0,D3D12_FENCE_FLAG_NONE,
         IID_PPV_ARGS(b->fence.GetAddressOf()));
+    if (SUCCEEDED(hr)) {
+        b->queue->SetName(L"Lunarc temporal queue");
+        b->list->SetName(L"Lunarc temporal commands");
+    }
     if (SUCCEEDED(hr) && !make_root_and_pipeline(b)) hr=E_FAIL;
     if (SUCCEEDED(hr) && !make_resources(b)) hr=E_FAIL;
     if (FAILED(hr)) {
@@ -389,15 +440,11 @@ extern "C" GPU_TEMPORAL_API int32_t gpu_temporal_open(void* raw_device,
     }
     int32_t rc=cuda_d3d12_color_create2(b->device.Get(),cuda_context,width,height,
         b->pitch,pixel_bytes,0,&b->source_bridge);
-    if (!rc) rc=cuda_d3d12_color_create2(b->device.Get(),cuda_context,width,height,
-        b->pitch,pixel_bytes,0,&b->candidate_bridge);
+
     if (rc) {
         std::snprintf(last_error,sizeof(last_error),"temporal CUDA interop: %s",
             nvof_d3d12_last_error()); gpu_temporal_close(b); return 4;
     }
-    b->event=CreateEventW(nullptr,FALSE,FALSE,nullptr);
-    if (!b->event) { fail("temporal CreateEvent",GetLastError());
-        gpu_temporal_close(b); return 5; }
     *out=b; return 0;
 }
 
@@ -439,12 +486,11 @@ extern "C" GPU_TEMPORAL_API int32_t gpu_temporal_observe(
     b->list->SetDescriptorHeaps(1,heaps); b->list->SetComputeRootSignature(b->root.Get());
     barrier(b->list.Get(),source,D3D12_RESOURCE_STATE_COMMON,
             D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-    barrier(b->list.Get(),b->output.Get(),D3D12_RESOURCE_STATE_COPY_SOURCE,
-            D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
     if (b->guide_srv[target]) barrier(b->list.Get(),b->guide[target].Get(),
         D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     DispatchBinding build{}; build.srv[0]=source;
-    build.output_texture=b->output.Get();
+    // Guide shaders never access the image output UAV (typed null descriptor).
     build.state_output=b->guide[target].Get(); build.stats=b->stats.Get();
     const uint32_t build_first=bind_dispatch(b,build);
     clear_stats(b,build_first);
@@ -462,7 +508,7 @@ extern "C" GPU_TEMPORAL_API int32_t gpu_temporal_observe(
        shader's HistoryValid branch would not read it. */
     if (b->guide_valid && !reset)
         compare.srv[3]=b->guide[previous].Get();
-    compare.srv[5]=b->guide[target].Get(); compare.output_texture=b->output.Get();
+    compare.srv[5]=b->guide[target].Get();
     compare.stats=b->stats.Get();
     const uint32_t compare_first=bind_dispatch(b,compare);
     c.history_valid=b->guide_valid?1u:0u;
@@ -470,8 +516,7 @@ extern "C" GPU_TEMPORAL_API int32_t gpu_temporal_observe(
     b->list->Dispatch(1,1,1);
     barrier(b->list.Get(),source,D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
             D3D12_RESOURCE_STATE_COMMON);
-    barrier(b->list.Get(),b->output.Get(),D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-            D3D12_RESOURCE_STATE_COPY_SOURCE);
+
     if (!execute_wait(b,"temporal observe dispatch")) { b->failed=true; return 4; }
     uint32_t words[8]{};
     if (!read_stats(b,32,words)) { b->failed=true; return 5; }
@@ -576,6 +621,7 @@ extern "C" GPU_TEMPORAL_API int32_t gpu_temporal_process(
         }
     } else { fail("unknown temporal candidate kind",0); return 2; }
 
+    if (!ensure_processing_resources(b)) { b->failed=true; return 4; }
     uint64_t source_ready=0,candidate_ready=0;
     if (cuda_d3d12_color_copy(b->source_bridge,source_ptr,source_pitch,&source_ready)) {
         std::snprintf(last_error,sizeof(last_error),"temporal source copy: %s",

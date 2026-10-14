@@ -222,6 +222,7 @@ def test_ffmpeg_dll_directories_follow_the_machine_not_a_developers_path(tmp_pat
     """
     import gpu_transfer_export as gtx
 
+    monkeypatch.setenv('LUNARC_RUNTIME_DIR', str(tmp_path / 'absent-runtime'))
     sdk_bin = tmp_path / "sdk" / "bin"
     sdk_bin.mkdir(parents=True)
     (sdk_bin / "avcodec-61.dll").write_bytes(b"x")

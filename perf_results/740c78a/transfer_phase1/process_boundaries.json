@@ -1,0 +1,149 @@
+{
+  "code_under_test": "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee",
+  "commit_subject": "test(transfer): gate the performance verdict on the question \u640244 asks",
+  "decoder": {
+    "cuda_ipc_currently_used": false,
+    "gpu_resource_export_api": "none",
+    "gpu_resource_owner": "the FFmpeg child process; it owns the NVDEC surfaces and the CUDA context that holds them",
+    "gpu_to_cpu_bytes_estimated_per_frame": 12441600,
+    "gpu_to_cpu_bytes_estimation_note": "FFmpeg exposes no transfer counter, so this is arithmetic on the frame format and is labelled estimated, never measured",
+    "gpu_to_cpu_within_decoder": "hwdownload inside the child",
+    "handoff": "host byte stream on the child's stdout pipe",
+    "hwdownload_evidence": [
+      "pipeline.py:868: \"-vf\", \"scale_cuda=format=nv12,hwdownload,format=nv12\","
+    ],
+    "hwdownload_removed_this_round": false,
+    "implemented_this_round": false,
+    "pipe_bytes_measured_per_frame": 12441600,
+    "pipe_bytes_measurement": "bytes read out of the decoder child's stdout, summed from the reads that produced the frame",
+    "process": "FFmpeg child process spawned by pipeline.py",
+    "process_boundary": "separate_process",
+    "read_evidence": [
+      "pipeline.py:625: def _read_exactly(stream, n, proc=None, stop_event=None, cancel=None, timeout=None, what=\"frame data\"):",
+      "pipeline.py:832: raw = _read_exactly(proc.stdout, frame_bytes_bgr, proc=proc, stop_event=stop_event, cancel=cancel, what=\"CPU BGR \u5e27\")",
+      "pipeline.py:945: raw = _read_exactly(proc.stdout, read_size, proc=proc,"
+    ],
+    "route": "FFmpeg child -> NVDEC GPU frame -> scale_cuda -> hwdownload to NV12 in the child's host memory -> rawvideo on stdout -> this Python process",
+    "shared_d3d_handle_currently_used": false,
+    "shared_gpu_resource": false,
+    "status": "BLOCKED_PROVEN",
+    "stdout_carries": "rawvideo bytes only",
+    "stdout_does_not_carry": [
+      "CUdeviceptr",
+      "ID3D11Texture2D*",
+      "ID3D12Resource*"
+    ],
+    "unblock_requires_any_of": [
+      "same-process libavcodec hardware decoder",
+      "NVIDIA Video Codec SDK / NVDEC bridge",
+      "explicit GPU IPC / shared-resource helper"
+    ],
+    "zero_copy_into_python_process": "BLOCKED_PROVEN"
+  },
+  "dlss": {
+    "gpu_resource_public_api": "none",
+    "internal_d2h": "unavailable",
+    "internal_h2d": "unavailable",
+    "internal_note": "the host wrapper reports no transfer counter and its source is not in this repository; the logical host-buffer sizes are the buffers it was handed, not measurements of what it copied",
+    "process": "the backend Python process",
+    "process_boundary": "in-process",
+    "public_input": "host pointers (void*) for colour, motion and depth",
+    "public_output": "host pointer for the RGBA8 output",
+    "round_trip_status": "BLOCKED_PROVEN",
+    "see": "dlss_host_abi.json"
+  },
+  "encoder": {
+    "cuda_ipc_currently_used": false,
+    "direct_gpu_encode": "BLOCKED_PROVEN",
+    "encoder_gpu_upload_bytes_measured": "unavailable",
+    "encoder_gpu_upload_note": "FFmpeg exposes no GPU transfer counter, so the CPU rawvideo -> NVENC surface copy has no number here",
+    "gpu_resource_owner": "the FFmpeg child process uploads the rawvideo it reads",
+    "implemented_this_round": false,
+    "input": "rawvideo BGR24 on the child's stdin",
+    "logical_input_payload_bytes_4k_bgr24": 24883200,
+    "logical_vs_measured": "under a normal BGR24 output the two agree; only the measured column is called measured",
+    "pipe_bytes_measured_per_frame": 24883200,
+    "pipe_bytes_measurement": "the byte count returned by _write_frame_bytes() for that frame, accumulated by the pipe ledger - not width*height*3 arithmetic",
+    "process": "FFmpeg child process spawned by pipeline.py",
+    "process_boundary": "separate_process",
+    "shared_d3d_handle_currently_used": false,
+    "shared_gpu_resource": false,
+    "status": "BLOCKED_PROVEN",
+    "unblock_requires_any_of": [
+      "same-process NVENC",
+      "same-process libavcodec NVENC",
+      "GPU shared-resource IPC into an encoder helper"
+    ],
+    "write_evidence": [
+      "pipeline.py:590: def _write_frame_bytes(pipe_stdin, frame_ndarray, chunk_size=1048576, cancel_fn=None, proc=None, frame_idx=0) -> int:",
+      "pipeline.py:2963: written = _write_frame_bytes(proc.stdin, final_bgr, chunk_size=1<<20, cancel_fn=cancel, proc=proc, frame_idx=idx)"
+    ]
+  },
+  "generated_at_utc": "2026-09-20T10:00:23Z",
+  "generated_by": "tests/unit/collect_transfer_abi.py",
+  "git_branch": "main",
+  "ledger_source": "perf_results/740c78a/transfer_phase1/transfer_ledger.json",
+  "measurement_basis_of_numbers_below": "steady-state medians of the per-frame records of the referenced transfer ledger; a field that ledger did not measure is None here",
+  "nvof": {
+    "d2h_bytes_measured_per_frame": 16588800,
+    "d2h_copy_count_measured_per_frame": 1,
+    "flow_d2h_note": "the DLSS host reads motion from host memory, so the flow field has to come back; it is not called zero-copy anywhere",
+    "flow_d2h_status": "BLOCKED_PROVEN",
+    "gpu_context": "native nvof_bridge CUDA context, opened once per session",
+    "h2d_bytes_measured_per_frame": 6220800,
+    "h2d_copy_count_measured_per_frame": 1,
+    "history": "previous-frame surfaces stay on the GPU between frames",
+    "input_format_measured": [
+      "bgr24_host"
+    ],
+    "input_handoff": "BGR24 host pointer -> one cuMemcpyHtoD into a persistent staging buffer -> byte-map kernel into the NVOF input surface",
+    "measurement": "nvof_bridge_get_counters, read either side of the frame",
+    "output_handoff": "float2 flow -> D2H into a host NumPy buffer",
+    "process": "the backend Python process",
+    "process_boundary": "in-process",
+    "shared_gpu_resource_with_decoder": false,
+    "shared_gpu_resource_with_dlss_host": false,
+    "staging_buffer_allocations_in_steady_state": null
+  },
+  "symbol_scan": {
+    "files": [
+      "pipeline.py",
+      "dlss_engine.py",
+      "dlss_service.py",
+      "optical_flow.py",
+      "residual_native.py",
+      "transfer_profiler.py",
+      "native/nvof_bridge.cpp",
+      "native/nvof_bridge.h",
+      "native/residual_bridge.cpp",
+      "native/residual_bridge.h"
+    ],
+    "matched": {},
+    "matches_by_pattern": {
+      "ID3D11Texture2D_shared_resource": [],
+      "ID3D12Device_CreateSharedHandle": [],
+      "ID3D12Resource": [],
+      "OpenSharedHandle": [],
+      "cuIpcGetMemHandle": [],
+      "cuIpcOpenMemHandle": [],
+      "cudaMallocManaged": [],
+      "external_memory_Vulkan": []
+    },
+    "note": "the booleans above are this scan: a pattern that appears nowhere in the production sources is reported as not currently used, which is a statement about this checkout and not about CUDA or D3D12",
+    "patterns": {
+      "ID3D11Texture2D_shared_resource": "SharedResource|D3D11_RESOURCE_MISC_SHARED",
+      "ID3D12Device_CreateSharedHandle": "CreateSharedHandle\\s*\\(",
+      "ID3D12Resource": "ID3D12Resource",
+      "OpenSharedHandle": "OpenSharedHandle",
+      "cuIpcGetMemHandle": "cuIpcGetMemHandle",
+      "cuIpcOpenMemHandle": "cuIpcOpenMemHandle",
+      "cudaMallocManaged": "cudaMallocManaged",
+      "external_memory_Vulkan": "vkGetMemoryWin32HandleProperties|VK_EXTERNAL"
+    }
+  },
+  "untracked_paths": [
+    "perf_results/740c78a/"
+  ],
+  "working_tree_dirty": false,
+  "working_tree_paths": []
+}

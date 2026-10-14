@@ -1,0 +1,269 @@
+{
+  "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+  "execution_schedule": [
+    {
+      "kept": false,
+      "order": [
+        "legacy",
+        "reduced"
+      ],
+      "run": 1
+    },
+    {
+      "kept": true,
+      "order": [
+        "legacy",
+        "reduced"
+      ],
+      "run": 2
+    },
+    {
+      "kept": true,
+      "order": [
+        "reduced",
+        "legacy"
+      ],
+      "run": 3
+    }
+  ],
+  "expected": {
+    "codec": "av1",
+    "fps": 60.0,
+    "frames": 60,
+    "height": 2160,
+    "width": 3840
+  },
+  "gate": [
+    {
+      "actual": true,
+      "expected": true,
+      "ok": true,
+      "what": "legacy run 1 ffprobe reports a complete stream"
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "ok": true,
+      "what": "legacy run 2 ffprobe reports a complete stream"
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "ok": true,
+      "what": "legacy run 3 ffprobe reports a complete stream"
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "ok": true,
+      "what": "reduced run 1 ffprobe reports a complete stream"
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "ok": true,
+      "what": "reduced run 2 ffprobe reports a complete stream"
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "ok": true,
+      "what": "reduced run 3 ffprobe reports a complete stream"
+    },
+    {
+      "actual": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+      "expected": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+      "ok": true,
+      "what": "run 1 video bitstream bit-identical between orders"
+    },
+    {
+      "actual": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+      "expected": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+      "ok": true,
+      "what": "run 2 video bitstream bit-identical between orders"
+    },
+    {
+      "actual": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+      "expected": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+      "ok": true,
+      "what": "run 3 video bitstream bit-identical between orders"
+    },
+    {
+      "actual": true,
+      "expected": true,
+      "ok": true,
+      "what": "one_bitstream_hash_across_every_run_of_both_orders"
+    }
+  ],
+  "generated_by": "tests/unit/collect_transfer_ab.py",
+  "note": "the encoder ran with the same codec and CQ for both orders; the packet counts, durations, resolutions, frame rates and codecs below are ffprobe's own reading of the file each run wrote, and the hashes are of those files",
+  "runs": {
+    "legacy": [
+      {
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e5r1-legacy.mkv",
+          "sha256": "81f7c3985aed5240505c5e830364b6bfe71c908ca3c8f75e4e690da74033aee6"
+        },
+        "position_in_pair": 1,
+        "run": 1
+      },
+      {
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e5r2-legacy.mkv",
+          "sha256": "d675673345205e0505dce0d2e1fb961bc021acc826374b1d134a7ff587f4b477"
+        },
+        "position_in_pair": 1,
+        "run": 2
+      },
+      {
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e5r3-legacy.mkv",
+          "sha256": "ebf1c1809a5fd01865a66c20d719306316e40e7a1cec6df8a73398a56781b424"
+        },
+        "position_in_pair": 2,
+        "run": 3
+      }
+    ],
+    "reduced": [
+      {
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e5r1-reduced.mkv",
+          "sha256": "99c81025dc23752aec32eb539b5809178ae4194e525947564faa3258a053f69a"
+        },
+        "position_in_pair": 2,
+        "run": 1
+      },
+      {
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e5r2-reduced.mkv",
+          "sha256": "80142ab5df9f96d98ae9c52e07e57c3c208fbd308b3cca7b559c9c8fdbf201c1"
+        },
+        "position_in_pair": 2,
+        "run": 2
+      },
+      {
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e5r3-reduced.mkv",
+          "sha256": "671366806ce5c0475655dcb82b2b2d6cd6732fefc3c6b23213797610afbe2fb7"
+        },
+        "position_in_pair": 1,
+        "run": 3
+      }
+    ]
+  },
+  "status": "DONE_PROVEN"
+}

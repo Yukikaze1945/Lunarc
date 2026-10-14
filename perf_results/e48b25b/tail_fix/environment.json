@@ -1,0 +1,59 @@
+{
+  "cuda_version": "13.4",
+  "native_libraries": {
+    "dlssnr_host.dll": {
+      "sha256": "9ec879388e573bebbf7886dccbdc885641d945420fdf4bb80bac6c657094160c",
+      "bytes": 54272
+    },
+    "nvngx_dlssnr.dll": {
+      "sha256": "e16bcf15e16e13f527491cdf7845b2fe6521a738d8f7c9c721866a8496e1fc8e",
+      "bytes": 165840496
+    },
+    "native/nvof_bridge.dll": {
+      "sha256": "16fafec0de798001818c59994b74dbe6eb096553c4ff931503f0473f443bb98c",
+      "bytes": 156672
+    },
+    "native/residual_bridge.dll": {
+      "sha256": "31945afa323f932b1e11589ef432f580cc04c5dca68d1ae0e024d8b0491ccca7",
+      "bytes": 198144
+    }
+  },
+  "utc_timestamp": "2026-09-20T00:58:21Z",
+  "platform": "win32",
+  "os": "Windows-10-10.0.26220-SP0",
+  "cpu_model": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+  "cpu_arch": "AMD64",
+  "cpu_logical_cores": 16,
+  "ram_total_bytes": 42852945920,
+  "python": "3.11.15",
+  "numpy": "2.4.6",
+  "opencv": "5.0.0",
+  "ffmpeg": "8.1.2-full_build-www.gyan.dev",
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 5060 Ti",
+    "driver_version": "616.92",
+    "memory_total_bytes": 17103323136
+  },
+  "rss_bytes": 53960704,
+  "peak_rss_bytes": 55799808,
+  "gpu_total_memory_used_bytes": 1350565888,
+  "process_gpu_memory_bytes": null,
+  "process_gpu_memory_source": "unavailable: this pid is not listed by nvidia-smi --query-compute-apps",
+  "kind": "tail_fix_validation",
+  "code_under_test_sha": "e48b25ba63c7503d1a3b04c0850d8636de5efe93",
+  "branch": "main",
+  "round_commits": {
+    "fix(native): make residual plan creation exception-safe": "ae95769d93912a87d97afb878bb4831b44b3fcd3",
+    "test(native): add residual creation failure regressions": "adbc7bd162c3eb4a8a1e1ca99986719db814fbbf",
+    "fix(metrics): fit rss growth on steady-state frame window": "769d6403904085341a6c4f0788cc6e8bc861ca28",
+    "test(metrics): add steady-state rss fit regressions": "33d2bbb841e7b46cab5d41a1cd5bc600c260036a",
+    "fix(native): keep the fault-injection build script's prose out of the command path": "e48b25ba63c7503d1a3b04c0850d8636de5efe93"
+  },
+  "argv": [
+    "scratch/build_tail_fix.py"
+  ],
+  "produced_at": "2026-09-20T08:58:20+0800",
+  "production_dll_sha256": "31945afa323f932b1e11589ef432f580cc04c5dca68d1ae0e024d8b0491ccca7",
+  "fault_test_dll_sha256": "fcf7620e0636eb4d3af3de2db3bc83b3b40ffc77c261d7af65ba64da1b2bdaa0",
+  "no_video_committed_here": true
+}

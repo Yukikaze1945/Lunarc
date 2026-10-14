@@ -132,7 +132,7 @@ class HdrNRStage:
         if self.core:
             self.core.strength = float(settings.get('residual_strength', 1))
             self.core.post_control.update_controls(controls_from_settings(settings))
-            self.core.temporal_control.controls = temporal_from_settings(settings)
+            self.core.temporal_control.update_controls(temporal_from_settings(settings))
             if hasattr(self.core, 'multi'):
                 self.core.multi = self.multi
                 if self.core.fusion and not self.core.fusion.update_parameters(self.multi, self.core.strength):
@@ -191,25 +191,23 @@ class Tail:
             output = self.resize.texture(output)
         if self.bridge is None:
             self.bridge = GpuHdrBridge(d3d12_device=self.live.d3d12_device(),cuda_context=frame.cuda_context,
-                full_width=target[0],full_height=target[1],working_width=target[0],working_height=target[1],paper_white_scrgb=1.)
+                full_width=target[0],full_height=target[1],working_width=target[0],working_height=target[1],paper_white_scrgb=1.,purpose='encode')
         if self.encoder is None:
             self.lib = chain.b['nvenc']
             bound = gtx._bind_optional(self.lib,htx._HDR_NVENC)
             if 'nvenc_hdr_open' not in bound or 'nvenc_encode_p010' not in bound:
                 raise RuntimeError('TrueHDR export requires the existing HDR10 NVENC bridge')
             struct = chain.plan['struct']
-            if struct['codec'] != b'hevc_nvenc':
-                raise ValueError('TrueHDR output requires HEVC Main10')
             options = htx.HdrOptions(struct_size=C.sizeof(htx.HdrOptions))
             for key in ('codec','preset','tune','multipass','rate_control','constant_quality','bitrate','gop'):
                 setattr(options,key,struct.get(key))
-            options.profile = b'main10'
+            options.profile = struct['profile']
             options.extra_options = gtx.extra_options_blob([(k,v) for k,v in chain.plan['av_options']
                                                            if k not in htx.LOCKED_HDR_AV_OPTIONS]) or None
             rate,tb = encoder_timing({} if getattr(chain,'ordered_framegen',None) else getattr(chain,'framegen_settings',{}),
                                     getattr(chain,'_encoder_fps',chain.fps),(frame.time_base_num,frame.time_base_den))
             handle = C.c_void_p()
-            rc = self.lib.nvenc_hdr_open(frame.cuda_context,*target,*rate,*tb,os.fsencode(chain.encoder_output),
+            rc = htx.open_p010_encoder(self.lib,False,frame.cuda_context,*target,*rate,*tb,os.fsencode(chain.encoder_output),
                                          C.byref(options),None,C.byref(handle))
             if rc: gtx._bridge_error(self.lib,'nvenc_last_error',rc)
             self.encoder = handle
@@ -250,7 +248,7 @@ class Tail:
             if not self.lib.nvenc_hdr_get_counters(self.encoder,C.byref(counts)):
                 counters = _fields(counts)
         return dict(effect=self.effect.report() if self.effect else None,encoder_contract=contract,encoder_counters=counters,
-                    output_contract='HEVC Main10 / P010 / BT.2020 / PQ / limited range',
+                    output_contract=f"{contract['codec']} / {contract['profile_name']} / P010 / BT.2020 / PQ / limited range" if contract else 'P010 / BT.2020 / PQ / limited range',
                     static_metadata='No source HDR metadata or measured MaxCLL invented')
 
     def close(self):

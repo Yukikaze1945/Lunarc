@@ -1,0 +1,34 @@
+{
+  "bitstream_identical": true,
+  "container_diff": {
+    "all_diffs_in_header": true,
+    "differing_bytes": 44,
+    "first_cluster_offset": 556,
+    "highest_differing_offset": 480,
+    "size_a": 5400011,
+    "size_b": 5400011,
+    "sizes_equal": true
+  },
+  "container_identical": false,
+  "frames_per_run": 15,
+  "note": "the only byte differences are inside the Matroska header, before the first Cluster, which is where the muxer writes its per-run random SegmentUID; the demuxed AV1 video bitstreams hash equal",
+  "per_run": {
+    "legacy": {
+      "bitstream_sha256": "284cb1be28892778cd6013bf0b75cc27b45231fb1b186e11a050ecba1d8344eb",
+      "bytes": 5400011,
+      "container_sha256": "3757dc44ed793e21c3a9cd67013280bd0d38097ea1bdb84f4118afc24963d638",
+      "matches_the_record": true,
+      "path": "bench_out/ledger_legacy_50_ab-e1r1-legacy.mkv"
+    },
+    "reduced": {
+      "bitstream_sha256": "284cb1be28892778cd6013bf0b75cc27b45231fb1b186e11a050ecba1d8344eb",
+      "bytes": 5400011,
+      "container_sha256": "d0e7bb8d0857552d28ad99f66b73f871be070bf1cc8b023e9ffbdd53afb84d07",
+      "matches_the_record": true,
+      "path": "bench_out/ledger_reduced_50_ab-e1r1-reduced.mkv"
+    }
+  },
+  "record_reproduced": true,
+  "runs_compared": 1,
+  "working_scale": 0.5
+}

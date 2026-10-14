@@ -416,9 +416,16 @@ int main() {
         const std::string kind=bytes==4?"RGBA8":"scRGB FP16";
         auto base=scene(bytes), duplicate=base;
         auto prime=residual_candidate(base,bytes,0.08f,true), jitter=residual_candidate(base,bytes,0.06f,true);
+        const uint64_t scene_bytes=gpu_temporal_allocated_device_bytes(p.bridge);
         report_observe(p,base,1,GPU_TEMPORAL_FIRST,(kind+" first frame").c_str());
+        check(gpu_temporal_allocated_device_bytes(p.bridge)==scene_bytes,
+            "scene observation allocates no full-size history/output/candidate");
         std::vector<uint8_t> out;GpuTemporalProcessReport pr{};
         bool ok=p.process(base,prime,0.0f,1,&out,&pr);
+        const uint64_t processing_bytes=gpu_temporal_allocated_device_bytes(p.bridge);
+        check(processing_bytes>scene_bytes,"first process allocates temporal history lazily");
+        std::printf("allocations %s scene=%llu processing=%llu\n",kind.c_str(),
+            static_cast<unsigned long long>(scene_bytes),static_cast<unsigned long long>(processing_bytes));
         GpuTemporalObserveReport after_first_reset{};
         const bool first_reset_continues=p.observe(duplicate,0,&after_first_reset);
         check(ok&&out==prime&&first_reset_continues&&

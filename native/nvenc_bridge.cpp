@@ -28,6 +28,8 @@ extern "C" {
 #include <string>
 #include <vector>
 
+#include "nvenc_av1_metadata.h"
+
 using Microsoft::WRL::ComPtr;
 
 namespace {
@@ -365,6 +367,7 @@ struct NvencBridge {
     NvencHdrMetadata hdr_metadata{0};
     NvencHdrCounters hdr_counters{0, 0, 0, 0, 0, 0, 0, 0};
     NvencHdrContract hdr_contract{0};
+    NvencP010MetadataStatus metadata_status{0};
     /* In-bitstream metadata writer state. hdr_sei_wanted is only true when the
      * source declared something this writer can serialise; hdr_sei_blocked
      * records the honest refusal when it cannot. Both are decided once at the
@@ -384,6 +387,7 @@ namespace {
 // prefix SEI NAL unit; only ever reached from an HDR bridge that was given
 // metadata it could serialise, so the SDR packets stay exactly as received.
 int hdr_sei_apply(NvencBridge* b);
+int hdr_av1_apply(NvencBridge* b);
 
 bool wait_gpu(NvencBridge* b) {    if (b->fence->GetCompletedValue() >= b->fence_value) return true;
     HRESULT hr = b->fence->SetEventOnCompletion(b->fence_value, b->event);
@@ -415,7 +419,8 @@ int write_packet(NvencBridge* b) {
         if (rc < 0) { set_av_error("receive packet", rc); return rc; }
         /* Receive-packet-before-mux boundary. An SDR bridge, and an HDR bridge
          * whose source declared no metadata, never enter this branch. */
-        if (b->hdr_mode && b->hdr_sei_wanted && hdr_sei_apply(b) < 0) return -1;
+        if (b->hdr_mode && b->hdr_sei_wanted &&
+            (b->codec_name == "av1_nvenc" ? hdr_av1_apply(b) : hdr_sei_apply(b)) < 0) return -1;
         av_packet_rescale_ts(b->packet, b->encoder->time_base,
                              b->stream->time_base);
         b->packet->stream_index = b->stream->index;
@@ -583,7 +588,10 @@ int configure_encoder(NvencBridge* b, const char* codec,
         if (!item.value || !*item.value) continue;
         const int rc = av_opt_set(b->encoder, item.name, item.value,
                                   AV_OPT_SEARCH_CHILDREN);
-        if (rc < 0) { set_av_error(item.name, rc); return -1; }
+        if (rc < 0) {
+            const std::string step = b->codec_name + ": " + item.name + "=" + item.value;
+            set_av_error(step.c_str(), rc); return -1;
+        }
     }
     if (options->constant_quality > 0) {
         const int rc = av_opt_set_int(b->encoder, "cq", options->constant_quality,
@@ -1716,16 +1724,21 @@ int hdr_sei_apply(NvencBridge* b) {
 // would refuse a working encoder. NVENC switches on the generic
 // AVCodecContext field, so a name resolution that left a different value there
 // is corrected before the open.
-int hdr_apply_profile(AVCodecContext* encoder) {
-    int rc = av_opt_set(encoder, "profile", kHdrProfileName,
-                        AV_OPT_SEARCH_CHILDREN);
-    if (encoder->profile != kHdrProfile) {
-        const int plain = av_opt_set(encoder, "profile", kHdrProfileName, 0);
+int hdr_apply_profile(AVCodecContext* encoder, const P010ColorContract& contract) {
+    const int profile = encoder->codec_id == AV_CODEC_ID_AV1 ? AV_PROFILE_AV1_MAIN : kHdrProfile;
+    const char* profile_name = contract.profile_name;
+    int rc = encoder->codec_id == AV_CODEC_ID_AV1
+        ? av_opt_set_int(encoder, "profile", profile, AV_OPT_SEARCH_CHILDREN)
+        : av_opt_set(encoder, "profile", profile_name, AV_OPT_SEARCH_CHILDREN);
+    if (encoder->profile != profile) {
+        const int plain = encoder->codec_id == AV_CODEC_ID_AV1
+            ? av_opt_set_int(encoder, "profile", profile, 0)
+            : av_opt_set(encoder, "profile", profile_name, 0);
         if (rc < 0) rc = plain;
     }
     if (rc < 0) { set_av_error("profile", rc); return -1; }
-    if (encoder->profile != kHdrProfile) encoder->profile = kHdrProfile;
-    const char* named = avcodec_profile_name(AV_CODEC_ID_HEVC, encoder->profile);
+    if (encoder->profile != profile) encoder->profile = profile;
+    const char* named = avcodec_profile_name(encoder->codec_id, encoder->profile);
     if (!named || !*named) {
         std::snprintf(last_error, sizeof(last_error),
                       "this FFmpeg build does not name profile %d: refusing "
@@ -1764,7 +1777,10 @@ int configure_hdr_encoder(NvencBridge* b, const NvencHdrOptions* options,
         if (!item.value || !*item.value) continue;
         const int rc = av_opt_set(b->encoder, item.name, item.value,
                                   AV_OPT_SEARCH_CHILDREN);
-        if (rc < 0) { set_av_error(item.name, rc); return -1; }
+        if (rc < 0) {
+            const std::string step = std::string(contract.codec) + ": " + item.name + "=" + item.value;
+            set_av_error(step.c_str(), rc); return -1;
+        }
     }
     if (options->constant_quality > 0) {
         const int rc = av_opt_set_int(b->encoder, "cq", options->constant_quality,
@@ -1791,7 +1807,7 @@ int configure_hdr_encoder(NvencBridge* b, const NvencHdrOptions* options,
                 rc = av_opt_set(b->encoder, name.c_str(), value.c_str(), 0);
             if (rc == AVERROR_OPTION_NOT_FOUND) {
                 std::snprintf(last_error, sizeof(last_error),
-                              "encoder %s has no option %s", kHdrCodec,
+                              "encoder %s has no option %s", contract.codec,
                               name.c_str());
                 return -1;
             }
@@ -1806,7 +1822,7 @@ int configure_hdr_encoder(NvencBridge* b, const NvencHdrOptions* options,
 
     b->encoder->pix_fmt = AV_PIX_FMT_CUDA;
     b->encoder->sw_pix_fmt = static_cast<enum AVPixelFormat>(contract.sw_format);
-    if (hdr_apply_profile(b->encoder) < 0) return -1;
+    if (hdr_apply_profile(b->encoder, contract) < 0) return -1;
     const int32_t profile_value = b->encoder->profile;
     b->encoder->color_range = static_cast<enum AVColorRange>(contract.color_range);
     b->encoder->color_primaries =
@@ -1925,7 +1941,7 @@ int attach_stream_hdr_metadata(NvencBridge* b) {
 }
 
 int create_ffmpeg_hdr(NvencBridge* b, const NvencHdrOptions* options,
-                      const P010ColorContract& contract) {
+                      const P010ColorContract& contract, bool with_muxer = true) {
     ContextScope scope(b);
     if (!scope.ok) return -1;
     int rc = av_hwdevice_ctx_create(&b->hw_device, AV_HWDEVICE_TYPE_CUDA,
@@ -1944,6 +1960,7 @@ int create_ffmpeg_hdr(NvencBridge* b, const NvencHdrOptions* options,
     b->hdr_contract.hw_frames_sw_format = frames->sw_format;
     b->hdr_contract.hw_frames_pool_size = frames->initial_pool_size;
     if (configure_hdr_encoder(b, options, contract) < 0) return -1;
+    if (!with_muxer) return 0;  // Real driver capability probe; no output file.
     if (open_muxer(b, b->output_path.c_str()) < 0) return -1;
     std::snprintf(b->hdr_contract.container, sizeof(b->hdr_contract.container),
                   "%s", b->format && b->format->oformat && b->format->oformat->name
@@ -2090,6 +2107,40 @@ extern "C" NVENC_BRIDGE_API int32_t nvenc_option_available(const char* codec,
                                    AV_OPT_SEARCH_CHILDREN) ? 1 : 0;
     avcodec_free_context(&probe);
     return rc;
+}
+
+extern "C" NVENC_BRIDGE_API int32_t nvenc_option_value_available(
+    const char* codec, const char* name, const char* value) {
+    last_error[0] = 0;
+    if (!codec || !*codec || !name || !*name || !value || !*value) return -1;
+    const AVCodec* found = avcodec_find_encoder_by_name(codec);
+    if (!found) {
+        std::snprintf(last_error, sizeof(last_error),
+                      "encoder %s not available in this FFmpeg build", codec);
+        return -1;
+    }
+    AVCodecContext* probe = avcodec_alloc_context3(found);
+    if (!probe) { fail("alloc option value probe", AVERROR(ENOMEM)); return -1; }
+    // Unsupported values are an expected capability answer, not an export error.
+    // Change only this disposable context's verbosity, never the global logger.
+    probe->log_level_offset = AV_LOG_MAX_OFFSET;
+    void* target = nullptr;
+    const AVOption* option = av_opt_find2(probe, name, nullptr, 0,
+                                         AV_OPT_SEARCH_CHILDREN, &target);
+    int rc = AVERROR_OPTION_NOT_FOUND;
+    if (option && option->type == AV_OPT_TYPE_INT && option->unit &&
+        std::strspn(value, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_") == std::strlen(value) &&
+        (value[0] < '0' || value[0] > '9')) {
+        // Named integer constants such as UHQ: the expression parser otherwise
+        // logs a global error even with this context's log offset suppressed.
+        const AVOption* constant = av_opt_find(target, value, option->unit, 0, 0);
+        if (constant && constant->type == AV_OPT_TYPE_CONST)
+            rc = av_opt_set_int(target, name, constant->default_val.i64, 0);
+    } else if (option) {
+        rc = av_opt_set(probe, name, value, AV_OPT_SEARCH_CHILDREN);
+    }
+    avcodec_free_context(&probe);
+    return rc >= 0 ? 1 : 0;
 }
 
 extern "C" NVENC_BRIDGE_API int32_t nvenc_open(void* d3d12_device,
@@ -2267,9 +2318,15 @@ extern "C" NVENC_BRIDGE_API int32_t nvenc_hdr_get_defaults(
     return 0;
 }
 
-extern "C" NVENC_BRIDGE_API int32_t nvenc_hdr_capability(void* cuda_context,
+static int32_t p010_capability_impl(const char* codec_name, void* cuda_context,
     uint32_t width, uint32_t height, NvencHdrCapability* out_capability) {
     last_error[0] = 0;
+    const bool av1 = codec_name && std::strcmp(codec_name, "av1_nvenc") == 0;
+    if (!av1 && (!codec_name || std::strcmp(codec_name, kHdrCodec))) {
+        fail("unsupported P010 codec", EINVAL); return -1;
+    }
+    const int profile_value = av1 ? AV_PROFILE_AV1_MAIN : kHdrProfile;
+    const char* profile_name = av1 ? "main" : kHdrProfileName;
     if (!out_capability ||
         out_capability->struct_size != sizeof(NvencHdrCapability)) {
         fail("nvenc_hdr_capability struct_size", EINVAL);
@@ -2277,13 +2334,13 @@ extern "C" NVENC_BRIDGE_API int32_t nvenc_hdr_capability(void* cuda_context,
     }
     *out_capability = NvencHdrCapability{sizeof(NvencHdrCapability)};
     std::snprintf(out_capability->encoder_name,
-                  sizeof(out_capability->encoder_name), "%s", kHdrCodec);
+                  sizeof(out_capability->encoder_name), "%s", codec_name);
 
-    const AVCodec* codec = avcodec_find_encoder_by_name(kHdrCodec);
+    const AVCodec* codec = avcodec_find_encoder_by_name(codec_name);
     if (codec) out_capability->encoder_present = 1;
     else {
         std::snprintf(last_error, sizeof(last_error),
-                      "encoder %s not available in this FFmpeg build", kHdrCodec);
+                      "encoder %s not available in this FFmpeg build", codec_name);
         return -1;
     }
 
@@ -2301,7 +2358,7 @@ extern "C" NVENC_BRIDGE_API int32_t nvenc_hdr_capability(void* cuda_context,
     }
     for (const AVProfile* profile = codec->profiles;
          profile && profile->profile != AV_PROFILE_UNKNOWN; ++profile) {
-        if (profile->profile == kHdrProfile) {
+        if (profile->profile == profile_value) {
             out_capability->main10_profile_supported = 1;
             std::snprintf(out_capability->profile_name,
                           sizeof(out_capability->profile_name), "%s",
@@ -2321,15 +2378,16 @@ extern "C" NVENC_BRIDGE_API int32_t nvenc_hdr_capability(void* cuda_context,
          * AVCodecContext::profile stays AV_PROFILE_UNKNOWN, so the plain search
          * is what lands on the generic field NVENC actually switches on. */
         if (!out_capability->main10_profile_supported) {
-            int rc = av_opt_set(probe, "profile", kHdrProfileName,
-                                AV_OPT_SEARCH_CHILDREN);
-            if (probe->profile != kHdrProfile) {
-                const int plain = av_opt_set(probe, "profile", kHdrProfileName, 0);
+            int rc = av1 ? av_opt_set_int(probe, "profile", profile_value, AV_OPT_SEARCH_CHILDREN)
+                         : av_opt_set(probe, "profile", profile_name, AV_OPT_SEARCH_CHILDREN);
+            if (probe->profile != profile_value) {
+                const int plain = av1 ? av_opt_set_int(probe, "profile", profile_value, 0)
+                                      : av_opt_set(probe, "profile", profile_name, 0);
                 if (rc < 0) rc = plain;
             }
-            const char* resolved = avcodec_profile_name(AV_CODEC_ID_HEVC,
+            const char* resolved = avcodec_profile_name(codec->id,
                                                        probe->profile);
-            if (rc >= 0 && probe->profile == kHdrProfile && resolved) {
+            if (rc >= 0 && probe->profile == profile_value && resolved) {
                 out_capability->main10_profile_supported = 1;
                 std::snprintf(out_capability->profile_name,
                               sizeof(out_capability->profile_name), "%s",
@@ -2340,7 +2398,7 @@ extern "C" NVENC_BRIDGE_API int32_t nvenc_hdr_capability(void* cuda_context,
                               resolved ? resolved : "");
                 std::snprintf(last_error, sizeof(last_error),
                     "Main 10 profile not resolved: av_opt_set(profile=%s) rc=%d, "
-                    "encoder landed on %d (%s)", kHdrProfileName, rc,
+                    "encoder landed on %d (%s)", profile_name, rc,
                     probe->profile, resolved ? resolved : "unnamed");
             }
         }
@@ -2390,8 +2448,10 @@ static int32_t nvenc_p010_open_impl(void* cuda_context,
     uint32_t width, uint32_t height, uint32_t fps_num, uint32_t fps_den,
     int32_t time_base_num, int32_t time_base_den, const char* utf8_output_path,
     const NvencHdrOptions* options, const NvencHdrMetadata* metadata,
-    NvencBridge** out_bridge, bool is_hdr) {
-    const P010ColorContract& contract = is_hdr ? kHdrP010Contract : kSdr10P010Contract;
+    NvencBridge** out_bridge, bool is_hdr, bool legacy = true) {
+    P010ColorContract contract = is_hdr ? kHdrP010Contract : kSdr10P010Contract;
+    const bool av1 = !legacy && options && options->codec && std::strcmp(options->codec, "av1_nvenc") == 0;
+    if (av1) { contract.codec = "av1_nvenc"; contract.profile_name = "main"; }
     last_error[0] = 0;
     if (out_bridge) *out_bridge = nullptr;
     if (!cuda_context || !out_bridge || !utf8_output_path || !options ||
@@ -2418,6 +2478,9 @@ static int32_t nvenc_p010_open_impl(void* cuda_context,
                 return -1;
             }
         }
+    }
+    if (options->constant_quality < 0 || options->constant_quality > (av1 ? 63 : 51)) {
+        fail("P010 CQ out of codec range", EINVAL); return -1;
     }
     // P010 stores two bytes per sample, so a row is width*2 bytes and an
     // AVFrame linesize has to stay inside a positive int.
@@ -2475,7 +2538,7 @@ static int32_t nvenc_p010_open_impl(void* cuda_context,
     b->height = height;
     b->fps = AVRational{static_cast<int>(fps_num), static_cast<int>(fps_den)};
     b->time_base = AVRational{time_base_num, time_base_den};
-    b->codec_name = kHdrCodec;
+    b->codec_name = contract.codec;
     b->output_path = utf8_output_path;
     b->context = static_cast<CUcontext>(cuda_context);
     if (metadata) b->hdr_metadata = *metadata;
@@ -2483,11 +2546,19 @@ static int32_t nvenc_p010_open_impl(void* cuda_context,
     // The in-bitstream writer decides here, once, before any encoder, muxer or
     // output file exists: a declared complete mastering display that cannot be
     // placed on the ST 2086 grid refuses the open and writes no file.
-    if (is_hdr && hdr_sei_prepare(b) < 0) {
+    b->metadata_status.struct_size = sizeof(NvencP010MetadataStatus);
+    b->metadata_status.codec_kind = av1 ? 2 : 1;
+    b->metadata_status.color_mode = is_hdr ? 1 : 0;
+    b->metadata_status.writer_available = 1;
+    Bytes av1_mastering, av1_light;
+    const bool metadata_ok = !is_hdr || (av1 ?
+        av1_prepare(b->hdr_metadata, b->metadata_status, av1_mastering, av1_light) : hdr_sei_prepare(b) == 0);
+    if (av1 && is_hdr) b->hdr_sei_wanted = b->metadata_status.metadata_requested != 0;
+    if (!metadata_ok) {
         std::snprintf(last_error, sizeof(last_error),
                       "nvenc_hdr_open refused: the declared HDR10 static "
                       "metadata cannot be authored into the bitstream (%s)",
-                      b->hdr_sei.detail);
+                      av1 ? b->metadata_status.detail : b->hdr_sei.detail);
         delete b;
         return -1;
     }
@@ -2504,7 +2575,7 @@ static int32_t nvenc_p010_open_impl(void* cuda_context,
     c.height = height;
     c.requested_pix_fmt = AV_PIX_FMT_CUDA;
     c.requested_sw_pix_fmt = contract.sw_format;
-    c.requested_profile = kHdrProfile;
+    c.requested_profile = av1 ? AV_PROFILE_AV1_MAIN : kHdrProfile;
     c.requested_bits_per_raw_sample = kHdrBitsPerSample;
     c.requested_color_range = contract.color_range;
     c.requested_color_primaries = contract.color_primaries;
@@ -2762,4 +2833,88 @@ extern "C" NVENC_BRIDGE_API int32_t nvenc_hdr_sei_get(NvencBridge* b,
     }
     *out_status = b->hdr_sei;
     return 0;
+}
+
+extern "C" NVENC_BRIDGE_API uint32_t nvenc_p010_abi_version(void) { return NVENC_P010_ABI_VERSION; }
+extern "C" NVENC_BRIDGE_API int32_t nvenc_hdr_capability(void* context,
+    uint32_t width, uint32_t height, NvencHdrCapability* out) {
+    return p010_capability_impl(kHdrCodec, context, width, height, out);
+}
+extern "C" NVENC_BRIDGE_API int32_t nvenc_p010_capability(void* context,
+    uint32_t width, uint32_t height, const char* codec, NvencP010Capability* out) {
+    if (!out || out->struct_size != sizeof(*out)) { fail("P010 capability layout",EINVAL); return -1; }
+    static_assert(sizeof(NvencP010Capability) == sizeof(NvencHdrCapability), "capability layout");
+    NvencHdrCapability temp{}; temp.struct_size=sizeof(temp);
+    const int rc=p010_capability_impl(codec,context,width,height,&temp);
+    if (rc == 0 && temp.supported) {
+        NvencBridge probe{};
+        probe.context=static_cast<CUcontext>(context); probe.width=width; probe.height=height;
+        probe.fps={25,1}; probe.time_base={1,25}; probe.p010_mode=true;
+        P010ColorContract contract=kSdr10P010Contract;
+        const bool av1=std::strcmp(codec,"av1_nvenc") == 0;
+        contract.codec=codec; contract.profile_name=av1 ? "main" : "main10";
+        NvencP010Options options{}; options.struct_size=sizeof(options);
+        options.codec=codec; options.profile=contract.profile_name;
+        options.preset="p4"; options.tune="hq"; options.rate_control="vbr";
+        options.constant_quality=20;
+        temp.supported=load_driver(&probe.cuda) &&
+            create_ffmpeg_hdr(&probe,&options,contract,false) == 0;
+        release_all(&probe);
+    }
+    std::memcpy(out,&temp,sizeof(temp)); return rc;
+}
+extern "C" NVENC_BRIDGE_API int32_t nvenc_p010_open(void* context,
+    uint32_t width,uint32_t height,uint32_t fps_num,uint32_t fps_den,
+    int32_t tb_num,int32_t tb_den,const char* path,const NvencP010Options* options,
+    const NvencHdrMetadata* metadata,int32_t color_mode,NvencBridge** out) {
+    if (color_mode != 0 && color_mode != 1) { if(out) *out=nullptr;
+        fail("P010 color mode must be SDR10=0 or HDR10=1",EINVAL); return -1; }
+    return nvenc_p010_open_impl(context,width,height,fps_num,fps_den,tb_num,tb_den,
+        path,options,metadata,out,color_mode == 1,false);
+}
+extern "C" NVENC_BRIDGE_API int32_t nvenc_p010_get_contract(NvencBridge* b,NvencP010Contract* out) {
+    return nvenc_hdr_get_contract(b,out);
+}
+extern "C" NVENC_BRIDGE_API int32_t nvenc_p010_get_metadata_status(NvencBridge* b,NvencP010MetadataStatus* out) {
+    if(!b || !out || out->struct_size != sizeof(*out) || !b->p010_mode) return -1;
+    if(b->codec_name != "av1_nvenc") {
+        auto& s=b->metadata_status; const auto& old=b->hdr_sei;
+        s.metadata_requested=old.metadata_requested; s.mastering_serialized=old.mastering_serialized;
+        s.content_light_serialized=old.content_light_serialized; s.error=old.error;
+        s.packets_seen=old.packets_seen; s.mastering_inserted=old.mastering_inserted;
+        s.content_light_inserted=old.content_light_inserted;
+        s.mastering_already_present=old.mastering_already_present;
+        s.content_light_already_present=old.content_light_already_present; s.bytes_inserted=old.bytes_inserted;
+        std::snprintf(s.detail,sizeof(s.detail),"%s",old.detail);
+    }
+    *out=b->metadata_status; return 0;
+}
+extern "C" NVENC_BRIDGE_API int32_t nvenc_av1_metadata_apply_packet(
+    const NvencHdrMetadata* md,const uint8_t* in,uint32_t size,uint8_t* out,uint32_t capacity,
+    uint32_t* out_size,NvencP010MetadataStatus* status) {
+    if(!md || md->struct_size != sizeof(*md) || !in || !size || !out_size ||
+       !status || status->struct_size != sizeof(*status)) return -1;
+    *status=NvencP010MetadataStatus{}; *out_size=0;
+    Bytes result;
+    if(!av1_apply(*md,in,size,result,*status)) return -1;
+    *out_size=static_cast<uint32_t>(result.size());
+    if(!out || capacity < result.size()) return 1;
+    std::memcpy(out,result.data(),result.size()); return 0;
+}
+namespace {
+int hdr_av1_apply(NvencBridge* b) {
+    Bytes result;
+    if(!av1_apply(b->hdr_metadata,b->packet->data,static_cast<uint32_t>(b->packet->size),result,b->metadata_status)) {
+        std::snprintf(last_error,sizeof(last_error),"AV1 HDR metadata: %s",b->metadata_status.detail);
+        b->failed=true; return -1;
+    }
+    if(result.size() == static_cast<size_t>(b->packet->size)) return 0;
+    AVBufferRef* ref=av_buffer_alloc(result.size()+AV_INPUT_BUFFER_PADDING_SIZE);
+    if(!ref) { fail("AV1 metadata packet allocation",ENOMEM); return -1; }
+    std::memcpy(ref->data,result.data(),result.size());
+    std::memset(ref->data+result.size(),0,AV_INPUT_BUFFER_PADDING_SIZE);
+    av_buffer_unref(&b->packet->buf); b->packet->buf=ref; b->packet->data=ref->data;
+    b->packet->size=static_cast<int>(result.size()); b->hdr_contract.metadata_written_to |= 32;
+    return 0;
+}
 }

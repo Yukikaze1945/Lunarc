@@ -1,0 +1,114 @@
+{
+  "quick:A": {
+    "ok": true,
+    "checks": {
+      "packets": true,
+      "resolution": true,
+      "duration_within_1pct": true,
+      "fps_matches_source": true
+    },
+    "packets": 60,
+    "expected_frames": 60,
+    "duration_sec": 1.0,
+    "fps": 60.0,
+    "codec": "av1",
+    "width": 3840,
+    "height": 2160
+  },
+  "quick:B": {
+    "ok": true,
+    "checks": {
+      "packets": true,
+      "resolution": true,
+      "duration_within_1pct": true,
+      "fps_matches_source": true
+    },
+    "packets": 60,
+    "expected_frames": 60,
+    "duration_sec": 1.0,
+    "fps": 60.0,
+    "codec": "av1",
+    "width": 3840,
+    "height": 2160
+  },
+  "quick:C": {
+    "ok": true,
+    "checks": {
+      "packets": true,
+      "resolution": true,
+      "duration_within_1pct": true,
+      "fps_matches_source": true
+    },
+    "packets": 60,
+    "expected_frames": 60,
+    "duration_sec": 1.0,
+    "fps": 60.0,
+    "codec": "av1",
+    "width": 3840,
+    "height": 2160
+  },
+  "quick:D": {
+    "ok": true,
+    "checks": {
+      "packets": true,
+      "resolution": true,
+      "duration_within_1pct": true,
+      "fps_matches_source": true
+    },
+    "packets": 60,
+    "expected_frames": 60,
+    "duration_sec": 1.0,
+    "fps": 60.0,
+    "codec": "av1",
+    "width": 3840,
+    "height": 2160
+  },
+  "quick:E": {
+    "ok": true,
+    "checks": {
+      "packets": true,
+      "resolution": true,
+      "duration_within_1pct": true,
+      "fps_matches_source": true
+    },
+    "packets": 60,
+    "expected_frames": 60,
+    "duration_sec": 1.0,
+    "fps": 60.0,
+    "codec": "av1",
+    "width": 3840,
+    "height": 2160
+  },
+  "sustained:A": {
+    "ok": true,
+    "checks": {
+      "packets": true,
+      "resolution": true,
+      "duration_within_1pct": true,
+      "fps_matches_source": true
+    },
+    "packets": 300,
+    "expected_frames": 300,
+    "duration_sec": 5.0,
+    "fps": 60.0,
+    "codec": "av1",
+    "width": 3840,
+    "height": 2160
+  },
+  "sustained:D": {
+    "ok": true,
+    "checks": {
+      "packets": true,
+      "resolution": true,
+      "duration_within_1pct": true,
+      "fps_matches_source": true
+    },
+    "packets": 300,
+    "expected_frames": 300,
+    "duration_sec": 5.0,
+    "fps": 60.0,
+    "codec": "av1",
+    "width": 3840,
+    "height": 2160
+  }
+}

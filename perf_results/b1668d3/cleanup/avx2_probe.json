@@ -1,0 +1,104 @@
+{
+  "avx2_intrinsic_used_by_kernels": false,
+  "capability_reported_only_this_round": true,
+  "cpu": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+  "kernels_compiled_with_arch_flag": false,
+  "legacy_macro_branch_note": "the pre-fix source opened with '#if defined(__AVX2__) return 1', so a build compiled for AVX2 answered yes on every CPU. MSVC does not define that macro for the baseline x64 set this DLL is built for, so on the shipped build the answer came from the bit test under it, which was ERMS.",
+  "legacy_probe": {
+    "answers_with": {
+      "bit": 8,
+      "expression": "((info[1] & (1 << 8)) != 0) ? 1 : 0",
+      "leaf": 7,
+      "register": "EBX"
+    },
+    "gates": {
+      "avx_bit28": false,
+      "compile_time_avx2_macro": true,
+      "leaf7_exists": false,
+      "osxsave_bit27": false,
+      "xgetbv_saves_ymm": false
+    },
+    "source": "git 7411d97:native/residual_bridge.cpp"
+  },
+  "measured_agreement_with_numpy": true,
+  "native_probe": {
+    "answers_with": {
+      "bit": 5,
+      "expression": "((info[1] & (1 << 5)) != 0) ? 1 : 0",
+      "leaf": 7,
+      "register": "EBX"
+    },
+    "gates": {
+      "avx_bit28": true,
+      "compile_time_avx2_macro": false,
+      "leaf7_exists": true,
+      "osxsave_bit27": true,
+      "xgetbv_saves_ymm": true
+    },
+    "probe_answer_on_this_machine": true,
+    "source": "native\\residual_bridge.cpp"
+  },
+  "numpy_runtime_features": {
+    "AVX": true,
+    "AVX2": true,
+    "AVX512F": false,
+    "FMA3": true,
+    "SSE42": true,
+    "X86_V3": true
+  },
+  "rows_where_old_and_new_disagree": [
+    "AMD Phenom II / Core 2 class: ERMS present, AVX2 absent",
+    "Intel Haswell class under an OS that never enabled YMM state saving",
+    "pre-leaf-7 CPU (early x86-64)"
+  ],
+  "rows_where_the_new_probe_is_wrong": [],
+  "rows_where_the_old_probe_was_wrong": [
+    "AMD Phenom II / Core 2 class: ERMS present, AVX2 absent",
+    "Intel Haswell class under an OS that never enabled YMM state saving",
+    "pre-leaf-7 CPU (early x86-64)"
+  ],
+  "semantics_table": [
+    {
+      "avx2_in_hardware": true,
+      "avx2_would_actually_execute": true,
+      "cpu": "measured here: AMD Ryzen 7 5700X (Zen 3)",
+      "new_correct": true,
+      "new_probe_would_answer": 1,
+      "old_correct": true,
+      "old_probe_would_answer": 1,
+      "os_saves_ymm_state": true
+    },
+    {
+      "avx2_in_hardware": false,
+      "avx2_would_actually_execute": false,
+      "cpu": "AMD Phenom II / Core 2 class: ERMS present, AVX2 absent",
+      "new_correct": true,
+      "new_probe_would_answer": 0,
+      "old_correct": false,
+      "old_probe_would_answer": 1,
+      "os_saves_ymm_state": true
+    },
+    {
+      "avx2_in_hardware": true,
+      "avx2_would_actually_execute": false,
+      "cpu": "Intel Haswell class under an OS that never enabled YMM state saving",
+      "new_correct": true,
+      "new_probe_would_answer": 0,
+      "old_correct": false,
+      "old_probe_would_answer": 1,
+      "os_saves_ymm_state": false
+    },
+    {
+      "avx2_in_hardware": false,
+      "avx2_would_actually_execute": false,
+      "cpu": "pre-leaf-7 CPU (early x86-64)",
+      "new_correct": true,
+      "new_probe_would_answer": 0,
+      "old_correct": false,
+      "old_probe_would_answer": null,
+      "os_saves_ymm_state": false
+    }
+  ],
+  "table_note": "every row but the first is a feature set this CPU does not have. The answers are computed from each version's own source text, so the table says what that code means; it is not a measurement.",
+  "this_machine_can_show_the_old_bug": false
+}

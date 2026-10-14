@@ -1,0 +1,298 @@
+{
+  "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+  "execution_count": 7,
+  "frames_per_run": 60,
+  "generated_by": "tests/unit/collect_transfer_performance.py",
+  "identical_across_orders": "fixture, frame count, working scale, NVOF grid and preset, DLSS options, depth convention, encoder, CQ and output resolution; only transfer_mode differs",
+  "kept_pair_count": 14,
+  "kept_run_count_per_mode": {
+    "legacy": 14,
+    "reduced": 14
+  },
+  "kept_run_ids": [
+    2,
+    3
+  ],
+  "legacy_first_kept_count": 7,
+  "per_execution_schedule": [
+    {
+      "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "execution": "recorded-1",
+      "execution_order_index": 1,
+      "execution_schedule": [
+        {
+          "kept": false,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 1
+        },
+        {
+          "kept": true,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 2
+        },
+        {
+          "kept": true,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 3
+        }
+      ],
+      "protocol": {
+        "name": "counterbalanced-kept-runs-ab",
+        "version": 2
+      },
+      "source_artifact": "execution_01_transfer_ab_benchmark.json",
+      "unpoolable_reasons": []
+    },
+    {
+      "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "execution": "recorded-2",
+      "execution_order_index": 2,
+      "execution_schedule": [
+        {
+          "kept": false,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 1
+        },
+        {
+          "kept": true,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 2
+        },
+        {
+          "kept": true,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 3
+        }
+      ],
+      "protocol": {
+        "name": "counterbalanced-kept-runs-ab",
+        "version": 2
+      },
+      "source_artifact": "execution_02_transfer_ab_benchmark.json",
+      "unpoolable_reasons": []
+    },
+    {
+      "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "execution": "recorded-3",
+      "execution_order_index": 3,
+      "execution_schedule": [
+        {
+          "kept": false,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 1
+        },
+        {
+          "kept": true,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 2
+        },
+        {
+          "kept": true,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 3
+        }
+      ],
+      "protocol": {
+        "name": "counterbalanced-kept-runs-ab",
+        "version": 2
+      },
+      "source_artifact": "execution_03_transfer_ab_benchmark.json",
+      "unpoolable_reasons": []
+    },
+    {
+      "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "execution": "recorded-4",
+      "execution_order_index": 4,
+      "execution_schedule": [
+        {
+          "kept": false,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 1
+        },
+        {
+          "kept": true,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 2
+        },
+        {
+          "kept": true,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 3
+        }
+      ],
+      "protocol": {
+        "name": "counterbalanced-kept-runs-ab",
+        "version": 2
+      },
+      "source_artifact": "execution_04_transfer_ab_benchmark.json",
+      "unpoolable_reasons": []
+    },
+    {
+      "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "execution": "recorded-5",
+      "execution_order_index": 5,
+      "execution_schedule": [
+        {
+          "kept": false,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 1
+        },
+        {
+          "kept": true,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 2
+        },
+        {
+          "kept": true,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 3
+        }
+      ],
+      "protocol": {
+        "name": "counterbalanced-kept-runs-ab",
+        "version": 2
+      },
+      "source_artifact": "execution_05_transfer_ab_benchmark.json",
+      "unpoolable_reasons": []
+    },
+    {
+      "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "execution": "recorded-6",
+      "execution_order_index": 6,
+      "execution_schedule": [
+        {
+          "kept": false,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 1
+        },
+        {
+          "kept": true,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 2
+        },
+        {
+          "kept": true,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 3
+        }
+      ],
+      "protocol": {
+        "name": "counterbalanced-kept-runs-ab",
+        "version": 2
+      },
+      "source_artifact": "execution_06_transfer_ab_benchmark.json",
+      "unpoolable_reasons": []
+    },
+    {
+      "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "execution": "recorded-7",
+      "execution_order_index": 7,
+      "execution_schedule": [
+        {
+          "kept": false,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 1
+        },
+        {
+          "kept": true,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 2
+        },
+        {
+          "kept": true,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 3
+        }
+      ],
+      "protocol": {
+        "name": "counterbalanced-kept-runs-ab",
+        "version": 2
+      },
+      "source_artifact": "execution_07_transfer_ab_benchmark.json",
+      "unpoolable_reasons": []
+    }
+  ],
+  "poolable_execution_count": 7,
+  "protocol": {
+    "name": "counterbalanced-kept-runs-ab",
+    "version": 2
+  },
+  "raw_run_count_per_mode": {
+    "legacy": 21,
+    "reduced": 21
+  },
+  "reduced_first_kept_count": 7,
+  "runs_per_mode": 3,
+  "schedule_rule": "odd executions launch legacy first and even executions reduced first; the kept pairs alternate, so each execution's kept pairs hold one pair of each position. Deterministic by (execution index, pair index), not random.",
+  "verdict_uses": "kept runs only",
+  "warmup_run_count_per_mode": {
+    "legacy": 7,
+    "reduced": 7
+  },
+  "warmup_run_ids": [
+    1
+  ]
+}

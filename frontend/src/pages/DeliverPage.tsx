@@ -410,12 +410,12 @@ export const DeliverPage: React.FC<DeliverPageProps> = React.memo(({
     }
 
     if (sdr10On) {
-      if (txSettings.codec !== 'hevc_nvenc' || txSettings.container !== '.mkv')
-        issues.push({ type: 'error', text: 'SDR 10-bit 导出请选择 HEVC · MKV。' })
+      if (!['hevc_nvenc', 'av1_nvenc'].includes(txSettings.codec) || txSettings.container !== '.mkv')
+        issues.push({ type: 'error', text: 'SDR 10-bit 导出请选择 HEVC 或 AV1，封装为 MKV。' })
       if (!['auto', 'p010le', 'yuv420p10le'].includes(txSettings.pixel_format))
         issues.push({ type: 'error', text: 'SDR 10-bit 的像素格式请选择 Auto 或 P010。' })
-      if (!['auto', 'main10'].includes(txSettings.profile))
-        issues.push({ type: 'error', text: 'SDR 10-bit 的 Profile 请选择 Auto 或 Main10。' })
+      if (!['auto', txSettings.codec === 'av1_nvenc' ? 'main' : 'main10'].includes(txSettings.profile))
+        issues.push({ type: 'error', text: '10-bit：HEVC 使用 Main10，AV1 使用 Main。' })
       if (txSettings.color_preset !== 'preserve')
         issues.push({ type: 'error', text: 'SDR 10-bit 请选择保留源色彩。' })
     }
@@ -1414,7 +1414,7 @@ export const DeliverPage: React.FC<DeliverPageProps> = React.memo(({
                       className="w-full bg-lunarc-dark border border-lunarc-border rounded px-2.5 py-1.5 text-xs text-lunarc-text focus:outline-none"
                     >
                       <option value="auto" disabled={Boolean(choices.profile && !choices.profile.includes("auto"))}>自动 (Auto)</option>
-                      <option value="main" disabled={Boolean(choices.profile && !choices.profile.includes("main"))}>Main (8-bit)</option>
+                      <option value="main" disabled={Boolean(choices.profile && !choices.profile.includes("main"))}>Main · {choices.wide ? '10-bit' : '8-bit'}</option>
                       {/* Main 10 is the profile the experimental HDR10 entry encodes;
                           on the 8-bit SDR pipe it would name a profile the frames
                           cannot fill, so it is offered on the branch that means it. */}

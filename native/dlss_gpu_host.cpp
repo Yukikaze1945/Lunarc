@@ -1,9 +1,11 @@
 #define DLSS_GPU_HOST_EXPORTS
 #include "dlss_gpu_host.h"
 #include "nvof_d3d12_interop.h"
+#include "gpu_dred_diagnostics.h"
 
 #include <windows.h>
 #include <d3d12.h>
+#include <dxgi1_4.h>
 #include <d3dcompiler.h>
 #include <nvsdk_ngx.h>
 #include <wrl/client.h>
@@ -119,6 +121,7 @@ struct SharedNgxCore {
     bool hook_installed = false;
     bool core_initialized = false;
     bool snippet_initialized = false;
+    bool owns_active = false;
     Shutdown shutdown = nullptr;
     ComPtr<ID3D12Device> device;
     std::mutex ngx_mutex;
@@ -130,6 +133,17 @@ struct SharedNgxCore {
 
 void error(const char* action, unsigned long code) {
     std::snprintf(last_error, sizeof(last_error), "%s: 0x%08lx", action, code);
+}
+
+void trace_cleanup(const char* action, NVSDK_NGX_Result result) {
+#ifdef DLSS_GPU_HOST_CLEANUP_PROBE
+    std::fprintf(stderr, "NGX cleanup %s: 0x%08lx success=%d\n", action,
+        static_cast<unsigned long>(result), NVSDK_NGX_SUCCEED(result) ? 1 : 0);
+    std::fflush(stderr);
+#else
+    (void)action;
+    (void)result;
+#endif
 }
 
 DWORD WINAPI compatible_module_name(HMODULE requested, LPWSTR destination,
@@ -202,7 +216,7 @@ bool patch_slot(void** slot, void* replacement, void** previous) {
 
 SharedNgxCore::~SharedNgxCore() {
     // No feature may survive the last core owner. NGX APIs are not thread safe.
-    if (snippet_initialized && shutdown) shutdown(device.Get());
+    if (snippet_initialized && shutdown) trace_cleanup("snippet Shutdown1", shutdown(device.Get()));
     bool restored = true;
     if (hook_installed) {
         void* replaced = nullptr;
@@ -210,9 +224,9 @@ SharedNgxCore::~SharedNgxCore() {
         original_module_name = nullptr;
         host_module = nullptr;
     }
-    if (core_initialized) NVSDK_NGX_D3D12_Shutdown1(device.Get());
+    if (core_initialized) trace_cleanup("core Shutdown1", NVSDK_NGX_D3D12_Shutdown1(device.Get()));
     if (snippet && restored) FreeLibrary(snippet);
-    active.store(false);
+    if (owns_active) active.store(false);
 }
 
 NVSDK_NGX_Result safe_core_init(const wchar_t* directory, ID3D12Device* device,
@@ -407,6 +421,7 @@ struct DlssGpuHost {
     uint64_t last_copy_src_pitch = 0, last_copy_row_bytes = 0;
     uint64_t last_copy_fence_value = 0;
     bool processed = false;
+    bool reset_next_evaluate = false;
     bool failed = false;
 #ifdef DLSS_GPU_HOST_FP16_PROBE
     float probe_pre_exposure = 1.0f;
@@ -540,37 +555,25 @@ HRESULT prepare_textures(DlssGpuHost* h) {
     auto desc = h->color->GetDesc();
     h->device->GetCopyableFootprints(&desc, 0, 1, 0,
         &h->color_layout, &rows, &row_bytes, &total);
-    hr = make_buffer(h, total, D3D12_HEAP_TYPE_UPLOAD,
-        D3D12_RESOURCE_STATE_GENERIC_READ, &h->color_upload);
-    if (FAILED(hr)) return hr;
+    // GPU transfer never uses CPU colour/flow staging or host readback. Keep
+    // their footprints, but allocate those buffers only at the matching API.
 #ifdef DLSS_GPU_HOST_FP16_PROBE
     hr = make_buffer(h, total, D3D12_HEAP_TYPE_READBACK,
         D3D12_RESOURCE_STATE_COPY_DEST, &h->color_probe_readback);
     if (FAILED(hr)) return hr;
 #endif
-    // Host motion: an upload buffer holds the tightly packed float32x2 rows the
-    // caller passed; a default-heap buffer is the compute pass's read target (an
-    // upload buffer cannot be bound as a ByteAddressBuffer SRV); the resident
-    // motion texture keeps a readback buffer so a gate can prove the plane
-    // landed. The footprint below is for that readback copy, not for the upload.
-    const uint64_t motion_plane = uint64_t(h->width) * h->height * 8;
-    hr = make_buffer(h, motion_plane, D3D12_HEAP_TYPE_UPLOAD,
-        D3D12_RESOURCE_STATE_GENERIC_READ, &h->motion_upload);
-    if (SUCCEEDED(hr))
-        hr = make_buffer(h, motion_plane, D3D12_HEAP_TYPE_DEFAULT,
-            D3D12_RESOURCE_STATE_COMMON, &h->motion_stage);
     desc = h->motion->GetDesc();
     h->device->GetCopyableFootprints(&desc, 0, 1, 0,
         &h->motion_layout, &rows, &row_bytes, &total);
-    if (SUCCEEDED(hr))
-        hr = make_buffer(h, total, D3D12_HEAP_TYPE_READBACK,
-            D3D12_RESOURCE_STATE_COPY_DEST, &h->motion_readback);
-    if (FAILED(hr)) return hr;
     desc = h->output->GetDesc();
     h->device->GetCopyableFootprints(&desc, 0, 1, 0,
         &h->output_layout, &rows, &row_bytes, &total);
-    return make_buffer(h, total, D3D12_HEAP_TYPE_READBACK,
-        D3D12_RESOURCE_STATE_COPY_DEST, &h->output_readback);
+    return S_OK;
+}
+
+HRESULT ensure_buffer(DlssGpuHost* h, ComPtr<ID3D12Resource>& buffer,
+    uint64_t bytes, D3D12_HEAP_TYPE heap, D3D12_RESOURCE_STATES state) {
+    return buffer ? S_OK : make_buffer(h, bytes, heap, state, &buffer);
 }
 
 void transition(ID3D12GraphicsCommandList* list, ID3D12Resource* resource,
@@ -768,6 +771,50 @@ extern "C" DLSS_GPU_HOST_API const char* dlss_gpu_host_last_error(void) {
     return last_error;
 }
 
+extern "C" DLSS_GPU_HOST_API uint64_t dlss_gpu_host_staging_bytes(DlssGpuHost* h) {
+    if (!h) return 0;
+    uint64_t bytes = 0;
+    for (auto* buffer : {h->color_upload.Get(), h->motion_upload.Get(),
+                        h->motion_stage.Get(), h->motion_readback.Get(),
+                        h->output_readback.Get()})
+        if (buffer) bytes += buffer->GetDesc().Width;
+    return bytes;
+}
+
+extern "C" DLSS_GPU_HOST_API int32_t dlss_gpu_memory_query(void* raw_device, DlssGpuMemoryInfo* out) {
+    if (!raw_device || !out || out->struct_size != sizeof(*out)) return int32_t(E_INVALIDARG);
+    ComPtr<IDXGIFactory4> factory;
+    HRESULT hr = CreateDXGIFactory1(IID_PPV_ARGS(&factory));
+    if (FAILED(hr)) return int32_t(hr);
+    auto luid = static_cast<ID3D12Device*>(raw_device)->GetAdapterLuid();
+    ComPtr<IDXGIAdapter3> adapter;
+    hr = factory->EnumAdapterByLuid(luid, IID_PPV_ARGS(&adapter));
+    if (FAILED(hr)) return int32_t(hr);
+    DXGI_QUERY_VIDEO_MEMORY_INFO local{}, nonlocal{};
+    hr = adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &local);
+    if (SUCCEEDED(hr)) hr = adapter->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL, &nonlocal);
+    if (FAILED(hr)) return int32_t(hr);
+    out->adapter_luid = (uint64_t(uint32_t(luid.HighPart)) << 32) | luid.LowPart;
+    out->local_usage = local.CurrentUsage; out->local_budget = local.Budget;
+    out->nonlocal_usage = nonlocal.CurrentUsage; out->nonlocal_budget = nonlocal.Budget;
+    return 0;
+}
+
+extern "C" DLSS_GPU_HOST_API int32_t dlss_gpu_host_resource_info(DlssGpuHost* h, DlssGpuResourceInfo* out) {
+    if (!h || !out || out->struct_size != sizeof(*out)) return int32_t(E_INVALIDARG);
+    auto allocation = [h](ID3D12Resource* resource) -> uint64_t {
+        if (!resource) return 0;
+        const auto desc = resource->GetDesc();
+        return h->device->GetResourceAllocationInfo(0, 1, &desc).SizeInBytes;
+    };
+    out->color_bytes = allocation(h->color.Get());
+    out->depth_bytes = allocation(h->depth.Get());
+    out->motion_bytes = allocation(h->motion.Get());
+    out->output_bytes = allocation(h->output.Get());
+    out->staging_bytes = dlss_gpu_host_staging_bytes(h);
+    return 0;
+}
+
 extern "C" DLSS_GPU_HOST_API void dlss_gpu_host_close(DlssGpuHost* h) {
     if (!h) return;
     auto shared = h->shared_core;
@@ -776,13 +823,13 @@ extern "C" DLSS_GPU_HOST_API void dlss_gpu_host_close(DlssGpuHost* h) {
     if (shared) {
         std::lock_guard<std::mutex> lock(shared->ngx_mutex);
         if (h->feature && h->release) {
-            h->release(h->feature);
+            trace_cleanup(h->dlaa ? "DLAA ReleaseFeature" : "NR ReleaseFeature", h->release(h->feature));
             if (h->dlaa) ++dlaa_releases;
             shared->features.erase(h->feature);
         }
-        if (h->parameters) NVSDK_NGX_D3D12_DestroyParameters(h->parameters);
+        if (h->parameters) trace_cleanup("DestroyParameters", NVSDK_NGX_D3D12_DestroyParameters(h->parameters));
         if (h->auxiliary_initialized && h->auxiliary_shutdown)
-            h->auxiliary_shutdown(h->device.Get());
+            trace_cleanup("auxiliary DLAA Shutdown1", h->auxiliary_shutdown(h->device.Get()));
         bool auxiliary_restored = true;
         if (h->auxiliary_import_slot) {
             void* replaced = nullptr;
@@ -794,10 +841,10 @@ extern "C" DLSS_GPU_HOST_API void dlss_gpu_host_close(DlssGpuHost* h) {
         // A failed first open has not transferred NGX ownership to a shared
         // core yet. Preserve the original partial-open teardown ordering.
         if (h->feature && h->release) {
-            h->release(h->feature);
+            trace_cleanup(h->dlaa ? "DLAA ReleaseFeature" : "NR ReleaseFeature", h->release(h->feature));
             if (h->dlaa) ++dlaa_releases;
         }
-        if (h->snippet_initialized && h->shutdown) h->shutdown(h->device.Get());
+        if (h->snippet_initialized && h->shutdown) trace_cleanup("partial snippet Shutdown1", h->shutdown(h->device.Get()));
         bool restored = true;
         if (h->hook_installed) {
             void* replaced = nullptr;
@@ -805,8 +852,8 @@ extern "C" DLSS_GPU_HOST_API void dlss_gpu_host_close(DlssGpuHost* h) {
             original_module_name = nullptr;
             host_module = nullptr;
         }
-        if (h->parameters) NVSDK_NGX_D3D12_DestroyParameters(h->parameters);
-        if (h->core_initialized) NVSDK_NGX_D3D12_Shutdown1(h->device.Get());
+        if (h->parameters) trace_cleanup("partial DestroyParameters", NVSDK_NGX_D3D12_DestroyParameters(h->parameters));
+        if (h->core_initialized) trace_cleanup("partial core Shutdown1", NVSDK_NGX_D3D12_Shutdown1(h->device.Get()));
         if (h->snippet && restored) FreeLibrary(h->snippet);
     }
     if (h->fence_event) CloseHandle(h->fence_event);
@@ -858,8 +905,9 @@ static int32_t open_impl(uint32_t width, uint32_t height,
     h->bytes_per_pixel = color_bytes;
     h->color_format = color_dxgi;
     h->options = *options;
+    std::unique_ptr<DlssGpuHost, decltype(&dlss_gpu_host_close)> pending(h, dlss_gpu_host_close);
     const auto abort_open = [&](int code) {
-        dlss_gpu_host_close(h);
+        pending.reset();
         return code;
     };
     const std::filesystem::path path = std::filesystem::absolute(signed_snippet_path);
@@ -879,6 +927,7 @@ static int32_t open_impl(uint32_t width, uint32_t height,
     if (!h->init || !h->shutdown || !h->create || !h->evaluate || !h->release) {
         error("signed snippet exports", 0); return abort_open(5);
     }
+    enable_gpu_dred_diagnostics();
     HRESULT hr = D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_11_0,
                                     IID_PPV_ARGS(h->device.GetAddressOf()));
     if (FAILED(hr)) { error("D3D12CreateDevice", hr); return abort_open(6); }
@@ -968,6 +1017,7 @@ static int32_t open_impl(uint32_t width, uint32_t height,
         shared->shutdown = h->shutdown;
         shared->device = h->device;
         h->shared_core = std::move(shared);
+        h->shared_core->owns_active = true;
         h->session_id = h->shared_core->next_session_id++;
         // The shared core now owns NGX init, the snippet and the import hook.
         h->hook_installed = h->core_initialized = h->snippet_initialized = false;
@@ -975,7 +1025,7 @@ static int32_t open_impl(uint32_t width, uint32_t height,
         error("allocate shared NGX core", 0);
         return abort_open(21);
     }
-    *out_host = h;
+    *out_host = pending.release();
     return 0;
 }
 
@@ -1087,7 +1137,8 @@ static int32_t open_layer_impl(DlssGpuHost* anchor, uint32_t width,
     h->color_format = color_dxgi;
     h->options = *options;
     h->dlaa = dlaa_path != nullptr;
-    const auto abort_open = [&](int code) { dlss_gpu_host_close(h); return code; };
+    std::unique_ptr<DlssGpuHost, decltype(&dlss_gpu_host_close)> pending(h, dlss_gpu_host_close);
+    const auto abort_open = [&](int code) { pending.reset(); return code; };
     if (dlaa_path) {
         if (h->shared_core->auxiliary_dlaa_active.exchange(true)) {
             error("only one auxiliary DLAA feature per shared NR core is supported", 0);
@@ -1101,7 +1152,7 @@ static int32_t open_layer_impl(DlssGpuHost* anchor, uint32_t width,
         h->create = reinterpret_cast<Create>(GetProcAddress(h->snippet, "NVSDK_NGX_D3D12_CreateFeature"));
         h->evaluate = reinterpret_cast<Evaluate>(GetProcAddress(h->snippet, "NVSDK_NGX_D3D12_EvaluateFeature"));
         h->release = reinterpret_cast<Release>(GetProcAddress(h->snippet, "NVSDK_NGX_D3D12_ReleaseFeature"));
-        h->auxiliary_shutdown = reinterpret_cast<Shutdown>(GetProcAddress(h->snippet, "NVSDK_NGX_D3D12_Shutdown"));
+        h->auxiliary_shutdown = reinterpret_cast<Shutdown>(GetProcAddress(h->snippet, "NVSDK_NGX_D3D12_Shutdown1"));
         if (!init || !h->create || !h->evaluate || !h->release || !h->auxiliary_shutdown) {
             error("DLAA module API", 0); return abort_open(25);
         }
@@ -1187,7 +1238,7 @@ static int32_t open_layer_impl(DlssGpuHost* anchor, uint32_t width,
         h->feature = nullptr;
         return abort_open(11);
     }
-    *out_host = h;
+    *out_host = pending.release();
     return 0;
 }
 
@@ -1235,6 +1286,67 @@ extern "C" DLSS_GPU_HOST_API int32_t dlss_gpu_host_update_options(
     return 0;
 }
 
+extern "C" DLSS_GPU_HOST_API int32_t dlss_gpu_host_recreate_dlaa(
+    DlssGpuHost* h, const DlssGpuHostOptions* options) {
+    last_error[0] = 0;
+    if (!h || !h->dlaa || h->failed || !h->shared_core || !options ||
+        options->struct_size != sizeof(*options)) {
+        error("invalid DLAA recreation", 0); return 1;
+    }
+    if (options->preset == h->options.preset) return 0;
+    if (h->fence_value && !wait_for_gpu(h, h->fence_value)) return 2;
+    std::lock_guard<std::mutex> lock(h->shared_core->ngx_mutex);
+    const auto fail = [&](const char* stage, unsigned long code) {
+        h->failed = true; error(stage, code); return 3;
+    };
+    auto* old_feature = h->feature;
+    h->feature = nullptr;
+    auto ngx = h->release(old_feature);
+    ++dlaa_releases;
+    trace_cleanup("DLAA recreate ReleaseFeature", ngx);
+    if (!NVSDK_NGX_SUCCEED(ngx)) return fail("release old DLAA model", static_cast<unsigned long>(ngx));
+    h->shared_core->features.erase(old_feature);
+    auto* old_parameters = h->parameters;
+    h->parameters = nullptr;
+    ngx = NVSDK_NGX_D3D12_DestroyParameters(old_parameters);
+    trace_cleanup("DLAA recreate DestroyParameters", ngx);
+    if (!NVSDK_NGX_SUCCEED(ngx)) return fail("destroy old DLAA parameters", static_cast<unsigned long>(ngx));
+    ngx = NVSDK_NGX_D3D12_AllocateParameters(&h->parameters);
+    if (!NVSDK_NGX_SUCCEED(ngx) || !h->parameters)
+        return fail("allocate new DLAA parameters", static_cast<unsigned long>(ngx));
+    DWORD exception = 0;
+    if (!configure_create(h->parameters, h->width, h->height, options->preset,
+                          &exception, true, h->bytes_per_pixel == 8))
+        return fail("configure new DLAA model", exception);
+    auto hr = h->allocator->Reset();
+    if (SUCCEEDED(hr)) hr = h->list->Reset(h->allocator.Get(), nullptr);
+    if (FAILED(hr)) return fail("reset DLAA recreation list", hr);
+    ngx = safe_create(h->create, h->list.Get(), h->parameters, &h->feature,
+                      &exception, NVSDK_NGX_Feature_SuperSampling);
+    if (!NVSDK_NGX_SUCCEED(ngx) || exception || !h->feature) {
+        h->list->Close(); return fail("create new DLAA model", static_cast<unsigned long>(ngx));
+    }
+    ++dlaa_creates;
+    if (!h->shared_core->features.insert(h->feature).second) {
+        // A pre-existing feature belongs to another shared session.
+        h->feature = nullptr;
+        return fail("NGX reused an active feature during DLAA recreation", 0);
+    }
+    hr = h->list->Close();
+    if (FAILED(hr)) return fail("close DLAA recreation list", hr);
+    ID3D12CommandList* lists[] = {h->list.Get()};
+    h->queue->ExecuteCommandLists(1, lists);
+    hr = h->queue->Signal(h->fence.Get(), ++h->fence_value);
+    if (FAILED(hr)) return fail("signal DLAA recreation fence", hr);
+    if (!wait_for_gpu(h, h->fence_value)) { h->failed = true; return 4; }
+    h->options = *options;
+    h->session_id = h->shared_core->next_session_id++;
+    h->reset_next_evaluate = true;
+    // processed describes the retained texture states, not the new feature's
+    // history. Its first Evaluate must reset; do not change these states here.
+    return 0;
+}
+
 static int32_t process_impl(DlssGpuHost* h,
     const uint8_t* rgba, size_t rgba_stride,
     void* color_context, uint64_t rgba_device_ptr, size_t rgba_device_pitch,
@@ -1259,6 +1371,22 @@ static int32_t process_impl(DlssGpuHost* h,
         return 1;
     }
     const auto abort_frame = [&](int code) { h->failed = true; return code; };
+    HRESULT staging_hr = S_OK;
+    if (!rgba_device_ptr)
+        staging_hr = ensure_buffer(h, h->color_upload,
+            uint64_t(h->color_layout.Footprint.RowPitch) * h->height,
+            D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+    if (SUCCEEDED(staging_hr) && host_motion)
+        staging_hr = ensure_buffer(h, h->motion_upload, uint64_t(h->width) * h->height * 8,
+            D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+    if (SUCCEEDED(staging_hr) && host_motion)
+        staging_hr = ensure_buffer(h, h->motion_stage, uint64_t(h->width) * h->height * 8,
+            D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON);
+    if (SUCCEEDED(staging_hr) && !keep_device_output)
+        staging_hr = ensure_buffer(h, h->output_readback,
+            uint64_t(h->output_layout.Footprint.RowPitch) * h->height,
+            D3D12_HEAP_TYPE_READBACK, D3D12_RESOURCE_STATE_COPY_DEST);
+    if (FAILED(staging_hr)) { error("allocate requested CPU staging", staging_hr); return abort_frame(6); }
     uint64_t flow_ready = 0;
     void* raw_buffer = nullptr;
     void* raw_fence = nullptr;
@@ -1460,7 +1588,7 @@ static int32_t process_impl(DlssGpuHost* h,
         std::unique_lock<std::mutex> lock;
         if (h->shared_core) lock = std::unique_lock<std::mutex>(
             h->shared_core->ngx_mutex);
-        if (!configure_evaluate(h, motion_resource, reset != 0, &exception)) {
+        if (!configure_evaluate(h, motion_resource, reset != 0 || h->reset_next_evaluate, &exception)) {
             error("configure evaluate", exception);
         } else {
             ngx = safe_evaluate(h->evaluate, list, h->feature,
@@ -1501,6 +1629,7 @@ static int32_t process_impl(DlssGpuHost* h,
     }
     if (h->dlaa) ++dlaa_evaluates;
     h->processed = true;
+    h->reset_next_evaluate = false;
     return 0;
 }
 
@@ -1585,7 +1714,11 @@ extern "C" DLSS_GPU_HOST_API int32_t dlss_gpu_host_readback_output(
         error("invalid output readback arguments", 0);
         return 1;
     }
-    HRESULT hr = h->allocator->Reset();
+    HRESULT hr = ensure_buffer(h, h->output_readback,
+        uint64_t(h->output_layout.Footprint.RowPitch) * h->height,
+        D3D12_HEAP_TYPE_READBACK, D3D12_RESOURCE_STATE_COPY_DEST);
+    if (FAILED(hr)) { error("allocate output readback", hr); return 6; }
+    hr = h->allocator->Reset();
     if (SUCCEEDED(hr)) hr = h->list->Reset(h->allocator.Get(), nullptr);
     if (FAILED(hr)) { error("reset readback command list", hr); h->failed = true; return 2; }
     copy_texture(h->list.Get(), h->output.Get(), h->output_readback.Get(),
@@ -1654,7 +1787,11 @@ extern "C" DLSS_GPU_HOST_API int32_t dlss_gpu_host_readback_motion(
         error("invalid motion readback arguments", 0);
         return 1;
     }
-    HRESULT hr = h->allocator->Reset();
+    HRESULT hr = ensure_buffer(h, h->motion_readback,
+        uint64_t(h->motion_layout.Footprint.RowPitch) * h->height,
+        D3D12_HEAP_TYPE_READBACK, D3D12_RESOURCE_STATE_COPY_DEST);
+    if (FAILED(hr)) { error("allocate motion readback", hr); return 6; }
+    hr = h->allocator->Reset();
     if (SUCCEEDED(hr)) hr = h->list->Reset(h->allocator.Get(), nullptr);
     if (FAILED(hr)) { error("reset motion readback command list", hr);
         h->failed = true; return 2; }

@@ -7,5 +7,7 @@ from component_paths import configure
 configure()
 
 if __name__ == '__main__':
+    from backend_process import contain_children
+    contain_children()
     from server import main
     main()

@@ -692,5 +692,8 @@ class Live:
 
     def close(self):
         if self._handle.value:
-            self._lib.dlss_gpu_host_close(self._handle)
+            handle = self._handle
             self._handle = ctypes.c_void_p()
+            # A foreign close may fault after deleting the host. Never call it
+            # again with that address during outer-chain cleanup.
+            self._lib.dlss_gpu_host_close(handle)

@@ -1,0 +1,70 @@
+{
+  "code_under_test": "f7d35df5511b8a8bfdf2b366f5da78621a0449d8",
+  "correct_kept_median_legacy": 7.4485,
+  "correct_kept_median_reduced": 7.6178,
+  "correct_kept_run_count_per_order": {
+    "legacy": 24,
+    "reduced": 24
+  },
+  "correct_pair_count": 24,
+  "corrected_median_reduced_minus_legacy_percent": 2.46,
+  "corrected_ratio": 1.0227,
+  "corrected_sign_test": {
+    "p_value_legacy_ahead_by_at_least_this_much": 0.999228,
+    "p_value_reduced_ahead_by_at_least_this_much": 0.003305,
+    "pairs": 24,
+    "runs_favouring_legacy": 5,
+    "runs_favouring_reduced": 19,
+    "used_for": "secondary evidence only; no threshold in this file reads it"
+  },
+  "executions": 12,
+  "generated_by": "tests/unit/collect_transfer_performance.py",
+  "old_all_run_count_per_order": {
+    "legacy": 36,
+    "reduced": 36
+  },
+  "old_all_run_median_legacy": 7.4839,
+  "old_all_run_median_reduced": 7.5984,
+  "old_median_reduced_minus_legacy_percent": 2.46,
+  "old_pair_count": 36,
+  "old_ratio": 1.0153,
+  "old_sign_test": {
+    "p_value_legacy_ahead_by_at_least_this_much": 0.998033,
+    "p_value_reduced_ahead_by_at_least_this_much": 0.005665,
+    "pairs": 36,
+    "runs_favouring_legacy": 10,
+    "runs_favouring_reduced": 26,
+    "used_for": "secondary evidence only; no threshold in this file reads it"
+  },
+  "provenance_note": "code_under_test is the collector that recomputed these numbers; source_code_under_test is the code the source artifacts were measured on. The sources were opened read-only and none of their files was written to, so the earlier round's published verdict still stands beside this recalculation unchanged",
+  "read_only_source": [
+    "F:\\dlss5standaloneV2\\perf_results\\740c78a\\transfer_phase1",
+    "F:\\dlss5standaloneV2\\perf_results\\740c78a\\transfer_phase1\\ab_executions"
+  ],
+  "source_artifacts_read_only": true,
+  "source_code_under_test": "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee",
+  "source_code_under_test_values": [
+    "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee"
+  ],
+  "sources": [
+    "execution_01_transfer_ab_benchmark.json",
+    "execution_02_transfer_ab_benchmark.json",
+    "execution_03_transfer_ab_benchmark.json",
+    "execution_04_transfer_ab_benchmark.json",
+    "execution_05_transfer_ab_benchmark.json",
+    "execution_06_transfer_ab_benchmark.json",
+    "execution_07_transfer_ab_benchmark.json",
+    "execution_08_transfer_ab_benchmark.json",
+    "execution_09_transfer_ab_benchmark.json",
+    "execution_10_transfer_ab_benchmark.json",
+    "transfer_ab_benchmark.json",
+    "transfer_ab_benchmark_60f_e2.json"
+  ],
+  "verdict_would_change": false,
+  "warmup_run_count_per_order": {
+    "legacy": 12,
+    "reduced": 12
+  },
+  "what_this_does_not_prove": "anything about speed under a counterbalanced protocol. Every pair of this batch ran legacy first, so reduced always occupied the second position, and removing warmups does not remove that.",
+  "what_this_proves": "that the earlier pooled verdict read 36 runs per order where the protocol kept 24: it folded each execution's warmup pair back into the median and the sign test. The two columns below are the same runs, separated only by whether the warmup pair was allowed to count."
+}

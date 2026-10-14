@@ -47,6 +47,7 @@ function WorkspaceApp() {
   const [currentFrame,setCurrentFrame]=useState(0)
   const [statusText,setStatusText]=useState('连接本地工作台…')
   const [ready,setReady]=useState(false)
+  const recoveryDraft=useRef({video,settings,currentFrame});recoveryDraft.current={video,settings,currentFrame}
   const queue = useSyncExternalStore(subscribeQueue, queueSnapshot)
   useEffect(()=>{
     let cancelled=false, initialized=false, inFlight=false
@@ -72,8 +73,24 @@ function WorkspaceApp() {
     }
     void init()
     const timer=setInterval(()=>{if(!initialized){void init();return}void fetchSystemInfo().then(s=>{if(!cancelled)setSystem(s)}).catch(()=>{})},5000)
-    const unsubscribe=window.electronAPI?.onBackendExit?.(info=>{if(!cancelled){setReady(false);setStatusText(`后端已退出 (${info.code})，请重启应用`)}})
-    return()=>{cancelled=true;clearInterval(timer);unsubscribe?.()}
+    const unsubscribe=window.electronAPI?.onBackendExit?.(info=>{if(!cancelled){setReady(false);setStatusText(`后端已退出 (${info.code})，正在检查恢复`)}})
+    const recovery=window.electronAPI?.onBackendRecovery?.(state=>{
+      if(cancelled)return
+      setStatusText(state.phase==='restored'?'后端已启动，正在恢复工作台…':state.message)
+      if(state.phase!=='restored'){setReady(false);return}
+      void (async()=>{
+        try{
+          const draft=recoveryDraft.current
+          if(draft.video){const restored=await loadVideoFile(draft.video.path);if(cancelled)return;setVideo(restored)}
+          const restored=await saveSettings(recoveryDraft.current.settings)
+          if(cancelled)return
+          setSettings(completeSettings(restored));setCurrentFrame(draft.currentFrame)
+          initialized=true;setReady(true);setStatusText(state.message)
+          window.dispatchEvent(new Event('lunarc:backend-restored'))
+        }catch(error:any){if(!cancelled)setStatusText(`后端已启动，工作台恢复失败：${error.message}`)}
+      })()
+    })
+    return()=>{cancelled=true;clearInterval(timer);unsubscribe?.();recovery?.()}
   },[])
   useEffect(()=>{const q=queue;if(!q)return;try{
     const terminal=q.jobs.filter(j=>['completed','failed','cancelled','skipped'].includes(j.status)).map(j=>({id:j.id,name:j.name,status:j.status,input_path:j.input_path,output_path:j.output_path,frame_range:j.frame_range,source_fps:j.source_fps,error:j.error,recorded:new Date().toISOString()}))
@@ -113,7 +130,7 @@ function WorkspaceApp() {
     {dragging&&<div className="media-drop-overlay" role="status"><span>松开以载入素材</span></div>}
     <aside className="navigation"><div className="rail-mark" aria-hidden="true"><Aperture size={23}/></div><nav aria-label="主导航">{NAV.map(n=><button key={n.id} aria-label={n.label} title={n.label} className={activeTab===n.id?'active':''} onClick={()=>setActiveTab(n.id)} aria-current={activeTab===n.id?'page':undefined}><n.icon size={20}/></button>)}</nav></aside>
     <div className="app-content"><Header activeTab={activeTab} onNavigate={setActiveTab} theme={theme} onThemeChange={()=>setTheme(t=>t==='dark'?'light':'dark')} onFileLoaded={importFile} onError={setStatusText}/><main className="page-host">
-      <div className={`mounted-page ${activeTab==='dlss'?'':'hidden'}`}><DLSSPage video={video} settings={settings} onSettingsChange={updateSettings} currentFrame={currentFrame} setCurrentFrame={setCurrentFrame} onStatusChange={setStatusText} isActive={activeTab==='dlss'}/></div>
+      <div className={`mounted-page ${activeTab==='dlss'?'':'hidden'}`}><DLSSPage video={video} settings={settings} onSettingsChange={updateSettings} currentFrame={currentFrame} setCurrentFrame={setCurrentFrame} onStatusChange={setStatusText} isActive={ready&&activeTab==='dlss'}/></div>
       <div className={`mounted-page ${activeTab==='deliver'?'':'hidden'}`}><DeliverPage video={video} settings={settings} onSettingsChange={updateSettings} onStatusChange={setStatusText} isActive={activeTab==='deliver'}/></div>
       {activeTab==='compare'&&<ComparePage initialPair={comparePair}/>}
       {activeTab==='guide'&&<Guide/>}

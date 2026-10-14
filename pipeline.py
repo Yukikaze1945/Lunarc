@@ -3180,6 +3180,7 @@ def export_gpu_transfer_stream(video, live, frames, fps, cq, with_audio, out_pat
     js = dict(job_settings or {})
     _, source_fps, w, h = video_info(video)
     import native_effects
+    js = native_effects.execution_settings(js)
     nr_w, nr_h = native_effects.processing_size(js, (w, h))
     live_w, live_h = resolve_working_dims(nr_w, nr_h, native_effects.core_working_scale(js))
     dst_w, dst_h = resolve_output_dims(w, h, transcode_settings)
@@ -3235,9 +3236,7 @@ def export_gpu_transfer_stream(video, live, frames, fps, cq, with_audio, out_pat
         option_available=(bridges or {}).get("option_available"),
         bridges_ok=bridges is not None, bridge_error=bridge_error,
         flow_provider=flow_provider,
-        # Of the installation the bridges bound to, not of the one PATH would have
-        # answered with: the encoder that has to honour this is a library in here.
-        tune_available=lambda codec: _supports_tune_uhq(gtx.encoder_cli(), codec),
+        tune_available=(bridges or {}).get("tune_available"),
         capabilities=(bridges or {}).get("capabilities"),
         extra_reasons=[source_error] if source_error else None)
 
@@ -3343,7 +3342,9 @@ def export_gpu_hdr_transfer_stream(video, live, dims, frames, fps, cq, with_audi
         try:
             capability_reader = htx.load_sdr10_capabilities if sdr10 else htx.load_hdr_capabilities
             hdr_caps = capability_reader(
-                bridges, int(dims["src_w"]), int(dims["src_h"]))
+                bridges, int(dims["src_w"]), int(dims["src_h"]),
+                **({'codec': transcode_settings['codec']} if transcode_settings and
+                   transcode_settings.get('codec') == 'av1_nvenc' else {}))
         except Exception as caps_error:
             hdr_caps = {"missing": [f"the HDR entries could not be read: {caps_error}"]}
 
@@ -3356,6 +3357,7 @@ def export_gpu_hdr_transfer_stream(video, live, dims, frames, fps, cq, with_audi
             option_available=(bridges or {}).get("option_available"),
             bridges_ok=bridges is not None, bridge_error=bridge_error,
             flow_provider=flow_provider,
+            tune_available=(bridges or {}).get("tune_available"),
             extra_reasons=[source_error] if source_error else None)
     except BaseException:
         # Nothing below this line has taken the bridge set, so its loader cookies are

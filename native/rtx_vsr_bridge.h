@@ -35,6 +35,13 @@ RTX_VSR_API int32_t rtx_vsr_open2(void* cuda_context, uint32_t input_width,
     uint32_t input_height, uint32_t output_width, uint32_t output_height,
     uint32_t quality_level, uint32_t component_type,
     const wchar_t* runtime_directory, RtxVsrHandle** out_handle);
+/* Additive API; old open/open2 preserve SDK-default Strength. */
+RTX_VSR_API int32_t rtx_vsr_open3(void* cuda_context, uint32_t input_width,
+    uint32_t input_height, uint32_t output_width, uint32_t output_height,
+    uint32_t quality_level, uint32_t component_type, float strength,
+    const wchar_t* runtime_directory, RtxVsrHandle** out_handle);
+RTX_VSR_API int32_t rtx_vsr_get_configuration(RtxVsrHandle* handle,
+    uint32_t* mode, float* strength, uint32_t* known);
 RTX_VSR_API int32_t rtx_vsr_get_counters(RtxVsrHandle* handle, RtxVsrCounters* out_counters);
 RTX_VSR_API void rtx_vsr_close(RtxVsrHandle* handle);
 // The VFG handle uses the same counter/lifetime ABI; pixel buffers are CUDA.

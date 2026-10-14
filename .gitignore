@@ -85,6 +85,7 @@ tests/test-results.json
 
 # Native build artifacts
 native/build/
+/runtime/
 
 # Scratch & temporary benchmark artifacts
 scratch/
@@ -102,24 +103,3 @@ native/*.lib
 native/*.exp
 native/*_test.exe
 native/*_probe.exe
-
-# Public source release: binaries and local configuration are never published
-*.dll
-*.exe
-*.lib
-*.obj
-*.exp
-*.pdb
-*.7z
-*.zip
-*.tsbuildinfo
-.agents/
-.workbuddy/
-AGENTS.md
-_selftest.txt
-python_path.txt
-.env
-.env.*
-native/db_exports.bat
-native/nvenc_hdr_options_probe2.txt
-.pytest_cache/

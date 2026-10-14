@@ -26,11 +26,12 @@ class Counters(ctypes.Structure):
 class RtxVsr:
     def __init__(self, bridge_path: str | Path, runtime_directory: str | Path,
                  cuda_context: int, input_size: tuple[int, int], output_size: tuple[int, int],
-                 quality_level: int, *, is_hdr: bool = False, packed10: bool = False):
+                 quality_level: int, *, is_hdr: bool = False, packed10: bool = False, strength: float | None = None):
         if is_hdr and not packed10:
             raise RtxVsrError("HDR VSR requires packed RGB10A2; no 8-bit conversion is allowed")
-        if not 1 <= int(quality_level) <= 4:
-            raise ValueError("quality_level must be 1, 2, 3, or 4")
+        from vsr_config import validate_sdk_options
+        validate_sdk_options(quality_level, strength, input_size, output_size)
+        self.strength_requested = strength
         self._dll = ctypes.WinDLL(str(Path(bridge_path).resolve()))
         self._dll.rtx_vsr_abi_version.restype = ctypes.c_uint32
         if self._dll.rtx_vsr_abi_version() != 1:
@@ -46,7 +47,14 @@ class RtxVsr:
         self._handle = ctypes.c_void_p()
         iw, ih = map(int, input_size)
         ow, oh = map(int, output_size)
-        if packed10:
+        if strength is not None:
+            if not hasattr(self._dll, 'rtx_vsr_open3'):
+                raise RtxVsrError('VSR custom strength requires rebuilding rtx_vsr_bridge.dll')
+            self._dll.rtx_vsr_open3.argtypes = [ctypes.c_void_p] + [ctypes.c_uint32] * 6 + [ctypes.c_float, ctypes.c_wchar_p, ctypes.POINTER(ctypes.c_void_p)]
+            self._dll.rtx_vsr_open3.restype = ctypes.c_int32
+            result = self._dll.rtx_vsr_open3(ctypes.c_void_p(cuda_context), iw, ih, ow, oh,
+                quality_level, 11 if packed10 else 1, strength, str(Path(runtime_directory).resolve()), ctypes.byref(self._handle))
+        elif packed10:
             self._dll.rtx_vsr_open2.argtypes = [ctypes.c_void_p] + [ctypes.c_uint32] * 6 + [ctypes.c_wchar_p, ctypes.POINTER(ctypes.c_void_p)]
             result = self._dll.rtx_vsr_open2(ctypes.c_void_p(cuda_context), iw, ih, ow, oh,
                 int(quality_level), 11, str(Path(runtime_directory).resolve()), ctypes.byref(self._handle))
@@ -73,7 +81,20 @@ class RtxVsr:
         result = self._dll.rtx_vsr_get_counters(self._handle, ctypes.byref(value))
         if result:
             raise self._error("get_counters", result)
-        return {name: getattr(value, name) for name, *_ in Counters._fields_}
+        result = {name: getattr(value, name) for name, *_ in Counters._fields_}
+        result['strength_requested'] = self.strength_requested
+        getter = getattr(self._dll, 'rtx_vsr_get_configuration', None)
+        result.update(quality_effective=None, strength_effective=None)
+        if getter:
+            getter.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint32),
+                ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_uint32)]
+            getter.restype = ctypes.c_int32
+            mode, strength, known = ctypes.c_uint32(), ctypes.c_float(), ctypes.c_uint32()
+            code = getter(self._handle, ctypes.byref(mode), ctypes.byref(strength), ctypes.byref(known))
+            if code: raise self._error('configuration query', code)
+            result.update(quality_effective=mode.value if known.value & 1 else None,
+                          strength_effective=strength.value if known.value & 2 else None)
+        return result
 
     def close(self) -> None:
         if self._handle:

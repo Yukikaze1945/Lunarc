@@ -859,13 +859,8 @@ void main_proxy(uint3 id : SV_DispatchThreadID) {
     float normalised = saturate(code / max(ceiling_code, 1e-7f));
 #endif
     uint value = uint(round(normalised * 255.0f));
-#ifdef SDR10_GUIDANCE
     uint packed_guidance = value | (value << 8u) | (value << 16u) | 0xff000000u;
     Guidance.Store(id.y * GuidancePitch + id.x * 4u, packed_guidance);
-#else
-    Guidance.Store4(id.y * GuidancePitch + id.x * 4u,
-                    uint4(value, value, value, 255u));
-#endif
     InterlockedAdd(Counters[17], 1u);
     float negatives = uint(master.r < 0.0f) + uint(master.g < 0.0f) +
         uint(master.b < 0.0f);
@@ -1252,6 +1247,8 @@ struct Bridge {
     double support_ceiling = 0.0;
     double clip_ceiling = 0.0;
     bool sdr10_mode = false;
+    uint32_t purpose = GPU_HDR_PURPOSE_FULL;
+    bool pass_enabled[kPassCount] = {};
     Plane planes[kPlaneCount];
     ComPtr<ID3D12DescriptorHeap> heap;
     ComPtr<ID3D12RootSignature> root;
@@ -1450,8 +1447,8 @@ void plan_taps(Bridge* b, const GpuHdrTapTable& downscale,
                const GpuHdrTapTable& reconstruct) {
     const uint32_t down_v = downscale.vertical_dst_len;
     const uint32_t down_h = downscale.horizontal_dst_len;
-    const uint32_t rec_v = reconstruct.vertical_dst_len;
-    const uint32_t rec_h = reconstruct.horizontal_dst_len;
+    const uint32_t rec_v = b->purpose == GPU_HDR_PURPOSE_FULL ? reconstruct.vertical_dst_len : 0;
+    const uint32_t rec_h = b->purpose == GPU_HDR_PURPOSE_FULL ? reconstruct.horizontal_dst_len : 0;
     b->tap_rows[0] = down_v;
     b->tap_rows[1] = down_h;
     b->tap_rows[2] = rec_v;
@@ -1489,12 +1486,23 @@ void layout_planes(Bridge* b, const GpuHdrTapTable& downscale,
         {kPlaneCounters, kCounterSlots * 4u, 1u},
     };
     for (const Request& r : requests) {
+        const bool needed = b->purpose == GPU_HDR_PURPOSE_FULL || r.id == kPlaneCounters ||
+            r.id == kPlaneMaster ||
+            (b->purpose == GPU_HDR_PURPOSE_DECODE &&
+                (r.id == kPlaneSourceY || r.id == kPlaneSourceUV)) ||
+            (b->purpose == GPU_HDR_PURPOSE_GUIDANCE &&
+                (r.id == kPlaneWorking || r.id == kPlaneProxy ||
+                 r.id == kPlaneGuidance || r.id == kPlaneScratch)) ||
+            (b->purpose == GPU_HDR_PURPOSE_ENCODE &&
+                (r.id == kPlaneComposited || r.id == kPlaneEncodeY || r.id == kPlaneEncodeUV));
+        if (!needed) continue;
         if (FAILED(create_plane(b, r.id, r.bytes_per_row, r.rows, true, true))) {
             b->failed = true;
             return;
         }
     }
-    plan_taps(b, downscale, reconstruct);
+    if (b->purpose == GPU_HDR_PURPOSE_FULL || b->purpose == GPU_HDR_PURPOSE_GUIDANCE)
+        plan_taps(b, downscale, reconstruct);
     if (b->failed) return;
     if (FAILED(create_host_visible(b, kPlaneInitPattern,
             kCounterSlots * sizeof(uint32_t), D3D12_HEAP_TYPE_UPLOAD, false)) ||
@@ -1714,6 +1722,7 @@ HRESULT make_heap(Bridge* b) {
                       cpu_slot(b, pass, b->max_srv + slot));
     }
     for (uint32_t pass = 0; pass < kPassCount; ++pass) {
+        if (!b->pass_enabled[pass]) continue;
         const PassBinding& d = b->bindings[pass];
         for (uint32_t i = 0; i < d.srv_count; ++i)
             make_view(b, d.srv[i], cpu_slot(b, pass, i));
@@ -2091,6 +2100,9 @@ void prepare_states(ID3D12GraphicsCommandList* list, Bridge* b, PassId pass) {
  * readable by the CUDA side the moment the call returns. */
 bool run_pass(Bridge* b, PassId pass, const Constants& constants,
               uint32_t groups_x, uint32_t groups_y) {
+    if (!b->pass_enabled[pass]) {
+        say("shader pass is not available for this HDR bridge purpose"); return false;
+    }
     const PassBinding& d = b->bindings[pass];
     if (constants.count != d.const_count) {
         std::snprintf(last_error, sizeof(last_error),
@@ -2178,6 +2190,7 @@ double counter_float(const Bridge* b, PassId pass, uint32_t slot) {
 bool copy_device_to_device(Bridge* b, uint64_t source, uint32_t source_pitch,
                            Plane& destination, uint32_t bytes_per_row,
                            uint32_t rows, const char* what) {
+    if (!destination.resource) { say("destination plane is not allocated for this bridge purpose"); return false; }
     if (source_pitch % 16 || destination.pitch % 16) {
         std::snprintf(last_error, sizeof(last_error),
                       "%s pitch is not a multiple of 16", what);
@@ -2199,6 +2212,7 @@ bool copy_device_to_device(Bridge* b, uint64_t source, uint32_t source_pitch,
 
 bool read_plane_to_host(Bridge* b, const Plane& plane, uint8_t* destination,
                         size_t row_stride, const char* what) {
+    if (!plane.resource) { say("readback plane is not allocated for this bridge purpose"); return false; }
     if (!destination) { say("HDR readback destination is null"); return false; }
     if (row_stride < plane.bytes_per_row) {
         std::snprintf(last_error, sizeof(last_error),
@@ -2322,8 +2336,11 @@ static int32_t gpu_hdr_open_impl(
     void* d3d12_device, void* cuda_context, uint32_t full_width,
     uint32_t full_height, uint32_t working_width, uint32_t working_height,
     const GpuHdrTapTable* downscale_plan, const GpuHdrTapTable* reconstruct_plan,
-    double paper_white_scrgb, GpuHdrBridge** out_bridge, bool sdr10_mode) {
+    double paper_white_scrgb, GpuHdrBridge** out_bridge, bool sdr10_mode,
+    uint32_t purpose = GPU_HDR_PURPOSE_FULL) {
     error_reset();
+    if (out_bridge) *out_bridge = nullptr;
+    if (purpose > GPU_HDR_PURPOSE_ENCODE) { say("unknown HDR bridge purpose"); return -1; }
     if (sdr10_mode && paper_white_scrgb != 1.0) {
         say("SDR10 reference white is fixed at 1.0 relative-linear unit");
         return -1;
@@ -2390,7 +2407,7 @@ static int32_t gpu_hdr_open_impl(
     auto* b = new (std::nothrow) Bridge;
     if (!b) { say("out of memory for the HDR bridge"); return -1; }
     b->device = static_cast<ID3D12Device*>(d3d12_device);
-    b->device->AddRef();
+    // ComPtr assignment already holds one reference; its destructor releases it.
     b->context = static_cast<CUcontext>(cuda_context);
     b->full_w = full_width;
     b->full_h = full_height;
@@ -2400,6 +2417,13 @@ static int32_t gpu_hdr_open_impl(
     b->rec_taps = reconstruct_plan->taps;
     b->paper_white = paper_white_scrgb;
     b->sdr10_mode = sdr10_mode;
+    b->purpose = purpose;
+    for (uint32_t p = 0; p < kPassCount; ++p)
+        b->pass_enabled[p] = purpose == GPU_HDR_PURPOSE_FULL ||
+            (purpose == GPU_HDR_PURPOSE_DECODE && p == kPassDecode) ||
+            (purpose == GPU_HDR_PURPOSE_GUIDANCE &&
+                (p == kPassVertical || p == kPassHorizontal || p == kPassProxy)) ||
+            (purpose == GPU_HDR_PURPOSE_ENCODE && p == kPassEncode);
     b->actionable_relative = contract_probe.proxy_actionable_relative > 0.0
         ? contract_probe.proxy_actionable_relative : kProxyActionableFallback;
     b->saturation_relative = contract_probe.proxy_saturation_relative > 0.0
@@ -2477,6 +2501,7 @@ static int32_t gpu_hdr_open_impl(
     if (FAILED(make_root_signature(b))) { delete b; return -1; }
     if (FAILED(make_heap(b))) { delete b; return -1; }
     for (uint32_t p = 0; p < kPassCount; ++p) {
+        if (!b->pass_enabled[p]) continue;
         const std::string source = pass_source(PassId(p), sdr10_mode);
         if (!build_pipeline(b, PassId(p), source.c_str(),
                             b->bindings[p].entry)) {
@@ -2484,7 +2509,8 @@ static int32_t gpu_hdr_open_impl(
             return -1;
         }
     }
-    if (FAILED(upload_taps(b, *downscale_plan, *reconstruct_plan))) {
+    if (b->planes[kPlaneTaps].resource &&
+        FAILED(upload_taps(b, *downscale_plan, *reconstruct_plan))) {
         delete b;
         return -1;
     }
@@ -2512,6 +2538,33 @@ extern "C" GPU_HDR_API int32_t gpu_sdr10_open(
         paper_white_scrgb, out_bridge, true);
 }
 
+extern "C" GPU_HDR_API int32_t gpu_hdr_open_purpose(
+    void* device, void* context, uint32_t width, uint32_t height,
+    uint32_t low_width, uint32_t low_height, const GpuHdrTapTable* down,
+    const GpuHdrTapTable* up, double white, uint32_t purpose, GpuHdrBridge** out) {
+    return gpu_hdr_open_impl(device, context, width, height, low_width, low_height,
+        down, up, white, out, false, purpose);
+}
+extern "C" GPU_HDR_API int32_t gpu_sdr10_open_purpose(
+    void* device, void* context, uint32_t width, uint32_t height,
+    uint32_t low_width, uint32_t low_height, const GpuHdrTapTable* down,
+    const GpuHdrTapTable* up, double white, uint32_t purpose, GpuHdrBridge** out) {
+    return gpu_hdr_open_impl(device, context, width, height, low_width, low_height,
+        down, up, white, out, true, purpose);
+}
+// DEFAULT heap allocations, including padding/alignment; excludes CPU counter heaps.
+extern "C" GPU_HDR_API uint64_t gpu_hdr_allocated_device_bytes(GpuHdrBridge* handle) {
+    Bridge* b = reinterpret_cast<Bridge*>(handle);
+    if (!b) return 0;
+    uint64_t bytes = 0;
+    for (uint32_t i = 0; i < kPlaneCount; ++i) {
+        if (i == kPlaneInitPattern || i == kPlaneCounterReadback || !b->planes[i].resource) continue;
+        auto desc = b->planes[i].resource->GetDesc();
+        bytes += b->device->GetResourceAllocationInfo(0, 1, &desc).SizeInBytes;
+    }
+    return bytes;
+}
+
 /* The ceiling the composite stage clamps to, which is the larger of what the
  * caller declared the content reaches and what the encode will clip to: a
  * sample inside the declared domain must never be clamped on its way through
@@ -2532,6 +2585,7 @@ static int32_t gpu_decode_impl(
     Bridge* b = reinterpret_cast<Bridge*>(handle);
     error_reset();
     if (!b) { say("gpu_hdr_decode on a closed bridge"); return -1; }
+    if (!b->pass_enabled[kPassDecode]) { say("decode is unavailable for this bridge purpose"); return -1; }
     if (b->sdr10_mode != sdr10_mode) {
         say(sdr10_mode ? "gpu_sdr10_decode needs an SDR10 bridge" :
                          "gpu_hdr_decode refuses an SDR10 bridge");
@@ -2722,6 +2776,7 @@ bool copy_texture_to_plane(Bridge* b, const BorrowedCopy& contract,
                            uint64_t fence_value, Plane& destination,
                            uint32_t width, uint32_t height, uint64_t* counted) {
     auto* texture = static_cast<ID3D12Resource*>(raw_texture);
+    if (!destination.resource) { say("texture destination is unavailable for this bridge purpose"); return false; }
     if (!texture) { say(contract.missing_error); return false; }
     const D3D12_RESOURCE_DESC desc = texture->GetDesc();
     if (desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE2D ||

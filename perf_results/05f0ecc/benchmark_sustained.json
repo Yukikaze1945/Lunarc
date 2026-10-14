@@ -1,0 +1,918 @@
+{
+  "kind": "e2e_sustained_benchmark",
+  "code_under_test_sha": "05f0ecc3e47809078b946f4302c9331a240746fc",
+  "environment": {
+    "cuda_version": "13.4",
+    "native_libraries": {
+      "dlssnr_host.dll": {
+        "sha256": "9ec879388e573bebbf7886dccbdc885641d945420fdf4bb80bac6c657094160c",
+        "bytes": 54272
+      },
+      "nvngx_dlssnr.dll": {
+        "sha256": "e16bcf15e16e13f527491cdf7845b2fe6521a738d8f7c9c721866a8496e1fc8e",
+        "bytes": 165840496
+      },
+      "native/nvof_bridge.dll": {
+        "sha256": "3ac877318f19b6e0e125534f6dadf1c155327470b0c5be81b83c0dd24f16e717",
+        "bytes": 156160
+      },
+      "native/residual_bridge.dll": {
+        "sha256": "54621c1a8c4f91f745cbabdb400dff9973e715f598c9695f6d6ebc188a03246f",
+        "bytes": 189952
+      }
+    },
+    "utc_timestamp": "2026-09-19T09:03:24Z",
+    "platform": "win32",
+    "os": "Windows-10-10.0.26220-SP0",
+    "cpu_model": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+    "cpu_arch": "AMD64",
+    "cpu_logical_cores": 16,
+    "ram_total_bytes": 42852945920,
+    "python": "3.11.15",
+    "numpy": "2.4.6",
+    "opencv": "5.0.0",
+    "ffmpeg": "8.1.2-full_build-www.gyan.dev",
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "driver_version": "616.92",
+      "memory_total_bytes": 17103323136
+    },
+    "rss_bytes": 42233856,
+    "peak_rss_bytes": 44036096,
+    "vram_bytes": 1735393280,
+    "fixture_path": "bench_out\\fixture_4k_300.mp4",
+    "fixture_sha256": "1500839c8ef50e2bcd4d8d0c974041af1a17178921213222c78f958208bcca9f",
+    "fixture_width": 3840,
+    "fixture_height": 2160,
+    "fixture_fps": 60.0,
+    "fixture_frame_count": 300,
+    "fixture_codec": "h264",
+    "encoder": "av1_nvenc (pipeline default; codec actually written is reported by ffprobe)",
+    "cq": 18,
+    "flow_engine": "nvof",
+    "flow_preset": "4M"
+  },
+  "config": {
+    "mode": "sustained",
+    "frames": 300,
+    "scenarios": [
+      {
+        "id": "A",
+        "name": "100% working, NVOF 4M",
+        "scale": 1.0,
+        "residual_backend": null
+      },
+      {
+        "id": "D",
+        "name": "50% working, NVOF 4M + native residual",
+        "scale": 0.5,
+        "residual_backend": "native"
+      }
+    ]
+  },
+  "results": [
+    {
+      "id": "A",
+      "name": "100% working, NVOF 4M",
+      "working_scale": 1.0,
+      "working_dims": [
+        3840,
+        2160
+      ],
+      "frames": 300,
+      "elapsed_sec": 55.255,
+      "fps": 5.429,
+      "stages_ms": {
+        "frame_total": {
+          "mean": 171.53445366527498,
+          "p50": 166.1533499864163,
+          "p95": 196.69645999820207,
+          "min": 148.29439998720773,
+          "max": 396.05010001105256
+        },
+        "working_color_prepare_ms": {
+          "mean": 0.0006583336895952622,
+          "p50": 0.000500003807246685,
+          "p95": 0.0014999837731011212,
+          "min": 0.00019997241906821728,
+          "max": 0.0037999998312443495
+        },
+        "guidance_total": {
+          "mean": 34.984450333577115,
+          "p50": 34.230199991725385,
+          "p95": 39.001210017886486,
+          "min": 27.799999981652945,
+          "max": 165.3805999958422
+        },
+        "dlss_process": {
+          "mean": 120.20364966641257,
+          "p50": 118.28115000389516,
+          "p95": 137.7943549916381,
+          "min": 105.53590001654811,
+          "max": 195.1755000045523
+        },
+        "residual_pyramid": {
+          "mean": 3.7889650011008293,
+          "p50": 3.3555000118212774,
+          "p95": 3.97312499844702,
+          "min": 3.0537999991793185,
+          "max": 22.849800006952137
+        },
+        "output_convert": {
+          "mean": 0.00731000075271974,
+          "p50": 0.006500020390376449,
+          "p95": 0.012699981743935496,
+          "min": 0.0041000021155923605,
+          "max": 0.028099981136620045
+        },
+        "pipe_write": {
+          "mean": 12.28716533407957,
+          "p50": 9.738199994899333,
+          "p95": 12.016104997019285,
+          "min": 7.6843000133521855,
+          "max": 177.20020000706427
+        },
+        "decode_wait": {
+          "mean": 0.32862166680085164,
+          "p50": 0.020700012100860476,
+          "p95": 0.041909998981282115,
+          "min": 0.010199990356341004,
+          "max": 91.80409999680705
+        },
+        "nvof_submit_cpu_ms": {
+          "mean": 0.5684183333333334,
+          "p50": 0.51715,
+          "p95": 0.9752950000000004,
+          "min": 0.2927,
+          "max": 6.708
+        },
+        "nvof_dependency_wait_ms": {
+          "mean": 4.263711666666667,
+          "p50": 4.1524,
+          "p95": 5.368430000000001,
+          "min": 3.0346,
+          "max": 5.9573
+        },
+        "nvof_upscale": {
+          "mean": 4.263711666666667,
+          "p50": 4.1524,
+          "p95": 5.368430000000001,
+          "min": 3.0346,
+          "max": 5.9573
+        },
+        "nvof_download": {
+          "mean": 10.612627999999999,
+          "p50": 10.44895,
+          "p95": 12.886160000000002,
+          "min": 8.0825,
+          "max": 16.753600000000002
+        }
+      },
+      "per_frame_counters": {
+        "nvof_h2d_bytes_delta": {
+          "mean": 33288192.0,
+          "p50": 33177600.0,
+          "p95": 33177600.0,
+          "min": 33177600.0,
+          "max": 66355200.0
+        },
+        "nvof_d2h_bytes_delta": {
+          "mean": 66355200.0,
+          "p50": 66355200.0,
+          "p95": 66355200.0,
+          "min": 66355200.0,
+          "max": 66355200.0
+        },
+        "nvof_h2d_copy_count_delta": {
+          "mean": 1.0033333333333334,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 2.0
+        },
+        "nvof_d2h_copy_count_delta": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "nvof_execute_count_delta": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "nvof_native_history": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "cpu_previous_frame_copy_bytes": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "depth_missing_frames": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "filter_plan_build_count": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      },
+      "residual_diagnostics": {},
+      "peak_rss_bytes": 1184202752,
+      "peak_vram_bytes": 4779409408,
+      "thread_count_end": 61,
+      "child_process_count_end": 0,
+      "frame_samples": [
+        {
+          "frame": 30,
+          "rss_bytes": 1114243072,
+          "peak_rss_bytes": 1181605888,
+          "thread_count": 63,
+          "child_process_count": 12
+        },
+        {
+          "frame": 60,
+          "rss_bytes": 1114320896,
+          "peak_rss_bytes": 1181605888,
+          "thread_count": 63,
+          "child_process_count": 10
+        },
+        {
+          "frame": 90,
+          "rss_bytes": 1114640384,
+          "peak_rss_bytes": 1182294016,
+          "thread_count": 65,
+          "child_process_count": 4
+        },
+        {
+          "frame": 120,
+          "rss_bytes": 1116401664,
+          "peak_rss_bytes": 1182765056,
+          "thread_count": 66,
+          "child_process_count": 4
+        },
+        {
+          "frame": 150,
+          "rss_bytes": 1116491776,
+          "peak_rss_bytes": 1183928320,
+          "thread_count": 67,
+          "child_process_count": 4
+        },
+        {
+          "frame": 180,
+          "rss_bytes": 1116499968,
+          "peak_rss_bytes": 1183928320,
+          "thread_count": 67,
+          "child_process_count": 4
+        },
+        {
+          "frame": 210,
+          "rss_bytes": 1116545024,
+          "peak_rss_bytes": 1184202752,
+          "thread_count": 67,
+          "child_process_count": 4
+        },
+        {
+          "frame": 240,
+          "rss_bytes": 1116553216,
+          "peak_rss_bytes": 1184202752,
+          "thread_count": 67,
+          "child_process_count": 4
+        },
+        {
+          "frame": 270,
+          "rss_bytes": 1116577792,
+          "peak_rss_bytes": 1184202752,
+          "thread_count": 67,
+          "child_process_count": 4
+        },
+        {
+          "frame": 300,
+          "rss_bytes": 942354432,
+          "peak_rss_bytes": 1184202752,
+          "thread_count": 66,
+          "child_process_count": 2
+        }
+      ],
+      "ffprobe": {
+        "ok": true,
+        "checks": {
+          "packets": true,
+          "resolution": true,
+          "duration_within_1pct": true,
+          "fps_matches_source": true
+        },
+        "packets": 300,
+        "expected_frames": 300,
+        "duration_sec": 5.0,
+        "fps": 60.0,
+        "codec": "av1",
+        "width": 3840,
+        "height": 2160
+      },
+      "output_path": "F:\\dlss5standaloneV2\\bench_out\\e2e_A_100.mkv"
+    },
+    {
+      "id": "D",
+      "name": "50% working, NVOF 4M + native residual",
+      "working_scale": 0.5,
+      "working_dims": [
+        1920,
+        1080
+      ],
+      "frames": 300,
+      "elapsed_sec": 38.48,
+      "fps": 7.796,
+      "stages_ms": {
+        "frame_total": {
+          "mean": 113.18896033383983,
+          "p50": 110.07674998836592,
+          "p95": 122.51073500519854,
+          "min": 92.31330000329763,
+          "max": 370.9190000081435
+        },
+        "working_color_prepare_ms": {
+          "mean": 17.73532933332414,
+          "p50": 17.333800002234057,
+          "p95": 21.43096498330124,
+          "min": 14.451199996983632,
+          "max": 38.272000005235896
+        },
+        "guidance_total": {
+          "mean": 9.282713668168677,
+          "p50": 8.660999999847263,
+          "p95": 10.233335001976231,
+          "min": 6.983200000831857,
+          "max": 113.31350001273677
+        },
+        "dlss_process": {
+          "mean": 37.71609800052829,
+          "p50": 36.76704999816138,
+          "p95": 45.30338501353981,
+          "min": 31.499300006544217,
+          "max": 99.60170002887025
+        },
+        "residual_pyramid": {
+          "mean": 31.132112666673493,
+          "p50": 30.221450011595152,
+          "p95": 36.771820014109835,
+          "min": 25.725899991812184,
+          "max": 75.89780000853352
+        },
+        "output_convert": {
+          "mean": 0.006983332956830661,
+          "p50": 0.006250003934837878,
+          "p95": 0.011905003339052202,
+          "min": 0.0028999929782003164,
+          "max": 0.08899997919797897
+        },
+        "pipe_write": {
+          "mean": 17.24725999966419,
+          "p50": 15.050049987621605,
+          "p95": 21.20514498528792,
+          "min": 6.888200005050749,
+          "max": 279.8420999897644
+        },
+        "decode_wait": {
+          "mean": 2.0394573329637447,
+          "p50": 0.02204999327659607,
+          "p95": 17.185120012436535,
+          "min": 0.006700021913275123,
+          "max": 36.48199999588542
+        },
+        "nvof_submit_cpu_ms": {
+          "mean": 0.6674720000000001,
+          "p50": 0.65185,
+          "p95": 0.9800000000000001,
+          "min": 0.341,
+          "max": 5.2256
+        },
+        "nvof_dependency_wait_ms": {
+          "mean": 1.0152563333333333,
+          "p50": 0.95275,
+          "p95": 1.3116500000000002,
+          "min": 0.6916,
+          "max": 1.6779000000000002
+        },
+        "nvof_upscale": {
+          "mean": 1.0152563333333333,
+          "p50": 0.95275,
+          "p95": 1.3116500000000002,
+          "min": 0.6916,
+          "max": 1.6779000000000002
+        },
+        "nvof_download": {
+          "mean": 2.9753913333333335,
+          "p50": 2.9049500000000004,
+          "p95": 3.89827,
+          "min": 2.1528,
+          "max": 4.9317
+        }
+      },
+      "per_frame_counters": {
+        "nvof_h2d_bytes_delta": {
+          "mean": 8322048.0,
+          "p50": 8294400.0,
+          "p95": 8294400.0,
+          "min": 8294400.0,
+          "max": 16588800.0
+        },
+        "nvof_d2h_bytes_delta": {
+          "mean": 16588800.0,
+          "p50": 16588800.0,
+          "p95": 16588800.0,
+          "min": 16588800.0,
+          "max": 16588800.0
+        },
+        "nvof_h2d_copy_count_delta": {
+          "mean": 1.0033333333333334,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 2.0
+        },
+        "nvof_d2h_copy_count_delta": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "nvof_execute_count_delta": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "nvof_native_history": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "cpu_previous_frame_copy_bytes": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "depth_missing_frames": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "filter_plan_build_count": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      },
+      "residual_diagnostics": {
+        "residual_backend": "cpu_reference_native",
+        "residual_backend_version": "api-0x00010000",
+        "plan_create_count": 1,
+        "plan_destroy_count": 0,
+        "scratch_alloc_count": 1,
+        "scratch_alloc_bytes": 87505920,
+        "native_scratch_bytes": 87505920,
+        "axis_plan_count": 4,
+        "downsample_call_count": 300,
+        "reconstruct_call_count": 300,
+        "downsample_pixel_count": 622080000,
+        "reconstruct_pixel_count": 2488320000,
+        "worker_create_count": 8,
+        "worker_count": 9,
+        "closed": false
+      },
+      "peak_rss_bytes": 1033969664,
+      "peak_vram_bytes": 3937402880,
+      "thread_count_end": 64,
+      "child_process_count_end": 0,
+      "frame_samples": [
+        {
+          "frame": 30,
+          "rss_bytes": 992563200,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 72,
+          "child_process_count": 14
+        },
+        {
+          "frame": 60,
+          "rss_bytes": 967913472,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 72,
+          "child_process_count": 10
+        },
+        {
+          "frame": 90,
+          "rss_bytes": 967929856,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 72,
+          "child_process_count": 8
+        },
+        {
+          "frame": 120,
+          "rss_bytes": 943349760,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 73,
+          "child_process_count": 7
+        },
+        {
+          "frame": 150,
+          "rss_bytes": 968249344,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 73,
+          "child_process_count": 4
+        },
+        {
+          "frame": 180,
+          "rss_bytes": 968577024,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 74,
+          "child_process_count": 4
+        },
+        {
+          "frame": 210,
+          "rss_bytes": 968753152,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 76,
+          "child_process_count": 4
+        },
+        {
+          "frame": 240,
+          "rss_bytes": 968736768,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 75,
+          "child_process_count": 4
+        },
+        {
+          "frame": 270,
+          "rss_bytes": 943874048,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 75,
+          "child_process_count": 4
+        },
+        {
+          "frame": 300,
+          "rss_bytes": 856768512,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 74,
+          "child_process_count": 2
+        }
+      ],
+      "ffprobe": {
+        "ok": true,
+        "checks": {
+          "packets": true,
+          "resolution": true,
+          "duration_within_1pct": true,
+          "fps_matches_source": true
+        },
+        "packets": 300,
+        "expected_frames": 300,
+        "duration_sec": 5.0,
+        "fps": 60.0,
+        "codec": "av1",
+        "width": 3840,
+        "height": 2160
+      },
+      "output_path": "F:\\dlss5standaloneV2\\bench_out\\e2e_D_50.mkv"
+    }
+  ],
+  "performance_gate": {
+    "fps_100_percent": 5.429,
+    "fps_50_percent_native": 7.796,
+    "requirement": "fps_50_percent_native > fps_100_percent",
+    "passed": true,
+    "ratio": 1.436
+  },
+  "resource_samples": {
+    "A": {
+      "wallclock_samples": [
+        {
+          "t_sec": 0.0,
+          "rss_bytes": 584060928,
+          "peak_rss_bytes": 758161408,
+          "vram_bytes": 3038773248,
+          "thread_count": 40,
+          "child_process_count": 10
+        },
+        {
+          "t_sec": 5.226,
+          "rss_bytes": 1149341696,
+          "peak_rss_bytes": 1180536832,
+          "vram_bytes": 4779409408,
+          "thread_count": 63,
+          "child_process_count": 12
+        },
+        {
+          "t_sec": 10.477,
+          "rss_bytes": 1167052800,
+          "peak_rss_bytes": 1181605888,
+          "vram_bytes": 4779409408,
+          "thread_count": 63,
+          "child_process_count": 12
+        },
+        {
+          "t_sec": 15.937,
+          "rss_bytes": 1135083520,
+          "peak_rss_bytes": 1181605888,
+          "vram_bytes": 4665114624,
+          "thread_count": 64,
+          "child_process_count": 6
+        },
+        {
+          "t_sec": 21.14,
+          "rss_bytes": 1182101504,
+          "peak_rss_bytes": 1182294016,
+          "vram_bytes": 4631560192,
+          "thread_count": 66,
+          "child_process_count": 4
+        },
+        {
+          "t_sec": 26.323,
+          "rss_bytes": 1137192960,
+          "peak_rss_bytes": 1182814208,
+          "vram_bytes": 4665114624,
+          "thread_count": 68,
+          "child_process_count": 4
+        },
+        {
+          "t_sec": 31.506,
+          "rss_bytes": 1182859264,
+          "peak_rss_bytes": 1183928320,
+          "vram_bytes": 4632608768,
+          "thread_count": 67,
+          "child_process_count": 4
+        },
+        {
+          "t_sec": 36.687,
+          "rss_bytes": 1137246208,
+          "peak_rss_bytes": 1183928320,
+          "vram_bytes": 4665114624,
+          "thread_count": 67,
+          "child_process_count": 4
+        },
+        {
+          "t_sec": 41.845,
+          "rss_bytes": 1137283072,
+          "peak_rss_bytes": 1184202752,
+          "vram_bytes": 4632608768,
+          "thread_count": 67,
+          "child_process_count": 4
+        },
+        {
+          "t_sec": 47.002,
+          "rss_bytes": 1151221760,
+          "peak_rss_bytes": 1184202752,
+          "vram_bytes": 4632608768,
+          "thread_count": 67,
+          "child_process_count": 4
+        },
+        {
+          "t_sec": 52.171,
+          "rss_bytes": 1116577792,
+          "peak_rss_bytes": 1184202752,
+          "vram_bytes": 4255121408,
+          "thread_count": 67,
+          "child_process_count": 4
+        }
+      ],
+      "frame_samples": [
+        {
+          "frame": 30,
+          "rss_bytes": 1114243072,
+          "peak_rss_bytes": 1181605888,
+          "thread_count": 63,
+          "child_process_count": 12
+        },
+        {
+          "frame": 60,
+          "rss_bytes": 1114320896,
+          "peak_rss_bytes": 1181605888,
+          "thread_count": 63,
+          "child_process_count": 10
+        },
+        {
+          "frame": 90,
+          "rss_bytes": 1114640384,
+          "peak_rss_bytes": 1182294016,
+          "thread_count": 65,
+          "child_process_count": 4
+        },
+        {
+          "frame": 120,
+          "rss_bytes": 1116401664,
+          "peak_rss_bytes": 1182765056,
+          "thread_count": 66,
+          "child_process_count": 4
+        },
+        {
+          "frame": 150,
+          "rss_bytes": 1116491776,
+          "peak_rss_bytes": 1183928320,
+          "thread_count": 67,
+          "child_process_count": 4
+        },
+        {
+          "frame": 180,
+          "rss_bytes": 1116499968,
+          "peak_rss_bytes": 1183928320,
+          "thread_count": 67,
+          "child_process_count": 4
+        },
+        {
+          "frame": 210,
+          "rss_bytes": 1116545024,
+          "peak_rss_bytes": 1184202752,
+          "thread_count": 67,
+          "child_process_count": 4
+        },
+        {
+          "frame": 240,
+          "rss_bytes": 1116553216,
+          "peak_rss_bytes": 1184202752,
+          "thread_count": 67,
+          "child_process_count": 4
+        },
+        {
+          "frame": 270,
+          "rss_bytes": 1116577792,
+          "peak_rss_bytes": 1184202752,
+          "thread_count": 67,
+          "child_process_count": 4
+        },
+        {
+          "frame": 300,
+          "rss_bytes": 942354432,
+          "peak_rss_bytes": 1184202752,
+          "thread_count": 66,
+          "child_process_count": 2
+        }
+      ]
+    },
+    "D": {
+      "wallclock_samples": [
+        {
+          "t_sec": 0.0,
+          "rss_bytes": 583151616,
+          "peak_rss_bytes": 758681600,
+          "vram_bytes": 2340421632,
+          "thread_count": 40,
+          "child_process_count": 10
+        },
+        {
+          "t_sec": 5.224,
+          "rss_bytes": 984289280,
+          "peak_rss_bytes": 1033969664,
+          "vram_bytes": 3937402880,
+          "thread_count": 72,
+          "child_process_count": 14
+        },
+        {
+          "t_sec": 10.584,
+          "rss_bytes": 955461632,
+          "peak_rss_bytes": 1033969664,
+          "vram_bytes": 3929014272,
+          "thread_count": 72,
+          "child_process_count": 8
+        },
+        {
+          "t_sec": 15.833,
+          "rss_bytes": 959672320,
+          "peak_rss_bytes": 1033969664,
+          "vram_bytes": 3781165056,
+          "thread_count": 73,
+          "child_process_count": 8
+        },
+        {
+          "t_sec": 21.107,
+          "rss_bytes": 943390720,
+          "peak_rss_bytes": 1033969664,
+          "vram_bytes": 3789553664,
+          "thread_count": 74,
+          "child_process_count": 4
+        },
+        {
+          "t_sec": 26.309,
+          "rss_bytes": 952012800,
+          "peak_rss_bytes": 1033969664,
+          "vram_bytes": 3781165056,
+          "thread_count": 75,
+          "child_process_count": 4
+        },
+        {
+          "t_sec": 31.517,
+          "rss_bytes": 943865856,
+          "peak_rss_bytes": 1033969664,
+          "vram_bytes": 3789553664,
+          "thread_count": 75,
+          "child_process_count": 4
+        },
+        {
+          "t_sec": 36.713,
+          "rss_bytes": 943886336,
+          "peak_rss_bytes": 1033969664,
+          "vram_bytes": 3403677696,
+          "thread_count": 75,
+          "child_process_count": 4
+        }
+      ],
+      "frame_samples": [
+        {
+          "frame": 30,
+          "rss_bytes": 992563200,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 72,
+          "child_process_count": 14
+        },
+        {
+          "frame": 60,
+          "rss_bytes": 967913472,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 72,
+          "child_process_count": 10
+        },
+        {
+          "frame": 90,
+          "rss_bytes": 967929856,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 72,
+          "child_process_count": 8
+        },
+        {
+          "frame": 120,
+          "rss_bytes": 943349760,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 73,
+          "child_process_count": 7
+        },
+        {
+          "frame": 150,
+          "rss_bytes": 968249344,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 73,
+          "child_process_count": 4
+        },
+        {
+          "frame": 180,
+          "rss_bytes": 968577024,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 74,
+          "child_process_count": 4
+        },
+        {
+          "frame": 210,
+          "rss_bytes": 968753152,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 76,
+          "child_process_count": 4
+        },
+        {
+          "frame": 240,
+          "rss_bytes": 968736768,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 75,
+          "child_process_count": 4
+        },
+        {
+          "frame": 270,
+          "rss_bytes": 943874048,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 75,
+          "child_process_count": 4
+        },
+        {
+          "frame": 300,
+          "rss_bytes": 856768512,
+          "peak_rss_bytes": 1033969664,
+          "thread_count": 74,
+          "child_process_count": 2
+        }
+      ]
+    }
+  }
+}

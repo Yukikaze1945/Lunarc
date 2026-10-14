@@ -1,0 +1,1669 @@
+{
+  "allowed_status_values": [
+    "DONE_PROVEN",
+    "NOT_READY"
+  ],
+  "artifact_shas": {
+    "counterbalanced_150f": "7c1768fe22f765b65e9c0bc9c99e8bc6e3b8e76a",
+    "counterbalanced_performance": "7c1768fe22f765b65e9c0bc9c99e8bc6e3b8e76a",
+    "environment": "7c1768fe22f765b65e9c0bc9c99e8bc6e3b8e76a",
+    "ffprobe_output": null,
+    "historical_warmup_recalc": null,
+    "protocol": "7c1768fe22f765b65e9c0bc9c99e8bc6e3b8e76a",
+    "status_consistency": "7c1768fe22f765b65e9c0bc9c99e8bc6e3b8e76a"
+  },
+  "baseline": "8fa242b",
+  "code_under_test": "7c1768fe22f765b65e9c0bc9c99e8bc6e3b8e76a",
+  "commits": [
+    {
+      "native_binary_in_same_commit": [],
+      "native_source_touched": [],
+      "sha": "150e59a",
+      "subject": "fix(bench): exclude warmup runs from pooled transfer verdict"
+    },
+    {
+      "native_binary_in_same_commit": [],
+      "native_source_touched": [],
+      "sha": "a5677b8",
+      "subject": "fix(bench): counterbalance legacy and reduced run order"
+    },
+    {
+      "native_binary_in_same_commit": [],
+      "native_source_touched": [],
+      "sha": "c871c27",
+      "subject": "fix(artifacts): correct unchanged decoder transfer status"
+    },
+    {
+      "native_binary_in_same_commit": [],
+      "native_source_touched": [],
+      "sha": "7c1768f",
+      "subject": "test(bench): add transfer benchmark protocol regressions"
+    }
+  ],
+  "forbidden_phrases": [
+    "GPU pipeline complete",
+    "zero-copy complete",
+    "CPU round trips eliminated",
+    "full GPU acceleration complete"
+  ],
+  "gate_statuses": {
+    "copy_gate": "DONE_PROVEN",
+    "counterbalanced_order": "DONE_PROVEN",
+    "decoder_status_semantics": "DONE_PROVEN",
+    "full_unit_suite": "DONE_PROVEN",
+    "kept_run_pooling": "DONE_PROVEN",
+    "native_scope_unchanged": "DONE_PROVEN",
+    "order_balance": "DONE_PROVEN",
+    "output_integrity_gate": "DONE_PROVEN",
+    "performance_direction_consistency": "NOT_READY",
+    "performance_non_regression": "NOT_READY",
+    "position_stratification": "DONE_PROVEN",
+    "warmup_exclusion": "DONE_PROVEN"
+  },
+  "gates": {
+    "copy_gate": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": 12,
+          "expected": true,
+          "ok": true,
+          "what": "copy_gate_passed_in_every_execution"
+        },
+        {
+          "actual": true,
+          "detail": [
+            6220800
+          ],
+          "expected": true,
+          "ok": true,
+          "what": "reduced_upload_is_6220800_bytes_in_every_execution"
+        },
+        {
+          "actual": true,
+          "detail": [
+            8294400
+          ],
+          "expected": true,
+          "ok": true,
+          "what": "legacy_upload_is_8294400_bytes_in_every_execution"
+        },
+        {
+          "actual": true,
+          "detail": [
+            [
+              0,
+              0
+            ]
+          ],
+          "expected": true,
+          "ok": true,
+          "what": "reduced_cpu_conversions_are_zero_in_every_execution"
+        },
+        {
+          "actual": true,
+          "detail": [
+            2
+          ],
+          "expected": true,
+          "ok": true,
+          "what": "legacy_cpu_conversions_are_the_control"
+        },
+        {
+          "actual": true,
+          "detail": [
+            0
+          ],
+          "expected": true,
+          "ok": true,
+          "what": "no_cpu_copy_of_the_previous_frame_anywhere"
+        }
+      ],
+      "detail": {
+        "legacy_h2d_values": [
+          8294400
+        ],
+        "reduced_h2d_values": [
+          6220800
+        ]
+      },
+      "evidence": [
+        "counterbalanced_performance.json executions[].gates.copy_gate",
+        "counterbalanced_performance.json executions[].orders[].steady_state_counters"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "counterbalanced_order": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": 12,
+          "expected": true,
+          "ok": true,
+          "what": "every_execution_recorded_a_schedule"
+        },
+        {
+          "actual": true,
+          "detail": "all matched",
+          "expected": true,
+          "ok": true,
+          "what": "every_launch_sequence_matches_its_recorded_schedule"
+        },
+        {
+          "actual": true,
+          "detail": "all matched",
+          "expected": true,
+          "ok": true,
+          "what": "every_schedule_is_the_deterministic_rule"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "execution_01_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            },
+            "execution_02_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            },
+            "execution_03_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            },
+            "execution_04_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            },
+            "execution_05_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            },
+            "execution_06_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            },
+            "execution_07_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            },
+            "execution_08_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            },
+            "execution_09_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            },
+            "execution_10_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            },
+            "execution_11_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            },
+            "execution_12_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            }
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_execution_had_kept_pairs_of_both_positions"
+        },
+        {
+          "actual": true,
+          "detail": null,
+          "expected": true,
+          "ok": true,
+          "what": "no_execution_ran_a_fixed_order"
+        }
+      ],
+      "detail": {
+        "recorded_schedule": [
+          [
+            {
+              "kept": false,
+              "order": [
+                "legacy",
+                "reduced"
+              ],
+              "run": 1
+            },
+            {
+              "kept": true,
+              "order": [
+                "legacy",
+                "reduced"
+              ],
+              "run": 2
+            },
+            {
+              "kept": true,
+              "order": [
+                "reduced",
+                "legacy"
+              ],
+              "run": 3
+            }
+          ],
+          [
+            {
+              "kept": false,
+              "order": [
+                "reduced",
+                "legacy"
+              ],
+              "run": 1
+            },
+            {
+              "kept": true,
+              "order": [
+                "reduced",
+                "legacy"
+              ],
+              "run": 2
+            },
+            {
+              "kept": true,
+              "order": [
+                "legacy",
+                "reduced"
+              ],
+              "run": 3
+            }
+          ]
+        ]
+      },
+      "evidence": [
+        "ab_executions/*_transfer_ab_benchmark.json execution_schedule",
+        "ab_executions/*_transfer_ab_benchmark.json run_launch_sequence",
+        "counterbalanced_performance.json verdict.per_execution_outcome[].kept_pair_positions"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "decoder_status_semantics": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "legacy_bytes": 12441600,
+            "reason": "the decoder is a child process writing a byte pipe; this round changed nothing on that path, and the two measurements agree",
+            "reduced_bytes": 12441600,
+            "status": "BLOCKED_PROVEN",
+            "unchanged_this_round": true
+          },
+          "expected": true,
+          "ok": true,
+          "what": "decoder_pipe_is_not_reported_as_reduced"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "legacy": 12441600,
+            "reduced": 12441600
+          },
+          "expected": true,
+          "ok": true,
+          "what": "decoder_pipe_reports_blocked_while_its_bytes_are_equal"
+        },
+        {
+          "actual": true,
+          "detail": [],
+          "expected": true,
+          "ok": true,
+          "what": "no_published_word_contradicts_its_own_numbers"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "decoder_pipe": "BLOCKED_PROVEN",
+            "encoder_pipe": "BLOCKED_PROVEN",
+            "nvof_flow_d2h_download": "BLOCKED_PROVEN"
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_row_whose_numbers_are_equal_says_blocked"
+        }
+      ],
+      "detail": {
+        "claims": [
+          {
+            "after": 6220800,
+            "before": 8294400,
+            "claim": "nvof_h2d_upload",
+            "consistent": true,
+            "derived_status": "REDUCED_PROVEN",
+            "problems": [],
+            "published_status": "REDUCED_PROVEN",
+            "saved": 2073600,
+            "saved_percent": 25.0
+          },
+          {
+            "after": 0,
+            "before": 2,
+            "claim": "cpu_bgr_to_rgba_calls",
+            "consistent": true,
+            "derived_status": "DONE_PROVEN",
+            "problems": [],
+            "published_status": "ELIMINATED_PROVEN",
+            "saved": 2,
+            "saved_percent": 100.0
+          },
+          {
+            "after": 0,
+            "before": 1,
+            "claim": "cpu_rgba_to_bgr_calls",
+            "consistent": true,
+            "derived_status": "DONE_PROVEN",
+            "problems": [],
+            "published_status": "ELIMINATED_PROVEN",
+            "saved": 1,
+            "saved_percent": 100.0
+          },
+          {
+            "after": 0,
+            "before": 22809600,
+            "claim": "cpu_color_conversion_output",
+            "consistent": true,
+            "derived_status": "DONE_PROVEN",
+            "problems": [],
+            "published_status": "ELIMINATED_PROVEN",
+            "saved": 22809600,
+            "saved_percent": 100.0
+          },
+          {
+            "after": 16588800,
+            "before": 16588800,
+            "claim": "nvof_flow_d2h_download",
+            "consistent": true,
+            "derived_status": "BLOCKED_PROVEN",
+            "problems": [],
+            "published_status": "BLOCKED_PROVEN",
+            "saved": 0,
+            "saved_percent": 0.0
+          },
+          {
+            "after": 12441600,
+            "before": 12441600,
+            "claim": "decoder_pipe",
+            "consistent": true,
+            "derived_status": "BLOCKED_PROVEN",
+            "problems": [],
+            "published_status": "BLOCKED_PROVEN",
+            "saved": 0,
+            "saved_percent": 0.0
+          },
+          {
+            "after": 24883200,
+            "before": 24883200,
+            "claim": "encoder_pipe",
+            "consistent": true,
+            "derived_status": "BLOCKED_PROVEN",
+            "problems": [],
+            "published_status": "BLOCKED_PROVEN",
+            "saved": 0,
+            "saved_percent": 0.0
+          }
+        ],
+        "reduced_proven_rows": [
+          {
+            "after": 6220800,
+            "before": 8294400,
+            "claim": "nvof_h2d_upload",
+            "saved": 2073600,
+            "saved_percent": 25.0,
+            "status": "REDUCED_PROVEN",
+            "unit": "bytes/frame"
+          }
+        ]
+      },
+      "evidence": [
+        "status_consistency.json",
+        "counterbalanced_performance.json executions[].orders[].steady_state_counters.decoder_pipe_bytes"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "full_unit_suite": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": "287 passed in 134.35s (0:02:14)",
+          "expected": true,
+          "ok": true,
+          "what": "the_suite_ran_and_its_transcript_is_here"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "passed": 287
+          },
+          "expected": true,
+          "ok": true,
+          "what": "nothing_failed"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "passed": 287
+          },
+          "expected": true,
+          "ok": true,
+          "what": "at_least_the_phase1_baseline_of_273"
+        }
+      ],
+      "detail": {
+        "counts": {
+          "passed": 287
+        },
+        "summary_line": "287 passed in 134.35s (0:02:14)"
+      },
+      "evidence": [
+        "pytest_output.txt"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "kept_run_pooling": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "legacy": 3.5983,
+            "reduced": 3.5804
+          },
+          "expected": true,
+          "ok": true,
+          "what": "pooled_median_recomputed_from_the_kept_rows"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "legacy": "24 of 36",
+            "reduced": "24 of 36"
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_verdict_does_not_read_the_warmup_runs"
+        },
+        {
+          "actual": true,
+          "detail": null,
+          "expected": true,
+          "ok": true,
+          "what": "kept_and_all_run_counts_are_both_published"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "diagnostic": {
+              "legacy": 3.5983,
+              "reduced": 3.6162
+            }
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_all_runs_figure_is_labelled_a_diagnostic"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "correct_kept_median_legacy": 7.4485,
+            "correct_kept_median_reduced": 7.6178,
+            "correct_kept_run_count_per_order": {
+              "legacy": 24,
+              "reduced": 24
+            },
+            "correct_pair_count": 24,
+            "corrected_median_reduced_minus_legacy_percent": 2.46,
+            "corrected_ratio": 1.0227,
+            "corrected_sign_test": {
+              "p_value_legacy_ahead_by_at_least_this_much": 0.999228,
+              "p_value_reduced_ahead_by_at_least_this_much": 0.003305,
+              "pairs": 24,
+              "runs_favouring_legacy": 5,
+              "runs_favouring_reduced": 19,
+              "used_for": "secondary evidence only; no threshold in this file reads it"
+            },
+            "executions": 12,
+            "generated_by": "tests/unit/collect_transfer_performance.py",
+            "old_all_run_count_per_order": {
+              "legacy": 36,
+              "reduced": 36
+            },
+            "old_all_run_median_legacy": 7.4839,
+            "old_all_run_median_reduced": 7.5984,
+            "old_median_reduced_minus_legacy_percent": 2.46,
+            "old_pair_count": 36,
+            "old_ratio": 1.0153,
+            "old_sign_test": {
+              "p_value_legacy_ahead_by_at_least_this_much": 0.998033,
+              "p_value_reduced_ahead_by_at_least_this_much": 0.005665,
+              "pairs": 36,
+              "runs_favouring_legacy": 10,
+              "runs_favouring_reduced": 26,
+              "used_for": "secondary evidence only; no threshold in this file reads it"
+            },
+            "read_only_source": [
+              "F:\\dlss5standaloneV2\\perf_results\\740c78a\\transfer_phase1",
+              "F:\\dlss5standaloneV2\\perf_results\\740c78a\\transfer_phase1\\ab_executions"
+            ],
+            "sources": [
+              "execution_01_transfer_ab_benchmark.json",
+              "execution_02_transfer_ab_benchmark.json",
+              "execution_03_transfer_ab_benchmark.json",
+              "execution_04_transfer_ab_benchmark.json",
+              "execution_05_transfer_ab_benchmark.json",
+              "execution_06_transfer_ab_benchmark.json",
+              "execution_07_transfer_ab_benchmark.json",
+              "execution_08_transfer_ab_benchmark.json",
+              "execution_09_transfer_ab_benchmark.json",
+              "execution_10_transfer_ab_benchmark.json",
+              "transfer_ab_benchmark.json",
+              "transfer_ab_benchmark_60f_e2.json"
+            ],
+            "verdict_would_change": false,
+            "warmup_run_count_per_order": {
+              "legacy": 12,
+              "reduced": 12
+            },
+            "what_this_does_not_prove": "anything about speed under a counterbalanced protocol. Every pair of this batch ran legacy first, so reduced always occupied the second position, and removing warmups does not remove that.",
+            "what_this_proves": "that the earlier pooled verdict read 36 runs per order where the protocol kept 24: it folded each execution's warmup pair back into the median and the sign test. The two columns below are the same runs, separated only by whether the warmup pair was allowed to count."
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_history_recalc_shows_the_same_split"
+        }
+      ],
+      "detail": {
+        "pooled_all_runs_median_fps_diagnostic": {
+          "legacy": 3.5983,
+          "reduced": 3.6162
+        },
+        "pooled_kept_median_fps": {
+          "legacy": 3.5983,
+          "reduced": 3.5804
+        }
+      },
+      "evidence": [
+        "counterbalanced_performance.json verdict.kept_orders",
+        "counterbalanced_performance.json verdict.all_orders_diagnostic",
+        "historical_warmup_recalc.json"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "native_scope_unchanged": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "nvof_bridge.dll": {
+              "baseline_commit": "8fa242b",
+              "last_commit_touching_binary": "1352c71 perf(nvof): add native bgr input path",
+              "matches_baseline": true,
+              "matches_head": true,
+              "path": "native/nvof_bridge.dll",
+              "sha256_at_baseline": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80",
+              "sha256_at_head": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80",
+              "unchanged_since_baseline": true,
+              "working_tree_sha256": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80"
+            },
+            "residual_bridge.dll": {
+              "baseline_commit": "8fa242b",
+              "last_commit_touching_binary": "51c980c perf(residual): consume dlss rgba directly in reconstruction",
+              "matches_baseline": true,
+              "matches_head": true,
+              "path": "native/residual_bridge.dll",
+              "sha256_at_baseline": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2",
+              "sha256_at_head": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2",
+              "unchanged_since_baseline": true,
+              "working_tree_sha256": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2"
+            }
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_native_binary_matches_the_baseline_commit"
+        },
+        {
+          "actual": true,
+          "detail": [],
+          "expected": true,
+          "ok": true,
+          "what": "no_native_source_was_touched"
+        },
+        {
+          "actual": true,
+          "detail": [],
+          "expected": true,
+          "ok": true,
+          "what": "every_file_this_round_changed_is_test_layer"
+        }
+      ],
+      "detail": {
+        "binaries": {
+          "nvof_bridge.dll": {
+            "baseline_commit": "8fa242b",
+            "last_commit_touching_binary": "1352c71 perf(nvof): add native bgr input path",
+            "matches_baseline": true,
+            "matches_head": true,
+            "path": "native/nvof_bridge.dll",
+            "sha256_at_baseline": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80",
+            "sha256_at_head": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80",
+            "unchanged_since_baseline": true,
+            "working_tree_sha256": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80"
+          },
+          "residual_bridge.dll": {
+            "baseline_commit": "8fa242b",
+            "last_commit_touching_binary": "51c980c perf(residual): consume dlss rgba directly in reconstruction",
+            "matches_baseline": true,
+            "matches_head": true,
+            "path": "native/residual_bridge.dll",
+            "sha256_at_baseline": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2",
+            "sha256_at_head": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2",
+            "unchanged_since_baseline": true,
+            "working_tree_sha256": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2"
+          }
+        },
+        "changed": [
+          "tests/unit/collect_transfer_ab.py",
+          "tests/unit/collect_transfer_performance.py",
+          "tests/unit/collect_transfer_status.py",
+          "tests/unit/test_transfer_benchmark_protocol.py"
+        ]
+      },
+      "evidence": [
+        "git object hashes at 8fa242b and in the working tree",
+        "git diff --name-only 8fa242b..HEAD"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "order_balance": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "legacy_first": 12,
+            "pairs": 24,
+            "reduced_first": 12
+          },
+          "expected": true,
+          "ok": true,
+          "what": "legacy_first_kept_pairs_equal_reduced_first"
+        },
+        {
+          "actual": true,
+          "detail": 0,
+          "expected": true,
+          "ok": true,
+          "what": "no_kept_pair_has_an_unknown_position"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "kept": {
+              "legacy": 24,
+              "reduced": 24
+            },
+            "pairs": 24
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_kept_run_is_in_exactly_one_balanced_pair"
+        },
+        {
+          "actual": true,
+          "detail": "the balance is enforced by the launch schedule, per execution",
+          "expected": true,
+          "ok": true,
+          "what": "the_balance_is_not_a_statistical_correction"
+        }
+      ],
+      "detail": {
+        "order_balance": {
+          "balanced": true,
+          "legacy_first": 12,
+          "pairs": 24,
+          "reduced_first": 12,
+          "unknown_position": 0
+        }
+      },
+      "evidence": [
+        "counterbalanced_performance.json verdict.order_balance",
+        "ab_executions/*_transfer_ab_benchmark.json gates.order_balance_gate"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "output_integrity_gate": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": 12,
+          "expected": true,
+          "ok": true,
+          "what": "output_integrity_gate_passed_in_every_execution"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "execution_01_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            },
+            "execution_02_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            },
+            "execution_03_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            },
+            "execution_04_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            },
+            "execution_05_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            },
+            "execution_06_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            },
+            "execution_07_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            },
+            "execution_08_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            },
+            "execution_09_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            },
+            "execution_10_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            },
+            "execution_11_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            },
+            "execution_12_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            }
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_execution_produced_a_bitstream_for_both_orders"
+        },
+        {
+          "actual": true,
+          "detail": "every execution",
+          "expected": true,
+          "ok": true,
+          "what": "legacy_and_reduced_bitstreams_are_the_same_bytes"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "probed": 72,
+            "runs": 72
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_output_file_was_probed"
+        },
+        {
+          "actual": true,
+          "detail": [],
+          "expected": true,
+          "ok": true,
+          "what": "no_execution_failed_or_crashed"
+        }
+      ],
+      "detail": {
+        "bitstream_digests_per_execution": {
+          "execution_01_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          },
+          "execution_02_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          },
+          "execution_03_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          },
+          "execution_04_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          },
+          "execution_05_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          },
+          "execution_06_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          },
+          "execution_07_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          },
+          "execution_08_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          },
+          "execution_09_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          },
+          "execution_10_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          },
+          "execution_11_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          },
+          "execution_12_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          }
+        }
+      },
+      "evidence": [
+        "counterbalanced_performance.json executions[].gates.output_integrity_gate",
+        "ab_executions/*_transfer_ab_benchmark.json output_identity",
+        "ffprobe_output.json"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "performance_direction_consistency": {
+      "checks": [
+        {
+          "actual": false,
+          "detail": {
+            "pairwise_median_ratio": 1.0226,
+            "pooled_kept_ratio": 0.995
+          },
+          "expected": true,
+          "ok": false,
+          "what": "the_pooled_medians_and_the_paired_ratios_point_the_same_way"
+        },
+        {
+          "actual": true,
+          "detail": null,
+          "expected": true,
+          "ok": true,
+          "what": "both_readings_are_published"
+        },
+        {
+          "actual": true,
+          "detail": "secondary evidence only; no threshold in this file reads it",
+          "expected": true,
+          "ok": true,
+          "what": "the_sign_test_is_evidence_not_a_gate"
+        }
+      ],
+      "detail": {
+        "median_reduced_minus_legacy_percent": 2.26,
+        "sign_test": {
+          "p_value_legacy_ahead_by_at_least_this_much": 0.846272,
+          "p_value_reduced_ahead_by_at_least_this_much": 0.270628,
+          "pairs": 24,
+          "runs_favouring_legacy": 10,
+          "runs_favouring_reduced": 14,
+          "used_for": "secondary evidence only; no threshold in this file reads it"
+        }
+      },
+      "evidence": [
+        "counterbalanced_performance.json verdict.performance_direction_consistent",
+        "counterbalanced_performance.json verdict.pairwise_median_ratio"
+      ],
+      "failed_checks": [
+        "the_pooled_medians_and_the_paired_ratios_point_the_same_way"
+      ],
+      "status": "NOT_READY"
+    },
+    "performance_non_regression": {
+      "checks": [
+        {
+          "actual": false,
+          "detail": {
+            "legacy": 3.5983,
+            "reduced": 3.5804
+          },
+          "expected": true,
+          "ok": false,
+          "what": "reduced_kept_median_at_least_legacy_kept"
+        },
+        {
+          "actual": false,
+          "detail": null,
+          "expected": true,
+          "ok": false,
+          "what": "the_pooled_verdict_reports_no_regression"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "attempted": 12,
+            "recorded": 12
+          },
+          "expected": true,
+          "ok": true,
+          "what": "no_execution_was_dropped_to_get_there"
+        },
+        {
+          "actual": true,
+          "detail": [],
+          "expected": true,
+          "ok": true,
+          "what": "every_execution_that_ran_is_still_in_the_file"
+        }
+      ],
+      "detail": {
+        "executions_whose_own_median_ratios_came_out_below_one": [
+          "execution-1",
+          "execution-4",
+          "execution-5",
+          "execution-6"
+        ],
+        "kept_they_are_all_still_pooled": true,
+        "note": "\u00a733: an execution that measures the reduced order slower stays in the pool. It is named here so a reader can count them and check none went missing."
+      },
+      "evidence": [
+        "counterbalanced_performance.json verdict.no_end_to_end_regression",
+        "counterbalanced_performance.json verdict.pooled_kept_median_fps"
+      ],
+      "failed_checks": [
+        "reduced_kept_median_at_least_legacy_kept",
+        "the_pooled_verdict_reports_no_regression"
+      ],
+      "status": "NOT_READY"
+    },
+    "position_stratification": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "reduced_vs_legacy_when_reduced_first": 12,
+            "reduced_vs_legacy_when_reduced_second": 12
+          },
+          "expected": true,
+          "ok": true,
+          "what": "both_position_strata_have_samples"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "pairs": 24,
+            "strata": 24
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_two_strata_partition_the_kept_pairs"
+        },
+        {
+          "actual": true,
+          "detail": null,
+          "expected": true,
+          "ok": true,
+          "what": "each_stratum_reports_its_own_ratio_and_wins"
+        }
+      ],
+      "detail": {
+        "note": "no gate requires both strata to favour either order; an empty stratum would mean the claimed balance never happened, and that is what fails here",
+        "strata": {
+          "reduced_vs_legacy_when_reduced_first": {
+            "executions": [
+              "execution-1",
+              "execution-10",
+              "execution-11",
+              "execution-12",
+              "execution-2",
+              "execution-3",
+              "execution-4",
+              "execution-5",
+              "execution-6",
+              "execution-7",
+              "execution-8",
+              "execution-9"
+            ],
+            "losses": 5,
+            "median_percent_change": 2.37,
+            "median_ratio": 1.0237,
+            "pair_count": 12,
+            "wins": 7
+          },
+          "reduced_vs_legacy_when_reduced_second": {
+            "executions": [
+              "execution-1",
+              "execution-10",
+              "execution-11",
+              "execution-12",
+              "execution-2",
+              "execution-3",
+              "execution-4",
+              "execution-5",
+              "execution-6",
+              "execution-7",
+              "execution-8",
+              "execution-9"
+            ],
+            "losses": 5,
+            "median_percent_change": 2.26,
+            "median_ratio": 1.0226,
+            "pair_count": 12,
+            "wins": 7
+          }
+        }
+      },
+      "evidence": [
+        "counterbalanced_performance.json verdict.position_strata"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "warmup_exclusion": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "legacy": 12,
+            "reduced": 12
+          },
+          "expected": true,
+          "ok": true,
+          "what": "warmup_runs_were_measured_and_published"
+        },
+        {
+          "actual": true,
+          "detail": null,
+          "expected": true,
+          "ok": true,
+          "what": "warmup_rows_are_flagged_out_of_the_verdict"
+        },
+        {
+          "actual": true,
+          "detail": null,
+          "expected": true,
+          "ok": true,
+          "what": "kept_rows_are_flagged_into_the_verdict"
+        },
+        {
+          "actual": true,
+          "detail": null,
+          "expected": true,
+          "ok": true,
+          "what": "no_run_is_both_warmup_and_kept"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "legacy": [
+              [
+                2,
+                3
+              ]
+            ],
+            "reduced": [
+              [
+                2,
+                3
+              ]
+            ]
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_execution_named_its_own_kept_run_ids"
+        }
+      ],
+      "detail": {
+        "run_census": {
+          "legacy": {
+            "all_run_count": 36,
+            "kept_run_count": 24,
+            "kept_run_ids": [
+              2,
+              3
+            ],
+            "warmup_run_count": 12,
+            "warmup_run_ids": [
+              1
+            ]
+          },
+          "reduced": {
+            "all_run_count": 36,
+            "kept_run_count": 24,
+            "kept_run_ids": [
+              2,
+              3
+            ],
+            "warmup_run_count": 12,
+            "warmup_run_ids": [
+              1
+            ]
+          }
+        }
+      },
+      "evidence": [
+        "counterbalanced_performance.json run_census",
+        "counterbalanced_performance.json kept_runs_per_order",
+        "counterbalanced_performance.json warmup_runs_per_order",
+        "executions[].orders[].runs_used_for_medians"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    }
+  },
+  "generated_at_utc": "2026-09-20T13:03:58Z",
+  "generated_by": "tests/unit/collect_transfer_status.py",
+  "missing_artifacts": [],
+  "native_binaries": {
+    "nvof_bridge.dll": {
+      "binary_git_blob_committed": "24d84408bbfe150d255e998b3905524fabf99ce3",
+      "binary_git_blob_working": "24d84408bbfe150d255e998b3905524fabf99ce3",
+      "binary_matches_commit": true,
+      "binary_path": "native/nvof_bridge.dll",
+      "binary_sha256": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80",
+      "binary_size_bytes": 161792,
+      "last_commit_touching_binary": "1352c71 perf(nvof): add native bgr input path",
+      "last_commit_touching_source": "1352c71 perf(nvof): add native bgr input path",
+      "source_git_blob_committed": "71f41a639bdc6826a20c30c51334fda2061d8861",
+      "source_git_blob_working": "71f41a639bdc6826a20c30c51334fda2061d8861",
+      "source_matches_commit": true,
+      "source_path": "native/nvof_bridge.cpp",
+      "source_sha256": "0d6d6d34a9b0362d094363b0ac7e057e552b88a39d4b58218006c4a7e50b6562"
+    },
+    "residual_bridge.dll": {
+      "binary_git_blob_committed": "cc578dfe4541c7336d7334210fe1a155468a3677",
+      "binary_git_blob_working": "cc578dfe4541c7336d7334210fe1a155468a3677",
+      "binary_matches_commit": true,
+      "binary_path": "native/residual_bridge.dll",
+      "binary_sha256": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2",
+      "binary_size_bytes": 200192,
+      "last_commit_touching_binary": "51c980c perf(residual): consume dlss rgba directly in reconstruction",
+      "last_commit_touching_source": "51c980c perf(residual): consume dlss rgba directly in reconstruction",
+      "source_git_blob_committed": "71a23fab702247a6b2427cf68a4aa4e7aca8d54d",
+      "source_git_blob_working": "71a23fab702247a6b2427cf68a4aa4e7aca8d54d",
+      "source_matches_commit": true,
+      "source_path": "native/residual_bridge.cpp",
+      "source_sha256": "c76d9aa2859f50b71625acfa061c47ae7a73635e43ce7aba405e15ca6b74be08"
+    }
+  },
+  "performance_readings": {
+    "150_frame_corroboration": {
+      "all_orders_diagnostic": {
+        "legacy": {
+          "executions": [
+            "execution-1"
+          ],
+          "max_fps": 4.2802,
+          "mean_fps": 4.1273,
+          "median_fps": 4.1666,
+          "min_fps": 3.935,
+          "per_execution_inter_run_spread_percent": {
+            "execution-1": 8.77
+          },
+          "run_count": 3,
+          "spread_percent": 8.77
+        },
+        "reduced": {
+          "executions": [
+            "execution-1"
+          ],
+          "max_fps": 4.3427,
+          "mean_fps": 4.0971,
+          "median_fps": 4.0702,
+          "min_fps": 3.8784,
+          "per_execution_inter_run_spread_percent": {
+            "execution-1": 11.97
+          },
+          "run_count": 3,
+          "spread_percent": 11.97
+        }
+      },
+      "all_required_checks_passed": false,
+      "corroboration": {},
+      "evidence_that_reduced_is_slower_p_value": 0.25,
+      "kept_orders": {
+        "legacy": {
+          "executions": [
+            "execution-1"
+          ],
+          "max_fps": 4.2802,
+          "mean_fps": 4.2234,
+          "median_fps": 4.2234,
+          "min_fps": 4.1666,
+          "per_execution_inter_run_spread_percent": {
+            "execution-1": 2.73
+          },
+          "run_count": 2,
+          "spread_percent": 2.73
+        },
+        "reduced": {
+          "executions": [
+            "execution-1"
+          ],
+          "max_fps": 4.0702,
+          "mean_fps": 3.9743,
+          "median_fps": 3.9743,
+          "min_fps": 3.8784,
+          "per_execution_inter_run_spread_percent": {
+            "execution-1": 4.95
+          },
+          "run_count": 2,
+          "spread_percent": 4.95
+        }
+      },
+      "kept_pairs": [
+        {
+          "execution": "execution-1",
+          "frames": 150,
+          "included_in_performance_verdict": true,
+          "legacy_fps": 4.2802,
+          "legacy_position_in_pair": 1,
+          "reduced_fps": 4.0702,
+          "reduced_minus_legacy_percent": -4.91,
+          "reduced_over_legacy_ratio": 0.9509,
+          "reduced_position_in_pair": 2,
+          "run": "2"
+        },
+        {
+          "execution": "execution-1",
+          "frames": 150,
+          "included_in_performance_verdict": true,
+          "legacy_fps": 4.1666,
+          "legacy_position_in_pair": 2,
+          "reduced_fps": 3.8784,
+          "reduced_minus_legacy_percent": -6.92,
+          "reduced_over_legacy_ratio": 0.9308,
+          "reduced_position_in_pair": 1,
+          "run": "3"
+        }
+      ],
+      "median_reduced_minus_legacy_percent": -5.92,
+      "no_end_to_end_regression": false,
+      "order_balance": {
+        "balanced": true,
+        "legacy_first": 1,
+        "pairs": 2,
+        "reduced_first": 1,
+        "unknown_position": 0
+      },
+      "pairwise_median_ratio": 0.9408,
+      "per_execution_outcome": {
+        "execution-1": {
+          "copy_gate_all_passed": true,
+          "decoder_pipe_bytes": {
+            "legacy": 12441600,
+            "reduced": 12441600
+          },
+          "inter_run_spread_percent": {
+            "legacy": 2.73,
+            "reduced": 4.95
+          },
+          "kept_pair_positions": [
+            {
+              "kept": false,
+              "order": [
+                "legacy",
+                "reduced"
+              ],
+              "run": 1
+            },
+            {
+              "kept": true,
+              "order": [
+                "legacy",
+                "reduced"
+              ],
+              "run": 2
+            },
+            {
+              "kept": true,
+              "order": [
+                "reduced",
+                "legacy"
+              ],
+              "run": 3
+            }
+          ],
+          "kept_run_ids": {
+            "legacy": [
+              2,
+              3
+            ],
+            "reduced": [
+              2,
+              3
+            ]
+          },
+          "median_fps_of_kept_runs": {
+            "legacy": 4.2234,
+            "reduced": 3.9743
+          },
+          "order_balance_gate_all_passed": true,
+          "output_integrity_gate_all_passed": true,
+          "own_performance_gate_all_passed": false,
+          "protocol": {
+            "name": "counterbalanced-kept-runs-ab",
+            "version": 2
+          },
+          "status": "NOT_READY",
+          "unpoolable_reasons": []
+        }
+      },
+      "performance_direction_consistent": true,
+      "pooled_all_runs_median_fps_diagnostic": {
+        "legacy": 4.1666,
+        "reduced": 4.0702
+      },
+      "pooled_all_runs_ratio_diagnostic": 0.9769,
+      "pooled_kept_median_fps": {
+        "legacy": 4.2234,
+        "reduced": 3.9743
+      },
+      "pooled_kept_ratio": 0.941,
+      "position_strata": {
+        "reduced_vs_legacy_when_reduced_first": {
+          "executions": [
+            "execution-1"
+          ],
+          "losses": 1,
+          "median_percent_change": -6.92,
+          "median_ratio": 0.9308,
+          "pair_count": 1,
+          "wins": 0
+        },
+        "reduced_vs_legacy_when_reduced_second": {
+          "executions": [
+            "execution-1"
+          ],
+          "losses": 1,
+          "median_percent_change": -4.91,
+          "median_ratio": 0.9509,
+          "pair_count": 1,
+          "wins": 0
+        }
+      },
+      "primary_question": "Does the reduced order regress end-to-end performance under a counterbalanced protocol?",
+      "primary_rule": "the pooled median of the reduced order's kept runs is at least the pooled median of the legacy order's kept runs",
+      "rejected_executions": [],
+      "required_checks": [
+        {
+          "actual": true,
+          "detail": "2 legacy / 2 reduced kept runs",
+          "expected": true,
+          "ok": true,
+          "what": "kept_runs_in_the_verdict"
+        },
+        {
+          "actual": true,
+          "detail": "0 of 1 executions rejected",
+          "expected": true,
+          "ok": true,
+          "what": "every_execution_poolable"
+        },
+        {
+          "actual": false,
+          "detail": "3.9743 vs 4.2234",
+          "expected": true,
+          "ok": false,
+          "what": "reduced_kept_median_at_least_legacy_kept"
+        },
+        {
+          "actual": true,
+          "detail": "every pooled and corroborating execution passed both",
+          "expected": true,
+          "ok": true,
+          "what": "copy_and_integrity_gates_passed_in_every_execution"
+        },
+        {
+          "actual": true,
+          "detail": "1 legacy-first / 1 reduced-first of 2 kept pairs",
+          "expected": true,
+          "ok": true,
+          "what": "kept_pairs_are_position_balanced"
+        },
+        {
+          "actual": true,
+          "detail": "{\"reduced_vs_legacy_when_reduced_first\": 1, \"reduced_vs_legacy_when_reduced_second\": 1}",
+          "expected": true,
+          "ok": true,
+          "what": "both_position_strata_have_samples"
+        },
+        {
+          "actual": true,
+          "detail": "pooled kept medians point - and the paired median ratio points -",
+          "expected": true,
+          "ok": true,
+          "what": "performance_direction_consistent"
+        }
+      ],
+      "required_companion_gates": [
+        "copy",
+        "output integrity",
+        "order balance",
+        "direction consistency"
+      ],
+      "rule": "Warmup pairs are published and excluded: an execution names its kept run ids and only those reach a median, a ratio, a pair or the sign test. The gate asks the non-regression question and nothing stronger - no p-value threshold is applied in either direction - but it does require the instrument to have been built balanced, and it requires the two readings of that instrument, the pooled medians and the paired ratios, to agree about which way they point. If they point opposite ways the honest answer is that the instrument gave a contradiction, which is NOT_READY rather than a choice of the nicer number.",
+      "run_census": {
+        "legacy": {
+          "all_run_count": 3,
+          "kept_run_count": 2,
+          "kept_run_ids": [
+            2,
+            3
+          ],
+          "warmup_run_count": 1,
+          "warmup_run_ids": [
+            1
+          ]
+        },
+        "reduced": {
+          "all_run_count": 3,
+          "kept_run_count": 2,
+          "kept_run_ids": [
+            2,
+            3
+          ],
+          "warmup_run_count": 1,
+          "warmup_run_ids": [
+            1
+          ]
+        }
+      },
+      "secondary_evidence": [
+        "paired median percent change",
+        "exact sign test over kept pairs",
+        "position-stratified ratios"
+      ],
+      "sign_test": {
+        "p_value_legacy_ahead_by_at_least_this_much": 0.25,
+        "p_value_reduced_ahead_by_at_least_this_much": 1.0,
+        "pairs": 2,
+        "runs_favouring_legacy": 2,
+        "runs_favouring_reduced": 0,
+        "used_for": "secondary evidence only; no threshold in this file reads it"
+      },
+      "status": "NOT_READY",
+      "warmup_pairs_diagnostics": [
+        {
+          "execution": "execution-1",
+          "frames": 150,
+          "included_in_performance_verdict": false,
+          "legacy_fps": 3.935,
+          "legacy_position_in_pair": 1,
+          "reduced_fps": 4.3427,
+          "reduced_minus_legacy_percent": 10.36,
+          "reduced_over_legacy_ratio": 1.1036,
+          "reduced_position_in_pair": 2,
+          "run": "1"
+        }
+      ]
+    },
+    "A_pooled_kept_median_legacy_fps": 3.5983,
+    "B_pooled_kept_median_reduced_fps": 3.5804,
+    "C_pooled_kept_ratio": 0.995,
+    "D_pairwise_median_ratio": 1.0226,
+    "all_runs_median_diagnostic": {
+      "legacy": 3.5983,
+      "reduced": 3.6162
+    },
+    "note": "\u00a732 asks for all four readings plus both strata and the sign test, and forbids picking the prettiest one; the diagnostic column is the figure the warmup bug would have produced, published beside the one the verdict used",
+    "order_balance": {
+      "balanced": true,
+      "legacy_first": 12,
+      "pairs": 24,
+      "reduced_first": 12,
+      "unknown_position": 0
+    },
+    "reduced_vs_legacy_when_reduced_first": {
+      "executions": [
+        "execution-1",
+        "execution-10",
+        "execution-11",
+        "execution-12",
+        "execution-2",
+        "execution-3",
+        "execution-4",
+        "execution-5",
+        "execution-6",
+        "execution-7",
+        "execution-8",
+        "execution-9"
+      ],
+      "losses": 5,
+      "median_percent_change": 2.37,
+      "median_ratio": 1.0237,
+      "pair_count": 12,
+      "wins": 7
+    },
+    "reduced_vs_legacy_when_reduced_second": {
+      "executions": [
+        "execution-1",
+        "execution-10",
+        "execution-11",
+        "execution-12",
+        "execution-2",
+        "execution-3",
+        "execution-4",
+        "execution-5",
+        "execution-6",
+        "execution-7",
+        "execution-8",
+        "execution-9"
+      ],
+      "losses": 5,
+      "median_percent_change": 2.26,
+      "median_ratio": 1.0226,
+      "pair_count": 12,
+      "wins": 7
+    },
+    "run_census": {
+      "legacy": {
+        "all_run_count": 36,
+        "kept_run_count": 24,
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "warmup_run_count": 12,
+        "warmup_run_ids": [
+          1
+        ]
+      },
+      "reduced": {
+        "all_run_count": 36,
+        "kept_run_count": 24,
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "warmup_run_count": 12,
+        "warmup_run_ids": [
+          1
+        ]
+      }
+    },
+    "sign_test_over_kept_pairs": {
+      "p_value_legacy_ahead_by_at_least_this_much": 0.846272,
+      "p_value_reduced_ahead_by_at_least_this_much": 0.270628,
+      "pairs": 24,
+      "runs_favouring_legacy": 10,
+      "runs_favouring_reduced": 14,
+      "used_for": "secondary evidence only; no threshold in this file reads it"
+    }
+  },
+  "primary_question": "Does the reduced order regress end-to-end performance under a counterbalanced protocol?",
+  "round": "Transfer benchmark evidence protocol fix",
+  "rule": "Warmup pairs are published and excluded: an execution names its kept run ids and only those reach a median, a ratio, a pair or the sign test. The gate asks the non-regression question and nothing stronger - no p-value threshold is applied in either direction - but it does require the instrument to have been built balanced, and it requires the two readings of that instrument, the pooled medians and the paired ratios, to agree about which way they point. If they point opposite ways the honest answer is that the instrument gave a contradiction, which is NOT_READY rather than a choice of the nicer number.",
+  "status": "NOT_READY",
+  "what_this_round_did_not_claim": [
+    "no speedup claim: this round fixed the instrument, and the sign test it reports is evidence, not a gate",
+    "no reduction claim for any transfer whose two measurements are equal",
+    "no GPU pipeline, zero-copy or eliminated-round-trip claim of any kind"
+  ]
+}

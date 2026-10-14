@@ -1,0 +1,427 @@
+{
+  "analysis": {
+    "always_unmeasured": [
+      "nvof_convert_ms",
+      "nvof_gpu_execute_ms"
+    ],
+    "field_to_key": {
+      "dependency_wait_ms": "nvof_dependency_wait_ms",
+      "download_ms": "nvof_download_ms",
+      "postprocess_wait_inclusive_ms": "nvof_postprocess_wait_inclusive_ms",
+      "submit_cpu_ms": "nvof_submit_cpu_ms",
+      "total_native_ms": "nvof_total_native_ms",
+      "upload_ms": "nvof_upload_ms"
+    },
+    "frames_sequential": 2,
+    "frames_timed": 6,
+    "frames_with_six_distinct_spans": 6,
+    "native_struct_fields": [
+      "upload_ms",
+      "submit_cpu_ms",
+      "dependency_wait_ms",
+      "download_ms",
+      "postprocess_wait_inclusive_ms",
+      "total_native_ms"
+    ],
+    "pass": true,
+    "per_key_ms": {
+      "nvof_dependency_wait_ms": [
+        0.941,
+        1.0897,
+        1.0352,
+        1.0202,
+        1.1287,
+        1.1216
+      ],
+      "nvof_download_ms": [
+        3.3046,
+        2.0969,
+        1.943,
+        2.1806,
+        2.575,
+        2.0728
+      ],
+      "nvof_postprocess_wait_inclusive_ms": [
+        0.0497,
+        0.0677,
+        0.0448,
+        0.0577,
+        0.0795,
+        0.0423
+      ],
+      "nvof_submit_cpu_ms": [
+        4.7153,
+        1.2971,
+        0.4708,
+        0.519,
+        0.4423,
+        0.6071
+      ],
+      "nvof_total_native_ms": [
+        12.1025,
+        7.5888,
+        5.8349,
+        6.3072,
+        7.7759,
+        7.0676
+      ],
+      "nvof_upload_ms": [
+        3.0824,
+        3.0316,
+        2.3388,
+        2.5265,
+        3.5458,
+        3.2212
+      ]
+    },
+    "problems": [],
+    "retired_keys_still_absent": true
+  },
+  "retired_keys": [
+    "upload_ms",
+    "download_ms",
+    "convert_ms",
+    "upscale_ms",
+    "nvof_upload",
+    "nvof_upscale",
+    "nvof_download",
+    "nvof_gpu_execute_ms_inclusive",
+    "postprocess_gpu_ms",
+    "d2h_ms",
+    "native_total_ms",
+    "nvof_to_host_total_ms",
+    "nvof_execute_ms"
+  ],
+  "rows": [
+    {
+      "frame": 0,
+      "path": "timed",
+      "provider": {
+        "available": true,
+        "cuda_context": "0x0",
+        "device": "NVIDIA GeForce RTX 5060 Ti",
+        "device_index": 0,
+        "engine": "nvof",
+        "grid_size": 4,
+        "hardware": true,
+        "perf_level": "medium",
+        "provider": "nvidia-optical-flow",
+        "sync_mode": "CRITICAL_SECTION + cuCtxPushCurrent",
+        "thread_owner_id": 0
+      },
+      "raw": {
+        "dependency_wait_ms": 0.9410000000000001,
+        "download_ms": 3.3046,
+        "postprocess_wait_inclusive_ms": 0.0497,
+        "submit_cpu_ms": 4.7153,
+        "total_native_ms": 12.102500000000001,
+        "upload_ms": 3.0824000000000003
+      },
+      "reported": {
+        "bgr_to_abgr_ms": 10.67039999179542,
+        "cur_bgr_to_rgba_ms": 9.553599986247718,
+        "fps": 43.518941624250324,
+        "nvof_convert_ms": "unavailable",
+        "nvof_dependency_wait_ms": 0.9410000000000001,
+        "nvof_download_ms": 3.3046,
+        "nvof_gpu_execute_ms": "unavailable",
+        "nvof_postprocess_wait_inclusive_ms": 0.0497,
+        "nvof_submit_cpu_ms": 4.7153,
+        "nvof_total_native_ms": 12.102500000000001,
+        "nvof_upload_ms": 3.0824000000000003,
+        "prev_bgr_to_rgba_ms": 1.1168000055477023,
+        "python_total_ms": 22.978499997407198
+      }
+    },
+    {
+      "frame": 1,
+      "path": "timed",
+      "provider": {
+        "available": true,
+        "cuda_context": "0x0",
+        "device": "NVIDIA GeForce RTX 5060 Ti",
+        "device_index": 0,
+        "engine": "nvof",
+        "grid_size": 4,
+        "hardware": true,
+        "perf_level": "medium",
+        "provider": "nvidia-optical-flow",
+        "sync_mode": "CRITICAL_SECTION + cuCtxPushCurrent",
+        "thread_owner_id": 0
+      },
+      "raw": {
+        "dependency_wait_ms": 1.0897000000000001,
+        "download_ms": 2.0969,
+        "postprocess_wait_inclusive_ms": 0.06770000000000001,
+        "submit_cpu_ms": 1.2971000000000001,
+        "total_native_ms": 7.5888,
+        "upload_ms": 3.0316
+      },
+      "reported": {
+        "bgr_to_abgr_ms": 1.8196000310126692,
+        "cur_bgr_to_rgba_ms": 1.0037000174634159,
+        "fps": 105.5241913056243,
+        "nvof_convert_ms": "unavailable",
+        "nvof_dependency_wait_ms": 1.0897000000000001,
+        "nvof_download_ms": 2.0969,
+        "nvof_gpu_execute_ms": "unavailable",
+        "nvof_postprocess_wait_inclusive_ms": 0.06770000000000001,
+        "nvof_submit_cpu_ms": 1.2971000000000001,
+        "nvof_total_native_ms": 7.5888,
+        "nvof_upload_ms": 3.0316,
+        "prev_bgr_to_rgba_ms": 0.8159000135492533,
+        "python_total_ms": 9.476500010350719
+      }
+    },
+    {
+      "frame": 2,
+      "path": "timed",
+      "provider": {
+        "available": true,
+        "cuda_context": "0x0",
+        "device": "NVIDIA GeForce RTX 5060 Ti",
+        "device_index": 0,
+        "engine": "nvof",
+        "grid_size": 4,
+        "hardware": true,
+        "perf_level": "medium",
+        "provider": "nvidia-optical-flow",
+        "sync_mode": "CRITICAL_SECTION + cuCtxPushCurrent",
+        "thread_owner_id": 0
+      },
+      "raw": {
+        "dependency_wait_ms": 1.0352000000000001,
+        "download_ms": 1.943,
+        "postprocess_wait_inclusive_ms": 0.0448,
+        "submit_cpu_ms": 0.4708,
+        "total_native_ms": 5.8349,
+        "upload_ms": 2.3388
+      },
+      "reported": {
+        "bgr_to_abgr_ms": 1.6129999712575227,
+        "cur_bgr_to_rgba_ms": 0.8033999765757471,
+        "fps": 133.15579235110644,
+        "nvof_convert_ms": "unavailable",
+        "nvof_dependency_wait_ms": 1.0352000000000001,
+        "nvof_download_ms": 1.943,
+        "nvof_gpu_execute_ms": "unavailable",
+        "nvof_postprocess_wait_inclusive_ms": 0.0448,
+        "nvof_submit_cpu_ms": 0.4708,
+        "nvof_total_native_ms": 5.8349,
+        "nvof_upload_ms": 2.3388,
+        "prev_bgr_to_rgba_ms": 0.8095999946817756,
+        "python_total_ms": 7.509999995818362
+      }
+    },
+    {
+      "frame": 3,
+      "path": "timed",
+      "provider": {
+        "available": true,
+        "cuda_context": "0x0",
+        "device": "NVIDIA GeForce RTX 5060 Ti",
+        "device_index": 0,
+        "engine": "nvof",
+        "grid_size": 4,
+        "hardware": true,
+        "perf_level": "medium",
+        "provider": "nvidia-optical-flow",
+        "sync_mode": "CRITICAL_SECTION + cuCtxPushCurrent",
+        "thread_owner_id": 0
+      },
+      "raw": {
+        "dependency_wait_ms": 1.0202,
+        "download_ms": 2.1806,
+        "postprocess_wait_inclusive_ms": 0.0577,
+        "submit_cpu_ms": 0.519,
+        "total_native_ms": 6.3072,
+        "upload_ms": 2.5265
+      },
+      "reported": {
+        "bgr_to_abgr_ms": 1.5631999995093793,
+        "cur_bgr_to_rgba_ms": 0.7142999966163188,
+        "fps": 126.10817528603155,
+        "nvof_convert_ms": "unavailable",
+        "nvof_dependency_wait_ms": 1.0202,
+        "nvof_download_ms": 2.1806,
+        "nvof_gpu_execute_ms": "unavailable",
+        "nvof_postprocess_wait_inclusive_ms": 0.0577,
+        "nvof_submit_cpu_ms": 0.519,
+        "nvof_total_native_ms": 6.3072,
+        "nvof_upload_ms": 2.5265,
+        "prev_bgr_to_rgba_ms": 0.8489000028930604,
+        "python_total_ms": 7.929700019303709
+      }
+    },
+    {
+      "frame": 4,
+      "path": "timed",
+      "provider": {
+        "available": true,
+        "cuda_context": "0x0",
+        "device": "NVIDIA GeForce RTX 5060 Ti",
+        "device_index": 0,
+        "engine": "nvof",
+        "grid_size": 4,
+        "hardware": true,
+        "perf_level": "medium",
+        "provider": "nvidia-optical-flow",
+        "sync_mode": "CRITICAL_SECTION + cuCtxPushCurrent",
+        "thread_owner_id": 0
+      },
+      "raw": {
+        "dependency_wait_ms": 1.1287,
+        "download_ms": 2.575,
+        "postprocess_wait_inclusive_ms": 0.0795,
+        "submit_cpu_ms": 0.4423,
+        "total_native_ms": 7.7759,
+        "upload_ms": 3.5458000000000003
+      },
+      "reported": {
+        "bgr_to_abgr_ms": 1.6818000003695488,
+        "cur_bgr_to_rgba_ms": 0.8027000003494322,
+        "fps": 104.7701865321443,
+        "nvof_convert_ms": "unavailable",
+        "nvof_dependency_wait_ms": 1.1287,
+        "nvof_download_ms": 2.575,
+        "nvof_gpu_execute_ms": "unavailable",
+        "nvof_postprocess_wait_inclusive_ms": 0.0795,
+        "nvof_submit_cpu_ms": 0.4423,
+        "nvof_total_native_ms": 7.7759,
+        "nvof_upload_ms": 3.5458000000000003,
+        "prev_bgr_to_rgba_ms": 0.8791000000201166,
+        "python_total_ms": 9.544700005790219
+      }
+    },
+    {
+      "frame": 5,
+      "path": "timed",
+      "provider": {
+        "available": true,
+        "cuda_context": "0x0",
+        "device": "NVIDIA GeForce RTX 5060 Ti",
+        "device_index": 0,
+        "engine": "nvof",
+        "grid_size": 4,
+        "hardware": true,
+        "perf_level": "medium",
+        "provider": "nvidia-optical-flow",
+        "sync_mode": "CRITICAL_SECTION + cuCtxPushCurrent",
+        "thread_owner_id": 0
+      },
+      "raw": {
+        "dependency_wait_ms": 1.1216000000000002,
+        "download_ms": 2.0728,
+        "postprocess_wait_inclusive_ms": 0.042300000000000004,
+        "submit_cpu_ms": 0.6071000000000001,
+        "total_native_ms": 7.0676000000000005,
+        "upload_ms": 3.2212
+      },
+      "reported": {
+        "bgr_to_abgr_ms": 1.9240999827161431,
+        "cur_bgr_to_rgba_ms": 0.9450999787077308,
+        "fps": 110.32656683830177,
+        "nvof_convert_ms": "unavailable",
+        "nvof_dependency_wait_ms": 1.1216000000000002,
+        "nvof_download_ms": 2.0728,
+        "nvof_gpu_execute_ms": "unavailable",
+        "nvof_postprocess_wait_inclusive_ms": 0.042300000000000004,
+        "nvof_submit_cpu_ms": 0.6071000000000001,
+        "nvof_total_native_ms": 7.0676000000000005,
+        "nvof_upload_ms": 3.2212,
+        "prev_bgr_to_rgba_ms": 0.9790000040084124,
+        "python_total_ms": 9.063999983482063
+      }
+    },
+    {
+      "frame": 0,
+      "path": "sequential",
+      "provider": {
+        "available": true,
+        "cuda_context": "0x0",
+        "device": "NVIDIA GeForce RTX 5060 Ti",
+        "device_index": 0,
+        "engine": "nvof",
+        "grid_size": 4,
+        "hardware": true,
+        "perf_level": "medium",
+        "provider": "nvidia-optical-flow",
+        "sync_mode": "CRITICAL_SECTION + cuCtxPushCurrent",
+        "thread_owner_id": 0
+      },
+      "raw": {
+        "dependency_wait_ms": -1.0,
+        "download_ms": 1.9158000000000002,
+        "postprocess_wait_inclusive_ms": 0.9604,
+        "submit_cpu_ms": 0.4581,
+        "total_native_ms": 5.162,
+        "upload_ms": 1.8255000000000001
+      },
+      "reported": {
+        "bgr_to_abgr_ms": 0.8366999973077327,
+        "cur_bgr_to_rgba_ms": 0.8366999973077327,
+        "fps": 165.2046053605754,
+        "nvof_convert_ms": "unavailable",
+        "nvof_dependency_wait_ms": "unavailable",
+        "nvof_download_ms": 1.9158000000000002,
+        "nvof_gpu_execute_ms": "unavailable",
+        "nvof_postprocess_wait_inclusive_ms": 0.9604,
+        "nvof_submit_cpu_ms": 0.4581,
+        "nvof_total_native_ms": 5.162,
+        "nvof_upload_ms": 1.8255000000000001,
+        "prev_bgr_to_rgba_ms": 0.0,
+        "python_total_ms": 6.053100019926205
+      }
+    },
+    {
+      "frame": 1,
+      "path": "sequential",
+      "provider": {
+        "available": true,
+        "cuda_context": "0x0",
+        "device": "NVIDIA GeForce RTX 5060 Ti",
+        "device_index": 0,
+        "engine": "nvof",
+        "grid_size": 4,
+        "hardware": true,
+        "perf_level": "medium",
+        "provider": "nvidia-optical-flow",
+        "sync_mode": "CRITICAL_SECTION + cuCtxPushCurrent",
+        "thread_owner_id": 0
+      },
+      "raw": {
+        "dependency_wait_ms": -1.0,
+        "download_ms": 2.7053000000000003,
+        "postprocess_wait_inclusive_ms": 0.9391,
+        "submit_cpu_ms": 1.0042,
+        "total_native_ms": 5.904800000000001,
+        "upload_ms": 1.2538
+      },
+      "reported": {
+        "bgr_to_abgr_ms": 0.7425000076182187,
+        "cur_bgr_to_rgba_ms": 0.7425000076182187,
+        "fps": 148.48912319694435,
+        "nvof_convert_ms": "unavailable",
+        "nvof_dependency_wait_ms": "unavailable",
+        "nvof_download_ms": 2.7053000000000003,
+        "nvof_gpu_execute_ms": "unavailable",
+        "nvof_postprocess_wait_inclusive_ms": 0.9391,
+        "nvof_submit_cpu_ms": 1.0042,
+        "nvof_total_native_ms": 5.904800000000001,
+        "nvof_upload_ms": 1.2538,
+        "prev_bgr_to_rgba_ms": 0.0,
+        "python_total_ms": 6.734499998856336
+      }
+    }
+  ],
+  "stage_meaning": {
+    "nvof_convert_ms": "not separable: the conversion and the upscale are one fused kernel",
+    "nvof_dependency_wait_ms": "waiting for the input frame's producer to finish, timed separately from the execute",
+    "nvof_download_ms": "the device to host copy of the flow grid",
+    "nvof_gpu_execute_ms": "not separable: the execute and the synchronize that waits for it are one span on this hardware",
+    "nvof_postprocess_wait_inclusive_ms": "the S10.5 convert-and-upscale kernel plus the synchronize that waits for it, as one inclusive span",
+    "nvof_submit_cpu_ms": "CPU time inside nvOFExecute: the submit and its return, not the hardware's own duration",
+    "nvof_total_native_ms": "wall clock around the whole native bridge call",
+    "nvof_upload_ms": "the ABGR host to device copy that feeds this execute"
+  }
+}

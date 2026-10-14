@@ -1,0 +1,112 @@
+{
+  "generated_by": "a read-only observation made after the round ended, not by the round's instrument, and not a measurement of it",
+  "observed_utc": "2026-09-22T04:57:07Z",
+  "code_under_test": "36e808c106877179d862941aa663e0059731e518",
+  "round_recorded_in": "benchmark_environment.json (same directory)",
+  "preflight_status_recorded_by_the_instrument": "FAIL",
+  "not_ready_reason_recorded_by_the_instrument": "no_quiet_preflight_window",
+  "windows_attempted": 20,
+  "waited_between_utc": [
+    "2026-09-22T04:44:14Z",
+    "2026-09-22T04:54:30Z"
+  ],
+  "budget_and_window_frozen_in_the_instrument": {
+    "wait_budget_seconds": 600,
+    "window_length_seconds": 30,
+    "sample_interval_seconds": 1.0
+  },
+  "last_refused_window_thresholds": {
+    "cpu_median_percent": 38.1,
+    "cpu_p95_percent": 53.455,
+    "gpu_utilization_median_percent": 100.0,
+    "gpu_utilization_p95_percent": 100.0,
+    "available_ram_min_bytes": 15237173248,
+    "limits": {
+      "available_ram_at_least_bytes": 8589934592,
+      "cpu_median_percent_at_most": 20.0,
+      "cpu_p95_percent_at_most": 35.0,
+      "gpu_utilization_median_percent_at_most": 10.0,
+      "gpu_utilization_p95_percent_at_most": 25.0
+    }
+  },
+  "what_the_round_refused_on": "the CPU and GPU load thresholds of every one of the twenty 30-second windows. No external GPU compute client and no repository workload was recorded in any window: the table nvidia-smi answers with `--query-compute-apps` does not list the process that was using the card, so the refusal is the utilisation reading itself and not a classification.",
+  "external_compute_processes_across_all_windows": [],
+  "conflicting_repo_processes_across_all_windows": [],
+  "gpu_state_when_observed": "90 %, 56 %, 0 %, 0 %, 10555 MiB, 59",
+  "top_processes_when_observed": [
+    {
+      "cpu_percent_of_one_logical_core": 171.7,
+      "pid": 13908,
+      "name": "GF2_Exilium.exe",
+      "image_or_command_line": "H:\\手机游戏\\Games\\GF2_Exilium.exe"
+    },
+    {
+      "cpu_percent_of_one_logical_core": 41.8,
+      "pid": 7056,
+      "name": "",
+      "image_or_command_line": ""
+    },
+    {
+      "cpu_percent_of_one_logical_core": 26.5,
+      "pid": 18048,
+      "name": "okz.exe",
+      "image_or_command_line": "F:\\okz\\okz.exe"
+    },
+    {
+      "cpu_percent_of_one_logical_core": 18.4,
+      "pid": 4,
+      "name": "System",
+      "image_or_command_line": ""
+    },
+    {
+      "cpu_percent_of_one_logical_core": 17.4,
+      "pid": 5360,
+      "name": "qbittorrent.exe",
+      "image_or_command_line": "D:\\qBittorrenBT下载\\qBittorrent\\qbittorrent.exe magnet:?xt=urn:btih:7df7fe959a9300ad38fd7149849c0c7e76e4984a&tr=http://open.acgtracker.com:1096/announce"
+    },
+    {
+      "cpu_percent_of_one_logical_core": 16.7,
+      "pid": 27964,
+      "name": "msedgewebview2.exe",
+      "image_or_command_line": "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.24\\msedgewebview2.exe --type=gpu-process --gpu-recent-crash-count=0 --noerrdialogs --user-da"
+    },
+    {
+      "cpu_percent_of_one_logical_core": 15.7,
+      "pid": 3360,
+      "name": "",
+      "image_or_command_line": ""
+    },
+    {
+      "cpu_percent_of_one_logical_core": 15.0,
+      "pid": 2732,
+      "name": "Qoder CN.exe",
+      "image_or_command_line": "F:\\Qoder CN\\.qoder-versions\\0.3.4\\Qoder CN.exe"
+    },
+    {
+      "cpu_percent_of_one_logical_core": 12.2,
+      "pid": 11876,
+      "name": "ChatGPT Classic.exe",
+      "image_or_command_line": "C:\\Program Files\\WindowsApps\\OpenAI.ChatGPT-Desktop_1.2026.190.0_x64__2p2nqsd0c76g0\\app\\ChatGPT Classic.exe --type=renderer --user-data-dir=C:\\Users\\18392\\AppDa"
+    },
+    {
+      "cpu_percent_of_one_logical_core": 7.7,
+      "pid": 28788,
+      "name": "msedgewebview2.exe",
+      "image_or_command_line": "C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\154.0.4258.24\\msedgewebview2.exe --type=renderer --noerrdialogs --user-data-dir=C:\\Users\\18392\\AppData\\"
+    },
+    {
+      "cpu_percent_of_one_logical_core": 7.3,
+      "pid": 34572,
+      "name": "chrome.exe",
+      "image_or_command_line": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe --type=renderer --gpu-client-id=408 --origin-trial-disabled-features=CanvasTextNg|WebAssemblyCustomDescrip"
+    },
+    {
+      "cpu_percent_of_one_logical_core": 6.3,
+      "pid": 29412,
+      "name": "chrome.exe",
+      "image_or_command_line": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe --type=renderer --gpu-client-id=334 --origin-trial-disabled-features=CanvasTextNg|WebAssemblyCustomDescrip"
+    }
+  ],
+  "nothing_was_changed": "no process was signalled, killed or paused, and no affinity mask, priority class, power scheme, processor state or job setting was touched (§6, §10). The round took no measurement: it stopped inside the preflight wait, before any execution was launched, and the 150-frame corroboration was never started (§14's precondition).",
+  "how_this_was_measured": "a 3-second psutil sample of every process on the machine except pid 0 (the idle process, which is not a consumer) and except the sampling process itself, plus one nvidia-smi query. Read-only."
+}

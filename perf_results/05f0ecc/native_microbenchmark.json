@@ -1,0 +1,489 @@
+{
+  "kind": "residual_backend_microbenchmark",
+  "environment": {
+    "cuda_version": "13.4",
+    "native_libraries": {
+      "dlssnr_host.dll": {
+        "sha256": "9ec879388e573bebbf7886dccbdc885641d945420fdf4bb80bac6c657094160c",
+        "bytes": 54272
+      },
+      "nvngx_dlssnr.dll": {
+        "sha256": "e16bcf15e16e13f527491cdf7845b2fe6521a738d8f7c9c721866a8496e1fc8e",
+        "bytes": 165840496
+      },
+      "native/nvof_bridge.dll": {
+        "sha256": "3ac877318f19b6e0e125534f6dadf1c155327470b0c5be81b83c0dd24f16e717",
+        "bytes": 156160
+      },
+      "native/residual_bridge.dll": {
+        "sha256": "54621c1a8c4f91f745cbabdb400dff9973e715f598c9695f6d6ebc188a03246f",
+        "bytes": 189952
+      }
+    },
+    "utc_timestamp": "2026-09-19T09:07:30Z",
+    "platform": "win32",
+    "os": "Windows-10-10.0.26220-SP0",
+    "cpu_model": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+    "cpu_arch": "AMD64",
+    "cpu_logical_cores": 16,
+    "ram_total_bytes": 42852945920,
+    "python": "3.11.15",
+    "numpy": "2.4.6",
+    "opencv": "5.0.0",
+    "ffmpeg": "8.1.2-full_build-www.gyan.dev",
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "driver_version": "616.92",
+      "memory_total_bytes": 17103323136
+    },
+    "rss_bytes": 48574464,
+    "peak_rss_bytes": 902553600,
+    "vram_bytes": 1740636160
+  },
+  "config": {
+    "backends": [
+      "python",
+      "native"
+    ],
+    "scales": [
+      0.75,
+      0.63,
+      0.5,
+      0.25
+    ],
+    "warmup": 3,
+    "iterations": 10,
+    "source": [
+      3840,
+      2160
+    ]
+  },
+  "results": [
+    {
+      "requested_backend": "python",
+      "parity_with_reference_4k": null,
+      "actual_backend": "cpu_reference_python",
+      "backend_version": "axisplan-1",
+      "working_scale": 0.75,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        2880,
+        1616
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 849.76,
+        "p50_ms": 831.19,
+        "p95_ms": 925.539,
+        "min_ms": 816.994,
+        "max_ms": 925.539
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 827.917,
+        "p50_ms": 823.878,
+        "p95_ms": 865.104,
+        "min_ms": 804.552,
+        "max_ms": 865.104
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 229847040,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "python",
+      "parity_with_reference_4k": null,
+      "actual_backend": "cpu_reference_python",
+      "backend_version": "axisplan-1",
+      "working_scale": 0.63,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        2416,
+        1360
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 758.627,
+        "p50_ms": 747.794,
+        "p95_ms": 892.74,
+        "min_ms": 705.996,
+        "max_ms": 892.74
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 752.911,
+        "p50_ms": 742.185,
+        "p95_ms": 811.464,
+        "min_ms": 718.986,
+        "max_ms": 811.464
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 201630720,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "python",
+      "parity_with_reference_4k": null,
+      "actual_backend": "cpu_reference_python",
+      "backend_version": "axisplan-1",
+      "working_scale": 0.5,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        1920,
+        1080
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 627.634,
+        "p50_ms": 625.31,
+        "p95_ms": 663.236,
+        "min_ms": 584.14,
+        "max_ms": 663.236
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 706.621,
+        "p50_ms": 703.333,
+        "p95_ms": 751.229,
+        "min_ms": 668.35,
+        "max_ms": 751.229
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 174182400,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "python",
+      "parity_with_reference_4k": null,
+      "actual_backend": "cpu_reference_python",
+      "backend_version": "axisplan-1",
+      "working_scale": 0.25,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        960,
+        544
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 452.06,
+        "p50_ms": 450.915,
+        "p95_ms": 528.587,
+        "min_ms": 412.25,
+        "max_ms": 528.587
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 511.597,
+        "p50_ms": 512.51,
+        "p95_ms": 571.622,
+        "min_ms": 478.463,
+        "max_ms": 571.622
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 130867200,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "native",
+      "parity_with_reference_4k": {
+        "source": [
+          3840,
+          2160
+        ],
+        "working": [
+          2880,
+          1616
+        ],
+        "bit_equal_downsample": true,
+        "downsample_max_abs_diff": 0,
+        "bit_equal_reconstruct": true,
+        "reconstruct_max_abs_diff": 0,
+        "max_abs_diff": 0
+      },
+      "actual_backend": "cpu_reference_native",
+      "backend_version": "api-0x00010000",
+      "working_scale": 0.75,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        2880,
+        1616
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 18.625,
+        "p50_ms": 18.638,
+        "p95_ms": 19.277,
+        "min_ms": 17.85,
+        "max_ms": 19.277
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 34.948,
+        "p50_ms": 35.085,
+        "p95_ms": 36.536,
+        "min_ms": 33.439,
+        "max_ms": 36.536
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_native",
+        "residual_backend_version": "api-0x00010000",
+        "plan_create_count": 1,
+        "plan_destroy_count": 0,
+        "scratch_alloc_count": 1,
+        "scratch_alloc_bytes": 158653440,
+        "native_scratch_bytes": 158653440,
+        "axis_plan_count": 4,
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "downsample_pixel_count": 60503040,
+        "reconstruct_pixel_count": 107827200,
+        "worker_create_count": 8,
+        "worker_count": 9,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "native",
+      "parity_with_reference_4k": {
+        "source": [
+          3840,
+          2160
+        ],
+        "working": [
+          2416,
+          1360
+        ],
+        "bit_equal_downsample": true,
+        "downsample_max_abs_diff": 0,
+        "bit_equal_reconstruct": true,
+        "reconstruct_max_abs_diff": 0,
+        "max_abs_diff": 0
+      },
+      "actual_backend": "cpu_reference_native",
+      "backend_version": "api-0x00010000",
+      "working_scale": 0.63,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        2416,
+        1360
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 16.635,
+        "p50_ms": 16.627,
+        "p95_ms": 17.76,
+        "min_ms": 15.359,
+        "max_ms": 17.76
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 29.923,
+        "p50_ms": 29.827,
+        "p95_ms": 31.908,
+        "min_ms": 28.829,
+        "max_ms": 31.908
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_native",
+        "residual_backend_version": "api-0x00010000",
+        "plan_create_count": 3,
+        "plan_destroy_count": 2,
+        "scratch_alloc_count": 3,
+        "scratch_alloc_bytes": 439534080,
+        "native_scratch_bytes": 122227200,
+        "axis_plan_count": 4,
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "downsample_pixel_count": 42714880,
+        "reconstruct_pixel_count": 107827200,
+        "worker_create_count": 24,
+        "worker_count": 9,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "native",
+      "parity_with_reference_4k": {
+        "source": [
+          3840,
+          2160
+        ],
+        "working": [
+          1920,
+          1080
+        ],
+        "bit_equal_downsample": true,
+        "downsample_max_abs_diff": 0,
+        "bit_equal_reconstruct": true,
+        "reconstruct_max_abs_diff": 0,
+        "max_abs_diff": 0
+      },
+      "actual_backend": "cpu_reference_native",
+      "backend_version": "api-0x00010000",
+      "working_scale": 0.5,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        1920,
+        1080
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 15.478,
+        "p50_ms": 15.593,
+        "p95_ms": 16.499,
+        "min_ms": 14.743,
+        "max_ms": 16.499
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 28.561,
+        "p50_ms": 28.327,
+        "p95_ms": 30.864,
+        "min_ms": 27.421,
+        "max_ms": 30.864
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_native",
+        "residual_backend_version": "api-0x00010000",
+        "plan_create_count": 5,
+        "plan_destroy_count": 4,
+        "scratch_alloc_count": 5,
+        "scratch_alloc_bytes": 649267200,
+        "native_scratch_bytes": 87505920,
+        "axis_plan_count": 4,
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "downsample_pixel_count": 26956800,
+        "reconstruct_pixel_count": 107827200,
+        "worker_create_count": 40,
+        "worker_count": 9,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "native",
+      "parity_with_reference_4k": {
+        "source": [
+          3840,
+          2160
+        ],
+        "working": [
+          960,
+          544
+        ],
+        "bit_equal_downsample": true,
+        "downsample_max_abs_diff": 0,
+        "bit_equal_reconstruct": true,
+        "reconstruct_max_abs_diff": 0,
+        "max_abs_diff": 0
+      },
+      "actual_backend": "cpu_reference_native",
+      "backend_version": "api-0x00010000",
+      "working_scale": 0.25,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        960,
+        544
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 12.834,
+        "p50_ms": 13.043,
+        "p95_ms": 13.421,
+        "min_ms": 11.544,
+        "max_ms": 13.421
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 23.07,
+        "p50_ms": 23.019,
+        "p95_ms": 23.869,
+        "min_ms": 22.33,
+        "max_ms": 23.869
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_native",
+        "residual_backend_version": "api-0x00010000",
+        "plan_create_count": 7,
+        "plan_destroy_count": 6,
+        "scratch_alloc_count": 7,
+        "scratch_alloc_bytes": 771655680,
+        "native_scratch_bytes": 34882560,
+        "axis_plan_count": 4,
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "downsample_pixel_count": 6789120,
+        "reconstruct_pixel_count": 107827200,
+        "worker_create_count": 56,
+        "worker_count": 9,
+        "closed": false
+      }
+    }
+  ],
+  "speedup_native_vs_python": {
+    "0.25": {
+      "downsample_speedup": 34.571,
+      "reconstruct_speedup": 22.265
+    },
+    "0.5": {
+      "downsample_speedup": 40.102,
+      "reconstruct_speedup": 24.829
+    },
+    "0.63": {
+      "downsample_speedup": 44.975,
+      "reconstruct_speedup": 24.883
+    },
+    "0.75": {
+      "downsample_speedup": 44.597,
+      "reconstruct_speedup": 23.482
+    }
+  }
+}

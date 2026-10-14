@@ -6,7 +6,7 @@ export const DEFAULT_POST: PostControls = {
   roi_bounds: [0, 0, 1, 1], roi_feather: .02, debug_mode: 0,
 }
 export const DEFAULT_TEMPORAL: TemporalControls = {
-  scene_detection: false, mode: 'off', history_weight: .6,
+  scene_detection: true, mode: 'off', history_weight: .6,
 }
 export function hasExportControls(settings: {post_controls?: PostControls; temporal_controls?: TemporalControls}) {
   const p = {...DEFAULT_POST, ...settings.post_controls}

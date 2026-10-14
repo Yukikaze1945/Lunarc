@@ -60,7 +60,7 @@ def test_post_edits_on_combined_chain_do_not_update_model_options():
     preview.live=SimpleNamespace(update_runtime_options=lambda settings:updates.append(settings))
     preview.multi={'scales':[1.]}
     preview.chain=SimpleNamespace(post_control=SimpleNamespace(update_controls=lambda _:None),
-        temporal_control=SimpleNamespace(controls=None))
+        temporal_control=SimpleNamespace(controls=None, update_controls=lambda _:None))
     old={'render_pipeline':['nr','vsr'],'post_controls':{'chroma_gain':1}}
     preview.active_settings=old
     preview.post_cache.valid=True

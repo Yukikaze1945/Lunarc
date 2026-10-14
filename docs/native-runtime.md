@@ -20,4 +20,13 @@ DLAA 默认会检查 NVIDIA NGX 本机缓存，VSR / VFG 会检查本机 VFX 目
 
 `nvdec_bridge.dll` / `nvenc_bridge.dll` 的 FFmpeg 导入库版本必须和运行时共享 DLL 匹配。CUDA 驱动 DLL 来自 Windows 已安装的 NVIDIA 驱动，不应从开发机复制显卡驱动到软件目录。
 
+本轮解码/编码桥使用 FFmpeg 8.1.2 full shared。先运行 `python packaging/prepare_ffmpeg_sdk.py`，构建脚本会采用下载到 `build/ffmpeg-sdk` 的匹配 SDK；也可通过 `FFMPEG_SDK_DIR` 明确指定。头文件、导入库和运行时 DLL 必须来自同一版。安装版的视频处理组件同时下载命令行程序与共享库；开发运行时优先从程序的 `runtime/tools` 查找，不依赖其他软件的旧 DLL。
+
+源码运行可从同一下载包安装本地视频运行库：
+
+```powershell
+python packaging/prepare_ffmpeg_sdk.py
+python component_install.py ffmpeg build/ffmpeg-sdk/ffmpeg-8.1.2-full_build-shared.7z runtime
+```
+
 缺少组件时，“运行与诊断 → 运行环境”会列出缺少的组件。特效是否可用还取决于显卡、驱动、运行库版本和输入尺寸。

@@ -1,0 +1,22 @@
+{
+  "code_under_test_sha": "05f0ecc3e47809078b946f4302c9331a240746fc",
+  "fixture_sha256": "787afb83fe88f2fc89e3697daeac351dfda6c9e2d8f83a54da0c89275ca50d08",
+  "frames_requested": 600,
+  "frames_at_cancel": 41,
+  "decoder_encoder_pids": [
+    43520,
+    47600
+  ],
+  "cancel_latency_ms": 141.94,
+  "job_status": "cancelled",
+  "job_error": "None",
+  "job_error_tail": "",
+  "producer_threads_alive": [],
+  "queue_thread_alive": false,
+  "registry_after": 0,
+  "pids_still_running": [],
+  "output_exists": true,
+  "output_bytes": 0,
+  "written_packets": null,
+  "job_elapsed_sec": 4.038
+}

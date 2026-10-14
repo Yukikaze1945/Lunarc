@@ -1,0 +1,198 @@
+{
+  "control_build": {
+    "attempts": [
+      {
+        "checks_recorded": 6,
+        "process_returncode": 0,
+        "process_timed_out": false,
+        "stderr_tail": [
+          "  File \"F:\\dlss5standaloneV2\\tests\\unit\\native_thread_safety_probe.py\", line 120, in reconstruct",
+          "    return lib.rr_reconstruct_bgr8(h, ptr(src), src.shape[1], src.shape[0],",
+          "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+          "OSError: exception: access violation reading 0x000001B97F5BC7F0"
+        ]
+      }
+    ],
+    "dll": "F:\\dlss5standaloneV2\\scratch\\oldbridge\\residual_bridge_old.dll",
+    "how_it_was_built": "residual_bridge.dll built from git 7411d97:native/residual_bridge.cpp with scratch/oldbridge/build_old.bat (the same cl.exe /O2 flags native/build_residual.bat uses), so it is the pre-fix lifecycle code",
+    "note": "a scenario that reports pass=false here failed against the older build, which is the point: it shows the current scenarios catch the bug that was fixed. A pre-fix build faults natively, so an attempt can die part-way through; checks_recorded says how far it got.",
+    "report": {
+      "api_major": 1,
+      "api_version": "0x00010000",
+      "checks": {
+        "concurrent_lifecycle_counts": {
+          "final_plan_own_counts": {
+            "plan_create_count": 58,
+            "scratch_alloc_count": 58
+          },
+          "pass": true,
+          "plans_churned": 48,
+          "problems": [],
+          "process_scope_deltas": {
+            "plan_create_count": 48,
+            "plan_destroy_count": 48,
+            "scratch_alloc_count": 48,
+            "worker_create_count": 384
+          }
+        },
+        "cross_plan_not_blocked": {
+          "big_frame_ms": 42.826,
+          "pass": true,
+          "ratio": 0.0065,
+          "small_frame_ms": 0.277,
+          "small_pixels_exact": true
+        },
+        "destroy_waits_for_inflight_call": {
+          "destroy_code": 0,
+          "destroy_ms": 7.217,
+          "frame_ms": null,
+          "frame_thread_exception": "OSError: exception: access violation reading 0x000001B97F5BC7F0",
+          "frame_thread_returned": false,
+          "inflight_call_code": null,
+          "pass": false,
+          "pixels_exact_after_destroy": false
+        },
+        "last_error_per_thread": {
+          "pass": false,
+          "thread_a": "plan is 64x48 -> 32x24, called with 64x48 -> 16x16",
+          "thread_b": "plan is 64x48 -> 32x24, called with 64x48 -> 16x16"
+        },
+        "probe_does_not_pollute_per_plan_counters": {
+          "after_first_plan": {
+            "plan_create_count": 9,
+            "scratch_alloc_count": 9,
+            "scratch_bytes": 39168,
+            "worker_create_count": 72
+          },
+          "before_first_plan": {
+            "plan_create_count": 8,
+            "scratch_alloc_count": 8,
+            "scratch_bytes": 39168,
+            "worker_create_count": 64
+          },
+          "pass": false,
+          "per_plan_create_counts": [
+            9,
+            9,
+            9
+          ]
+        },
+        "same_plan_concurrent_frames": {
+          "downsample_call_count": 6,
+          "expected_calls": 72,
+          "failed_call_threads": [],
+          "pass": false,
+          "reconstruct_call_count": 6,
+          "rounds": 12,
+          "threads": 6,
+          "wrong_pixel_threads": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      "dll": "F:\\dlss5standaloneV2\\scratch\\oldbridge\\residual_bridge_old.dll",
+      "every_scenario_call_returned": true,
+      "non_daemon_threads_still_running": []
+    }
+  },
+  "current_build": {
+    "api_major": 2,
+    "api_version": "0x00020000",
+    "checks": {
+      "concurrent_lifecycle_counts": {
+        "final_plan_own_counts": {
+          "plan_create_count": 1,
+          "scratch_alloc_count": 1
+        },
+        "pass": true,
+        "plans_churned": 48,
+        "problems": [],
+        "process_scope_deltas": {
+          "process_plan_create_total": 48,
+          "process_plan_destroy_total": 48,
+          "process_scratch_alloc_total": 48
+        }
+      },
+      "cross_plan_not_blocked": {
+        "big_frame_ms": 41.637,
+        "pass": true,
+        "ratio": 0.0224,
+        "small_frame_ms": 0.933,
+        "small_pixels_exact": true
+      },
+      "destroy_waits_for_inflight_call": {
+        "destroy_code": 0,
+        "destroy_ms": 23.424,
+        "frame_ms": 28.495,
+        "frame_thread_returned": true,
+        "inflight_call_code": 0,
+        "pass": true,
+        "pixels_exact_after_destroy": true
+      },
+      "last_error_per_thread": {
+        "pass": true,
+        "thread_a": "invalid plan handle",
+        "thread_b": "plan is 64x48 -> 32x24, called with 64x48 -> 16x16"
+      },
+      "probe_does_not_pollute_per_plan_counters": {
+        "after_first_plan": {
+          "plan_create_count": 1,
+          "scratch_alloc_count": 1,
+          "scratch_bytes": 39168,
+          "worker_create_count": 8
+        },
+        "before_first_plan": {
+          "plan_create_count": 1,
+          "scratch_alloc_count": 1,
+          "scratch_bytes": 39168,
+          "worker_create_count": 8
+        },
+        "pass": true,
+        "per_plan_create_counts": [
+          1,
+          1,
+          1
+        ]
+      },
+      "same_plan_concurrent_frames": {
+        "downsample_call_count": 72,
+        "expected_calls": 72,
+        "failed_call_threads": [],
+        "pass": true,
+        "reconstruct_call_count": 72,
+        "rounds": 12,
+        "threads": 6,
+        "wrong_pixel_threads": []
+      }
+    },
+    "dll": "F:\\dlss5standaloneV2\\native\\residual_bridge.dll",
+    "every_scenario_call_returned": true,
+    "non_daemon_threads_still_running": []
+  },
+  "current_build_failing": [],
+  "scenario_summary": {
+    "concurrent_lifecycle_counts": {
+      "pass": true
+    },
+    "cross_plan_not_blocked": {
+      "pass": true
+    },
+    "destroy_waits_for_inflight_call": {
+      "pass": true
+    },
+    "last_error_per_thread": {
+      "pass": true
+    },
+    "probe_does_not_pollute_per_plan_counters": {
+      "pass": true
+    },
+    "same_plan_concurrent_frames": {
+      "pass": true
+    }
+  }
+}

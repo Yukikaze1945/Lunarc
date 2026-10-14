@@ -117,4 +117,3 @@ export const DEFAULT_EXPORT_SETTINGS: TranscodeSettings = {
   skip_existing: true,
   extra_args: '',
 }
-

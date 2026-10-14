@@ -119,3 +119,4 @@ html[data-density='compact'] .workspace-page { padding: 28px 36px; }
 .environment-check > div { display:flex; justify-content:space-between; gap:16px; }
 .environment-check p { margin:8px 0; }
 @media(max-width:1000px) { .environment-features { grid-template-columns:1fr; } }
+.memory-table{width:100%;border-collapse:collapse;margin-top:16px}.memory-table th,.memory-table td{text-align:left;padding:10px 0;border-bottom:1px solid var(--border)}

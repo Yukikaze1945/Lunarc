@@ -162,6 +162,7 @@ class GpuPreview:
         self.native_config = None
         self.native_presenter = None
         self.native_display = False
+        self.lifecycle_phase = 'idle'
 
     def configure_native(self, layout):
         from native_preview import validate_layout
@@ -194,54 +195,84 @@ class GpuPreview:
         self.executor.shutdown(wait=True)
 
     def _close(self):
+        from gpu_memory import inactive
+        inactive('preview')
+        errors = []
+        def release(label, callback):
+            try:
+                callback()
+            except Exception as error:
+                errors.append((label, error))
+        def detach(name, method='close'):
+            owner = getattr(self, name, None)
+            setattr(self, name, None)
+            if owner is not None:
+                release(name, getattr(owner, method))
         with self.native_lock:
-            if self.native_presenter:
-                self.native_presenter.close(); self.native_presenter = None
-        if getattr(self,'native_exchange',None):
-            self.native_exchange.close(); self.native_exchange = None
+            detach('native_presenter')
+        detach('native_exchange')
         self.native_exchange_key = None
         self.source_display_cache = None
-        self.post_cache.close()
+        from preview_cache import PostCache
+        post_cache, self.post_cache = self.post_cache, PostCache()
+        release('post_cache', post_cache.close)
         # Display reader borrows the processing device and closes before owners.
-        for _, reader in self.viewport_readers.values():
-            reader.close()
+        readers = list(self.viewport_readers.values())
         self.viewport_readers.clear()
-        if self.display_exchange:
-            self.display_exchange.close()
-            self.display_exchange = None
-        if self.reader:
-            self.reader.close()
-            self.reader = None
+        for _, reader in readers:
+            release('viewport_reader', reader.close)
+        detach('display_exchange')
+        detach('reader')
+        chain, live, layers = self.chain, self.live, self.pending_layers
+        self.chain = self.live = None
+        self.pending_layers = []
         try:
-            if self.chain:
-                self.chain.close()
+            if chain:
+                release('chain', chain.close)
+                # Chain cleanup can stop before its anchor, e.g. on a failing
+                # output effect. Live.close detaches its handle before the DLL
+                # call, so retrying an already attempted anchor is harmless.
+                if live:
+                    release('anchor', live.close)
             else:
-                for layer in reversed(self.pending_layers):
-                    if layer.get('flow_provider'):
-                        layer['flow_provider'].close_independent_layer()
+                for layer in reversed(layers):
                     if layer.get('live'):
-                        layer['live'].close()
-                if self.live:
-                    self.live.close()
+                        release('layer', layer['live'].close)
+                    if layer.get('flow_provider'):
+                        release('layer_flow', layer['flow_provider'].close_independent_layer)
+                if live:
+                    release('anchor', live.close)
         finally:
-            self.pending_layers = []
-            self.chain = self.live = None
-            if self.provider:
-                self.provider.close_independent_layer()
-                self.provider = None
-            if self.bridges:
-                htx.release_loader_cookies(self.bridges)
-                self.bridges = None
+            detach('provider', 'close_independent_layer')
+            bridges, self.bridges = self.bridges, None
+            if bridges:
+                release('loader_cookies', lambda: htx.release_loader_cookies(bridges))
             self.key = self.last_index = self.current_frame = None
             self.display_buffers.clear()
             self.cached_display = None
             self.active_settings = None
+        if errors:
+            raise RuntimeError('GPU preview cleanup failed: ' + '; '.join(
+                f'{label}: {error}' for label, error in errors)) from errors[0][1]
 
-    def _open(self, video, settings):
+    def _reopen_vsr_with_decoder(self, video, settings):
+        # Source identity is checked by _render. Keep its context alive until
+        # every old effect is closed and the new chain has adopted the decoder.
+        reuse = dict(lib=self.bridges['nvdec'], handle=self.chain.decoder,
+                     source=self.source, origin=self.source_origin)
+        self.chain.decoder = None
+        try:
+            self._close()
+            self._open(video, settings, decoder_reuse=reuse)
+        finally:
+            if reuse['handle'] is not None:
+                reuse['lib'].nvdec_bridge_close(reuse['handle'])
+
+    def _open(self, video, settings, decoder_reuse=None):
         # Frame generation is an export setting; it must not load VFG or reject
         # an otherwise valid preview when its target rate is being edited.
         settings = dict(settings, frame_generation='off')
-        source = gtx.probe_source(video)
+        source = decoder_reuse['source'] if decoder_reuse else gtx.probe_source(video)
         import native_effects
         native_effects.validate(settings, source)
         width, height = source['width'], source['height']
@@ -328,18 +359,27 @@ class GpuPreview:
         self.chain.post_control = GpuPostControl(controls_from_settings(settings), hdr=wide, sdr10=self.sdr10)
         self.chain.temporal_control = GpuTemporalControl(temporal_from_settings(settings), hdr=wide)
         native_effects.install(self.chain, self.live, settings, (width, height), self.provider)
-        self.chain.open_decoder()
+        if decoder_reuse:
+            if self.bridges['nvdec']._handle != decoder_reuse['lib']._handle:
+                raise RuntimeError('VSR preview decoder runtime changed; reuse refused')
+            self.chain.decoder, decoder_reuse['handle'] = decoder_reuse['handle'], None
+        else:
+            self.chain.open_decoder()
+        self.decoder_reused = bool(decoder_reuse)
         lib = self.bridges['nvdec']
         lib.nvdec_bridge_seek_us.argtypes = [C.c_void_p, C.c_int64]
         lib.nvdec_bridge_seek_us.restype = C.c_int32
         self.source = source
         # NVDEC reports absolute PTS; the UI clock and seek ABI are source-relative.
         import subprocess
-        raw = subprocess.check_output([pipeline._bundle_ffprobe(), '-v', 'error',
-            '-select_streams', 'v:0', '-read_intervals', '%+#1', '-show_frames',
-            '-show_entries', 'frame=best_effort_timestamp_time', '-of', 'json', video])
-        frames = json.loads(raw).get('frames', [])
-        self.source_origin = float(frames[0]['best_effort_timestamp_time']) if frames else 0.0
+        if decoder_reuse:
+            self.source_origin = decoder_reuse['origin']
+        else:
+            raw = subprocess.check_output([pipeline._bundle_ffprobe(), '-v', 'error',
+                '-select_streams', 'v:0', '-read_intervals', '%+#1', '-show_frames',
+                '-show_entries', 'frame=best_effort_timestamp_time', '-of', 'json', video])
+            frames = json.loads(raw).get('frames', [])
+            self.source_origin = float(frames[0]['best_effort_timestamp_time']) if frames else 0.0
         self.fps = negotiation['fps'][0] / negotiation['fps'][1]
         self.generation += 1
         self.display_bytes = 0
@@ -387,10 +427,14 @@ class GpuPreview:
         strength_hot = len(inline.multi['scales'] if inline else self.multi['scales']) == 1
         solver_keys = {'layer_weights', 'fusion_beta', 'fusion_max_iterations',
                        'fusion_relative_tolerance'} if not strength_hot else set()
-        allowed = runtime | {'residual_strength'} | solver_keys
+        allowed = runtime | {'residual_strength', 'dlaa_preset', 'vsr_mode', 'vsr_quality', 'vsr_strength'} | solver_keys
         if strength_hot and getattr(self.chain, 'sdr10', False):
             allowed.add('residual_pyramid')
         if not changed <= allowed:
+            return False
+        if 'dlaa_preset' in changed and not native_effects.update_dlaa_model(self.chain, settings):
+            return False
+        if changed & {'vsr_mode', 'vsr_quality', 'vsr_strength'} and not native_effects.update_vsr_options(self.chain, settings):
             return False
         self.runtime_changed_keys = changed
         from post_control import controls_from_settings
@@ -449,7 +493,7 @@ class GpuPreview:
         if hasattr(self.chain, 'post_control'):
             self.chain.post_control.update_controls(controls_from_settings({}) if inline_nr else post)
         if hasattr(self.chain, 'temporal_control'):
-            self.chain.temporal_control.controls = temporal_from_settings({}) if inline_nr else temporal
+            self.chain.temporal_control.update_controls(temporal_from_settings({'temporal_controls': {'scene_detection': False}}) if inline_nr else temporal)
         if 'residual_strength' in changed:
             self.chain.strength = float(settings.get('residual_strength', 1.))
         if 'residual_pyramid' in changed and getattr(self.chain, 'sdr10', False):
@@ -587,6 +631,7 @@ class GpuPreview:
         return pipeline.colorize_flow(image), image.nbytes
 
     def _render(self, video, settings, index, need_source=True, reuse_display=False, display_edge=0, flow_view=False, native=False):
+        settings = native_effects.execution_settings(settings)
         if index < 0:
             raise ValueError('preview frame must be nonnegative')
         settings = {key:value for key,value in settings.items() if key not in (
@@ -617,12 +662,22 @@ class GpuPreview:
             self.post_only_update = False
             if key != self.key:
                 same_source = self.key is not None and self.key[:2] == key[:2] and self.key[3:] == key[3:]
+                self.lifecycle_phase = 'update live options'
                 runtime_changed = same_source and self._update_runtime(settings)
                 if not runtime_changed:
-                    self._close()
-                    self._open(video, settings)
+                    changed = ({k for k in self.active_settings.keys() | settings.keys()
+                                if self.active_settings.get(k) != settings.get(k)} if self.active_settings else set())
+                    if same_source and changed and changed <= {'vsr_mode','vsr_quality','vsr_strength'} and self.chain.decoder:
+                        self.lifecycle_phase = 'resize VSR pipeline, retain decoder'
+                        self._reopen_vsr_with_decoder(video, settings)
+                    else:
+                        self.lifecycle_phase = 'close previous pipeline'
+                        self._close()
+                        self.lifecycle_phase = 'open new pipeline'
+                        self._open(video, settings)
                 self.key = key
                 self.active_settings = dict(settings)
+            self.lifecycle_phase = 'render frame'
             setup_ms = (time.perf_counter() - setup) * 1000
             if (reuse_display and self.cached_display is not None and self.last_index == index
                     and self.cached_edge == self.display_edge
@@ -643,7 +698,7 @@ class GpuPreview:
                 # Short forward gaps decode from the current surface. Only an
                 # initial/backward/large jump needs GOP seek; temporal reset is
                 # independent from decoder positioning.
-                seek = ((self.last_index is None and index > 0) or
+                seek = (getattr(self, 'decoder_reused', False) or (self.last_index is None and index > 0) or
                         (self.last_index is not None and (index <= self.last_index or
                          index - self.last_index > max(8, int(self.fps * 2)))))
                 if seek:
@@ -651,6 +706,7 @@ class GpuPreview:
                                                                      round(target * 1e6))
                     if code:
                         gtx._bridge_error(self.bridges['nvdec'], 'nvdec_bridge_last_error', code)
+                self.decoder_reused = False
                 while True:
                     frame = gtx._DeviceFrame(struct_size=C.sizeof(gtx._DeviceFrame))
                     code = self.chain.next_frame(frame)
@@ -801,7 +857,8 @@ class GpuPreview:
                 self.diag['fusion_mode_actual'] = 'native_single_effect'
             self.diag['motion'] = self.provider.timing() if self.provider else None
             if self.diag['neural_mode'] == 'dlaa':
-                self.diag['dlaa_process_global_counters'] = self.live.counters()
+                owner = getattr(self.live, 'owner', None) or self.live
+                self.diag['dlaa_process_global_counters'] = owner.counters()
             self.diag['native_output_effect'] = (self.chain.output_effect.report()
                 if getattr(self.chain, 'output_effect', None) else None)
             self.diag['native_input_effect'] = (self.chain.input_effect.report()
@@ -816,6 +873,8 @@ class GpuPreview:
                     fusion_mode_requested=inline.multi['fusion'],
                     fusion_mode_actual=(report['frame_report'] or {}).get('fusion_mode_actual', 'hdr_nr_after_truehdr'))
             self.diag['render_pipeline'] = native_effects.stages(settings)
+            from gpu_memory import capture
+            self.diag['gpu_memory'] = capture(self, self.live, phase='preview', preview_cache=self.post_cache)
             if getattr(self.chain, 'scene_observer', None):
                 self.chain.scene_observer.observations = self.chain.scene_observer.observations[-16:]
             if 'nr' not in self.diag['render_pipeline']:
@@ -839,6 +898,9 @@ class GpuPreview:
             self.cached_flow_view = flow_view
             self.cached_native = self.native_display
             return source_bgr, self.result_bgr, dict(self.diag)
-        except Exception:
-            self._close()
+        except Exception as error:
+            try:
+                self._close()
+            except Exception as cleanup_error:
+                raise RuntimeError(f'{error}; {cleanup_error}') from error
             raise

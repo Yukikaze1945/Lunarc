@@ -1,0 +1,613 @@
+{
+  "allowed_status_values": [
+    "DONE_PROVEN",
+    "REDUCED_PROVEN",
+    "BLOCKED_PROVEN",
+    "NOT_READY"
+  ],
+  "artifact_shas": {
+    "dlss_host_abi": "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee",
+    "environment": "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee",
+    "ffprobe_output": "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee",
+    "nvof_bgr_parity": "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee",
+    "process_boundaries": "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee",
+    "transfer_ab_benchmark": "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee",
+    "transfer_ledger": "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee",
+    "transfer_ledger_auto": "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee",
+    "transfer_ledger_legacy": "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee"
+  },
+  "code_under_test": "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee",
+  "code_under_test_shared_by_artifacts": true,
+  "commits": [
+    {
+      "native_binary_in_same_commit": [],
+      "native_source_touched": [],
+      "sha": "20fc47c",
+      "subject": "test(transfer): add pipeline transfer ledger and counters"
+    },
+    {
+      "native_binary_in_same_commit": [
+        "native/residual_bridge.dll"
+      ],
+      "native_source_touched": [
+        "native/residual_bridge.cpp",
+        "native/residual_bridge.h"
+      ],
+      "sha": "62f5a11",
+      "subject": "perf(residual): fuse working bgr and rgba preparation"
+    },
+    {
+      "native_binary_in_same_commit": [
+        "native/residual_bridge.dll"
+      ],
+      "native_source_touched": [
+        "native/residual_bridge.cpp",
+        "native/residual_bridge.h"
+      ],
+      "sha": "51c980c",
+      "subject": "perf(residual): consume dlss rgba directly in reconstruction"
+    },
+    {
+      "native_binary_in_same_commit": [
+        "native/nvof_bridge.dll"
+      ],
+      "native_source_touched": [
+        "native/nvof_bridge.cpp",
+        "native/nvof_bridge.h"
+      ],
+      "sha": "1352c71",
+      "subject": "perf(nvof): add native bgr input path"
+    },
+    {
+      "native_binary_in_same_commit": [],
+      "native_source_touched": [],
+      "sha": "981f423",
+      "subject": "refactor(pipeline): use reduced-transfer production path"
+    },
+    {
+      "native_binary_in_same_commit": [],
+      "native_source_touched": [],
+      "sha": "f5a18c6",
+      "subject": "test(transfer): add legacy versus reduced transfer gates"
+    },
+    {
+      "native_binary_in_same_commit": [],
+      "native_source_touched": [],
+      "sha": "740c78a",
+      "subject": "test(transfer): gate the performance verdict on the question \u640244 asks"
+    }
+  ],
+  "forbidden_phrases": [
+    "GPU pipeline complete",
+    "zero-copy complete",
+    "CPU round trips eliminated",
+    "full GPU acceleration complete"
+  ],
+  "gate_statuses": {
+    "cpu_color_conversion_elimination": "DONE_PROVEN",
+    "decoder_gpu_handoff": "BLOCKED_PROVEN",
+    "direct_rgba_residual": "DONE_PROVEN",
+    "dlss_gpu_io": "BLOCKED_PROVEN",
+    "encoder_gpu_handoff": "BLOCKED_PROVEN",
+    "full_unit_suite": "DONE_PROVEN",
+    "fused_working_prepare": "DONE_PROVEN",
+    "legacy_reduced_output_integrity": "DONE_PROVEN",
+    "legacy_reduced_performance": "DONE_PROVEN",
+    "native_numeric_regression": "DONE_PROVEN",
+    "nvof_bgr_input": "DONE_PROVEN",
+    "nvof_h2d_reduction": "REDUCED_PROVEN",
+    "nvof_native_history_regression": "DONE_PROVEN",
+    "preview_export_regression": "DONE_PROVEN",
+    "transfer_ledger": "DONE_PROVEN"
+  },
+  "gates": {
+    "additional_this_round": {
+      "decoder_pipe": {
+        "detail": {
+          "decoder_pipe_bytes_per_frame": 12441600,
+          "estimated_gpu_to_cpu_nv12_bytes": 12441600
+        },
+        "evidence": [
+          "process_boundaries.json decoder",
+          "transfer_ledger.json measured_steady_state"
+        ],
+        "status": "REDUCED_PROVEN"
+      },
+      "dlss_internal_round_trip": {
+        "detail": {
+          "internal_d2h": null,
+          "internal_h2d": null,
+          "logical_buffer_bytes": {
+            "dlss_input_color_bytes_logical": 8294400,
+            "dlss_input_depth_bytes_logical": 8294400,
+            "dlss_input_flow_bytes_logical": 16588800,
+            "dlss_output_bytes_logical": 8294400
+          }
+        },
+        "evidence": [
+          "process_boundaries.json dlss",
+          "dlss_host_abi.json"
+        ],
+        "status": "BLOCKED_PROVEN"
+      },
+      "nvof_flow_download": {
+        "detail": {
+          "d2h_bytes_per_steady_frame": 16588800,
+          "d2h_copy_count": 1,
+          "why": "the flow tensor is consumed on the CPU by the DLSS host wrapper, which takes host pointers; the upload got smaller, this one still returns"
+        },
+        "evidence": [
+          "process_boundaries.json nvof",
+          "transfer_ledger.json measured_steady_state"
+        ],
+        "status": "BLOCKED_PROVEN"
+      }
+    },
+    "cpu_color_conversion_elimination": {
+      "detail": {
+        "auto_order_calls": {
+          "cpu_bgr_to_rgba_calls": 0,
+          "cpu_rgba_to_bgr_calls": 0
+        },
+        "legacy_calls": {
+          "cpu_bgr_to_rgba_calls": 2,
+          "cpu_color_conversion_output_bytes": 22809600,
+          "cpu_rgba_to_bgr_calls": 1
+        },
+        "reduced_calls": {
+          "cpu_bgr_to_rgba_calls": 0,
+          "cpu_color_conversion_output_bytes": 0,
+          "cpu_rgba_to_bgr_calls": 0
+        },
+        "sites_eliminated": [
+          "cpu_bgr_to_rgba@dlss_input",
+          "cpu_bgr_to_rgba@nvof_input",
+          "cpu_rgba_to_bgr@residual_input"
+        ]
+      },
+      "evidence": [
+        "transfer_ab_benchmark.json gates.copy_gate",
+        "transfer_ledger.json measured_steady_state",
+        "transfer_ledger_legacy.json measured_steady_state as the control"
+      ],
+      "status": "DONE_PROVEN"
+    },
+    "decoder_gpu_handoff": {
+      "detail": {
+        "cuda_ipc_currently_used": false,
+        "gpu_resource_export_api": "none",
+        "hwdownload_removed_this_round": false,
+        "shared_d3d_handle_currently_used": false,
+        "unblock_requires_any_of": [
+          "same-process libavcodec hardware decoder",
+          "NVIDIA Video Codec SDK / NVDEC bridge",
+          "explicit GPU IPC / shared-resource helper"
+        ],
+        "zero_copy_into_python_process": "BLOCKED_PROVEN"
+      },
+      "evidence": [
+        "process_boundaries.json decoder"
+      ],
+      "status": "BLOCKED_PROVEN"
+    },
+    "direct_rgba_residual": {
+      "detail": {
+        "legacy_calls_at_residual_site": 1,
+        "reduced_calls_at_residual_site": 0,
+        "residual_backend_actual": "cpu_reference_native"
+      },
+      "evidence": [
+        "transfer_ledger.json measured_steady_state.cpu_rgba_to_bgr@residual_input_calls",
+        "transfer_ledger_legacy.json same field as the control"
+      ],
+      "status": "DONE_PROVEN"
+    },
+    "dlss_gpu_io": {
+      "detail": {
+        "conclusion_reason": "blocked by current host ABI and available source/dependencies",
+        "gpu_resource_public_abi": "unavailable",
+        "host_pointer_path_proven": true,
+        "host_source_present": false,
+        "public_exports": [
+          "dlssnr_create_feature",
+          "dlssnr_init",
+          "dlssnr_process",
+          "dlssnr_resize",
+          "dlssnr_set_options",
+          "dlssnr_shutdown"
+        ],
+        "sdk_headers_present": false,
+        "sdk_libs_present": false
+      },
+      "evidence": [
+        "dlss_host_abi.json"
+      ],
+      "status": "BLOCKED_PROVEN"
+    },
+    "encoder_gpu_handoff": {
+      "detail": {
+        "direct_gpu_encode": "BLOCKED_PROVEN",
+        "encoder_gpu_upload_bytes_measured": "unavailable",
+        "encoder_pipe_bytes_measured_per_frame": 24883200,
+        "unblock_requires_any_of": [
+          "same-process NVENC",
+          "same-process libavcodec NVENC",
+          "GPU shared-resource IPC into an encoder helper"
+        ]
+      },
+      "evidence": [
+        "process_boundaries.json encoder"
+      ],
+      "status": "BLOCKED_PROVEN"
+    },
+    "full_unit_suite": {
+      "detail": {
+        "collected": null,
+        "counts": {
+          "passed": 273
+        },
+        "summary_line": "273 passed in 72.96s (0:01:12)"
+      },
+      "evidence": [
+        "pytest_output.txt"
+      ],
+      "status": "DONE_PROVEN"
+    },
+    "fused_working_prepare": {
+      "detail": {
+        "legacy_calls_at_dlss_input_site": 1,
+        "reduced_calls_at_dlss_input_site": 0
+      },
+      "evidence": [
+        "transfer_ledger.json measured_steady_state.cpu_bgr_to_rgba@dlss_input_calls",
+        "transfer_ledger_legacy.json same field as the control",
+        "pytest_output.txt"
+      ],
+      "status": "DONE_PROVEN"
+    },
+    "legacy_reduced_output_integrity": {
+      "detail": {
+        "bitstream_sha256_per_run": {
+          "legacy": {
+            "1": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+            "2": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+            "3": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+          },
+          "reduced": {
+            "1": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+            "2": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+            "3": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+          }
+        },
+        "checks_per_execution": {
+          "transfer_ab_benchmark.json": "10/10",
+          "transfer_ab_benchmark_150f.json": "10/10",
+          "transfer_ab_benchmark_60f_e2.json": "10/10"
+        },
+        "container_hash_is_not_content": "Matroska writes a random SegmentUID and a per-run timestamp into every file, so no two exports of this pipeline hash alike, two runs of the same order included. The numbers above are measured: the count of differing bytes and their position relative to the first Cluster, which is where the payload starts. A container hash is therefore reported here as a diagnostic and the gate compares the bitstream."
+      },
+      "evidence": [
+        "transfer_ab_benchmark.json gates.output_integrity_gate",
+        "transfer_ab_benchmark_150f.json gates.output_integrity_gate",
+        "transfer_ab_benchmark_60f_e2.json gates.output_integrity_gate",
+        "ffprobe_output.json"
+      ],
+      "status": "DONE_PROVEN"
+    },
+    "legacy_reduced_performance": {
+      "detail": {
+        "150_frame_corroboration": {
+          "corroborating-transfer_ab_benchmark_150f.json": {
+            "frames_per_run": 150,
+            "inter_run_spread_percent": {
+              "legacy": 5.34,
+              "reduced": 4.89
+            },
+            "median_fps": {
+              "legacy": 8.1165,
+              "reduced": 8.2759
+            },
+            "paired_runs": 3,
+            "paired_runs_favouring_reduced": 2,
+            "runs_per_mode": 3,
+            "runs_per_order": {
+              "legacy": 3,
+              "reduced": 3
+            },
+            "source_artifact": "transfer_ab_benchmark_150f.json",
+            "speedup_ratio": 1.0322
+          }
+        },
+        "decision_rule": "\u00a744's own test: the pooled median of every individual run of the reduced order (executions of the specified protocol at the same frame count) at least the pooled median of the legacy order, with the copy and output-integrity gates of every recorded execution passing. The separate question - whether reduced is *faster* - is answered by the paired sign test below but is not what \u00a744 asks, and it explicitly declines to require a fixed gain, so a sign test that fails is recorded as reduced_faster_established=false rather than turning a non-regression result into NOT_READY. Its p-value in both directions and the per-order inter-run spreads say how large a difference this instrument could have told apart at all.",
+        "every_execution_reports_the_same_code_under_test": true,
+        "executions_of_the_specified_protocol": 12,
+        "executions_whose_own_44_gate_failed": [
+          "execution-8"
+        ],
+        "first_execution_code_under_test": [
+          "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee"
+        ],
+        "median_paired_fps_change_percent": 2.46,
+        "no_end_to_end_regression": true,
+        "p_value_that_reduced_is_slower": 0.998033,
+        "paired_sign_test": {
+          "p_value_legacy_ahead_by_at_least_this_much": 0.998033,
+          "p_value_reduced_ahead_by_at_least_this_much": 0.005665,
+          "pairs": 36,
+          "runs_favouring_legacy": 10,
+          "runs_favouring_reduced": 26
+        },
+        "per_execution_outcome": {
+          "execution-1": {
+            "legacy_inter_run_spread_percent": 17.14,
+            "performance_gate_all_passed": true,
+            "ratio": 1.0664,
+            "reduced_inter_run_spread_percent": 10.01,
+            "status": "DONE_PROVEN"
+          },
+          "execution-10": {
+            "legacy_inter_run_spread_percent": 3.97,
+            "performance_gate_all_passed": true,
+            "ratio": 1.0146,
+            "reduced_inter_run_spread_percent": 3.72,
+            "status": "DONE_PROVEN"
+          },
+          "execution-2": {
+            "legacy_inter_run_spread_percent": 5.3,
+            "performance_gate_all_passed": true,
+            "ratio": 1.0241,
+            "reduced_inter_run_spread_percent": 3.19,
+            "status": "DONE_PROVEN"
+          },
+          "execution-3": {
+            "legacy_inter_run_spread_percent": 2.29,
+            "performance_gate_all_passed": true,
+            "ratio": 1.0595,
+            "reduced_inter_run_spread_percent": 6.96,
+            "status": "DONE_PROVEN"
+          },
+          "execution-4": {
+            "legacy_inter_run_spread_percent": 9.36,
+            "performance_gate_all_passed": true,
+            "ratio": 1.0438,
+            "reduced_inter_run_spread_percent": 2.43,
+            "status": "DONE_PROVEN"
+          },
+          "execution-5": {
+            "legacy_inter_run_spread_percent": 8.33,
+            "performance_gate_all_passed": true,
+            "ratio": 1.0261,
+            "reduced_inter_run_spread_percent": 15.97,
+            "status": "DONE_PROVEN"
+          },
+          "execution-6": {
+            "legacy_inter_run_spread_percent": 1.89,
+            "performance_gate_all_passed": true,
+            "ratio": 1.0261,
+            "reduced_inter_run_spread_percent": 4.6,
+            "status": "DONE_PROVEN"
+          },
+          "execution-7": {
+            "legacy_inter_run_spread_percent": 3.13,
+            "performance_gate_all_passed": true,
+            "ratio": 1.0255,
+            "reduced_inter_run_spread_percent": 7.67,
+            "status": "DONE_PROVEN"
+          },
+          "execution-8": {
+            "legacy_inter_run_spread_percent": 4.11,
+            "performance_gate_all_passed": false,
+            "ratio": 0.9674,
+            "reduced_inter_run_spread_percent": 4.5,
+            "status": "NOT_READY"
+          },
+          "execution-9": {
+            "legacy_inter_run_spread_percent": 5.6,
+            "performance_gate_all_passed": true,
+            "ratio": 1.0339,
+            "reduced_inter_run_spread_percent": 2.58,
+            "status": "DONE_PROVEN"
+          },
+          "recorded-1": {
+            "legacy_inter_run_spread_percent": 10.26,
+            "performance_gate_all_passed": true,
+            "ratio": 1.0206,
+            "reduced_inter_run_spread_percent": 11.46,
+            "status": "DONE_PROVEN"
+          },
+          "recorded-2": {
+            "legacy_inter_run_spread_percent": 3.44,
+            "performance_gate_all_passed": true,
+            "ratio": 1.0266,
+            "reduced_inter_run_spread_percent": 6.07,
+            "status": "DONE_PROVEN"
+          }
+        },
+        "pooled_median_fps": {
+          "legacy": 7.4839,
+          "reduced": 7.5984
+        },
+        "pooled_runs_per_order": {
+          "legacy": 36,
+          "reduced": 36
+        },
+        "pooled_speedup_ratio": 1.0153,
+        "reduced_faster_established": true
+      },
+      "evidence": [
+        "transfer_performance_pooled.json verdict",
+        "transfer_performance_pooled.json executions[].orders",
+        "transfer_ab_benchmark.json gates.performance_gate",
+        "transfer_ab_benchmark_150f.json gates.performance_gate"
+      ],
+      "status": "DONE_PROVEN"
+    },
+    "native_numeric_regression": {
+      "detail": {
+        "included_in_full_suite": true,
+        "summary_line": "71 passed in 3.40s"
+      },
+      "evidence": [
+        "pytest_native_numeric.txt",
+        "pytest_output.txt"
+      ],
+      "status": "DONE_PROVEN"
+    },
+    "nvof_bgr_input": {
+      "detail": {
+        "checks": "56/56",
+        "flow_bit_exact": [
+          {
+            "synthetic": true
+          },
+          {
+            "fixture": true
+          },
+          {
+            "synthetic": true
+          },
+          {
+            "fixture": true
+          }
+        ],
+        "input_format_measured_in_legacy_run": [
+          "rgba8_host"
+        ],
+        "input_format_measured_in_reduced_run": [
+          "bgr24_host"
+        ]
+      },
+      "evidence": [
+        "nvof_bgr_parity.json",
+        "transfer_ledger.json measured_steady_state.nvof_input_format"
+      ],
+      "status": "DONE_PROVEN"
+    },
+    "nvof_h2d_reduction": {
+      "detail": {
+        "copy_count_legacy": 1,
+        "copy_count_reduced": 1,
+        "legacy_bytes_per_steady_frame": 8294400,
+        "note": "the download side is unchanged; this is a reduction of the upload payload from four bytes per pixel to three, not an eliminated transfer",
+        "reduced_bytes_per_steady_frame": 6220800,
+        "saved_bytes": 2073600,
+        "saved_percent": 25.0
+      },
+      "evidence": [
+        "transfer_ab_benchmark.json gates.copy_gate",
+        "transfer_ledger.json / transfer_ledger_legacy.json measured_steady_state"
+      ],
+      "status": "REDUCED_PROVEN"
+    },
+    "nvof_native_history_regression": {
+      "detail": {
+        "cpu_previous_frame_copy_bytes_values": [
+          0
+        ],
+        "native_history_flag_values": [
+          1
+        ],
+        "parity_reset_check": [
+          {
+            "synthetic": 12441600
+          },
+          {
+            "fixture": 12441600
+          },
+          {
+            "synthetic": 1382400
+          },
+          {
+            "fixture": 1382400
+          }
+        ],
+        "reset_frame_copy_count": 2,
+        "reset_frame_upload_bytes": 12441600,
+        "staging_allocations_first_frame": 2,
+        "staging_allocations_steady": [
+          0
+        ],
+        "staging_note": "the two persistent host-to-device staging buffers are allocated once when the session opens and reused from the second frame on; a per-frame number here would mean the path was allocating every frame",
+        "steady_frame_copy_count": [
+          1
+        ],
+        "steady_frame_upload_bytes": [
+          6220800
+        ]
+      },
+      "evidence": [
+        "transfer_ledger.json per_frame_records (upload bytes and copy counts, cpu_previous_frame_copy_bytes, staging allocations, native history flag)",
+        "transfer_ab_benchmark.json gates.copy_gate",
+        "nvof_bgr_parity.json reset-frame upload check"
+      ],
+      "status": "DONE_PROVEN"
+    },
+    "preview_export_regression": {
+      "detail": {
+        "exports_completed_this_round": 6,
+        "included_in_full_suite": true,
+        "summary_line": "17 passed in 12.37s"
+      },
+      "evidence": [
+        "pytest_preview_export.txt",
+        "pytest_output.txt"
+      ],
+      "status": "DONE_PROVEN"
+    },
+    "transfer_ledger": {
+      "detail": {
+        "frames": 12,
+        "measured_fields": 23,
+        "orders_recorded": [
+          "transfer_ledger",
+          "transfer_ledger_auto",
+          "transfer_ledger_legacy"
+        ],
+        "record_digest_sha256": "2371536d3d52b1fe25104820507466cb2a286666e5fa2120318f8be60715f9e4"
+      },
+      "evidence": [
+        "transfer_ledger.json",
+        "transfer_ledger_legacy.json",
+        "transfer_ledger_auto.json"
+      ],
+      "status": "DONE_PROVEN"
+    }
+  },
+  "generated_at_utc": "2026-09-20T10:19:56Z",
+  "generated_by": "tests/unit/collect_transfer_status.py",
+  "missing_artifacts": [],
+  "native_binaries": {
+    "nvof_bridge.dll": {
+      "binary_git_blob_committed": "24d84408bbfe150d255e998b3905524fabf99ce3",
+      "binary_git_blob_working": "24d84408bbfe150d255e998b3905524fabf99ce3",
+      "binary_matches_commit": true,
+      "binary_path": "native/nvof_bridge.dll",
+      "binary_sha256": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80",
+      "binary_size_bytes": 161792,
+      "last_commit_touching_binary": "1352c71 perf(nvof): add native bgr input path",
+      "last_commit_touching_source": "1352c71 perf(nvof): add native bgr input path",
+      "source_git_blob_committed": "71f41a639bdc6826a20c30c51334fda2061d8861",
+      "source_git_blob_working": "71f41a639bdc6826a20c30c51334fda2061d8861",
+      "source_matches_commit": true,
+      "source_path": "native/nvof_bridge.cpp",
+      "source_sha256": "0d6d6d34a9b0362d094363b0ac7e057e552b88a39d4b58218006c4a7e50b6562"
+    },
+    "residual_bridge.dll": {
+      "binary_git_blob_committed": "cc578dfe4541c7336d7334210fe1a155468a3677",
+      "binary_git_blob_working": "cc578dfe4541c7336d7334210fe1a155468a3677",
+      "binary_matches_commit": true,
+      "binary_path": "native/residual_bridge.dll",
+      "binary_sha256": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2",
+      "binary_size_bytes": 200192,
+      "last_commit_touching_binary": "51c980c perf(residual): consume dlss rgba directly in reconstruction",
+      "last_commit_touching_source": "51c980c perf(residual): consume dlss rgba directly in reconstruction",
+      "source_git_blob_committed": "71a23fab702247a6b2427cf68a4aa4e7aca8d54d",
+      "source_git_blob_working": "71a23fab702247a6b2427cf68a4aa4e7aca8d54d",
+      "source_matches_commit": true,
+      "source_path": "native/residual_bridge.cpp",
+      "source_sha256": "c76d9aa2859f50b71625acfa061c47ae7a73635e43ce7aba405e15ca6b74be08"
+    }
+  },
+  "round": "CPU-GPU round-trip reduction phase 1",
+  "status": "DONE_PROVEN"
+}

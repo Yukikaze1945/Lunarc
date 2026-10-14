@@ -84,7 +84,7 @@ if(WIN32)
         add_library(dlss_gpu_host SHARED dlss_gpu_host.cpp dlss_gpu_host.h)
         target_include_directories(dlss_gpu_host PRIVATE "${DLSS_SDK_DIR}/include")
         target_link_libraries(dlss_gpu_host PRIVATE
-            nvof_d3d12_interop d3d12 d3dcompiler advapi32 user32
+            nvof_d3d12_interop d3d12 dxgi d3dcompiler advapi32 user32
             "${DLSS_SDK_DIR}/lib/Windows_x86_64/x64/nvsdk_ngx_s.lib")
         if(MSVC)
             set_property(TARGET dlss_gpu_host PROPERTY MSVC_RUNTIME_LIBRARY

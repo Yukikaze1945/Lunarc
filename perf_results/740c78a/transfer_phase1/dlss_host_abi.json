@@ -1,0 +1,295 @@
+{
+  "code_under_test": "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee",
+  "commit_subject": "test(transfer): gate the performance verdict on the question \u640244 asks",
+  "conclusion": "BLOCKED_PROVEN",
+  "conclusion_reason": "blocked by current host ABI and available source/dependencies",
+  "conclusion_scope": "this binary, this export table and the dependencies present on this machine at collection time; it is not a statement about what is impossible forever, and nothing here infers what the host does with a pointer once it has it",
+  "dependency_search_coverage": {
+    "budget_seconds": 600,
+    "note": "a bounded filename search; contents of unrelated trees were not read",
+    "roots_walked": [
+      {
+        "completed": true,
+        "files_seen": 1467,
+        "max_depth": 6,
+        "root": "F:\\dlss5standaloneV2"
+      },
+      {
+        "completed": true,
+        "files_seen": 59972,
+        "max_depth": 4,
+        "root": "C:\\Users\\18392"
+      },
+      {
+        "completed": true,
+        "files_seen": 1185,
+        "max_depth": 4,
+        "root": "C:\\Program Files\\NVIDIA Corporation"
+      },
+      {
+        "completed": true,
+        "files_seen": 58,
+        "max_depth": 4,
+        "root": "C:\\Program Files (x86)\\NVIDIA Corporation"
+      },
+      {
+        "completed": true,
+        "files_seen": 2642,
+        "max_depth": 1,
+        "root": "F:\\"
+      }
+    ],
+    "skipped_directory_names": [
+      "$recycle.bin",
+      ".git",
+      ".gradle",
+      ".mypy_cache",
+      "__pycache__",
+      "bench_out",
+      "google",
+      "microsoft",
+      "node_modules",
+      "packages",
+      "publishcache",
+      "system volume information",
+      "torch_home",
+      "venv"
+    ],
+    "walk_finished": true
+  },
+  "dlssnr_exports": [
+    "dlssnr_create_feature",
+    "dlssnr_init",
+    "dlssnr_process",
+    "dlssnr_resize",
+    "dlssnr_set_options",
+    "dlssnr_shutdown"
+  ],
+  "evaluated_binary": {
+    "exists": true,
+    "loaded_by": "dlss_engine.HOST_DLL (package dir of the checkout)",
+    "mtime_utc": "2026-09-07T04:01:03Z",
+    "path": "dlssnr_host.dll",
+    "sha256": "9ec879388e573bebbf7886dccbdc885641d945420fdf4bb80bac6c657094160c",
+    "size_bytes": 54272
+  },
+  "export_count": 6,
+  "export_names_naming_a_gpu_resource": {},
+  "exports": [
+    {
+      "name": "dlssnr_create_feature",
+      "rva": "0x00001EA0"
+    },
+    {
+      "name": "dlssnr_init",
+      "rva": "0x00002250"
+    },
+    {
+      "name": "dlssnr_process",
+      "rva": "0x000027F0"
+    },
+    {
+      "name": "dlssnr_resize",
+      "rva": "0x00002F40"
+    },
+    {
+      "name": "dlssnr_set_options",
+      "rva": "0x00003030"
+    },
+    {
+      "name": "dlssnr_shutdown",
+      "rva": "0x000030B0"
+    }
+  ],
+  "exports_without_a_python_declaration": [
+    "dlssnr_resize"
+  ],
+  "generated_at_utc": "2026-09-20T10:00:22Z",
+  "generated_by": "tests/unit/collect_transfer_abi.py",
+  "git_branch": "main",
+  "gpu_resource_public_abi": "unavailable",
+  "gpu_resource_token_scan": {
+    "matched_exports": {},
+    "method": "every export name tested for each token; the matches are listed",
+    "tokens": [
+      "d3d",
+      "dxgi",
+      "cuda",
+      "cu",
+      "device",
+      "gpu",
+      "texture",
+      "surface",
+      "resource",
+      "handle",
+      "shared",
+      "srv",
+      "uav",
+      "fence",
+      "semaphore",
+      "memory",
+      "ptr",
+      "pointer"
+    ]
+  },
+  "host_pointer_path_proven": true,
+  "host_source_content_grepped_file_count": 16,
+  "host_source_matches": [],
+  "host_source_present": false,
+  "imports_of_host_dll": [
+    "ADVAPI32.dll",
+    "api-ms-win-crt-runtime-l1-1-0.dll",
+    "api-ms-win-crt-string-l1-1-0.dll",
+    "api-ms-win-crt-stdio-l1-1-0.dll",
+    "api-ms-win-crt-heap-l1-1-0.dll",
+    "api-ms-win-crt-convert-l1-1-0.dll",
+    "api-ms-win-crt-environment-l1-1-0.dll",
+    "api-ms-win-crt-time-l1-1-0.dll",
+    "USER32.dll",
+    "KERNEL32.dll",
+    "MSVCP140.dll",
+    "VCRUNTIME140.dll"
+  ],
+  "known_device_pointer_evidence": {
+    "historical_claims": [
+      "- `dlssnr_host.dll` \u4e0d\u652f\u6301\u76f4\u63a5\u4f20\u5165 CUDA `CUdeviceptr` \u6216\u5916\u90e8 D3D12/D3D11 \u8d44\u6e90\u3002",
+      "- \u4efb\u4f55\u8bd5\u56fe\u76f4\u63a5\u5c06 `nvof_bridge_get_output_deviceptr()` \u4f20\u5165 `dlssnr_process()` \u7684\u64cd\u4f5c\u5747\u4f1a\u5bfc\u81f4\u975e\u6cd5\u5185\u5b58\u8bbf\u95ee (Access Violation 0xC0000005)\u3002"
+    ],
+    "historical_record": "ABI_CAPABILITIES.md",
+    "historical_record_sha256": "bb2b708767a4defb0576610c6c42ad9b1e4f1afe04dd409862b2adb6e7cf1718",
+    "re_tested_this_round": false,
+    "reading": "no device-pointer input is proven usable through the public ABI",
+    "why_not_re_run": "a CUdeviceptr passed to dlssnr_process is reported to raise an access violation, and repeating that needs an isolated child process for one frame; the historical record already carries the result, so the dangerous run was not repeated"
+  },
+  "known_host_pointer_runtime_path": {
+    "buffer_formats": {
+      "colour_in": "working-resolution RGBA8 uint8 host buffer",
+      "colour_out": "RGBA8 uint8 host buffer owned by the caller",
+      "depth_in": "float32 (h, w) host buffer",
+      "motion_in": "float32 (h, w, 2) host buffer from the flow D2H"
+    },
+    "call_sites": [
+      "dlss_engine.py:127: rgba.ctypes.data_as(ctypes.c_void_p),",
+      "dlss_engine.py:128: mv.ctypes.data_as(ctypes.c_void_p),",
+      "dlss_engine.py:129: dp.ctypes.data_as(ctypes.c_void_p),",
+      "dlss_engine.py:130: o.ctypes.data_as(ctypes.c_void_p),",
+      "dlss_engine.py:237: rgba.ctypes.data_as(ctypes.c_void_p),",
+      "dlss_engine.py:238: motion.ctypes.data_as(ctypes.c_void_p),",
+      "dlss_engine.py:239: depth.ctypes.data_as(ctypes.c_void_p),",
+      "dlss_engine.py:240: o.ctypes.data_as(ctypes.c_void_p), 1 if reset else 0)"
+    ],
+    "description": "the call sites hand the host the address of a contiguous NumPy buffer in this process: colour RGBA8 in, motion float2, depth float32, RGBA8 out, plus an int reset flag"
+  },
+  "ngx_runtime_binary": {
+    "exists": true,
+    "note": "the NGX DLSSNR runtime the host loads; a runtime binary, not an import library, and it exports no function this project calls directly",
+    "path": "nvngx_dlssnr.dll",
+    "sha256": "e16bcf15e16e13f527491cdf7845b2fe6521a738d8f7c9c721866a8496e1fc8e",
+    "size_bytes": 165840496
+  },
+  "pe_tool": {
+    "exports_dump_captured": true,
+    "invocation": "dumpbin /exports <dll>, dumpbin /dependents <dll>",
+    "path": "E:\\Visual Studio\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\dumpbin.exe",
+    "version": "Microsoft (R) COFF/PE Dumper Version 14.44.35228.0"
+  },
+  "public_cuda_pointer_api_present": false,
+  "public_d3d12_resource_api_present": false,
+  "public_exports": [
+    "dlssnr_create_feature",
+    "dlssnr_init",
+    "dlssnr_process",
+    "dlssnr_resize",
+    "dlssnr_set_options",
+    "dlssnr_shutdown"
+  ],
+  "public_shared_handle_api_present": false,
+  "sdk_header_matches": [],
+  "sdk_headers_present": false,
+  "sdk_lib_matches": [],
+  "sdk_libs_present": false,
+  "search_was_download": false,
+  "signature_reading": {
+    "note": "a c_void_p is a pointer-sized argument. It does not say whose address space the value names, so it is not a device-pointer API.",
+    "pointer_typed_parameters": {
+      "dlssnr_create_feature": 0,
+      "dlssnr_init": 0,
+      "dlssnr_process": 4,
+      "dlssnr_set_options": 0,
+      "dlssnr_shutdown": 0
+    }
+  },
+  "untracked_paths": [
+    "perf_results/740c78a/"
+  ],
+  "working_tree_dirty": false,
+  "working_tree_paths": [],
+  "wrapper_load_error": null,
+  "wrapper_signatures": {
+    "dlssnr_create_feature": {
+      "declared_by_wrapper": true,
+      "parameters": [
+        "c_long",
+        "c_long",
+        "c_long"
+      ],
+      "pointer_parameters": 0,
+      "return": "c_long"
+    },
+    "dlssnr_init": {
+      "declared_by_wrapper": true,
+      "parameters": [
+        "c_long",
+        "c_long",
+        "c_long",
+        "c_wchar_p",
+        "c_wchar_p"
+      ],
+      "pointer_parameters": 0,
+      "return": "c_long"
+    },
+    "dlssnr_process": {
+      "declared_by_wrapper": true,
+      "parameters": [
+        "c_void_p",
+        "c_void_p",
+        "c_void_p",
+        "c_void_p",
+        "c_long"
+      ],
+      "pointer_parameters": 4,
+      "return": "c_long"
+    },
+    "dlssnr_resize": {
+      "declared_by_wrapper": false,
+      "parameters": null,
+      "pointer_parameters": 0,
+      "return": "c_long"
+    },
+    "dlssnr_set_options": {
+      "declared_by_wrapper": true,
+      "parameters": [
+        "c_long",
+        "c_long",
+        "c_float",
+        "c_float",
+        "c_float",
+        "c_float",
+        "c_long",
+        "c_long",
+        "c_long",
+        "c_long",
+        "c_float",
+        "c_float"
+      ],
+      "pointer_parameters": 0,
+      "return": null
+    },
+    "dlssnr_shutdown": {
+      "declared_by_wrapper": true,
+      "parameters": null,
+      "pointer_parameters": 0,
+      "return": "c_long"
+    }
+  }
+}

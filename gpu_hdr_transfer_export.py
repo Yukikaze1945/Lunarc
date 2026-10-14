@@ -20,9 +20,9 @@ Per frame, at a working scale below 1.0:
     gpu_hdr_scrgb_bridge  Catmull-Rom residual against the pristine master
                         (reconstruct), then composited scRGB -> PQ-coded BT.2020
                         limited-range P010 (encode)
-    nvenc_bridge        ``nvenc_hdr_open`` + ``nvenc_encode_p010``: an in-process
-                        hevc_nvenc Main 10 encoder whose own writer authors the
-                        mastering-display and content-light SEIs into every packet
+    nvenc_bridge        ``nvenc_p010_open`` + ``nvenc_encode_p010``: in-process
+                        HEVC Main10 or AV1 Main/10-bit, with codec-specific
+                        mastering-display and content-light SEIs / Metadata OBUs
 
 Fixed parameters, chosen once per job and never derived from the content:
 
@@ -111,6 +111,7 @@ DERIVED_LEGAL_PEAK_SCRGB = 207.53
 
 HDR_CODEC = "hevc_nvenc"
 HDR_PROFILE = "main10"
+P010_PROFILES = {"hevc_nvenc": "main10", "av1_nvenc": "main"}
 HDR_CONTAINER = ".mkv"
 # The only source shape the decode accepts: 10-bit 4:2:0, limited range, BT.2020
 # primaries, ST 2084 transfer, BT.2020 non-constant-luminance matrix. ffprobe's own
@@ -211,6 +212,11 @@ class HdrCapability(C.Structure):
                 ("profile_name", C.c_char * 32)]
 
 
+class P010Capability(C.Structure):
+    _fields_ = [('profile_supported' if name == 'main10_profile_supported' else name, kind)
+                for name, kind in HdrCapability._fields_]
+
+
 class HdrContract(C.Structure):
     """Mirror of NvencHdrContract."""
     _fields_ = [("struct_size", _U32), ("codec", C.c_char * 64),
@@ -252,6 +258,17 @@ class SeiCapability(C.Structure):
                 ("max_insert_bytes", _U32)]
 
 
+class P010MetadataStatus(C.Structure):
+    _fields_ = [("struct_size", _U32)] + [(name, _I32) for name in (
+        "codec_kind", "color_mode", "writer_available", "metadata_requested",
+        "mastering_serialized", "content_light_serialized", "error")] + [
+        (name, _U64) for name in ("packets_seen", "mastering_inserted",
+        "content_light_inserted", "mastering_already_present",
+        "content_light_already_present", "bytes_inserted")] + [
+        ("wire_values", _U32 * 12), ("max_chromaticity_error", C.c_double),
+        ("max_luminance_error", C.c_double), ("detail", C.c_char * 256)]
+
+
 class SeiStatus(C.Structure):
     """Mirror of NvencHdrSeiStatus: what the writer did to this session's packets."""
     _fields_ = [("struct_size", _U32), ("writer_available", _I32),
@@ -273,7 +290,7 @@ class SeiStatus(C.Structure):
 # than printing a number a reader would have to decode.
 METADATA_DESTINATIONS = {1: "frame_side_data", 2: "stream_coded_side_data",
                          4: "encoder_coded_side_data", 8: "container_colour_tags",
-                         16: "in_bitstream_prefix_sei"}
+                         16: "in_bitstream_prefix_sei", 32: "in_bitstream_metadata_obu"}
 SEI_ERRORS = {0: "ok", 1: "nothing_to_do", 2: "partial_mastering",
               3: "bad_rational", 4: "out_of_range", 5: "conflict",
               6: "framing_unsupported", 7: "no_vcl", 8: "malformed",
@@ -297,16 +314,19 @@ def _fields(struct, skip=("struct_size",)):
             out[name] = value.decode("utf-8", "replace")
         elif isinstance(value, C.Array):
             out[name] = list(value)
+        elif isinstance(value, float):
+            out[name] = value
         else:
             out[name] = int(value)
     return out
 
 
-def mastering_wire_report(snapshot):
+def mastering_wire_report(snapshot, codec=HDR_CODEC):
     """Audit the serializer's integer-grid conversion without changing source data.
 
     Matroska float metadata often becomes a rational with a power-of-two
-    denominator. HEVC uses 1/50000 chromaticity and 1/10000 luminance units.
+    denominator. HEVC uses 1/50000 chromaticity and 1/10000 luminance units;
+    AV1 uses 0.16 chromaticity, 24.8 maximum and 18.14 minimum luminance.
     Report each conversion and its exact error, including unchanged values.
     Native validation remains responsible for rejecting invalid declarations.
     """
@@ -315,13 +335,16 @@ def mastering_wire_report(snapshot):
             snapshot.get("mastering_has_luminance")):
         return {"policy": "nearest_wire_unit_ties_up", "fields": [],
                 "quantized_fields": 0}
+    av1 = codec == 'av1_nvenc'
+    chroma_scale = 65536 if av1 else 50000
     values = []
     for i, colour in enumerate(("red", "green", "blue")):
         for axis in ("x", "y"):
             values.append((f"{colour}_{axis}", snapshot[f"primary_{axis}_num"][i],
-                           snapshot[f"primary_{axis}_den"][i], 50000))
-    for name, scale in (("white_x", 50000), ("white_y", 50000),
-                        ("max_luminance", 10000), ("min_luminance", 10000)):
+                           snapshot[f"primary_{axis}_den"][i], chroma_scale))
+    for name, scale in (("white_x", chroma_scale), ("white_y", chroma_scale),
+                        ("max_luminance", 256 if av1 else 10000),
+                        ("min_luminance", 16384 if av1 else 10000)):
         values.append((name, snapshot[name + "_num"], snapshot[name + "_den"], scale))
     fields = []
     for name, num, den, scale in values:
@@ -406,7 +429,32 @@ _HDR_NVENC = {
 }
 
 
-def load_hdr_capabilities(bridges, width=None, height=None) -> dict:
+_P010_NVENC = {
+    "nvenc_p010_abi_version": (_U32, []),
+    "nvenc_p010_open": (_I32, [_VP, _U32, _U32, _U32, _U32, _I32, _I32, _CP,
+        C.POINTER(HdrOptions), C.POINTER(HdrMetadata), _I32, C.POINTER(_VP)]),
+    "nvenc_p010_capability": (_I32, [_VP, _U32, _U32, _CP, C.POINTER(P010Capability)]),
+    "nvenc_p010_get_metadata_status": (_I32, [_VP, C.POINTER(P010MetadataStatus)]),
+    "nvenc_p010_get_contract": (_I32, [_VP, C.POINTER(HdrContract)]),
+}
+
+
+def open_p010_encoder(library, sdr10, context, width, height, fps_num, fps_den,
+                      tb_num, tb_den, path, options, metadata, handle):
+    bound = gtx._bind_optional(library, _P010_NVENC)
+    if 'nvenc_p010_open' in bound:
+        if library.nvenc_p010_abi_version() != 1:
+            raise gtx.BridgeError('Unsupported P010 encoder ABI')
+        return library.nvenc_p010_open(context, width, height, fps_num, fps_den,
+            tb_num, tb_den, path, options, metadata, 0 if sdr10 else 1, handle)
+    if C.cast(options, C.POINTER(HdrOptions)).contents.codec != b'hevc_nvenc':
+        raise gtx.BridgeError('AV1 10-bit requires the rebuilt P010 encoder bridge')
+    entry = library.nvenc_sdr10_open if sdr10 else library.nvenc_hdr_open
+    return entry(context, width, height, fps_num, fps_den, tb_num, tb_den,
+                 path, options, metadata, handle)
+
+
+def load_hdr_capabilities(bridges, width=None, height=None, codec=HDR_CODEC) -> dict:
     """Bind the additive HDR entries onto the loaded set and ask them what they are.
 
     Called on the export thread, after ``gtx.load_bridges`` and before any frame:
@@ -474,6 +522,13 @@ def load_hdr_capabilities(bridges, width=None, height=None) -> dict:
             f"{_text(nvenc.nvenc_last_error())}")
         return out
     out["encoder_defaults"] = _fields(defaults)
+    out["encoder_defaults"]["profile"] = P010_PROFILES.get(codec, "")
+    p010_bound = gtx._bind_optional(nvenc, _P010_NVENC)
+    out["p010_available"] = set(_P010_NVENC).issubset(p010_bound) and nvenc.nvenc_p010_abi_version() == 1
+    out["encoder_codec"] = codec
+    if codec not in P010_PROFILES or (codec == 'av1_nvenc' and not out['p010_available']):
+        out['missing'].append('Requested codec needs the generic P010 bridge: ' + codec)
+        return out
 
     sei_cap = SeiCapability(C.sizeof(SeiCapability))
     rc = int(nvenc.nvenc_hdr_sei_capability(C.byref(sei_cap)))
@@ -485,13 +540,16 @@ def load_hdr_capabilities(bridges, width=None, height=None) -> dict:
         return out
     out["sei_capability"] = _fields(sei_cap)
 
-    cap = HdrCapability(C.sizeof(HdrCapability))
-    rc = int(nvenc.nvenc_hdr_capability(None, C.c_uint32(int(width or 0)),
-                                       C.c_uint32(int(height or 0)), C.byref(cap)))
+    cap_type = P010Capability if out['p010_available'] else HdrCapability
+    cap = cap_type(C.sizeof(cap_type))
+    if out['p010_available']:
+        rc = int(nvenc.nvenc_p010_capability(None, int(width or 0), int(height or 0), codec.encode(), C.byref(cap)))
+    else:
+        rc = int(nvenc.nvenc_hdr_capability(None, int(width or 0), int(height or 0), C.byref(cap)))
     out["struct_sizes_accepted"]["NvencHdrCapability"] = rc == 0
     if rc:
         out["missing"].append(
-            f"the installed FFmpeg has no usable hevc_nvenc for the HDR10 entry "
+            f"the installed FFmpeg has no usable {codec} for the P010 entry "
             f"({rc}): {_text(nvenc.nvenc_last_error())}")
         return out
     out["capability"] = _fields(cap)
@@ -541,9 +599,9 @@ def load_hdr_capabilities(bridges, width=None, height=None) -> dict:
     return out
 
 
-def load_sdr10_capabilities(bridges, width=None, height=None):
+def load_sdr10_capabilities(bridges, width=None, height=None, codec=HDR_CODEC):
     """Shared FP16/P010 facilities, with separately verified SDR colour entries."""
-    caps = load_hdr_capabilities(bridges, width, height)
+    caps = load_hdr_capabilities(bridges, width, height, codec=codec)
     for key, name, original in (("nvdec", "nvdec_bridge_open_p010", "nvdec_bridge_open_hdr"),
                                 ("nvenc", "nvenc_sdr10_open", "nvenc_hdr_open")):
         try:
@@ -654,7 +712,8 @@ def paper_white_reason(job_settings):
 
 
 def plan_hdr_encoder(transcode_settings, cq: int, source: dict,
-                     option_available=None, hdr_caps=None) -> dict:
+                     option_available=None, hdr_caps=None,
+                     tune_available=None) -> dict:
     """Turn the job's encoding settings into the HDR10 entry's own request.
 
     The same option vocabulary ``gtx.plan_encoder`` uses, minus the names the HDR10
@@ -667,16 +726,18 @@ def plan_hdr_encoder(transcode_settings, cq: int, source: dict,
     ts = dict(transcode_settings or {})
     unsupported = []
     codec = str(ts.get("codec", HDR_CODEC))
-    if codec != HDR_CODEC:
-        unsupported.append(
-            f"codec={codec}: the HDR10 encode entry is {HDR_CODEC} at Main 10 and "
-            "does not fall back to another codec, to 8-bit or to NV12")
-
-    requested_profile = str(ts.get("profile", "auto")).strip()
-    if requested_profile not in ("auto", "", "None", "none", HDR_PROFILE, "Main 10",
-                                 "main 10", "Main10"):
-        unsupported.append(
-            f"profile={requested_profile}: this entry encodes {HDR_PROFILE} only")
+    profile = P010_PROFILES.get(codec, '')
+    if not profile:
+        unsupported.append(f'codec={codec}: P010 supports HEVC or AV1 only')
+    if codec == 'av1_nvenc' and not (hdr_caps or {}).get('p010_available'):
+        unsupported.append('AV1 10-bit requires generic P010 encoder capabilities')
+    if (hdr_caps or {}).get('encoder_codec', codec) != codec:
+        unsupported.append('Encoder capabilities were queried for a different codec')
+    requested_profile = str(ts.get('profile', 'auto')).strip()
+    accepted_profiles = ('auto', '', 'None', 'none', profile)
+    if codec == 'hevc_nvenc': accepted_profiles += ('Main 10', 'main 10', 'Main10')
+    if requested_profile not in accepted_profiles:
+        unsupported.append(f'profile={requested_profile}: {codec} requires {profile}')
 
     pix_fmt = str(ts.get("pixel_format", "auto")).strip().lower()
     if pix_fmt not in HDR_ALLOWED_PIXEL_FORMATS:
@@ -684,7 +745,7 @@ def plan_hdr_encoder(transcode_settings, cq: int, source: dict,
             f"pixel_format={pix_fmt}: the HDR chain submits P010 (10-bit "
             "4:2:0) planes and refuses an 8-bit request rather than encoding one")
 
-    struct = {"codec": HDR_CODEC.encode(), "profile": HDR_PROFILE.encode(),
+    struct = {"codec": codec.encode(), "profile": profile.encode(),
               "preset": None, "tune": None, "multipass": None,
               "rate_control": None, "constant_quality": 0, "bitrate": 0, "gop": 0,
               # Zero means "the entry's own HDR10 value", which is what is filled in
@@ -701,16 +762,23 @@ def plan_hdr_encoder(transcode_settings, cq: int, source: dict,
         if key in defaults:
             struct[field] = int(defaults[key])
     declared_profile = str(defaults.get("profile") or "").strip()
-    if declared_profile and declared_profile != HDR_PROFILE:
+    if declared_profile and declared_profile != profile:
         unsupported.append(
             f"the installed HDR10 entry names its profile {declared_profile!r}, not "
-            f"{HDR_PROFILE!r}; the request is refused rather than sent to an "
+            f"{profile!r}; the request is refused rather than sent to an "
             "encoder that would reject it after the first frame")
 
     av_options = []
     preset = str(ts.get("preset", "p7"))
     struct["preset"] = preset.encode()
-    tune = "hq" if not ts else str(ts.get("tune", "auto"))
+    tune = requested_tune = "hq" if not ts else str(ts.get("tune", "auto"))
+    # The entry passes tune straight into the encoder's option table, where an
+    # enumerator that table does not list is an EINVAL that refuses the open after
+    # the decode and the reconstruction have already run. Which codecs list uhq is a
+    # property of the loaded libavcodec, so the probe is the caller's and the
+    # value passes through when nobody answered.
+    if tune == "uhq" and tune_available is not None and not tune_available(codec):
+        tune = "hq"
     if tune and tune != "auto":
         struct["tune"] = tune.encode()
     multipass = str(ts.get("multipass", "auto"))
@@ -762,6 +830,8 @@ def plan_hdr_encoder(transcode_settings, cq: int, source: dict,
             continue
         if key == "weighted_prediction":
             text = "1" if text in ("1", "true", "True", "on") else "0"
+        if codec == 'av1_nvenc' and key == 'weighted_prediction' and text == '0':
+            continue
         av_options.append((option, text))
 
     aq_mode = str(ts.get("aq_mode", "spatial"))
@@ -781,19 +851,28 @@ def plan_hdr_encoder(transcode_settings, cq: int, source: dict,
             unsupported.append(
                 f"encoder option {name}={value} is fixed by the HDR10 entry and "
                 "cannot be passed to it")
-        elif option_available is not None and not option_available(HDR_CODEC, name):
+        elif option_available is not None and not option_available(codec, name):
             av_options.remove((name, value))
-            unsupported.append(f"encoder {HDR_CODEC} has no option {name}, so the "
+            unsupported.append(f"encoder {codec} has no option {name}, so the "
                                "setting for it cannot be applied")
 
+    value = int(struct['constant_quality'])
+    if not 0 <= value <= (63 if codec == 'av1_nvenc' else 51):
+        unsupported.append(f'CQ out of range for {codec}: {value}')
+    if codec == 'av1_nvenc' and ts.get('weighted_prediction'):
+        unsupported.append('AV1 does not support weighted prediction')
+    if codec == 'av1_nvenc' and ts.get('b_ref_mode') == 'each':
+        unsupported.append('AV1 does not support each B-frame as reference')
     ignored = {k for k in ts if k not in gtx.MUX_ONLY_KEYS
                and k not in HDR_MUX_ONLY_KEYS
                and k not in gtx.ENCODER_KEYS and k not in gtx.QUEUE_ONLY_KEYS}
     for key in sorted(ignored):
         unsupported.append(f"transcode_settings[{key!r}] has no equivalent this "
                            "encoder can be given")
-    return {"struct": struct, "av_options": av_options, "codec": HDR_CODEC,
-            "profile": HDR_PROFILE, "unsupported": unsupported}
+    return {"struct": struct, "av_options": av_options, "codec": codec,
+            "tune_adjustment": {"requested": requested_tune, "applied": tune,
+                "reason": "loaded encoder does not support UHQ"} if tune != requested_tune else None,
+            "profile": profile, "unsupported": unsupported}
 
 
 # --- the gate -------------------------------------------------------------------
@@ -951,7 +1030,8 @@ def negotiate_hdr(dims: dict, source: dict, job_settings, transcode_settings,
                   cq: int, with_audio: bool, out_path: str, live,
                   hdr_caps=None, option_available=None, bridges_ok=True,
                   bridge_error=None, flow_provider=None,
-                  extra_reasons=None, colour_mode="hdr10") -> dict:
+                  extra_reasons=None, tune_available=None,
+                  colour_mode="hdr10") -> dict:
     """Say whether this HDR10 export can run on the GPU, and exactly why not.
 
     The same shape and the same rule set as ``gtx.negotiate`` wherever the two chains
@@ -1189,7 +1269,7 @@ def negotiate_hdr(dims: dict, source: dict, job_settings, transcode_settings,
     if not fps:
         reasons.append("frame rate is not a positive rational, so the encoder cannot "
                        "be given a frame rate at all")
-    plan = plan_hdr_encoder(ts, cq, source, option_available, caps)
+    plan = plan_hdr_encoder(ts, cq, source, option_available, caps, tune_available)
     reasons += plan["unsupported"]
     reasons += list(extra_reasons or [])
 
@@ -1235,7 +1315,7 @@ def negotiate_hdr(dims: dict, source: dict, job_settings, transcode_settings,
             "hdr_video_stream_metadata": video_stream_metadata,
             "hdr_policy": policy,
             "hdr_encoder_contract_declared": {
-                "codec": HDR_CODEC, "profile": HDR_PROFILE,
+                "codec": plan["codec"], "profile": plan["profile"],
                 "sw_pixel_format": plan["struct"]["sw_pixel_format"],
                 "color_range": plan["struct"]["color_range"],
                 "color_primaries": plan["struct"]["color_primaries"],
@@ -1244,7 +1324,7 @@ def negotiate_hdr(dims: dict, source: dict, job_settings, transcode_settings,
             "hdr_caps": {key: caps.get(key) for key in
                          ("nvdec", "nvenc", "defaults_rc", "encoder_defaults",
                           "sei_capability", "capability", "colour_bridge",
-                          "fusion_bridge", "struct_sizes_accepted")
+                          "fusion_bridge", "struct_sizes_accepted", "p010_available", "encoder_codec")
                          if key in caps}}
 
 
@@ -1363,34 +1443,28 @@ class HdrChain:
         its context. Every close here is idempotent or guarded, so a failed run
         tearing down after a partially-opened chain is the same path.
         """
-        self.post_control.close()
-        self.temporal_control.close()
+        from gpu_cleanup import release_owned, finish_cleanup
+        errors = []
+        release_owned(self, 'post_control', errors)
+        release_owned(self, 'temporal_control', errors)
         for name in ('truehdr_tail','export_resize', 'export_resize_bridge', 'framegen_tail', 'ordered_framegen', 'framegen_input', 'output_effect', 'native_output_exchange', 'input_effect',
                      'framegen', 'framegen_exchange', 'framegen_bridge',
                      'encode_exchange', 'encode_bridge', 'decode_bridge'):
-            effect = getattr(self, name, None)
-            if effect is not None:
-                effect.close()
-                setattr(self, name, None)
-        if self.encoder:
-            self.b["nvenc"].nvenc_close(self.encoder)
-            self.encoder = None
-        if self.bridge is not None:
-            self.bridge.close()
-            self.bridge = None
+            release_owned(self, name, errors)
+        release_owned(self, 'encoder', errors, lambda handle: self.b['nvenc'].nvenc_close(handle))
+        release_owned(self, 'bridge', errors)
         if getattr(self.flow_provider, 'borrows_decoder_context', False):
-            self.flow_provider.close_independent_layer()
-        closer = getattr(self.live, "close", None)
-        if callable(closer):
-            closer()
+            release_owned(self, 'flow_provider', errors, method='close_independent_layer')
+        release_owned(self, 'live', errors)
         if self.pushed:
             try:
                 self.cuda.pop()
+            except Exception as error:
+                errors.append(('decoder_context_pop', error))
             finally:
                 self.pushed = False
-        if self.decoder:
-            self.b["nvdec"].nvdec_bridge_close(self.decoder)
-            self.decoder = None
+        release_owned(self, 'decoder', errors, lambda handle: self.b['nvdec'].nvdec_bridge_close(handle))
+        finish_cleanup(errors)
 
     def _fail(self, symbol, code):
         gtx._bridge_error(self.b["nvenc"], symbol, code)
@@ -1477,7 +1551,7 @@ class HdrChain:
             self.decode_bridge = self.bridge_type(d3d12_device=self.live.d3d12_device(),
                 cuda_context=context, full_width=self.src[0], full_height=self.src[1],
                 working_width=self.src[0], working_height=self.src[1],
-                paper_white_scrgb=float(self.policy['paper_white_scrgb']))
+                paper_white_scrgb=float(self.policy['paper_white_scrgb']), purpose='decode')
 
         # Preview owns display/readback. Preserve the decoder, context and colour
         # bridge setup, but do not open an output encoder for a preview-only chain.
@@ -1507,11 +1581,10 @@ class HdrChain:
         attach = None if not (snapshot["has_mastering"] or
                               snapshot["has_content_light"]) else metadata
         encoder = C.c_void_p()
-        opener = "nvenc_sdr10_open" if self.sdr10 else "nvenc_hdr_open"
         from vfx_framegen import encoder_timing
         rate, tb = encoder_timing(getattr(self, 'framegen_settings', {}), self.fps,
             (int(frame.time_base_num), int(frame.time_base_den)))
-        code = int(getattr(self.b["nvenc"], opener)(
+        code = int(open_p010_encoder(self.b["nvenc"], self.sdr10,
             C.c_void_p(context), self.output_size[0], self.output_size[1], *rate,
             C.c_int32(tb[0]), C.c_int32(tb[1]),
             os.fsencode(self.encoder_output), C.byref(options), attach,
@@ -1952,6 +2025,10 @@ class HdrChain:
             if not self.b["nvenc"].nvenc_hdr_sei_get(self.encoder, C.byref(sei)):
                 out["sei"] = _fields(sei)
                 self.sei_status = out["sei"]
+            if hasattr(self.b['nvenc'], 'nvenc_p010_get_metadata_status'):
+                status = P010MetadataStatus(C.sizeof(P010MetadataStatus))
+                if not self.b['nvenc'].nvenc_p010_get_metadata_status(self.encoder, C.byref(status)):
+                    out['p010_metadata'] = _fields(status)
         if self.live is not None:
             try:
                 out["dlss"] = self.live.transfer_counters()
@@ -2778,7 +2855,13 @@ def hdr_transfer_report(counters, processed, src_w, src_h, working, policy,
         # The only bit that is a statement about the elementary stream the file
         # holds; the side-data and container bits describe other carriers.
         report["encoder_in_bitstream_sei_written"] = bool(written & 16)
+        report["encoder_in_bitstream_obu_written"] = bool(written & 32)
         report["encoder_contract"] = contract
+    if counters.get('p010_metadata'):
+        report['p010_metadata_writer'] = counters['p010_metadata']
+        report['p010_metadata_writer']['format'] = 'av1_metadata_obu' if counters['p010_metadata']['codec_kind'] == 2 else 'hevc_prefix_sei'
+        if counters['p010_metadata']['codec_kind'] == 2:
+            sei = None
     if sei:
         report["sei_writer"] = {
             "writer_available": sei.get("writer_available"),
@@ -2971,7 +3054,8 @@ def _export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
     live_w, live_h = int(dims["live_w"]), int(dims["live_h"])
     uses_flow = bool(negotiation["uses_flow"])
     bridges = bridges or gtx.load_bridges(requires_flow=uses_flow)
-    hdr_caps = hdr_caps or load_hdr_capabilities(bridges, src_w, src_h)
+    hdr_caps = hdr_caps or (load_sdr10_capabilities if sdr10 else load_hdr_capabilities)(
+        bridges, src_w, src_h, codec=(transcode_settings or {}).get('codec', HDR_CODEC))
     encoder_output = intermediate or out_path
     multi = negotiation.get("multi_scale")
     extra_layers = []
@@ -3068,6 +3152,8 @@ def _export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
             previous_timestamp = (int(frame.pts), int(frame.time_base_num),
                                   int(frame.time_base_den))
             frame_ms = (time.perf_counter() - t_frame) * 1000.0
+            from gpu_memory import capture
+            capture(chain, live, phase='export')
             after = (flow_provider.device_input_counters()
                      if uses_flow and hasattr(flow_provider,
                                               "device_input_counters") else None)
@@ -3173,7 +3259,7 @@ def _export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
     report['truehdr'] = counters.get('truehdr')
     if js.get('truehdr_enabled'):
         report['transfer_mode_actual'] = 'gpu_sdr10_truehdr_transfer'
-        report['output_color_contract'] = 'BT.2020 / PQ / limited range / P010 / HEVC Main10'
+        report['output_color_contract'] = 'BT.2020 / PQ / limited range / P010 / ' + negotiation['plan']['codec'] + ' / ' + negotiation['plan']['profile']
         report.setdefault('sdr10_not_claimed',{})['formal_hdr'] = 'TrueHDR HDR10 conversion; no formal conformance certification'
     report['extra_colour_bridges'] = {k: counters[k] for k in ('decode_bridge', 'encode_bridge', 'framegen_bridge', 'export_resize_bridge') if k in counters}
     report["primary_vendor_feature"] = (counters.get("dlss") or {}).get(
@@ -3206,6 +3292,7 @@ def _export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
     report["hdr_encoder_codec"] = negotiation["plan"]["codec"]
     report["hdr_encoder_profile"] = negotiation["plan"]["profile"]
     report["hdr_encoder_av_options"] = negotiation["plan"]["av_options"]
+    report["hdr_encoder_tune_adjustment"] = negotiation["plan"].get("tune_adjustment")
     # Which file the caller's name belongs to. The encoder always writes one video
     # stream into one container; when the request carries anything else, the pass below
     # is what produces the deliverable, and a run has to be able to say which of the
@@ -3222,7 +3309,7 @@ def _export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
         "hdr_video_stream_metadata")
     report["hdr_bridge_dll"] = (hdr_caps.get("colour_bridge") or {}).get("path")
     report["hdr_source_metadata"] = chain.source_metadata
-    report["hdr_mastering_wire_conversion"] = mastering_wire_report(chain.source_metadata)
+    report["hdr_mastering_wire_conversion"] = mastering_wire_report(chain.source_metadata, negotiation['plan']['codec'])
     report["hdr_pixel_readback_exports_bound"] = (
         (hdr_caps.get("colour_bridge") or {}).get("pixel_readback_exports_bound"))
     report["decoder_pixel_readback_entry_bound"] = bool(
@@ -3348,7 +3435,7 @@ def sdr10_report(value):
         converted = bool(result.get('truehdr'))
         result["sdr10_not_claimed"].update(
             formal_hdr="TrueHDR HDR10 conversion; no formal conformance certification" if converted else "not HDR: BT.709 SDR, no PQ or HDR SEI",
-            domains="SDR10 input → TrueHDR → linear scRGB → P010 / PQ / BT.2020 / HEVC Main10" if converted else "limited-range 10-bit BT.709 SDR, HEVC Main10 MKV; "
+            domains="SDR10 input → TrueHDR → linear scRGB → P010 / PQ / BT.2020 / HEVC or AV1" if converted else "limited-range 10-bit BT.709 SDR, HEVC or AV1 10-bit MKV; "
                     "other SDR domains are not supported; final output resizing uses the GPU export resampler",
             lossless="FP16 and lossy video encoding are not lossless")
     if "sdr10_policy" in result:

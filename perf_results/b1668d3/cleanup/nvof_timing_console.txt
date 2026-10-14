@@ -1,0 +1,57 @@
+[NVOF init] input=1920x1080 grid=4 output=480x270 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=10)
+{
+  "frames_sequential": 2,
+  "frames_timed": 6,
+  "pass": true,
+  "per_key_ms": {
+    "nvof_dependency_wait_ms": [
+      0.941,
+      1.0897,
+      1.0352,
+      1.0202,
+      1.1287,
+      1.1216
+    ],
+    "nvof_download_ms": [
+      3.3046,
+      2.0969,
+      1.943,
+      2.1806,
+      2.575,
+      2.0728
+    ],
+    "nvof_postprocess_wait_inclusive_ms": [
+      0.0497,
+      0.0677,
+      0.0448,
+      0.0577,
+      0.0795,
+      0.0423
+    ],
+    "nvof_submit_cpu_ms": [
+      4.7153,
+      1.2971,
+      0.4708,
+      0.519,
+      0.4423,
+      0.6071
+    ],
+    "nvof_total_native_ms": [
+      12.1025,
+      7.5888,
+      5.8349,
+      6.3072,
+      7.7759,
+      7.0676
+    ],
+    "nvof_upload_ms": [
+      3.0824,
+      3.0316,
+      2.3388,
+      2.5265,
+      3.5458,
+      3.2212
+    ]
+  },
+  "problems": []
+}

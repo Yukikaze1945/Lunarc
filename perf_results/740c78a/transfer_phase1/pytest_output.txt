@@ -1,0 +1,11 @@
+$ python -m py_compile pipeline.py optical_flow.py dlss_service.py dlss_engine.py residual_native.py   # code under test 740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee
+exit code 0 (no output above means every module compiled)
+
+$ python -m pytest -q tests/unit
+........................................................................ [ 26%]
+........................................................................ [ 52%]
+........................................................................ [ 79%]
+.........................................................                [100%]
+273 passed in 72.96s (0:01:12)
+
+pytest exit code 0

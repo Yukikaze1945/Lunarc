@@ -1,0 +1,318 @@
+{
+  "all_rows_consistent": true,
+  "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+  "decoder_pipe": {
+    "legacy_bytes": 12441600,
+    "reason": "the decoder is a child process writing a byte pipe; this round changed nothing on that path, and the two measurements agree",
+    "reduced_bytes": 12441600,
+    "status": "BLOCKED_PROVEN",
+    "unchanged_this_round": true
+  },
+  "generated_by": "tests/unit/collect_transfer_status.py",
+  "inconsistent_rows": [],
+  "measured_steady_state_by_order": {
+    "legacy": {
+      "cpu_bgr_to_rgba_calls": {
+        "executions_reporting": 7,
+        "median": 2,
+        "values": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      },
+      "cpu_color_conversion_output_bytes": {
+        "executions_reporting": 7,
+        "median": 22809600,
+        "values": [
+          22809600,
+          22809600,
+          22809600,
+          22809600,
+          22809600,
+          22809600,
+          22809600
+        ]
+      },
+      "cpu_previous_frame_copy_bytes": {
+        "executions_reporting": 7,
+        "median": 0,
+        "values": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "cpu_rgba_to_bgr_calls": {
+        "executions_reporting": 7,
+        "median": 1,
+        "values": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "decoder_pipe_bytes": {
+        "executions_reporting": 7,
+        "median": 12441600,
+        "values": [
+          12441600,
+          12441600,
+          12441600,
+          12441600,
+          12441600,
+          12441600,
+          12441600
+        ]
+      },
+      "encoder_pipe_bytes": {
+        "executions_reporting": 7,
+        "median": 24883200,
+        "values": [
+          24883200,
+          24883200,
+          24883200,
+          24883200,
+          24883200,
+          24883200,
+          24883200
+        ]
+      },
+      "nvof_d2h_bytes_measured": {
+        "executions_reporting": 7,
+        "median": 16588800,
+        "values": [
+          16588800,
+          16588800,
+          16588800,
+          16588800,
+          16588800,
+          16588800,
+          16588800
+        ]
+      },
+      "nvof_h2d_bytes_measured": {
+        "executions_reporting": 7,
+        "median": 8294400,
+        "values": [
+          8294400,
+          8294400,
+          8294400,
+          8294400,
+          8294400,
+          8294400,
+          8294400
+        ]
+      }
+    },
+    "reduced": {
+      "cpu_bgr_to_rgba_calls": {
+        "executions_reporting": 7,
+        "median": 0,
+        "values": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "cpu_color_conversion_output_bytes": {
+        "executions_reporting": 7,
+        "median": 0,
+        "values": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "cpu_previous_frame_copy_bytes": {
+        "executions_reporting": 7,
+        "median": 0,
+        "values": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "cpu_rgba_to_bgr_calls": {
+        "executions_reporting": 7,
+        "median": 0,
+        "values": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "decoder_pipe_bytes": {
+        "executions_reporting": 7,
+        "median": 12441600,
+        "values": [
+          12441600,
+          12441600,
+          12441600,
+          12441600,
+          12441600,
+          12441600,
+          12441600
+        ]
+      },
+      "encoder_pipe_bytes": {
+        "executions_reporting": 7,
+        "median": 24883200,
+        "values": [
+          24883200,
+          24883200,
+          24883200,
+          24883200,
+          24883200,
+          24883200,
+          24883200
+        ]
+      },
+      "nvof_d2h_bytes_measured": {
+        "executions_reporting": 7,
+        "median": 16588800,
+        "values": [
+          16588800,
+          16588800,
+          16588800,
+          16588800,
+          16588800,
+          16588800,
+          16588800
+        ]
+      },
+      "nvof_h2d_bytes_measured": {
+        "executions_reporting": 7,
+        "median": 6220800,
+        "values": [
+          6220800,
+          6220800,
+          6220800,
+          6220800,
+          6220800,
+          6220800,
+          6220800
+        ]
+      }
+    }
+  },
+  "reduced_proven_rows": [
+    {
+      "after": 6220800,
+      "before": 8294400,
+      "claim": "nvof_h2d_upload",
+      "saved": 2073600,
+      "saved_percent": 25.0,
+      "status": "REDUCED_PROVEN",
+      "unit": "bytes/frame"
+    }
+  ],
+  "rows": [
+    {
+      "after": 6220800,
+      "before": 8294400,
+      "claim": "nvof_h2d_upload",
+      "consistent": true,
+      "derived_status": "REDUCED_PROVEN",
+      "problems": [],
+      "published_status": "REDUCED_PROVEN",
+      "saved": 2073600,
+      "saved_percent": 25.0
+    },
+    {
+      "after": 0,
+      "before": 2,
+      "claim": "cpu_bgr_to_rgba_calls",
+      "consistent": true,
+      "derived_status": "DONE_PROVEN",
+      "problems": [],
+      "published_status": "ELIMINATED_PROVEN",
+      "saved": 2,
+      "saved_percent": 100.0
+    },
+    {
+      "after": 0,
+      "before": 1,
+      "claim": "cpu_rgba_to_bgr_calls",
+      "consistent": true,
+      "derived_status": "DONE_PROVEN",
+      "problems": [],
+      "published_status": "ELIMINATED_PROVEN",
+      "saved": 1,
+      "saved_percent": 100.0
+    },
+    {
+      "after": 0,
+      "before": 22809600,
+      "claim": "cpu_color_conversion_output",
+      "consistent": true,
+      "derived_status": "DONE_PROVEN",
+      "problems": [],
+      "published_status": "ELIMINATED_PROVEN",
+      "saved": 22809600,
+      "saved_percent": 100.0
+    },
+    {
+      "after": 16588800,
+      "before": 16588800,
+      "claim": "nvof_flow_d2h_download",
+      "consistent": true,
+      "derived_status": "BLOCKED_PROVEN",
+      "problems": [],
+      "published_status": "BLOCKED_PROVEN",
+      "saved": 0,
+      "saved_percent": 0.0
+    },
+    {
+      "after": 12441600,
+      "before": 12441600,
+      "claim": "decoder_pipe",
+      "consistent": true,
+      "derived_status": "BLOCKED_PROVEN",
+      "problems": [],
+      "published_status": "BLOCKED_PROVEN",
+      "saved": 0,
+      "saved_percent": 0.0
+    },
+    {
+      "after": 24883200,
+      "before": 24883200,
+      "claim": "encoder_pipe",
+      "consistent": true,
+      "derived_status": "BLOCKED_PROVEN",
+      "problems": [],
+      "published_status": "BLOCKED_PROVEN",
+      "saved": 0,
+      "saved_percent": 0.0
+    }
+  ],
+  "rule": "a REDUCED_PROVEN row needs after strictly below before; a row that claims a transfer was deleted needs after == 0 with a non-zero measurement on the other order as its control; before == after can only ever be BLOCKED_PROVEN"
+}

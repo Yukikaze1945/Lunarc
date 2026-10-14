@@ -1,0 +1,65 @@
+{
+  "all_runs_per_order": {
+    "legacy": [],
+    "reduced": []
+  },
+  "code_under_test": "f7d35df5511b8a8bfdf2b366f5da78621a0449d8",
+  "corroborating_executions": [],
+  "execution_failures": [],
+  "executions": [],
+  "generated_at": "2026-09-22T16:32:24",
+  "generated_by": "tests/unit/collect_transfer_performance.py",
+  "kept_runs_per_order": {
+    "legacy": [],
+    "reduced": []
+  },
+  "pooled_all_runs_median_diagnostic": {
+    "legacy": null,
+    "reduced": null
+  },
+  "pooled_kept_runs_median": {
+    "legacy": null,
+    "reduced": null
+  },
+  "protocol": {
+    "child_process_per_run": true,
+    "defined_by": "tests/unit/collect_transfer_ab.py",
+    "executions_pooled": 0,
+    "executions_rejected": 0,
+    "frames_per_run": 150,
+    "kept_run_ids": [
+      2,
+      3
+    ],
+    "name": "counterbalanced-kept-runs-ab",
+    "pairs_interleaved_within_an_execution": true,
+    "runs_per_mode": 3,
+    "schedule_counterbalanced": true,
+    "version": 3,
+    "warmup_run_ids": [
+      1
+    ]
+  },
+  "run_counts_per_order": {
+    "legacy": {
+      "all": 0,
+      "kept": 0,
+      "warmup": 0
+    },
+    "reduced": {
+      "all": 0,
+      "kept": 0,
+      "warmup": 0
+    }
+  },
+  "verdict": {
+    "rule": "no execution of the protocol produced an artifact",
+    "status": "NOT_READY"
+  },
+  "warmup_policy": "an execution publishes runs_used_for_medians; only those runs reach a pooled median, a paired ratio or the sign test. The warmup runs are still in this file, with included_in_performance_verdict=false",
+  "warmup_runs_per_order": {
+    "legacy": [],
+    "reduced": []
+  },
+  "why_pooled": "one execution of the protocol is a median of two runs, and the same order of the same code measures 1.2-52% apart between runs on this machine; that instrument cannot resolve the difference the performance gate is asked about, in either direction"
+}

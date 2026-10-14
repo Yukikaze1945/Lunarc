@@ -3,7 +3,7 @@ import type { TranscodeSettings, RenderStage } from '../types'
 // resolver needs the real file name, and the delivery tests read the preview builder
 // straight from source rather than through a browser.
 import {
-  HDR_CLIP_CEILING_SCRGB, HDR_CODEC, HDR_CONTAINER, HDR_DERIVED_LEGAL_PEAK_SCRGB,
+  HDR_CLIP_CEILING_SCRGB, HDR_CONTAINER, HDR_DERIVED_LEGAL_PEAK_SCRGB,
   HDR_PROFILE, HDR_SUPPORT_CEILING_SCRGB, NITS_PER_SCRGB, paperWhiteLabel,
 } from './hdrExport.ts'
 
@@ -282,7 +282,7 @@ export function buildGpuTransferPreview({
   if (renderPipeline.some(stage => stage !== 'nr')) return {
     kind: 'gpu-transfer-chain', command: '', copyable: false, lines: [
       `渲染顺序：${renderPipeline.map(s => ({nr:'DLSSNR',dlaa:'DLAA',vsr:'RTX VSR',vfg:'NVIDIA VFG',truehdr:'TrueHDR'}[s])).join(' → ')}`,
-      ...(sdr10 ? ['SDR 10-bit：P010 → linear Rec.709 FP16 → 所选阶段 → P010 Main10。',
+      ...(sdr10 ? [`SDR 10-bit：P010 → linear Rec.709 FP16 → 所选阶段 → P010 → ${ts.codec === 'av1_nvenc' ? 'AV1 Main · 10-bit' : 'HEVC Main10'}。`,
         ...(renderPipeline.includes('vsr') ? ['VSR 通过 VFX 1.3 RGB10A2；不经过 8-bit 图像。'] : [])] : []),
       ...(renderPipeline.includes('dlaa') ? [`DLAA 模型提示：${({0:'默认',5:'E',6:'F',10:'J',11:'K',12:'L',13:'M'} as Record<number,string>)[dlaaPreset] ?? dlaaPreset}；实际模型由运行库决定。`] : []),
       ...(renderPipeline.includes('nr') ? [`DLSSNR：${reconstructionMode} · ${activeScales.map(s => `${Math.round(s * 100)}%`).join(' / ')}；VSR 提前时按放大后尺寸处理。`] : []),
@@ -294,7 +294,7 @@ export function buildGpuTransferPreview({
   }
   if (sdr10) return { kind: 'gpu-transfer-chain', command: '', copyable: false, lines: [
     'SDR 10-bit · GPU Transfer',
-    'P010 → linear Rec.709 FP16 → Feature 18 → FP16 重建 → P010 → HEVC Main10',
+    `P010 → linear Rec.709 FP16 → 所选阶段 → P010 → ${ts.codec === 'av1_nvenc' ? 'AV1 Main · 10-bit' : 'HEVC Main10'}`,
     `模式：${reconstructionMode} · 比例：${activeScales.map(s => `${Math.round(s * 100)}%`).join(' / ')}`,
     '保留 BT.709 SDR；不转换为 PQ，不添加 HDR metadata。',
     '音轨、字幕、章节与附件复用现有 FFmpeg 封装。',
@@ -379,7 +379,7 @@ export function buildHdrTransferPreview(input: HdrPreviewInput): ExportPreview {
     return {kind: 'hdr10-transfer-chain', command: '', copyable: false, lines: [
       'HDR10 · GPU Transfer · 实验性',
       `渲染顺序：${order.map(s => ({nr:'DLSSNR',dlaa:'DLAA',vsr:'RTX VSR',vfg:'NVIDIA VFG',truehdr:'TrueHDR'}[s])).join(' → ')}`,
-      'P010 / PQ / BT.2020 → 有符号线性 scRGB FP16 → 所选阶段 → PQ / P010 / Main10。',
+      `P010 / PQ / BT.2020 → 有符号线性 scRGB FP16 → 所选阶段 → PQ / P010 → ${input.ts.codec === 'av1_nvenc' ? 'AV1 Main · 10-bit' : 'HEVC Main10'}。`,
       ...(order.includes('nr') ? ['NR 使用现有 FP16 代理和线性残差重建；多层融合保持原有算法。'] : []),
       ...(order.includes('dlaa') ? ['DLAA 直接处理线性 FP16 主图像；深度和抖动为零。'] : []),
       ...(order.includes('vsr') ? ['VSR 使用 VFX 1.3 RGB10A2 / PQ / BT.2020；输出回到线性 FP16。'] : []),
@@ -431,8 +431,8 @@ export function buildHdrTransferPreview(input: HdrPreviewInput): ExportPreview {
       : reconstructionMode !== 'single'
         ? '  5. Catmull 基线重建与 FP16 合成；其余层参与观测，不参与最终融合输出。'
         : '  5. 原始 HDR 主帧重建 + Catmull-Rom 残差/FP16 合成 → scRGB → PQ → P010。',
-    `  6. NVENC HDR10 编码：${HDR_CODEC} @ ${HDR_PROFILE} / P010，单视频流写入 ${HDR_CONTAINER}；`
-    + 'ST 2086 静态母版显示与 CTA-861.3 CLL/FALL 以码流内 SEI 保留。',
+    `  6. NVENC HDR10 编码：${ts.codec} @ ${ts.codec === 'av1_nvenc' ? 'main' : HDR_PROFILE} / P010，单视频流写入 ${HDR_CONTAINER}；`
+    + `静态母版显示与 CLL/FALL 以码流内 ${ts.codec === 'av1_nvenc' ? 'Metadata OBU' : 'SEI'} 保留。`,
     '  7. 收尾封装：请求携带音频、字幕、章节、附件、容器级 FORMAT 元数据或源视频轨自己的标题/语言/标志位时，'
     + '编码先结束并释放文件，随后复用 SDR 链路既有的 gtx.build_mux_command copy pass，'
     + `以 -c:v copy 把这些流带进同一个 ${HDR_CONTAINER}：`

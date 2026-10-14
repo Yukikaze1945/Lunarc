@@ -1,5 +1,8 @@
 @echo off
 rem Reuse an x64 Native Tools prompt, or discover MSVC without a machine path.
+if not defined FFMPEG_SDK_DIR if exist "%~dp0..\build\ffmpeg-sdk\ffmpeg-8.1.2-full_build-shared\lib\avcodec.lib" (
+  set "FFMPEG_SDK_DIR=%~dp0..\build\ffmpeg-sdk\ffmpeg-8.1.2-full_build-shared"
+)
 if defined VSCMD_VER exit /b 0
 if defined VCVARS64 (
   call "%VCVARS64%" || exit /b 1

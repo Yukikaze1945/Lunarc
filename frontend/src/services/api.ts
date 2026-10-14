@@ -28,7 +28,12 @@ export function wsUrl(path: 'player' | 'queue'): string {
 export async function fetchSystemInfo(): Promise<SystemInfo> {
   const res = await fetch(`${API_BASE}/api/system`, { headers: authHeaders() })
   if (!res.ok) throw new Error('Failed to fetch system info')
-  return res.json()
+  const system=await res.json()
+  try{
+    const memory=await fetch(`${API_BASE}/api/gpu/memory`,{headers:authHeaders(),signal:AbortSignal.timeout(2000)})
+    if(memory.ok)system.gpu_memory=(await memory.json()).memory
+  }catch{/* Startup/older backend can still report system information. */}
+  return system
 }
 
 export async function fetchEnvironment(refresh = false): Promise<EnvironmentReport> {

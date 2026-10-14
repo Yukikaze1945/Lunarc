@@ -1,0 +1,5 @@
+$ python -m pytest -q tests/unit/test_native_residual.py tests/unit/test_resampler_numeric.py tests/unit/test_residual_backend.py   # code under test 740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee
+.......................................................................  [100%]
+71 passed in 3.40s
+
+pytest exit code 0

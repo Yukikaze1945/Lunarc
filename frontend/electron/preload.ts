@@ -37,5 +37,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('backend-exit', handler)
     return () => ipcRenderer.removeListener('backend-exit', handler)
   },
+  onBackendRecovery: (cb: (state: {phase:string;message:string}) => void) => {
+    const handler=(_event:Electron.IpcRendererEvent,state:{phase:string;message:string})=>cb(state)
+    ipcRenderer.on('backend-recovery',handler)
+    return()=>ipcRenderer.removeListener('backend-recovery',handler)
+  },
   isElectron: true
 })

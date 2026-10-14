@@ -9,7 +9,7 @@
 
 Lunarc 是一款视频增强软件，支持 DLSSNR、DLAA、RTX VSR、TrueHDR 和 NVIDIA VFG，可调整处理顺序、预览画面并批量导出。
 
-[下载安装版](https://github.com/Yukikaze1945/Lunarc/releases/tag/v1.0.0-beta) &nbsp; / &nbsp; [安装说明](docs/installing.md) &nbsp; / &nbsp; [源码运行](docs/getting-started.md)
+[下载安装版](https://github.com/Yukikaze1945/Lunarc/releases/tag/v1.1.0-beta) &nbsp; / &nbsp; [安装说明](docs/installing.md) &nbsp; / &nbsp; [源码运行](docs/getting-started.md)
 
 ## 01 / 界面
 
@@ -37,7 +37,7 @@ Lunarc 是一款视频增强软件，支持 DLSSNR、DLAA、RTX VSR、TrueHDR �
 
 ## 03 / 安装
 
-1. 在 [Releases](https://github.com/Yukikaze1945/Lunarc/releases/tag/v1.0.0-beta) 下载并运行 `Lunarc-1.0.0-beta-x64-Setup.exe`，约 140 MB。
+1. 在 [Releases](https://github.com/Yukikaze1945/Lunarc/releases/tag/v1.1.0-beta) 下载并运行 `Lunarc-1.1.0-beta-x64-Setup.exe`，约 146.7 MB（139.9 MiB）。
 2. 首次启动按提示安装基础运行环境和视频处理组件。
 3. 在 **运行与诊断 → DLSSNR 运行库** 中下载或导入运行库，再选择“使用”。
 

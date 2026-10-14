@@ -70,7 +70,7 @@ HIDDENIMPORTS = ['PIL.Image', 'PIL.ImageTk',
 HIDDENIMPORTS += ['post_control', 'temporal_control']
 HIDDENIMPORTS += ['dlssnr_runtime']
 HIDDENIMPORTS += ['gpu_preview_engine', 'native_effects', 'ordered_vfg', 'dlaa_gpu_engine',
-                  'rtx_vsr_engine', 'fidelityfx_flow_engine',
+                  'rtx_vsr_engine', 'vsr_config', 'gpu_memory', 'gpu_faults', 'queue_store', 'backend_process', 'fidelityfx_flow_engine',
                   'comparison_media', 'comparison_audio', 'comparison_playback', 'queue_payload']
 
 a = Analysis(

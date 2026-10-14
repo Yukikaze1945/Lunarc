@@ -221,8 +221,9 @@ export const QualityInspector: React.FC<QualityInspectorProps> = ({
               <div className="qi-section-title"><h3>残差稳定</h3><span>默认关闭</span></div>
               {matches('时域模式', 'temporal mode stability') && <label className="qi-control">
                 <span>抗闪烁<ParameterHelp name="temporal" label="抗闪烁" /></span><select value={temporal.mode}
-                  onChange={(event) => saveTemporal({ ...temporal, mode: event.target.value as TemporalControls['mode'] })}>
-                  <option value="off">关闭</option><option value="static_low_frequency">静态低频累积</option>
+                  onChange={(event) => saveTemporal({ ...temporal, mode: event.target.value as TemporalControls['mode'],
+                    scene_detection: event.target.value === 'off' ? true : temporal.scene_detection })}>
+                  <option value="off">{temporal.scene_detection ? '仅镜头检测' : '关闭'}</option><option value="static_low_frequency">静态低频累积</option>
                 </select>
               </label>}
               {matches('历史权重', 'history_weight') && <Slider label="历史权重" helpKey="history_weight" value={temporal.history_weight}

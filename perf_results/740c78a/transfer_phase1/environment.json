@@ -1,0 +1,86 @@
+{
+  "cuda_version": "13.4",
+  "native_libraries": {
+    "dlssnr_host.dll": {
+      "sha256": "9ec879388e573bebbf7886dccbdc885641d945420fdf4bb80bac6c657094160c",
+      "bytes": 54272
+    },
+    "nvngx_dlssnr.dll": {
+      "sha256": "e16bcf15e16e13f527491cdf7845b2fe6521a738d8f7c9c721866a8496e1fc8e",
+      "bytes": 165840496
+    },
+    "native/nvof_bridge.dll": {
+      "sha256": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80",
+      "bytes": 161792
+    },
+    "native/residual_bridge.dll": {
+      "sha256": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2",
+      "bytes": 200192
+    }
+  },
+  "utc_timestamp": "2026-09-20T10:19:50Z",
+  "platform": "win32",
+  "os": "Windows-10-10.0.26220-SP0",
+  "cpu_model": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+  "cpu_arch": "AMD64",
+  "cpu_logical_cores": 16,
+  "ram_total_bytes": 42852945920,
+  "python": "3.11.15",
+  "numpy": "2.4.6",
+  "opencv": "5.0.0",
+  "ffmpeg": "8.1.2-full_build-www.gyan.dev",
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 5060 Ti",
+    "driver_version": "616.92",
+    "memory_total_bytes": 17103323136
+  },
+  "rss_bytes": 42078208,
+  "peak_rss_bytes": 43876352,
+  "gpu_total_memory_used_bytes": 9274654720,
+  "process_gpu_memory_bytes": null,
+  "process_gpu_memory_source": "unavailable: this pid is not listed by nvidia-smi --query-compute-apps",
+  "code_under_test_sha": "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee",
+  "git_branch": "main",
+  "worktree_dirty_paths": [],
+  "worktree_clean": true,
+  "commit_subject": "test(transfer): gate the performance verdict on the question \u640244 asks",
+  "commit_history": [
+    "740c78a test(transfer): gate the performance verdict on the question \u640244 asks",
+    "92e786f test(transfer): name the collector that wrote each artifact",
+    "4c92cdf test(transfer): decide the performance gate on pooled runs, not on a median of two",
+    "f091965 test(transfer): derive the round's status from the artifacts it cites",
+    "473fa54 test(transfer): read the residual backend from the frames that ran it",
+    "176541c test(transfer): add the ABI, parity and A/B evidence collectors"
+  ],
+  "fixtures": {
+    "tests/unit/fixture_1080p_600f.mp4": {
+      "path": "tests/unit/fixture_1080p_600f.mp4",
+      "bytes": 9340939,
+      "sha256": "787afb83fe88f2fc89e3697daeac351dfda6c9e2d8f83a54da0c89275ca50d08",
+      "used_by": [],
+      "codec": "h264",
+      "width": 1920,
+      "height": 1080,
+      "fps": 60.0,
+      "frames": 600
+    },
+    "bench_out/fixture_4k_300.mp4": {
+      "path": "bench_out/fixture_4k_300.mp4",
+      "bytes": 15869886,
+      "sha256": "1500839c8ef50e2bcd4d8d0c974041af1a17178921213222c78f958208bcca9f",
+      "used_by": [],
+      "codec": "h264",
+      "width": 3840,
+      "height": 2160,
+      "fps": 60.0,
+      "frames": 300
+    }
+  },
+  "encoder_settings": {
+    "encoder": null,
+    "cq": null,
+    "flow_engine": null,
+    "flow_preset": null,
+    "observed_outputs": {}
+  }
+}

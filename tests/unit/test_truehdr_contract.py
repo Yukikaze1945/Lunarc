@@ -80,7 +80,7 @@ def test_inline_hdr_nr_parameter_edit_updates_only_the_selected_session(monkeypa
     preview.active_settings = old
     preview.live = NS()
     preview.multi = {'scales':[1.]}
-    preview.chain = NS(post_control=NS(update_controls=lambda _:None), temporal_control=NS(controls=None))
+    preview.chain = NS(post_control=NS(update_controls=lambda _:None), temporal_control=NS(controls=None, update_controls=lambda _:None))
     try:
         assert preview._update_runtime(dict(old, layer_settings=[{}, {'intensity':.25}, {}]))
         assert updates == [(1,.25)]

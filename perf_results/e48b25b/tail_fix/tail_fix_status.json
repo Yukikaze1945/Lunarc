@@ -1,0 +1,1001 @@
+{
+  "code_under_test_sha": "e48b25ba63c7503d1a3b04c0850d8636de5efe93",
+  "code_under_test_sha_short": "e48b25b",
+  "overall": "DONE_PROVEN",
+  "required_this_round": [
+    "residual_create_exception_safety",
+    "rowpool_single_ownership",
+    "no_cpp_exception_crosses_c_abi",
+    "failure_path_no_counter_pollution",
+    "failure_path_no_thread_residue",
+    "native_numeric_regression",
+    "native_thread_safety_regression",
+    "rss_fit_excludes_warmup",
+    "rss_fit_excludes_teardown",
+    "rss_true_growth_detection",
+    "rss_insufficient_sample_handling",
+    "full_unit_suite"
+  ],
+  "statuses": {
+    "residual_create_exception_safety": {
+      "status": "DONE_PROVEN",
+      "evidence": {
+        "failing_points": [
+          "after_plan_create",
+          "after_plan_create",
+          "during_axis_plan",
+          "during_axis_plan",
+          "after_row_pool_create",
+          "after_row_pool_create",
+          "during_scratch_alloc",
+          "during_scratch_alloc",
+          "before_registry_publish",
+          "before_registry_publish",
+          "during_registry_publish",
+          "during_registry_publish"
+        ],
+        "repetitions_per_point": 50,
+        "exit_codes": [
+          0
+        ],
+        "codes_returned": [
+          -9,
+          -7
+        ],
+        "handles_after_failed_create": [
+          0
+        ],
+        "pytest": "18 passed in 23.47s"
+      },
+      "meaning": "every allocation step of rr_create_plan was interrupted 50 times, in a child process, and each interruption came back as a return code with the handle zeroed",
+      "required_this_round": true
+    },
+    "rowpool_single_ownership": {
+      "status": "DONE_PROVEN",
+      "evidence": {
+        "runs_at_the_pool_owning_step": [
+          {
+            "exception_kind": "bad_alloc",
+            "process_exit_code": 0,
+            "registry_size": {
+              "baseline": 1,
+              "max": 1,
+              "min": 1
+            },
+            "handles": [
+              0
+            ]
+          },
+          {
+            "exception_kind": "runtime_error",
+            "process_exit_code": 0,
+            "registry_size": {
+              "baseline": 1,
+              "max": 1,
+              "min": 1
+            },
+            "handles": [
+              0
+            ]
+          }
+        ],
+        "harness_still_detects_the_pre_fix_double_free": "1 passed in 4.24s"
+      },
+      "meaning": "the pool is a unique_ptr member, so the throw after it is built destroys it once; a heap fault would end the child process instead of returning a code, and the regenerated pre-fix double free still ends a process, so the check is not vacuous",
+      "required_this_round": true
+    },
+    "no_cpp_exception_crosses_c_abi": {
+      "status": "DONE_PROVEN",
+      "evidence": {
+        "child_processes": 14,
+        "non_zero_exits": [],
+        "probes_that_wrote_no_report": [],
+        "windows_exception_codes_seen": []
+      },
+      "meaning": "a C++ exception leaving an extern \"C\" function terminates the process on x64 Windows; no probe process terminated, at any point, under either exception kind",
+      "required_this_round": true
+    },
+    "failure_path_no_counter_pollution": {
+      "status": "DONE_PROVEN",
+      "evidence": {
+        "process_counter_delta_per_failing_point": {
+          "after_plan_create/bad_alloc": {
+            "process_plan_create_total": 0,
+            "process_plan_destroy_total": 0,
+            "process_scratch_alloc_total": 0,
+            "process_scratch_bytes_total": 0,
+            "process_worker_create_total": 0
+          },
+          "after_plan_create/runtime_error": {
+            "process_plan_create_total": 0,
+            "process_plan_destroy_total": 0,
+            "process_scratch_alloc_total": 0,
+            "process_scratch_bytes_total": 0,
+            "process_worker_create_total": 0
+          },
+          "during_axis_plan/bad_alloc": {
+            "process_plan_create_total": 0,
+            "process_plan_destroy_total": 0,
+            "process_scratch_alloc_total": 0,
+            "process_scratch_bytes_total": 0,
+            "process_worker_create_total": 0
+          },
+          "during_axis_plan/runtime_error": {
+            "process_plan_create_total": 0,
+            "process_plan_destroy_total": 0,
+            "process_scratch_alloc_total": 0,
+            "process_scratch_bytes_total": 0,
+            "process_worker_create_total": 0
+          },
+          "after_row_pool_create/bad_alloc": {
+            "process_plan_create_total": 0,
+            "process_plan_destroy_total": 0,
+            "process_scratch_alloc_total": 0,
+            "process_scratch_bytes_total": 0,
+            "process_worker_create_total": 0
+          },
+          "after_row_pool_create/runtime_error": {
+            "process_plan_create_total": 0,
+            "process_plan_destroy_total": 0,
+            "process_scratch_alloc_total": 0,
+            "process_scratch_bytes_total": 0,
+            "process_worker_create_total": 0
+          },
+          "during_scratch_alloc/bad_alloc": {
+            "process_plan_create_total": 0,
+            "process_plan_destroy_total": 0,
+            "process_scratch_alloc_total": 0,
+            "process_scratch_bytes_total": 0,
+            "process_worker_create_total": 0
+          },
+          "during_scratch_alloc/runtime_error": {
+            "process_plan_create_total": 0,
+            "process_plan_destroy_total": 0,
+            "process_scratch_alloc_total": 0,
+            "process_scratch_bytes_total": 0,
+            "process_worker_create_total": 0
+          },
+          "before_registry_publish/bad_alloc": {
+            "process_plan_create_total": 0,
+            "process_plan_destroy_total": 0,
+            "process_scratch_alloc_total": 0,
+            "process_scratch_bytes_total": 0,
+            "process_worker_create_total": 0
+          },
+          "before_registry_publish/runtime_error": {
+            "process_plan_create_total": 0,
+            "process_plan_destroy_total": 0,
+            "process_scratch_alloc_total": 0,
+            "process_scratch_bytes_total": 0,
+            "process_worker_create_total": 0
+          },
+          "during_registry_publish/bad_alloc": {
+            "process_plan_create_total": 0,
+            "process_plan_destroy_total": 0,
+            "process_scratch_alloc_total": 0,
+            "process_scratch_bytes_total": 0,
+            "process_worker_create_total": 0
+          },
+          "during_registry_publish/runtime_error": {
+            "process_plan_create_total": 0,
+            "process_plan_destroy_total": 0,
+            "process_scratch_alloc_total": 0,
+            "process_scratch_bytes_total": 0,
+            "process_worker_create_total": 0
+          }
+        },
+        "control_same_loop_plan_creates": 50
+      },
+      "meaning": "the totals move only when a plan is published, so the control's 50 creates are counted and the failures' are not",
+      "required_this_round": true
+    },
+    "failure_path_no_thread_residue": {
+      "status": "DONE_PROVEN",
+      "evidence": {
+        "thread_counts_per_point": {
+          "control_no_fault/bad_alloc": {
+            "before": {
+              "at_entry": 19,
+              "baseline_during_loop": 27
+            },
+            "after": {
+              "max_after_each_rep": 27,
+              "at_exit": 19
+            }
+          },
+          "after_plan_create/bad_alloc": {
+            "before": {
+              "at_entry": 19,
+              "baseline_during_loop": 27
+            },
+            "after": {
+              "max_after_each_rep": 27,
+              "at_exit": 19
+            }
+          },
+          "after_plan_create/runtime_error": {
+            "before": {
+              "at_entry": 19,
+              "baseline_during_loop": 27
+            },
+            "after": {
+              "max_after_each_rep": 27,
+              "at_exit": 19
+            }
+          },
+          "during_axis_plan/bad_alloc": {
+            "before": {
+              "at_entry": 19,
+              "baseline_during_loop": 27
+            },
+            "after": {
+              "max_after_each_rep": 27,
+              "at_exit": 19
+            }
+          },
+          "during_axis_plan/runtime_error": {
+            "before": {
+              "at_entry": 19,
+              "baseline_during_loop": 27
+            },
+            "after": {
+              "max_after_each_rep": 27,
+              "at_exit": 19
+            }
+          },
+          "after_row_pool_create/bad_alloc": {
+            "before": {
+              "at_entry": 19,
+              "baseline_during_loop": 27
+            },
+            "after": {
+              "max_after_each_rep": 27,
+              "at_exit": 19
+            }
+          },
+          "after_row_pool_create/runtime_error": {
+            "before": {
+              "at_entry": 19,
+              "baseline_during_loop": 27
+            },
+            "after": {
+              "max_after_each_rep": 27,
+              "at_exit": 19
+            }
+          },
+          "during_scratch_alloc/bad_alloc": {
+            "before": {
+              "at_entry": 19,
+              "baseline_during_loop": 27
+            },
+            "after": {
+              "max_after_each_rep": 27,
+              "at_exit": 19
+            }
+          },
+          "during_scratch_alloc/runtime_error": {
+            "before": {
+              "at_entry": 19,
+              "baseline_during_loop": 27
+            },
+            "after": {
+              "max_after_each_rep": 27,
+              "at_exit": 19
+            }
+          },
+          "before_registry_publish/bad_alloc": {
+            "before": {
+              "at_entry": 19,
+              "baseline_during_loop": 27
+            },
+            "after": {
+              "max_after_each_rep": 27,
+              "at_exit": 19
+            }
+          },
+          "before_registry_publish/runtime_error": {
+            "before": {
+              "at_entry": 19,
+              "baseline_during_loop": 27
+            },
+            "after": {
+              "max_after_each_rep": 27,
+              "at_exit": 19
+            }
+          },
+          "during_registry_publish/bad_alloc": {
+            "before": {
+              "at_entry": 19,
+              "baseline_during_loop": 27
+            },
+            "after": {
+              "max_after_each_rep": 27,
+              "at_exit": 19
+            }
+          },
+          "during_registry_publish/runtime_error": {
+            "before": {
+              "at_entry": 19,
+              "baseline_during_loop": 27
+            },
+            "after": {
+              "max_after_each_rep": 27,
+              "at_exit": 19
+            }
+          },
+          "during_pool_thread_create/bad_alloc": {
+            "before": {
+              "at_entry": 19,
+              "baseline_during_loop": 27
+            },
+            "after": {
+              "max_after_each_rep": 27,
+              "at_exit": 19
+            }
+          }
+        },
+        "pool_that_survived_a_partial_start": {
+          "worker_counts_the_plans_reported": [
+            1
+          ],
+          "pixels_match_the_full_pool": true,
+          "scratch_sized_to_its_chunks": true
+        }
+      },
+      "meaning": "process thread count after each repetition and at exit, against the baseline sampled at entry: a worker left running would show up as a count that stays high",
+      "required_this_round": true
+    },
+    "native_numeric_regression": {
+      "status": "DONE_PROVEN",
+      "evidence": {
+        "files": [
+          "test_resampler_numeric.py",
+          "test_native_residual.py",
+          "test_residual_backend.py",
+          "test_preview_export_parity.py",
+          "test_native_thread_safety.py"
+        ],
+        "pytest": "70 passed in 7.00s",
+        "counts": {
+          "passed": 70,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "per_file": {
+          "test_resampler_numeric.py": "17 passed in 0.32s",
+          "test_native_residual.py": "22 passed in 0.55s",
+          "test_residual_backend.py": "15 passed in 0.31s",
+          "test_preview_export_parity.py": "7 passed in 3.14s",
+          "test_native_thread_safety.py": "9 passed in 3.63s"
+        }
+      },
+      "meaning": "bit parity against the scalar oracle, backend reporting and preview/export parity still hold after the ownership change",
+      "required_this_round": true
+    },
+    "native_thread_safety_regression": {
+      "status": "DONE_PROVEN",
+      "evidence": {
+        "pytest": "9 passed in 3.63s",
+        "exit_code": 0
+      },
+      "meaning": "handle registry, per-plan serialization and cross-plan concurrency re-checked against the rebuilt DLL",
+      "required_this_round": true
+    },
+    "rss_fit_excludes_warmup": {
+      "status": "DONE_PROVEN",
+      "evidence": {
+        "case_a_window": [
+          60,
+          270
+        ],
+        "case_a_frames": [
+          60,
+          90,
+          120,
+          150,
+          180,
+          210,
+          240,
+          270
+        ],
+        "case_a_excluded_before_window": [
+          0,
+          30
+        ],
+        "case_e_input_frames": [
+          0,
+          31,
+          62,
+          93,
+          127,
+          181,
+          229,
+          268,
+          300
+        ],
+        "case_e_frames": [
+          62,
+          93,
+          127,
+          181,
+          229,
+          268
+        ],
+        "case_e_frames_a_positional_slice_would_have_kept": [
+          31,
+          62,
+          93,
+          127,
+          181,
+          229,
+          268
+        ]
+      },
+      "meaning": "selection is by the frame number each sample carries; a percentage slice of the same list would keep warm-up frames because of where they sit in the array",
+      "required_this_round": true
+    },
+    "rss_fit_excludes_teardown": {
+      "status": "DONE_PROVEN",
+      "evidence": {
+        "case_a_excluded_after_window": [
+          300
+        ],
+        "case_a_steady_slope": 1000.0,
+        "case_a_whole_range_slope": -454036.4,
+        "case_a_verdict_old_gate": "NOT_READY",
+        "case_a_verdict_new_gate": "DONE_PROVEN",
+        "historical_runs_frame_300_excluded": {
+          "perf_results/05f0ecc/resource_samples.json:A": true,
+          "perf_results/05f0ecc/resource_samples.json:D": true
+        }
+      },
+      "meaning": "the teardown sample is outside the window in the synthetic case and in both committed 300-frame runs; case A is a synthetic flat-plateau run whose teardown the old whole-run magnitude gate fails for finishing, which the steady-state gate passes",
+      "required_this_round": true
+    },
+    "rss_true_growth_detection": {
+      "status": "DONE_PROVEN",
+      "evidence": {
+        "injected_growth_bytes_per_frame": 2000000,
+        "recovered_slope_bytes_per_frame": 2000000.0,
+        "gate": "NOT_READY",
+        "reason": "steady-state RSS projects positive growth above the threshold",
+        "falling_case_signed_growth": -210000000.0,
+        "falling_case_positive_growth": 0.0,
+        "falling_case_gate": "DONE_PROVEN"
+      },
+      "meaning": "growth is detected at the rate it was injected at, and a falling steady state is not read as growth; the claim stays 'no sustained positive growth over the steady-state window'",
+      "required_this_round": true
+    },
+    "rss_insufficient_sample_handling": {
+      "status": "DONE_PROVEN",
+      "evidence": {
+        "per_sample_count": {
+          "0_samples_in_window": [
+            0,
+            "NOT_READY",
+            "insufficient steady-state RSS samples"
+          ],
+          "1_samples_in_window": [
+            1,
+            "NOT_READY",
+            "insufficient steady-state RSS samples"
+          ],
+          "2_samples_in_window": [
+            2,
+            "NOT_READY",
+            "insufficient steady-state RSS samples"
+          ],
+          "3_samples_in_window": [
+            3,
+            "NOT_READY",
+            "insufficient steady-state RSS samples"
+          ],
+          "4_samples_in_window": [
+            4,
+            "NOT_READY",
+            "insufficient steady-state RSS samples"
+          ]
+        },
+        "minimum_samples": 5,
+        "no_slope_is_reported": true
+      },
+      "meaning": "a window with too few samples says so instead of producing a number to gate on",
+      "required_this_round": true
+    },
+    "full_unit_suite": {
+      "status": "DONE_PROVEN",
+      "evidence": {
+        "counted_by": "pytest, not by hand",
+        "pytest": "202 passed in 60.63s (0:01:00)",
+        "counts": {
+          "passed": 202,
+          "failed": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "exit_code": 0
+      },
+      "meaning": "everything under tests/unit, including the failure paths and the fit regressions",
+      "required_this_round": true
+    },
+    "production_dll_matches_committed_source": {
+      "status": "DONE_PROVEN",
+      "evidence": {
+        "production_dll_sha256": "31945afa323f932b1e11589ef432f580cc04c5dca68d1ae0e024d8b0491ccca7",
+        "shipped_dll_is_the_committed_one": true,
+        "fresh_build_sha256": "bb079d4db735757d62f996eb1cb79da26dc7bd3feccef08c248d0f291c89095d",
+        "differing_bytes": 19,
+        "code_sections_identical": true,
+        "sections": {
+          ".text": {
+            "raw_size": 122368,
+            "raw_offset": [
+              1024,
+              1024
+            ],
+            "identical": true,
+            "differing_bytes": 0
+          },
+          ".rdata": {
+            "raw_size": 59392,
+            "raw_offset": [
+              123392,
+              123392
+            ],
+            "identical": false,
+            "differing_bytes": 17
+          },
+          ".data": {
+            "raw_size": 4608,
+            "raw_offset": [
+              182784,
+              182784
+            ],
+            "identical": true,
+            "differing_bytes": 0
+          },
+          ".pdata": {
+            "raw_size": 7680,
+            "raw_offset": [
+              187392,
+              187392
+            ],
+            "identical": true,
+            "differing_bytes": 0
+          },
+          ".fptable": {
+            "raw_size": 512,
+            "raw_offset": [
+              195072,
+              195072
+            ],
+            "identical": true,
+            "differing_bytes": 0
+          },
+          ".reloc": {
+            "raw_size": 2560,
+            "raw_offset": [
+              195584,
+              195584
+            ],
+            "identical": true,
+            "differing_bytes": 0
+          }
+        },
+        "exports_match": true,
+        "test_exports_in_production": false,
+        "injection_text_in_test_dll": true,
+        "api_version": "0x20001"
+      },
+      "meaning": "the DLL the tests load is the committed one, and a fresh build of the tracked source from the tracked command line differs from it only in the link-time stamps"
+    },
+    "light_performance_no_regression": {
+      "status": "DONE_PROVEN",
+      "evidence": {
+        "sixty_frame_ad": {
+          "fps_100_percent": 5.164,
+          "fps_50_percent_native": 7.247,
+          "requirement": "fps_50_percent_native > fps_100_percent",
+          "passed": true,
+          "ratio": 1.403
+        },
+        "frames": 60,
+        "sustained_run_performed_this_round": false
+      },
+      "meaning": "the round's hard requirement is fps at 50% working above fps at 100% working on the same fixture; no 300-frame benchmark was asked for and none was run"
+    }
+  },
+  "allowed_status_values": [
+    "DONE_PROVEN",
+    "NOT_READY"
+  ],
+  "full_unit_suite": {
+    "command": "C:\\Users\\18392\\AppData\\Local\\hermes\\hermes-agent\\venv\\Scripts\\python.exe -m pytest -q tests/unit",
+    "exit_code": 0,
+    "pytest_summary": "202 passed in 60.63s (0:01:00)",
+    "counts": {
+      "passed": 202,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "light_performance": {
+    "native_microbenchmark": {
+      "exit_code": 0,
+      "report": {
+        "kind": "residual_backend_microbenchmark",
+        "environment": {
+          "cuda_version": "13.4",
+          "native_libraries": {
+            "dlssnr_host.dll": {
+              "sha256": "9ec879388e573bebbf7886dccbdc885641d945420fdf4bb80bac6c657094160c",
+              "bytes": 54272
+            },
+            "nvngx_dlssnr.dll": {
+              "sha256": "e16bcf15e16e13f527491cdf7845b2fe6521a738d8f7c9c721866a8496e1fc8e",
+              "bytes": 165840496
+            },
+            "native/nvof_bridge.dll": {
+              "sha256": "16fafec0de798001818c59994b74dbe6eb096553c4ff931503f0473f443bb98c",
+              "bytes": 156672
+            },
+            "native/residual_bridge.dll": {
+              "sha256": "31945afa323f932b1e11589ef432f580cc04c5dca68d1ae0e024d8b0491ccca7",
+              "bytes": 198144
+            }
+          },
+          "utc_timestamp": "2026-09-20T00:56:45Z",
+          "platform": "win32",
+          "os": "Windows-10-10.0.26220-SP0",
+          "cpu_model": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+          "cpu_arch": "AMD64",
+          "cpu_logical_cores": 16,
+          "ram_total_bytes": 42852945920,
+          "python": "3.11.15",
+          "numpy": "2.4.6",
+          "opencv": "5.0.0",
+          "ffmpeg": "8.1.2-full_build-www.gyan.dev",
+          "gpu": {
+            "name": "NVIDIA GeForce RTX 5060 Ti",
+            "driver_version": "616.92",
+            "memory_total_bytes": 17103323136
+          },
+          "rss_bytes": 48136192,
+          "peak_rss_bytes": 902250496,
+          "gpu_total_memory_used_bytes": 1350565888,
+          "process_gpu_memory_bytes": null,
+          "process_gpu_memory_source": "unavailable: this pid is not listed by nvidia-smi --query-compute-apps"
+        },
+        "config": {
+          "backends": [
+            "native"
+          ],
+          "scales": [
+            0.75,
+            0.63,
+            0.5,
+            0.25
+          ],
+          "warmup": 3,
+          "iterations": 10,
+          "source": [
+            3840,
+            2160
+          ]
+        },
+        "results": [
+          {
+            "requested_backend": "native",
+            "parity_with_reference_4k": {
+              "source": [
+                3840,
+                2160
+              ],
+              "working": [
+                2880,
+                1616
+              ],
+              "bit_equal_downsample": true,
+              "downsample_max_abs_diff": 0,
+              "bit_equal_reconstruct": true,
+              "reconstruct_max_abs_diff": 0,
+              "max_abs_diff": 0
+            },
+            "actual_backend": "cpu_reference_native",
+            "backend_version": "api-0x00020001",
+            "working_scale": 0.75,
+            "source": [
+              3840,
+              2160
+            ],
+            "working": [
+              2880,
+              1616
+            ],
+            "working_color": {
+              "iterations": 10,
+              "mean_ms": 17.642,
+              "p50_ms": 17.419,
+              "p95_ms": 19.734,
+              "min_ms": 16.148,
+              "max_ms": 19.734
+            },
+            "reconstruct": {
+              "iterations": 10,
+              "mean_ms": 36.38,
+              "p50_ms": 36.003,
+              "p95_ms": 38.96,
+              "min_ms": 34.686,
+              "max_ms": 38.96
+            },
+            "backend_diagnostics": {
+              "residual_backend": "cpu_reference_native",
+              "residual_backend_version": "api-0x00020001",
+              "this_plan_create_count": 1,
+              "this_plan_destroy_count": 0,
+              "this_plan_scratch_alloc_count": 1,
+              "this_plan_scratch_alloc_bytes": 158653440,
+              "this_plan_worker_create_count": 8,
+              "this_plan_worker_count": 9,
+              "native_scratch_bytes": 158653440,
+              "axis_plan_count": 4,
+              "downsample_call_count": 13,
+              "reconstruct_call_count": 13,
+              "downsample_pixel_count": 60503040,
+              "reconstruct_pixel_count": 107827200,
+              "process_plan_create_total": 1,
+              "process_plan_destroy_total": 0,
+              "process_scratch_alloc_total": 1,
+              "process_scratch_bytes_total": 158653440,
+              "process_worker_create_total": 8,
+              "process_plan_open_total": 1,
+              "closed": false
+            }
+          },
+          {
+            "requested_backend": "native",
+            "parity_with_reference_4k": {
+              "source": [
+                3840,
+                2160
+              ],
+              "working": [
+                2416,
+                1360
+              ],
+              "bit_equal_downsample": true,
+              "downsample_max_abs_diff": 0,
+              "bit_equal_reconstruct": true,
+              "reconstruct_max_abs_diff": 0,
+              "max_abs_diff": 0
+            },
+            "actual_backend": "cpu_reference_native",
+            "backend_version": "api-0x00020001",
+            "working_scale": 0.63,
+            "source": [
+              3840,
+              2160
+            ],
+            "working": [
+              2416,
+              1360
+            ],
+            "working_color": {
+              "iterations": 10,
+              "mean_ms": 15.503,
+              "p50_ms": 15.46,
+              "p95_ms": 16.147,
+              "min_ms": 14.587,
+              "max_ms": 16.147
+            },
+            "reconstruct": {
+              "iterations": 10,
+              "mean_ms": 31.857,
+              "p50_ms": 31.961,
+              "p95_ms": 33.016,
+              "min_ms": 30.066,
+              "max_ms": 33.016
+            },
+            "backend_diagnostics": {
+              "residual_backend": "cpu_reference_native",
+              "residual_backend_version": "api-0x00020001",
+              "this_plan_create_count": 1,
+              "this_plan_destroy_count": 0,
+              "this_plan_scratch_alloc_count": 1,
+              "this_plan_scratch_alloc_bytes": 122227200,
+              "this_plan_worker_create_count": 8,
+              "this_plan_worker_count": 9,
+              "native_scratch_bytes": 122227200,
+              "axis_plan_count": 4,
+              "downsample_call_count": 13,
+              "reconstruct_call_count": 13,
+              "downsample_pixel_count": 42714880,
+              "reconstruct_pixel_count": 107827200,
+              "process_plan_create_total": 3,
+              "process_plan_destroy_total": 2,
+              "process_scratch_alloc_total": 3,
+              "process_scratch_bytes_total": 439534080,
+              "process_worker_create_total": 24,
+              "process_plan_open_total": 1,
+              "closed": false
+            }
+          },
+          {
+            "requested_backend": "native",
+            "parity_with_reference_4k": {
+              "source": [
+                3840,
+                2160
+              ],
+              "working": [
+                1920,
+                1080
+              ],
+              "bit_equal_downsample": true,
+              "downsample_max_abs_diff": 0,
+              "bit_equal_reconstruct": true,
+              "reconstruct_max_abs_diff": 0,
+              "max_abs_diff": 0
+            },
+            "actual_backend": "cpu_reference_native",
+            "backend_version": "api-0x00020001",
+            "working_scale": 0.5,
+            "source": [
+              3840,
+              2160
+            ],
+            "working": [
+              1920,
+              1080
+            ],
+            "working_color": {
+              "iterations": 10,
+              "mean_ms": 13.349,
+              "p50_ms": 13.232,
+              "p95_ms": 13.987,
+              "min_ms": 12.701,
+              "max_ms": 13.987
+            },
+            "reconstruct": {
+              "iterations": 10,
+              "mean_ms": 29.065,
+              "p50_ms": 29.179,
+              "p95_ms": 30.075,
+              "min_ms": 27.919,
+              "max_ms": 30.075
+            },
+            "backend_diagnostics": {
+              "residual_backend": "cpu_reference_native",
+              "residual_backend_version": "api-0x00020001",
+              "this_plan_create_count": 1,
+              "this_plan_destroy_count": 0,
+              "this_plan_scratch_alloc_count": 1,
+              "this_plan_scratch_alloc_bytes": 87505920,
+              "this_plan_worker_create_count": 8,
+              "this_plan_worker_count": 9,
+              "native_scratch_bytes": 87505920,
+              "axis_plan_count": 4,
+              "downsample_call_count": 13,
+              "reconstruct_call_count": 13,
+              "downsample_pixel_count": 26956800,
+              "reconstruct_pixel_count": 107827200,
+              "process_plan_create_total": 5,
+              "process_plan_destroy_total": 4,
+              "process_scratch_alloc_total": 5,
+              "process_scratch_bytes_total": 649267200,
+              "process_worker_create_total": 40,
+              "process_plan_open_total": 1,
+              "closed": false
+            }
+          },
+          {
+            "requested_backend": "native",
+            "parity_with_reference_4k": {
+              "source": [
+                3840,
+                2160
+              ],
+              "working": [
+                960,
+                544
+              ],
+              "bit_equal_downsample": true,
+              "downsample_max_abs_diff": 0,
+              "bit_equal_reconstruct": true,
+              "reconstruct_max_abs_diff": 0,
+              "max_abs_diff": 0
+            },
+            "actual_backend": "cpu_reference_native",
+            "backend_version": "api-0x00020001",
+            "working_scale": 0.25,
+            "source": [
+              3840,
+              2160
+            ],
+            "working": [
+              960,
+              544
+            ],
+            "working_color": {
+              "iterations": 10,
+              "mean_ms": 10.828,
+              "p50_ms": 11.091,
+              "p95_ms": 11.425,
+              "min_ms": 9.791,
+              "max_ms": 11.425
+            },
+            "reconstruct": {
+              "iterations": 10,
+              "mean_ms": 25.433,
+              "p50_ms": 26.239,
+              "p95_ms": 26.354,
+              "min_ms": 22.727,
+              "max_ms": 26.354
+            },
+            "backend_diagnostics": {
+              "residual_backend": "cpu_reference_native",
+              "residual_backend_version": "api-0x00020001",
+              "this_plan_create_count": 1,
+              "this_plan_destroy_count": 0,
+              "this_plan_scratch_alloc_count": 1,
+              "this_plan_scratch_alloc_bytes": 34882560,
+              "this_plan_worker_create_count": 8,
+              "this_plan_worker_count": 9,
+              "native_scratch_bytes": 34882560,
+              "axis_plan_count": 4,
+              "downsample_call_count": 13,
+              "reconstruct_call_count": 13,
+              "downsample_pixel_count": 6789120,
+              "reconstruct_pixel_count": 107827200,
+              "process_plan_create_total": 7,
+              "process_plan_destroy_total": 6,
+              "process_scratch_alloc_total": 7,
+              "process_scratch_bytes_total": 771655680,
+              "process_worker_create_total": 56,
+              "process_plan_open_total": 1,
+              "closed": false
+            }
+          }
+        ],
+        "speedup_native_vs_python": {}
+      }
+    },
+    "sixty_frame_ad": {
+      "command": "C:\\Users\\18392\\AppData\\Local\\hermes\\hermes-agent\\venv\\Scripts\\python.exe tests/unit/benchmark_e2e.py --mode quick --frames 60 --only A,D --out F:\\dlss5standaloneV2\\scratch\\tail_fix_bench_quick.json",
+      "exit_code": 0,
+      "report_kind": "e2e_quick_benchmark",
+      "code_under_test_sha": "e48b25ba63c7503d1a3b04c0850d8636de5efe93",
+      "performance_gate": {
+        "fps_100_percent": 5.164,
+        "fps_50_percent_native": 7.247,
+        "requirement": "fps_50_percent_native > fps_100_percent",
+        "passed": true,
+        "ratio": 1.403
+      },
+      "results": [
+        {
+          "id": "A",
+          "frames": 60,
+          "fps": 5.164,
+          "elapsed_sec": 11.619,
+          "peak_rss_bytes": 1181036544,
+          "output_path": "F:\\dlss5standaloneV2\\bench_out\\e2e_A_100.mkv"
+        },
+        {
+          "id": "D",
+          "frames": 60,
+          "fps": 7.247,
+          "elapsed_sec": 8.279,
+          "peak_rss_bytes": 1039282176,
+          "output_path": "F:\\dlss5standaloneV2\\bench_out\\e2e_D_50.mkv"
+        }
+      ],
+      "frames_per_run": 60,
+      "note": "the round's hard requirement is fps(D, 50% working) > fps(A, 100% working); no 300-frame run was requested or performed"
+    },
+    "status": "DONE_PROVEN"
+  },
+  "wording_note": "the RSS gate shows there is no sustained positive growth over the steady-state window; it does not show a process is free of leaks, and nothing here claims it does"
+}

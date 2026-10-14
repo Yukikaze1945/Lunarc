@@ -1,4 +1,4 @@
-"""Default-off GPU scene observation and static low-frequency residual memory.
+"""Default-on GPU scene observation and static low-frequency residual memory.
 
 Scene observation is sampled and experimental. Static stability rejects changing
 source patches; it does not claim motion compensation or universal cut detection.
@@ -14,7 +14,7 @@ from post_control import candidate_descriptor, _Candidate, PostControlError
 
 @dataclass(frozen=True)
 class TemporalControls:
-    scene_detection: bool = False
+    scene_detection: bool = True
     mode: str = "off"
     history_weight: float = .6
 
@@ -71,6 +71,17 @@ class GpuTemporalControl:
         self._closed = False
         self.observations = []
         self.process_reports = []
+
+    def update_controls(self, controls):
+        if self._closed:
+            raise PostControlError("temporal owner is closed")
+        # A completed preview owns no borrowed history after its display copy.
+        # Release full-size temporal storage when stability is switched off.
+        if self.controls.mode != "off" and controls.mode == "off":
+            self._release_native()
+        if self.controls.enabled and not controls.enabled:
+            self._release_native()
+        self.controls = controls
 
     def _check(self, code, operation):
         if code:
@@ -139,13 +150,27 @@ class GpuTemporalControl:
                 "d3d12_device": device, "width": width, "height": height, "state": 0x800,
                 "dxgi_format": 10 if self.hdr else 28}
 
+    def allocated_device_bytes(self):
+        if self._handle is None:
+            return 0
+        entry = getattr(self._lib, "gpu_temporal_allocated_device_bytes", None)
+        if entry is None:
+            return None
+        entry.argtypes, entry.restype = [C.c_void_p], C.c_uint64
+        return int(entry(self._handle))
+
     def diagnostics(self):
         return {"controls": self.controls.as_dict(), "enabled": self.controls.enabled,
                 "motion_reprojection": False, "host_image_bytes": 0,
+                "allocated_device_bytes": self.allocated_device_bytes(),
                 "observations": self.observations, "process_reports": self.process_reports}
 
+    def _release_native(self):
+        handle, self._handle = self._handle, None
+        self._identity = None
+        if handle is not None:
+            self._lib.gpu_temporal_close(handle)
+
     def close(self):
-        if self._handle is not None:
-            self._lib.gpu_temporal_close(self._handle)
-            self._handle = None
         self._closed = True
+        self._release_native()

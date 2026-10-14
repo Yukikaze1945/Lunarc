@@ -1,0 +1,1094 @@
+{
+  "kind": "e2e_quick_benchmark",
+  "code_under_test_sha": "05f0ecc3e47809078b946f4302c9331a240746fc",
+  "environment": {
+    "cuda_version": "13.4",
+    "native_libraries": {
+      "dlssnr_host.dll": {
+        "sha256": "9ec879388e573bebbf7886dccbdc885641d945420fdf4bb80bac6c657094160c",
+        "bytes": 54272
+      },
+      "nvngx_dlssnr.dll": {
+        "sha256": "e16bcf15e16e13f527491cdf7845b2fe6521a738d8f7c9c721866a8496e1fc8e",
+        "bytes": 165840496
+      },
+      "native/nvof_bridge.dll": {
+        "sha256": "3ac877318f19b6e0e125534f6dadf1c155327470b0c5be81b83c0dd24f16e717",
+        "bytes": 156160
+      },
+      "native/residual_bridge.dll": {
+        "sha256": "54621c1a8c4f91f745cbabdb400dff9973e715f598c9695f6d6ebc188a03246f",
+        "bytes": 189952
+      }
+    },
+    "utc_timestamp": "2026-09-19T09:01:37Z",
+    "platform": "win32",
+    "os": "Windows-10-10.0.26220-SP0",
+    "cpu_model": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+    "cpu_arch": "AMD64",
+    "cpu_logical_cores": 16,
+    "ram_total_bytes": 42852945920,
+    "python": "3.11.15",
+    "numpy": "2.4.6",
+    "opencv": "5.0.0",
+    "ffmpeg": "8.1.2-full_build-www.gyan.dev",
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "driver_version": "616.92",
+      "memory_total_bytes": 17103323136
+    },
+    "rss_bytes": 42381312,
+    "peak_rss_bytes": 44208128,
+    "vram_bytes": 1734344704,
+    "fixture_path": "bench_out\\fixture_4k_300.mp4",
+    "fixture_sha256": "1500839c8ef50e2bcd4d8d0c974041af1a17178921213222c78f958208bcca9f",
+    "fixture_width": 3840,
+    "fixture_height": 2160,
+    "fixture_fps": 60.0,
+    "fixture_frame_count": 300,
+    "fixture_codec": "h264",
+    "encoder": "av1_nvenc (pipeline default; codec actually written is reported by ffprobe)",
+    "cq": 18,
+    "flow_engine": "nvof",
+    "flow_preset": "4M"
+  },
+  "config": {
+    "mode": "quick",
+    "frames": 60,
+    "scenarios": [
+      {
+        "id": "A",
+        "name": "100% working, NVOF 4M",
+        "scale": 1.0,
+        "residual_backend": null
+      },
+      {
+        "id": "B",
+        "name": "75% working, NVOF 4M + native residual",
+        "scale": 0.75,
+        "residual_backend": "native"
+      },
+      {
+        "id": "C",
+        "name": "63% working, NVOF 4M + native residual",
+        "scale": 0.63,
+        "residual_backend": "native"
+      },
+      {
+        "id": "D",
+        "name": "50% working, NVOF 4M + native residual",
+        "scale": 0.5,
+        "residual_backend": "native"
+      },
+      {
+        "id": "E",
+        "name": "25% working, NVOF 4M + native residual",
+        "scale": 0.25,
+        "residual_backend": "native"
+      }
+    ]
+  },
+  "results": [
+    {
+      "id": "A",
+      "name": "100% working, NVOF 4M",
+      "working_scale": 1.0,
+      "working_dims": [
+        3840,
+        2160
+      ],
+      "frames": 60,
+      "elapsed_sec": 12.519,
+      "fps": 4.793,
+      "stages_ms": {
+        "frame_total": {
+          "mean": 178.9591399981873,
+          "p50": 168.54075000446755,
+          "p95": 203.21495500684247,
+          "min": 151.44029998918995,
+          "max": 498.0089000018779
+        },
+        "working_color_prepare_ms": {
+          "mean": 0.0007200001467329761,
+          "p50": 0.000600004568696022,
+          "p95": 0.0014250108506530508,
+          "min": 0.000200001522898674,
+          "max": 0.0027999922167509794
+        },
+        "guidance_total": {
+          "mean": 38.24287499980225,
+          "p50": 35.88550000858959,
+          "p95": 41.307034991041284,
+          "min": 30.40570000302978,
+          "max": 161.265699978685
+        },
+        "dlss_process": {
+          "mean": 121.2536883346426,
+          "p50": 118.66555000597145,
+          "p95": 140.5286249879282,
+          "min": 106.18249999242835,
+          "max": 154.65449998737313
+        },
+        "residual_pyramid": {
+          "mean": 3.6197883324348368,
+          "p50": 3.5222499864175916,
+          "p95": 4.1897449977113865,
+          "min": 3.2245999900624156,
+          "max": 5.620100011583418
+        },
+        "output_convert": {
+          "mean": 0.007221665873657912,
+          "p50": 0.006599992047995329,
+          "p95": 0.011609999637585126,
+          "min": 0.0041000021155923605,
+          "max": 0.020700012100860476
+        },
+        "pipe_write": {
+          "mean": 15.319881666800939,
+          "p50": 10.132449999218807,
+          "p95": 12.287145007576328,
+          "min": 7.9092000087257475,
+          "max": 323.4736000013072
+        },
+        "decode_wait": {
+          "mean": 0.11829500047800441,
+          "p50": 0.02505000156816095,
+          "p95": 0.04514499305514618,
+          "min": 0.010199990356341004,
+          "max": 5.568699998548254
+        },
+        "nvof_submit_cpu_ms": {
+          "mean": 0.7208983333333335,
+          "p50": 0.6011500000000001,
+          "p95": 1.017855,
+          "min": 0.33080000000000004,
+          "max": 6.901800000000001
+        },
+        "nvof_dependency_wait_ms": {
+          "mean": 3.8670366666666665,
+          "p50": 3.7988,
+          "p95": 4.639799999999999,
+          "min": 3.0446,
+          "max": 5.154
+        },
+        "nvof_upscale": {
+          "mean": 3.8670366666666665,
+          "p50": 3.7988,
+          "p95": 4.639799999999999,
+          "min": 3.0446,
+          "max": 5.154
+        },
+        "nvof_download": {
+          "mean": 11.887775,
+          "p50": 11.43355,
+          "p95": 14.507059999999997,
+          "min": 8.8774,
+          "max": 20.0867
+        }
+      },
+      "per_frame_counters": {
+        "nvof_h2d_bytes_delta": {
+          "mean": 33730560.0,
+          "p50": 33177600.0,
+          "p95": 33177600.0,
+          "min": 33177600.0,
+          "max": 66355200.0
+        },
+        "nvof_d2h_bytes_delta": {
+          "mean": 66355200.0,
+          "p50": 66355200.0,
+          "p95": 66355200.0,
+          "min": 66355200.0,
+          "max": 66355200.0
+        },
+        "nvof_h2d_copy_count_delta": {
+          "mean": 1.0166666666666666,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 2.0
+        },
+        "nvof_d2h_copy_count_delta": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "nvof_execute_count_delta": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "nvof_native_history": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "cpu_previous_frame_copy_bytes": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "depth_missing_frames": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "filter_plan_build_count": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      },
+      "residual_diagnostics": {},
+      "peak_rss_bytes": 1181229056,
+      "peak_vram_bytes": 3074424832,
+      "thread_count_end": 62,
+      "child_process_count_end": 0,
+      "frame_samples": [],
+      "ffprobe": {
+        "ok": true,
+        "checks": {
+          "packets": true,
+          "resolution": true,
+          "duration_within_1pct": true,
+          "fps_matches_source": true
+        },
+        "packets": 60,
+        "expected_frames": 60,
+        "duration_sec": 1.0,
+        "fps": 60.0,
+        "codec": "av1",
+        "width": 3840,
+        "height": 2160
+      },
+      "output_path": "F:\\dlss5standaloneV2\\bench_out\\e2e_A_100.mkv"
+    },
+    {
+      "id": "B",
+      "name": "75% working, NVOF 4M + native residual",
+      "working_scale": 0.75,
+      "working_dims": [
+        2880,
+        1616
+      ],
+      "frames": 60,
+      "elapsed_sec": 11.941,
+      "fps": 5.025,
+      "stages_ms": {
+        "frame_total": {
+          "mean": 169.97856833186233,
+          "p50": 161.22819999873172,
+          "p95": 204.38819997798416,
+          "min": 146.7551999958232,
+          "max": 364.54910002066754
+        },
+        "working_color_prepare_ms": {
+          "mean": 23.019465000834316,
+          "p50": 22.577050011022948,
+          "p95": 27.36760500119999,
+          "min": 18.893000000389293,
+          "max": 39.32340000756085
+        },
+        "guidance_total": {
+          "mean": 20.720645000983495,
+          "p50": 18.341899980441667,
+          "p95": 21.59768001438351,
+          "min": 16.04570000199601,
+          "max": 139.94990001083352
+        },
+        "dlss_process": {
+          "mean": 74.77189166820608,
+          "p50": 71.94009998056572,
+          "p95": 89.5158349929261,
+          "min": 66.00319998688065,
+          "max": 96.62940000998788
+        },
+        "residual_pyramid": {
+          "mean": 38.91366333458185,
+          "p50": 37.38304998842068,
+          "p95": 41.362915006175164,
+          "min": 34.58619999582879,
+          "max": 101.12479998497292
+        },
+        "output_convert": {
+          "mean": 0.006606667011510581,
+          "p50": 0.00580001506023109,
+          "p95": 0.011599999561440194,
+          "min": 0.0034999975468963385,
+          "max": 0.021599989850074053
+        },
+        "pipe_write": {
+          "mean": 12.001083333840748,
+          "p50": 8.731599999009632,
+          "p95": 12.770749990886541,
+          "min": 6.810500024585053,
+          "max": 182.59680000483058
+        },
+        "decode_wait": {
+          "mean": 1.399505000639086,
+          "p50": 0.026599998818710446,
+          "p95": 0.0477149849757552,
+          "min": 0.012500007869675756,
+          "max": 82.35489999060519
+        },
+        "nvof_submit_cpu_ms": {
+          "mean": 0.7482083333333335,
+          "p50": 0.61345,
+          "p95": 1.0622949999999998,
+          "min": 0.3435,
+          "max": 7.0263
+        },
+        "nvof_dependency_wait_ms": {
+          "mean": 2.1773266666666666,
+          "p50": 2.0536000000000003,
+          "p95": 2.866535,
+          "min": 1.6412,
+          "max": 3.1476
+        },
+        "nvof_upscale": {
+          "mean": 2.1773266666666666,
+          "p50": 2.0536000000000003,
+          "p95": 2.866535,
+          "min": 1.6412,
+          "max": 3.1476
+        },
+        "nvof_download": {
+          "mean": 6.543510000000001,
+          "p50": 6.337250000000001,
+          "p95": 8.277715,
+          "min": 4.8747,
+          "max": 10.0459
+        }
+      },
+      "per_frame_counters": {
+        "nvof_h2d_bytes_delta": {
+          "mean": 18926592.0,
+          "p50": 18616320.0,
+          "p95": 18616320.0,
+          "min": 18616320.0,
+          "max": 37232640.0
+        },
+        "nvof_d2h_bytes_delta": {
+          "mean": 37232640.0,
+          "p50": 37232640.0,
+          "p95": 37232640.0,
+          "min": 37232640.0,
+          "max": 37232640.0
+        },
+        "nvof_h2d_copy_count_delta": {
+          "mean": 1.0166666666666666,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 2.0
+        },
+        "nvof_d2h_copy_count_delta": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "nvof_execute_count_delta": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "nvof_native_history": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "cpu_previous_frame_copy_bytes": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "depth_missing_frames": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "filter_plan_build_count": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      },
+      "residual_diagnostics": {
+        "residual_backend": "cpu_reference_native",
+        "residual_backend_version": "api-0x00010000",
+        "plan_create_count": 1,
+        "plan_destroy_count": 0,
+        "scratch_alloc_count": 1,
+        "scratch_alloc_bytes": 158653440,
+        "native_scratch_bytes": 158653440,
+        "axis_plan_count": 4,
+        "downsample_call_count": 60,
+        "reconstruct_call_count": 60,
+        "downsample_pixel_count": 279244800,
+        "reconstruct_pixel_count": 497664000,
+        "worker_create_count": 8,
+        "worker_count": 9,
+        "closed": false
+      },
+      "peak_rss_bytes": 1210486784,
+      "peak_vram_bytes": 2680160256,
+      "thread_count_end": 61,
+      "child_process_count_end": 2,
+      "frame_samples": [],
+      "ffprobe": {
+        "ok": true,
+        "checks": {
+          "packets": true,
+          "resolution": true,
+          "duration_within_1pct": true,
+          "fps_matches_source": true
+        },
+        "packets": 60,
+        "expected_frames": 60,
+        "duration_sec": 1.0,
+        "fps": 60.0,
+        "codec": "av1",
+        "width": 3840,
+        "height": 2160
+      },
+      "output_path": "F:\\dlss5standaloneV2\\bench_out\\e2e_B_75.mkv"
+    },
+    {
+      "id": "C",
+      "name": "63% working, NVOF 4M + native residual",
+      "working_scale": 0.63,
+      "working_dims": [
+        2416,
+        1360
+      ],
+      "frames": 60,
+      "elapsed_sec": 10.107,
+      "fps": 5.937,
+      "stages_ms": {
+        "frame_total": {
+          "mean": 140.23966500438596,
+          "p50": 131.38455001171678,
+          "p95": 154.71045001759185,
+          "min": 120.56469998788089,
+          "max": 398.760999989463
+        },
+        "working_color_prepare_ms": {
+          "mean": 20.606093335178837,
+          "p50": 20.22294999915175,
+          "p95": 23.840500005462673,
+          "min": 17.469000013079494,
+          "max": 25.597100000595674
+        },
+        "guidance_total": {
+          "mean": 15.400175000346886,
+          "p50": 13.209850003477186,
+          "p95": 16.76262499531731,
+          "min": 10.770099994260818,
+          "max": 127.23270000424236
+        },
+        "dlss_process": {
+          "mean": 53.617194998272076,
+          "p50": 52.50135000096634,
+          "p95": 65.44267500285059,
+          "min": 45.247500005643815,
+          "max": 74.76150000002235
+        },
+        "residual_pyramid": {
+          "mean": 36.426568333505806,
+          "p50": 35.048849997110665,
+          "p95": 40.66582497616764,
+          "min": 31.15240001352504,
+          "max": 88.53340000496246
+        },
+        "output_convert": {
+          "mean": 0.00825500125453497,
+          "p50": 0.0074499985203146935,
+          "p95": 0.013515014143195003,
+          "min": 0.0037999998312443495,
+          "max": 0.027700007194653153
+        },
+        "pipe_write": {
+          "mean": 13.919978334646052,
+          "p50": 9.705300006316975,
+          "p95": 12.869210020289751,
+          "min": 6.6439000074751675,
+          "max": 260.1571000122931
+        },
+        "decode_wait": {
+          "mean": 1.3139599987577337,
+          "p50": 0.026900001103058457,
+          "p95": 0.047790010285098085,
+          "min": 0.013699987903237343,
+          "max": 77.1703000064008
+        },
+        "nvof_submit_cpu_ms": {
+          "mean": 0.7500400000000002,
+          "p50": 0.64645,
+          "p95": 1.0467599999999997,
+          "min": 0.35710000000000003,
+          "max": 5.728800000000001
+        },
+        "nvof_dependency_wait_ms": {
+          "mean": 1.5187433333333333,
+          "p50": 1.39955,
+          "p95": 1.9013499999999999,
+          "min": 1.2299,
+          "max": 4.3259
+        },
+        "nvof_upscale": {
+          "mean": 1.5187433333333333,
+          "p50": 1.39955,
+          "p95": 1.9013499999999999,
+          "min": 1.2299,
+          "max": 4.3259
+        },
+        "nvof_download": {
+          "mean": 4.763193333333334,
+          "p50": 4.551,
+          "p95": 6.6137250000000005,
+          "min": 3.4455,
+          "max": 8.3078
+        }
+      },
+      "per_frame_counters": {
+        "nvof_h2d_bytes_delta": {
+          "mean": 13362090.666666666,
+          "p50": 13143040.0,
+          "p95": 13143040.0,
+          "min": 13143040.0,
+          "max": 26286080.0
+        },
+        "nvof_d2h_bytes_delta": {
+          "mean": 26286080.0,
+          "p50": 26286080.0,
+          "p95": 26286080.0,
+          "min": 26286080.0,
+          "max": 26286080.0
+        },
+        "nvof_h2d_copy_count_delta": {
+          "mean": 1.0166666666666666,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 2.0
+        },
+        "nvof_d2h_copy_count_delta": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "nvof_execute_count_delta": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "nvof_native_history": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "cpu_previous_frame_copy_bytes": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "depth_missing_frames": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "filter_plan_build_count": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      },
+      "residual_diagnostics": {
+        "residual_backend": "cpu_reference_native",
+        "residual_backend_version": "api-0x00010000",
+        "plan_create_count": 1,
+        "plan_destroy_count": 0,
+        "scratch_alloc_count": 1,
+        "scratch_alloc_bytes": 122227200,
+        "native_scratch_bytes": 122227200,
+        "axis_plan_count": 4,
+        "downsample_call_count": 60,
+        "reconstruct_call_count": 60,
+        "downsample_pixel_count": 197145600,
+        "reconstruct_pixel_count": 497664000,
+        "worker_create_count": 8,
+        "worker_count": 9,
+        "closed": false
+      },
+      "peak_rss_bytes": 1125113856,
+      "peak_vram_bytes": 2517630976,
+      "thread_count_end": 60,
+      "child_process_count_end": 2,
+      "frame_samples": [],
+      "ffprobe": {
+        "ok": true,
+        "checks": {
+          "packets": true,
+          "resolution": true,
+          "duration_within_1pct": true,
+          "fps_matches_source": true
+        },
+        "packets": 60,
+        "expected_frames": 60,
+        "duration_sec": 1.0,
+        "fps": 60.0,
+        "codec": "av1",
+        "width": 3840,
+        "height": 2160
+      },
+      "output_path": "F:\\dlss5standaloneV2\\bench_out\\e2e_C_63.mkv"
+    },
+    {
+      "id": "D",
+      "name": "50% working, NVOF 4M + native residual",
+      "working_scale": 0.5,
+      "working_dims": [
+        1920,
+        1080
+      ],
+      "frames": 60,
+      "elapsed_sec": 8.525,
+      "fps": 7.038,
+      "stages_ms": {
+        "frame_total": {
+          "mean": 114.56754166768708,
+          "p50": 107.35869999916758,
+          "p95": 121.07064499577962,
+          "min": 91.60569999949075,
+          "max": 379.2670000111684
+        },
+        "working_color_prepare_ms": {
+          "mean": 18.34085333442393,
+          "p50": 17.878749989904463,
+          "p95": 21.61891501309583,
+          "min": 15.623799990862608,
+          "max": 24.99619999434799
+        },
+        "guidance_total": {
+          "mean": 10.213979999631798,
+          "p50": 8.335000005899929,
+          "p95": 9.836704976623878,
+          "min": 7.081399991875514,
+          "max": 117.76279998593964
+        },
+        "dlss_process": {
+          "mean": 36.286456664674915,
+          "p50": 35.760149999987334,
+          "p95": 41.22955499624368,
+          "min": 31.115599995246157,
+          "max": 49.28219999419525
+        },
+        "residual_pyramid": {
+          "mean": 32.152503334509674,
+          "p50": 30.824500005110167,
+          "p95": 35.28236001438927,
+          "min": 25.684699998237193,
+          "max": 87.2096000239253
+        },
+        "output_convert": {
+          "mean": 0.0071883337416996556,
+          "p50": 0.0068500085035339,
+          "p95": 0.010369991650804874,
+          "min": 0.0030999945010989904,
+          "max": 0.01689998316578567
+        },
+        "pipe_write": {
+          "mean": 17.17519499992098,
+          "p50": 12.238549999892712,
+          "p95": 20.10562998912064,
+          "min": 7.682700001168996,
+          "max": 275.3235000127461
+        },
+        "decode_wait": {
+          "mean": 1.2664566660532728,
+          "p50": 0.02580000727903098,
+          "p95": 0.0535199927981011,
+          "min": 0.011199997970834374,
+          "max": 74.25320000038482
+        },
+        "nvof_submit_cpu_ms": {
+          "mean": 0.7805266666666667,
+          "p50": 0.6747000000000001,
+          "p95": 1.103575,
+          "min": 0.4364,
+          "max": 5.5803
+        },
+        "nvof_dependency_wait_ms": {
+          "mean": 0.9159516666666668,
+          "p50": 0.9071500000000001,
+          "p95": 1.042805,
+          "min": 0.7547,
+          "max": 1.0976000000000001
+        },
+        "nvof_upscale": {
+          "mean": 0.9159516666666668,
+          "p50": 0.9071500000000001,
+          "p95": 1.042805,
+          "min": 0.7547,
+          "max": 1.0976000000000001
+        },
+        "nvof_download": {
+          "mean": 2.9671549999999995,
+          "p50": 2.87545,
+          "p95": 3.87093,
+          "min": 2.1008,
+          "max": 4.2987
+        }
+      },
+      "per_frame_counters": {
+        "nvof_h2d_bytes_delta": {
+          "mean": 8432640.0,
+          "p50": 8294400.0,
+          "p95": 8294400.0,
+          "min": 8294400.0,
+          "max": 16588800.0
+        },
+        "nvof_d2h_bytes_delta": {
+          "mean": 16588800.0,
+          "p50": 16588800.0,
+          "p95": 16588800.0,
+          "min": 16588800.0,
+          "max": 16588800.0
+        },
+        "nvof_h2d_copy_count_delta": {
+          "mean": 1.0166666666666666,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 2.0
+        },
+        "nvof_d2h_copy_count_delta": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "nvof_execute_count_delta": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "nvof_native_history": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "cpu_previous_frame_copy_bytes": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "depth_missing_frames": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "filter_plan_build_count": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      },
+      "residual_diagnostics": {
+        "residual_backend": "cpu_reference_native",
+        "residual_backend_version": "api-0x00010000",
+        "plan_create_count": 1,
+        "plan_destroy_count": 0,
+        "scratch_alloc_count": 1,
+        "scratch_alloc_bytes": 87505920,
+        "native_scratch_bytes": 87505920,
+        "axis_plan_count": 4,
+        "downsample_call_count": 60,
+        "reconstruct_call_count": 60,
+        "downsample_pixel_count": 124416000,
+        "reconstruct_pixel_count": 497664000,
+        "worker_create_count": 8,
+        "worker_count": 9,
+        "closed": false
+      },
+      "peak_rss_bytes": 1033302016,
+      "peak_vram_bytes": 2376073216,
+      "thread_count_end": 60,
+      "child_process_count_end": 8,
+      "frame_samples": [],
+      "ffprobe": {
+        "ok": true,
+        "checks": {
+          "packets": true,
+          "resolution": true,
+          "duration_within_1pct": true,
+          "fps_matches_source": true
+        },
+        "packets": 60,
+        "expected_frames": 60,
+        "duration_sec": 1.0,
+        "fps": 60.0,
+        "codec": "av1",
+        "width": 3840,
+        "height": 2160
+      },
+      "output_path": "F:\\dlss5standaloneV2\\bench_out\\e2e_D_50.mkv"
+    },
+    {
+      "id": "E",
+      "name": "25% working, NVOF 4M + native residual",
+      "working_scale": 0.25,
+      "working_dims": [
+        960,
+        544
+      ],
+      "frames": 60,
+      "elapsed_sec": 7.441,
+      "fps": 8.064,
+      "stages_ms": {
+        "frame_total": {
+          "mean": 71.42599666549359,
+          "p50": 62.66334999236278,
+          "p95": 79.60429499944426,
+          "min": 55.388799984939396,
+          "max": 390.17930001136847
+        },
+        "working_color_prepare_ms": {
+          "mean": 13.887286669341847,
+          "p50": 13.744600000791252,
+          "p95": 15.733274989179334,
+          "min": 12.249299994437024,
+          "max": 17.56129998830147
+        },
+        "guidance_total": {
+          "mean": 4.752844999408505,
+          "p50": 2.9469500004779547,
+          "p95": 4.237144993385298,
+          "min": 2.204200020059943,
+          "max": 102.9866999888327
+        },
+        "dlss_process": {
+          "mean": 13.591550001971578,
+          "p50": 12.928100011777133,
+          "p95": 16.465204996347893,
+          "min": 10.741300007794052,
+          "max": 25.673700001789257
+        },
+        "residual_pyramid": {
+          "mean": 24.290423332422506,
+          "p50": 22.68924999225419,
+          "p95": 29.228759989200622,
+          "min": 19.86100000794977,
+          "max": 88.44500000122935
+        },
+        "output_convert": {
+          "mean": 0.005434999669281145,
+          "p50": 0.005049994797445834,
+          "p95": 0.008215004345402122,
+          "min": 0.0028999929782003164,
+          "max": 0.010000017937272787
+        },
+        "pipe_write": {
+          "mean": 14.844953334735086,
+          "p50": 9.165400013444014,
+          "p95": 11.951300004147923,
+          "min": 7.482500019250438,
+          "max": 324.17040001018904
+        },
+        "decode_wait": {
+          "mean": 27.71797500026878,
+          "p50": 33.64454999973532,
+          "p95": 39.079189994663466,
+          "min": 0.014399993233382702,
+          "max": 46.55209998600185
+        },
+        "nvof_submit_cpu_ms": {
+          "mean": 0.7189033333333333,
+          "p50": 0.6264000000000001,
+          "p95": 1.04874,
+          "min": 0.4194,
+          "max": 4.5151
+        },
+        "nvof_dependency_wait_ms": {
+          "mean": 0.3709016666666667,
+          "p50": 0.35550000000000004,
+          "p95": 0.4807749999999999,
+          "min": 0.182,
+          "max": 0.6408
+        },
+        "nvof_upscale": {
+          "mean": 0.3709016666666667,
+          "p50": 0.35550000000000004,
+          "p95": 0.4807749999999999,
+          "min": 0.182,
+          "max": 0.6408
+        },
+        "nvof_download": {
+          "mean": 0.8575033333333332,
+          "p50": 0.8392,
+          "p95": 1.1394449999999998,
+          "min": 0.6247,
+          "max": 1.6567
+        }
+      },
+      "per_frame_counters": {
+        "nvof_h2d_bytes_delta": {
+          "mean": 2123776.0,
+          "p50": 2088960.0,
+          "p95": 2088960.0,
+          "min": 2088960.0,
+          "max": 4177920.0
+        },
+        "nvof_d2h_bytes_delta": {
+          "mean": 4177920.0,
+          "p50": 4177920.0,
+          "p95": 4177920.0,
+          "min": 4177920.0,
+          "max": 4177920.0
+        },
+        "nvof_h2d_copy_count_delta": {
+          "mean": 1.0166666666666666,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 2.0
+        },
+        "nvof_d2h_copy_count_delta": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "nvof_execute_count_delta": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "nvof_native_history": {
+          "mean": 1.0,
+          "p50": 1.0,
+          "p95": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "cpu_previous_frame_copy_bytes": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "depth_missing_frames": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "filter_plan_build_count": {
+          "mean": 0.0,
+          "p50": 0.0,
+          "p95": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      },
+      "residual_diagnostics": {
+        "residual_backend": "cpu_reference_native",
+        "residual_backend_version": "api-0x00010000",
+        "plan_create_count": 1,
+        "plan_destroy_count": 0,
+        "scratch_alloc_count": 1,
+        "scratch_alloc_bytes": 34882560,
+        "native_scratch_bytes": 34882560,
+        "axis_plan_count": 4,
+        "downsample_call_count": 60,
+        "reconstruct_call_count": 60,
+        "downsample_pixel_count": 31334400,
+        "reconstruct_pixel_count": 497664000,
+        "worker_create_count": 8,
+        "worker_count": 9,
+        "closed": false
+      },
+      "peak_rss_bytes": 933629952,
+      "peak_vram_bytes": 2184183808,
+      "thread_count_end": 60,
+      "child_process_count_end": 8,
+      "frame_samples": [],
+      "ffprobe": {
+        "ok": true,
+        "checks": {
+          "packets": true,
+          "resolution": true,
+          "duration_within_1pct": true,
+          "fps_matches_source": true
+        },
+        "packets": 60,
+        "expected_frames": 60,
+        "duration_sec": 1.0,
+        "fps": 60.0,
+        "codec": "av1",
+        "width": 3840,
+        "height": 2160
+      },
+      "output_path": "F:\\dlss5standaloneV2\\bench_out\\e2e_E_25.mkv"
+    }
+  ],
+  "performance_gate": {
+    "fps_100_percent": 4.793,
+    "fps_50_percent_native": 7.038,
+    "requirement": "fps_50_percent_native > fps_100_percent",
+    "passed": true,
+    "ratio": 1.468
+  }
+}

@@ -45,8 +45,12 @@ export interface TemporalControls {
 export interface DLSSSettings {
   neural_mode?: 'nr' | 'dlaa' | 'vsr' | 'nr_dlaa' | 'nr_vsr'
   render_pipeline?: RenderStage[]
+  render_stage_enabled?: Partial<Record<RenderStage, boolean>>
+  frame_generation_saved_mode?: 'vfg' | 'vfg_dynamic'
   dlaa_preset?: 0 | 5 | 6 | 10 | 11 | 12 | 13
   vsr_quality?: number
+  vsr_mode?: 'standard' | 'denoise' | 'deblur' | 'high_bitrate' | 'streaming' | 'bicubic'
+  vsr_strength?: number | null
   vsr_output_mode?: 'scale' | 'resolution'
   vsr_scale?: number
   vsr_target?: '720p' | '1080p' | '1440p' | '4k' | '8k' | 'custom'
@@ -216,6 +220,10 @@ export interface DiagnosticLogEntry {
 }
 
 export interface SystemInfo {
+  gpu_memory?: {sampled_at:number;phase:string;active:boolean;error?:string;known_device_allocations_bytes?:number;
+    process?:{local_usage:number;local_budget:number;nonlocal_usage:number;nonlocal_budget:number};
+    components?:{owner:string;kind:string;allocated_device_bytes:number;host_staging_bytes?:number;scope?:string}[];
+    preview_cache?:{private_plane_bytes?:number};torch?:{allocated_bytes:number;reserved_bytes:number};unattributed?:string[]}
   adapter_memory_used_gb?: number | null
   adapter_memory_total_gb?: number | null
   adapter_memory_scope?: string
@@ -247,6 +255,7 @@ declare global {
       localToken?: string
       getBackendStartup?: () => Promise<{state: string; message: string; logPath?: string; checks?: EnvironmentCheck[]} | null>
       onBackendExit?: (cb: (info: { code: number | null; signal: string }) => void) => (() => void)
+      onBackendRecovery?: (cb: (state: {phase:string;message:string}) => void) => (() => void)
       isElectron: boolean
     }
   }

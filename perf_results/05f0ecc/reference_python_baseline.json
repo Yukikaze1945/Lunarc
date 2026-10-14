@@ -1,0 +1,223 @@
+{
+  "kind": "residual_backend_microbenchmark",
+  "environment": {
+    "cuda_version": "13.4",
+    "native_libraries": {
+      "dlssnr_host.dll": {
+        "sha256": "9ec879388e573bebbf7886dccbdc885641d945420fdf4bb80bac6c657094160c",
+        "bytes": 54272
+      },
+      "nvngx_dlssnr.dll": {
+        "sha256": "e16bcf15e16e13f527491cdf7845b2fe6521a738d8f7c9c721866a8496e1fc8e",
+        "bytes": 165840496
+      },
+      "native/nvof_bridge.dll": {
+        "sha256": "3ac877318f19b6e0e125534f6dadf1c155327470b0c5be81b83c0dd24f16e717",
+        "bytes": 156160
+      },
+      "native/residual_bridge.dll": {
+        "sha256": "54621c1a8c4f91f745cbabdb400dff9973e715f598c9695f6d6ebc188a03246f",
+        "bytes": 189952
+      }
+    },
+    "utc_timestamp": "2026-09-19T09:06:06Z",
+    "platform": "win32",
+    "os": "Windows-10-10.0.26220-SP0",
+    "cpu_model": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+    "cpu_arch": "AMD64",
+    "cpu_logical_cores": 16,
+    "ram_total_bytes": 42852945920,
+    "python": "3.11.15",
+    "numpy": "2.4.6",
+    "opencv": "5.0.0",
+    "ffmpeg": "8.1.2-full_build-www.gyan.dev",
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "driver_version": "616.92",
+      "memory_total_bytes": 17103323136
+    },
+    "rss_bytes": 48177152,
+    "peak_rss_bytes": 677851136,
+    "vram_bytes": 1744830464
+  },
+  "config": {
+    "backends": [
+      "python"
+    ],
+    "scales": [
+      0.75,
+      0.63,
+      0.5,
+      0.25
+    ],
+    "warmup": 3,
+    "iterations": 10,
+    "source": [
+      3840,
+      2160
+    ]
+  },
+  "results": [
+    {
+      "requested_backend": "python",
+      "parity_with_reference_4k": null,
+      "actual_backend": "cpu_reference_python",
+      "backend_version": "axisplan-1",
+      "working_scale": 0.75,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        2880,
+        1616
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 1025.748,
+        "p50_ms": 1011.336,
+        "p95_ms": 1087.386,
+        "min_ms": 991.932,
+        "max_ms": 1087.386
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 1019.218,
+        "p50_ms": 1007.823,
+        "p95_ms": 1125.078,
+        "min_ms": 976.392,
+        "max_ms": 1125.078
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 229847040,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "python",
+      "parity_with_reference_4k": null,
+      "actual_backend": "cpu_reference_python",
+      "backend_version": "axisplan-1",
+      "working_scale": 0.63,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        2416,
+        1360
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 814.639,
+        "p50_ms": 796.634,
+        "p95_ms": 987.177,
+        "min_ms": 761.383,
+        "max_ms": 987.177
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 818.107,
+        "p50_ms": 798.118,
+        "p95_ms": 936.562,
+        "min_ms": 764.417,
+        "max_ms": 936.562
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 201630720,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "python",
+      "parity_with_reference_4k": null,
+      "actual_backend": "cpu_reference_python",
+      "backend_version": "axisplan-1",
+      "working_scale": 0.5,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        1920,
+        1080
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 642.063,
+        "p50_ms": 630.431,
+        "p95_ms": 707.873,
+        "min_ms": 601.445,
+        "max_ms": 707.873
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 740.721,
+        "p50_ms": 734.684,
+        "p95_ms": 826.546,
+        "min_ms": 676.149,
+        "max_ms": 826.546
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 174182400,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "python",
+      "parity_with_reference_4k": null,
+      "actual_backend": "cpu_reference_python",
+      "backend_version": "axisplan-1",
+      "working_scale": 0.25,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        960,
+        544
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 486.42,
+        "p50_ms": 483.781,
+        "p95_ms": 578.899,
+        "min_ms": 413.802,
+        "max_ms": 578.899
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 578.264,
+        "p50_ms": 571.077,
+        "p95_ms": 680.914,
+        "min_ms": 513.956,
+        "max_ms": 680.914
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 130867200,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    }
+  ],
+  "speedup_native_vs_python": {}
+}

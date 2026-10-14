@@ -131,8 +131,8 @@ class FakeLibrary:
         if symbol == "gpu_hdr_fill_contract":
             self._fill_struct(args[0]._obj, self._contract_fields)
             return None
-        if symbol == "gpu_hdr_open":
-            out_handle = args[9]._obj
+        if symbol in ("gpu_hdr_open", "gpu_hdr_open_purpose"):
+            out_handle = args[-1]._obj
             if self._open_code == 0 or self._set_handle_on_failed_open:
                 out_handle.value = self._handle
             return self._open_code
@@ -795,7 +795,7 @@ def _function_body(native, entry):
     Comments go because prose is not behaviour: an entry that only *mentions* a
     resampler in a sentence must not pass an assertion that it runs no resampler,
     and the same sentence must not fail one. What is checked is the code."""
-    start = native.index(f"GPU_HDR_API int32_t {entry}(", )
+    start = native.index(f"int32_t {entry}(")
     body = native[start:native.index("\n}\n", start)]
     body = re.sub(r"/\*.*?\*/", "", body, flags=re.DOTALL)
     return re.sub(r"//[^\n]*", "", body)
@@ -1186,7 +1186,8 @@ def test_observe_and_reconstruct_share_one_residual_pass():
     assert native.count("run_pass(b, kPassResidual,") == 1
     assert native.count("r.put(float(kMinSlopePerStop));") == 1
     assert "run_residual_pass(b)" in _function_body(native, "gpu_hdr_observe")
-    assert "run_residual_pass(b)" in _function_body(native, "gpu_hdr_reconstruct")
+    assert "reconstruct_picture(" in _function_body(native, "gpu_hdr_reconstruct")
+    assert "run_residual_pass(b, preserve_detail)" in _function_body(native, "reconstruct_picture")
 
 
 def test_observe_adds_no_composite_and_no_strength():
@@ -1199,13 +1200,38 @@ def test_observe_adds_no_composite_and_no_strength():
 
 def test_the_single_layer_reconstruction_keeps_its_order_and_its_counts():
     body = _function_body(_NATIVE_SOURCE.read_text(encoding="utf-8"),
-                          "gpu_hdr_reconstruct")
-    sequence = ["copy_neural(b, dlss_texture", "run_residual_pass(b)",
+                          "reconstruct_picture")
+    sequence = ["copy_neural(b, dlss_texture", "run_residual_pass(b, preserve_detail)",
                 "run_pass(b, kPassComposite", "composited_device_write_bytes"]
     positions = [body.index(step) for step in sequence]
     assert positions == sorted(positions), "the old chain was reordered"
     # Its residual constants now live in the shared helper, not in its own body.
     assert "kMinSlopePerStop" not in body
+
+
+@pytest.mark.parametrize('purpose,number', [('guidance', 1), ('decode', 2), ('encode', 3)])
+def test_resource_purpose_is_additive_and_explicit(purpose, number):
+    fake = FakeLibrary()
+    bridge = _bridge(fake, purpose=purpose)
+    opens = [(name, args) for name, args in fake.calls if 'open' in name]
+    assert opens[0][0] == 'gpu_hdr_open_purpose' and opens[0][1][-2] == number
+    bridge.close()
+
+
+def test_old_library_still_supports_full_but_refuses_trimmed_purpose():
+    fake = FakeLibrary(missing={'gpu_hdr_open_purpose'})
+    bridge = _bridge(fake)
+    bridge.close()
+    with pytest.raises(hdr.HdrBridgeError, match='rebuild'):
+        _bridge(fake, purpose='decode')
+
+
+def test_motion_only_guidance_writes_one_packed_rgba8_pixel():
+    native = _NATIVE_SOURCE.read_text(encoding='utf-8')
+    proxy = native.split('const char* proxy_body =', 1)[1].split(')hlsl";', 1)[0]
+    assert 'Guidance.Store4' not in proxy
+    assert 'value | (value << 8u) | (value << 16u) | 0xff000000u' in proxy
+    assert 'Guidance.Store(id.y * GuidancePitch + id.x * 4u, packed_guidance)' in proxy
 
 
 def test_import_master_is_a_copy_and_nothing_else():

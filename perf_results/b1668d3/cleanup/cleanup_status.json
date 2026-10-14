@@ -1,0 +1,184 @@
+{
+  "code_under_test_sha": "b1668d39b08e7974de5806443732a7ea96f1681d",
+  "code_under_test_sha_short": "b1668d3",
+  "overall": "DONE_PROVEN",
+  "statuses": {
+    "avx2_probe": {
+      "evidence": {
+        "agrees_with_numpy": true,
+        "bit_tested": {
+          "bit": 5,
+          "expression": "((info[1] & (1 << 5)) != 0) ? 1 : 0",
+          "leaf": 7,
+          "register": "EBX"
+        },
+        "gate4": "13 passed in 3.79s",
+        "gates_walked": {
+          "avx_bit28": true,
+          "compile_time_avx2_macro": false,
+          "leaf7_exists": true,
+          "osxsave_bit27": true,
+          "xgetbv_saves_ymm": true
+        },
+        "numpy_runtime_avx2": true,
+        "probe_answer_on_this_machine": true,
+        "rows_where_the_new_probe_is_wrong": [],
+        "this_machine_can_show_the_old_bug": false
+      },
+      "meaning": "CPUID+XGETBV at runtime, matching an independent implementation; reported only - no AVX2 kernel, no /arch flag, no SIMD benchmark this round",
+      "status": "DONE_PROVEN"
+    },
+    "full_pytest": {
+      "evidence": {
+        "counted_by": "pytest, not by hand",
+        "summary": "156 passed in 39.17s"
+      },
+      "status": "DONE_PROVEN"
+    },
+    "native_numeric_regression": {
+      "evidence": {
+        "files": [
+          "test_resampler_numeric.py",
+          "test_native_residual.py",
+          "test_residual_backend.py",
+          "test_preview_export_parity.py"
+        ],
+        "gate2": "61 passed in 3.93s"
+      },
+      "meaning": "bit parity against the scalar oracle, backend reporting and preview/export parity still hold after the lifecycle change",
+      "status": "DONE_PROVEN"
+    },
+    "nvof_timing_semantics": {
+      "evidence": {
+        "frames_where_all_six_spans_differ": 6,
+        "gate4": "13 passed in 3.79s",
+        "hardware_frames_timed": 6,
+        "problems": [],
+        "retired_alias_keys_absent": true,
+        "stages_still_unmeasurable": [
+          "nvof_convert_ms",
+          "nvof_gpu_execute_ms"
+        ]
+      },
+      "meaning": "each nvof_* key equals its own QPC span; a span that cannot be timed reads 'unavailable', never 0.0, and no number is reused across stages",
+      "status": "DONE_PROVEN"
+    },
+    "per_plan_counter_semantics": {
+      "evidence": {
+        "concurrent_lifecycle_counts_own_totals": true,
+        "cross_plan_not_blocked": true,
+        "frames_exported_in_scenario_D": 60,
+        "per_check_meaning": {
+          "concurrent_lifecycle_counts": "each of N plans created concurrently reports its own create and scratch count, so nothing inherits another plan's number",
+          "cross_plan_not_blocked": "a long call on one plan does not hold up frames on other plans",
+          "probe_does_not_pollute_per_plan_counters": "reading diagnostics moves no counter on the plan probed or on any other"
+        },
+        "probe_moves_no_counter": true,
+        "process_plan_create_total": 1,
+        "process_plan_open_total": 1,
+        "reconstruct_call_count": 60,
+        "this_plan_create_count": 1,
+        "this_plan_scratch_alloc_count": 1,
+        "this_plan_worker_create_count": 8
+      },
+      "meaning": "a plan reports its own lifecycle (1 create, its own scratch and workers) while it serves every frame; process_* stay library-wide",
+      "status": "DONE_PROVEN"
+    },
+    "quick_performance_regression": {
+      "evidence": {
+        "ffprobe_ok": {
+          "A": true,
+          "D": true
+        },
+        "fps_100_percent": 4.803,
+        "fps_50_percent_native": 6.006,
+        "frames_per_scenario": 60,
+        "note": "60-frame A/D only. The 300-frame sustained sweep was explicitly out of scope for this round, so nothing here is a sustained result",
+        "p50_ms": {
+          "A": {
+            "dlss_process": 118.07014999794774,
+            "frame_total": 171.0112000000663,
+            "nvof_download_ms": 12.547550000000001,
+            "nvof_postprocess_wait_inclusive_ms": 3.8873,
+            "nvof_submit_cpu_ms": 0.59795,
+            "nvof_total_native_ms": 24.88605,
+            "nvof_upload_ms": 7.66915,
+            "pipe_write": 10.37799999176059,
+            "residual_pyramid": 3.9816000062273815,
+            "working_color_prepare_ms": 0.000500003807246685
+          },
+          "D": {
+            "dlss_process": 36.223750008502975,
+            "frame_total": 98.28710000147112,
+            "nvof_download_ms": 3.52145,
+            "nvof_postprocess_wait_inclusive_ms": 0.9046000000000001,
+            "nvof_submit_cpu_ms": 0.68045,
+            "nvof_total_native_ms": 6.8069500000000005,
+            "nvof_upload_ms": 1.6148500000000001,
+            "pipe_write": 10.0570499926107,
+            "residual_pyramid": 27.065699992817827,
+            "working_color_prepare_ms": 14.709650000440888
+          }
+        },
+        "ratio_50_over_100": 1.25,
+        "requirement": "fps_50_percent_native > fps_100_percent"
+      },
+      "meaning": "50% working must be faster than 100%, and both outputs must be the frame count and dimensions they claim",
+      "status": "DONE_PROVEN"
+    },
+    "residual_bridge_thread_safety": {
+      "evidence": {
+        "control_note": "residual_bridge.dll built from git 7411d97:native/residual_bridge.cpp with scratch/oldbridge/build_old.bat (the same cl.exe /O2 flags native/build_residual.bat uses), so it is the pre-fix lifecycle code",
+        "gate3": "9 passed in 4.47s",
+        "pre_fix_control_dll": "F:\\dlss5standaloneV2\\scratch\\oldbridge\\residual_bridge_old.dll",
+        "scenarios_failing_on_the_pre_fix_build": [
+          "destroy_waits_for_inflight_call",
+          "last_error_per_thread",
+          "probe_does_not_pollute_per_plan_counters",
+          "same_plan_concurrent_frames"
+        ],
+        "scenarios_on_current_build": {
+          "concurrent_lifecycle_counts": true,
+          "cross_plan_not_blocked": true,
+          "destroy_waits_for_inflight_call": true,
+          "last_error_per_thread": true,
+          "probe_does_not_pollute_per_plan_counters": true,
+          "same_plan_concurrent_frames": true
+        }
+      },
+      "meaning": "handle lookup, per-plan serialisation, destroy-waits-for-in-flight, thread-local last error and counter isolation all hold under the concurrent scenarios, and the same scenarios fail on the pre-fix build",
+      "status": "DONE_PROVEN"
+    },
+    "truthful_gpu_memory_metric_names": {
+      "evidence": {
+        "card_metric_name": "gpu_total_memory_used_bytes",
+        "claims_guard": "5 passed in 0.46s",
+        "peak_metric_name": "peak_gpu_total_memory_used_bytes",
+        "per_process_metric": {
+          "A": null,
+          "D": null
+        },
+        "per_process_source": {
+          "A": "unavailable: nvidia-smi lists this pid but reports its memory as '[N/A]', so no per-process GPU footprint exists on this driver",
+          "D": "unavailable: nvidia-smi lists this pid but reports its memory as '[N/A]', so no per-process GPU footprint exists on this driver"
+        }
+      },
+      "meaning": "the card's total in use is named for the card; the process figure is asked for separately and reports unavailable with the reason",
+      "status": "DONE_PROVEN"
+    },
+    "truthful_pipeline_docs": {
+      "evidence": {
+        "claims_guard": "5 passed in 0.46s",
+        "full_pytest": "156 passed in 39.17s",
+        "retired_claim_list_lives_in": "tests/unit/test_no_misleading_claims.py",
+        "snapshot_docs_exempt_only_with_banner": [
+          "CURRENT_STATE_AUDIT.md"
+        ]
+      },
+      "meaning": "the export is documented as a CPU-rendered pipe into an FFmpeg NVENC child, the device-pointer query as diagnostic, and a lifecycle test claims only that its calls returned",
+      "status": "DONE_PROVEN"
+    }
+  },
+  "utc_timestamp": "2026-09-19T22:56:49Z",
+  "vocabulary": "DONE_PROVEN only where this round's own run produced evidence; NOT_READY otherwise. The BLOCKED_PROVEN status the previous round used is not available in this round."
+}

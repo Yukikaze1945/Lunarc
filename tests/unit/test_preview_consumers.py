@@ -14,6 +14,7 @@ if str(ROOT) not in sys.path:
 import gpu_transfer_export as gtx
 import gpu_hdr_transfer_export as htx
 from hdr_gpu_engine import DevicePlane, FORMAT_RGBA16F_CUDA, PLANE_COMPOSITED
+from temporal_control import TemporalControls
 
 
 class _Nv12:
@@ -69,6 +70,8 @@ def test_sdr_single_preview_consumes_final_candidate_without_opening_encoder():
         downscaled=False,
         preview_consumer=lambda descriptor, frame: consumed.append((descriptor, frame)) or "jpeg",
     )
+    # These consumer tests use fake native pointers; scene detection is covered separately.
+    chain.temporal_control.update_controls(TemporalControls(scene_detection=False,mode='off'))
     chain.nv12 = object()
 
     outcome = chain.process(_frame(), None, 0, False)
@@ -96,6 +99,8 @@ def test_sdr_single_export_without_consumer_still_submits_nvenc():
             "color_matrix": 0}, "av_options": {}}, (30, 1), 1.0, (16, 8), uses_flow=False,
         downscaled=False,
     )
+    # These consumer tests use fake native pointers; scene detection is covered separately.
+    chain.temporal_control.update_controls(TemporalControls(scene_detection=False,mode='off'))
     chain.nv12 = object()
 
     outcome = chain.process(_frame(), None, 0, False)

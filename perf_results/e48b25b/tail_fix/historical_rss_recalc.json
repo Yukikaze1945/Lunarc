@@ -1,0 +1,142 @@
+{
+  "note": "read-only recalculation of the committed 300-frame runs; the numbers here are the ones the previous gate computed from the whole run, beside the ones the steady-state window gives",
+  "code_under_test_of_this_round": "e48b25ba63c7503d1a3b04c0850d8636de5efe93",
+  "directories": {
+    "perf_results/05f0ecc/resource_samples.json": {
+      "scenarios": {
+        "A": {
+          "source_artifact_path": "perf_results/05f0ecc/resource_samples.json",
+          "source_code_under_test_sha": "05f0ecc3e47809078b946f4302c9331a240746fc",
+          "source_total_frames": 300,
+          "all_sample_frames": [
+            30,
+            60,
+            90,
+            120,
+            150,
+            180,
+            210,
+            240,
+            270,
+            300
+          ],
+          "rss_fit_frame_start": 60,
+          "rss_fit_frame_end": 270,
+          "rss_fit_frames": [
+            60,
+            90,
+            120,
+            150,
+            180,
+            210,
+            240,
+            270
+          ],
+          "rss_fit_sample_count": 8,
+          "rss_fit_excluded_frames_before_window": [
+            30
+          ],
+          "rss_fit_excluded_frames_after_window": [
+            300
+          ],
+          "old_whole_range_slope": -307312.5,
+          "new_steady_state_slope": 10238.4,
+          "old_whole_range_predicted_growth": -82974384.9,
+          "signed_predicted_growth": 2150058.7,
+          "positive_predicted_growth": 2150058.7,
+          "peak_rss_bytes": 1116577792,
+          "gate": {
+            "status": "DONE_PROVEN",
+            "reason": "steady-state RSS shows no sustained positive growth",
+            "rss_predicted_positive_growth_bytes": 2150058.7,
+            "rss_predicted_signed_growth_bytes": 2150058.7,
+            "of_peak": 0.001926,
+            "threshold_fraction_of_peak": 0.1,
+            "rss_fit_sample_count": 8,
+            "rss_fit_frames": [
+              60,
+              90,
+              120,
+              150,
+              180,
+              210,
+              240,
+              270
+            ]
+          },
+          "frame_300_excluded": true,
+          "last_sample_excluded": true,
+          "status": "DONE_PROVEN"
+        },
+        "D": {
+          "source_artifact_path": "perf_results/05f0ecc/resource_samples.json",
+          "source_code_under_test_sha": "05f0ecc3e47809078b946f4302c9331a240746fc",
+          "source_total_frames": 300,
+          "all_sample_frames": [
+            30,
+            60,
+            90,
+            120,
+            150,
+            180,
+            210,
+            240,
+            270,
+            300
+          ],
+          "rss_fit_frame_start": 60,
+          "rss_fit_frame_end": 270,
+          "rss_fit_frames": [
+            60,
+            90,
+            120,
+            150,
+            180,
+            210,
+            240,
+            270
+          ],
+          "rss_fit_sample_count": 8,
+          "rss_fit_excluded_frames_before_window": [
+            30
+          ],
+          "rss_fit_excluded_frames_after_window": [
+            300
+          ],
+          "old_whole_range_slope": -264617.3,
+          "new_steady_state_slope": -34803.0,
+          "old_whole_range_predicted_growth": -71446676.9,
+          "signed_predicted_growth": -7308629.3,
+          "positive_predicted_growth": 0.0,
+          "peak_rss_bytes": 992563200,
+          "gate": {
+            "status": "DONE_PROVEN",
+            "reason": "steady-state RSS shows no sustained positive growth",
+            "rss_predicted_positive_growth_bytes": 0.0,
+            "rss_predicted_signed_growth_bytes": -7308629.3,
+            "of_peak": 0.0,
+            "threshold_fraction_of_peak": 0.1,
+            "rss_fit_sample_count": 8,
+            "rss_fit_frames": [
+              60,
+              90,
+              120,
+              150,
+              180,
+              210,
+              240,
+              270
+            ]
+          },
+          "frame_300_excluded": true,
+          "last_sample_excluded": true,
+          "status": "DONE_PROVEN"
+        }
+      },
+      "directory_before_digest": "416f3b4e3405726f9a7c0f4bc95a3ed4a2d87eafe1bd169ec9b5ff656b84a56f",
+      "directory_after_digest": "416f3b4e3405726f9a7c0f4bc95a3ed4a2d87eafe1bd169ec9b5ff656b84a56f",
+      "directory_unchanged": true
+    }
+  },
+  "status": "DONE_PROVEN"
+}

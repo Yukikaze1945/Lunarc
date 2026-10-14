@@ -755,7 +755,11 @@ class GpuHdrBridge:
     _linear_label = "scRGB"
 
     def __init__(self, *, d3d12_device, cuda_context, full_width, full_height,
-                 working_width, working_height, paper_white_scrgb, library=None):
+                 working_width, working_height, paper_white_scrgb, library=None, purpose="full"):
+        purposes = {"full": 0, "guidance": 1, "decode": 2, "encode": 3}
+        if purpose not in purposes:
+            raise HdrBridgeError(f"unknown HDR bridge purpose {purpose!r}")
+        self.purpose = purpose
         # Validate whatever library we are about to drive, injected or bundled:
         # a bridge that is not ABI 1, or is missing an entry this wrapper binds,
         # is refused here rather than mid-frame.
@@ -788,13 +792,25 @@ class GpuHdrBridge:
         self._handle = ctypes.c_void_p()
         self._cuda_context = _to_int_ptr(cuda_context)
         self._bind_colour_mode()
-        code = getattr(self._lib, self._open_symbol)(
+        open_entry = getattr(self._lib, self._open_symbol)
+        purpose_args = ()
+        if purpose != "full":
+            symbol = self._open_symbol + "_purpose"
+            try:
+                open_entry = getattr(self._lib, symbol)
+            except AttributeError as error:
+                raise HdrBridgeError(f"missing {symbol}; rebuild the colour bridge for resource purposes") from error
+            signature = next(args for name, args, _ in _BRIDGE if name == "gpu_hdr_open")
+            open_entry.argtypes = signature[:-1] + [ctypes.c_uint32, signature[-1]]
+            open_entry.restype = ctypes.c_int32
+            purpose_args = (purposes[purpose],)
+        code = open_entry(
             ctypes.c_void_p(_to_int_ptr(d3d12_device)),
             ctypes.c_void_p(self._cuda_context),
             full_width, full_height, working_width, working_height,
             ctypes.byref(self._downscale_plan),
             ctypes.byref(self._reconstruct_plan),
-            self._configured_paper_white, ctypes.byref(self._handle))
+            self._configured_paper_white, *purpose_args, ctypes.byref(self._handle))
         if code:
             detail = last_error_text(self._lib)
             # open reported failure; free whatever it may still have set, then say why.
@@ -1299,6 +1315,15 @@ class GpuHdrBridge:
 
     def encode_report(self):
         return self._read_report("encode")
+
+    def allocated_device_bytes(self):
+        """Actual DEFAULT heap allocation sizes, excluding CPU counter heaps."""
+        self._require_open()
+        entry = getattr(self._lib, "gpu_hdr_allocated_device_bytes", None)
+        if entry is None:
+            return None
+        entry.argtypes, entry.restype = [ctypes.c_void_p], ctypes.c_uint64
+        return int(entry(self._handle))
 
     def transfer_counters(self):
         """The device-traffic counters as a dict. Every field is what the ABI

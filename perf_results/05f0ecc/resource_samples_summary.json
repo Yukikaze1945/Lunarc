@@ -1,0 +1,50 @@
+{
+  "A": {
+    "frame_samples": 10,
+    "wallclock_samples": 11,
+    "rss_bytes_min": 942354432,
+    "rss_bytes_max": 1116577792,
+    "rss_bytes_last": 942354432,
+    "rss_slope_bytes_per_frame": -307312.5,
+    "rss_predicted_growth_over_run": -82974384.9,
+    "rss_tail_minus_head_of_tail": 174223360,
+    "thread_count_range": [
+      63,
+      67
+    ],
+    "child_process_count_range": [
+      2,
+      12
+    ],
+    "frame_range": [
+      30,
+      300
+    ],
+    "vram_bytes_max": 4779409408,
+    "vram_samples": 11
+  },
+  "D": {
+    "frame_samples": 10,
+    "wallclock_samples": 8,
+    "rss_bytes_min": 856768512,
+    "rss_bytes_max": 992563200,
+    "rss_bytes_last": 856768512,
+    "rss_slope_bytes_per_frame": -264617.3,
+    "rss_predicted_growth_over_run": -71446676.9,
+    "rss_tail_minus_head_of_tail": 111968256,
+    "thread_count_range": [
+      72,
+      76
+    ],
+    "child_process_count_range": [
+      2,
+      14
+    ],
+    "frame_range": [
+      30,
+      300
+    ],
+    "vram_bytes_max": 3937402880,
+    "vram_samples": 8
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "build_reproducibility_note": "MSVC link.exe stamps the image with a timestamp and a CodeView GUID, so a rebuild is not byte-identical. The hashes above are of the binaries that ran these gates, which is the claim being made.",
+  "code_under_test_sha": "b1668d39b08e7974de5806443732a7ea96f1681d",
+  "code_under_test_sha_short": "b1668d3",
+  "cpu_arch": "AMD64",
+  "cpu_logical_cores": 16,
+  "cpu_model": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+  "cuda_version": "13.4",
+  "dll_sha256": {
+    "native/nvof_bridge.dll": "16fafec0de798001818c59994b74dbe6eb096553c4ff931503f0473f443bb98c",
+    "native/residual_bridge.dll": "6a064f98ec1eab9e72c3d5a3ee1df80fe168373da1a03cea28eb5e8e03ec3ded"
+  },
+  "ffmpeg": "8.1.2-full_build-www.gyan.dev",
+  "git_log": "b1668d3 test(cleanup): label the per-plan counter evidence by what each check proves\n122a6fa test(artifacts): record final cleanup validation\nb986788 test(cleanup): let the claims guard own the only copy of the retired list\ndb017f5 test(cleanup): derive the round's statuses from the gate transcripts\n3b73523 test(cleanup): gate the retired claims and name NumPy's CPU features correctly\n9e2d425 test(benchmark): add --only so a round can run A/D without the 300-frame sweep\n9b89f14 chore(docs): remove misleading zero-copy and leak claims",
+  "gpu": {
+    "driver_version": "616.92",
+    "memory_total_bytes": 17103323136,
+    "name": "NVIDIA GeForce RTX 5060 Ti"
+  },
+  "gpu_total_memory_used_bytes": 952107008,
+  "how_the_shipped_dlls_were_built": {
+    "native/nvof_bridge.dll": "cl.exe /LD /O2 /EHsc /DNVOF_BRIDGE_EXPORTS /I. /Iinclude nvof_bridge.cpp /Fe:nvof_bridge.dll /link /DLL",
+    "native/residual_bridge.dll": "cl.exe /nologo /LD /O2 /Oy- /EHsc /std:c++17 /DRESIDUAL_BRIDGE_EXPORTS /I. residual_bridge.cpp /Fe:residual_bridge.dll /link /DLL || exit /b 1"
+  },
+  "native_libraries": {
+    "dlssnr_host.dll": {
+      "bytes": 54272,
+      "sha256": "9ec879388e573bebbf7886dccbdc885641d945420fdf4bb80bac6c657094160c"
+    },
+    "native/nvof_bridge.dll": {
+      "bytes": 156672,
+      "sha256": "16fafec0de798001818c59994b74dbe6eb096553c4ff931503f0473f443bb98c"
+    },
+    "native/residual_bridge.dll": {
+      "bytes": 197120,
+      "sha256": "6a064f98ec1eab9e72c3d5a3ee1df80fe168373da1a03cea28eb5e8e03ec3ded"
+    },
+    "nvngx_dlssnr.dll": {
+      "bytes": 165840496,
+      "sha256": "e16bcf15e16e13f527491cdf7845b2fe6521a738d8f7c9c721866a8496e1fc8e"
+    }
+  },
+  "numpy": "2.4.6",
+  "opencv": "5.0.0",
+  "os": "Windows-10-10.0.26220-SP0",
+  "peak_rss_bytes": 43749376,
+  "platform": "win32",
+  "process_gpu_memory_bytes": null,
+  "process_gpu_memory_source": "unavailable: this pid is not listed by nvidia-smi --query-compute-apps",
+  "pytest_summary": "156 passed in 39.17s",
+  "python": "3.11.15",
+  "ram_total_bytes": 42852945920,
+  "rss_bytes": 41938944,
+  "utc_timestamp": "2026-09-19T22:56:49Z",
+  "working_tree_unclean_at_collection": []
+}

@@ -1,14 +1,22 @@
 import type { DLSSSettings, RenderStage } from '../types'
+import {vsrSameSize} from './vsrModes.ts'
 
 const LEGACY: Record<string, RenderStage[]> = {
   nr: ['nr'], dlaa: ['dlaa'], vsr: ['vsr'], nr_dlaa: ['nr', 'dlaa'], nr_vsr: ['nr', 'vsr'],
 }
-export function renderStages(settings: DLSSSettings): RenderStage[] {
+export function configuredRenderStages(settings: DLSSSettings): RenderStage[] {
   const stages = [...new Set(settings.render_pipeline ?? LEGACY[settings.neural_mode ?? 'nr'] ?? ['nr'])]
   // Saved projects from before VFG joined the list keep their original tail position.
   if (settings.frame_generation && settings.frame_generation !== 'off' && !stages.includes('vfg')) stages.push('vfg')
   if (settings.truehdr_enabled && !stages.includes('truehdr')) stages.push('truehdr')
   return stages
+}
+export function renderStages(settings: DLSSSettings): RenderStage[] {
+  return configuredRenderStages(settings).filter(stage => settings.render_stage_enabled?.[stage] !== false)
+}
+export function toggleStagePatch(stage: RenderStage, settings: DLSSSettings): Partial<DLSSSettings> {
+  const enabled = {...settings.render_stage_enabled, [stage]: settings.render_stage_enabled?.[stage] === false}
+  return pipelinePatch(configuredRenderStages(settings), {...settings,render_stage_enabled:enabled})
 }
 export function moveStage(stages: RenderStage[], from: number, to: number): RenderStage[] {
   if (from < 0 || to < 0 || from >= stages.length || to >= stages.length) return stages
@@ -17,9 +25,14 @@ export function moveStage(stages: RenderStage[], from: number, to: number): Rend
   return result
 }
 export function pipelinePatch(stages: RenderStage[], settings?: DLSSSettings): Partial<DLSSSettings> {
+  const enabled = Object.fromEntries(Object.entries(settings?.render_stage_enabled ?? {}).filter(([stage]) => stages.includes(stage as RenderStage)))
+  const active = stages.filter(stage => enabled[stage] !== false)
+  const vfgMode = settings?.frame_generation === 'vfg_dynamic' || (settings?.frame_generation === 'off' && settings.frame_generation_saved_mode === 'vfg_dynamic') ? 'vfg_dynamic' : 'vfg'
   return { render_pipeline: stages, neural_mode: 'nr',
-    truehdr_enabled: stages.includes('truehdr'),
-    frame_generation: stages.includes('vfg') ? (settings?.frame_generation === 'vfg_dynamic' ? 'vfg_dynamic' : 'vfg') : 'off',
+    ...(settings?.render_stage_enabled ? {render_stage_enabled: enabled} : {}),
+    truehdr_enabled: active.includes('truehdr'),
+    frame_generation: active.includes('vfg') ? vfgMode : 'off',
+    ...(stages.includes('vfg') ? {frame_generation_saved_mode:vfgMode} : {}),
     ...(stages.some(s => s !== 'nr') ? { export_backend: 'gpu_transfer' as const } : {}),
     ...(!stages.includes('nr') ? { working_scale: 1, reconstruction_mode: 'single' as const,
       layer_scales: [1], layer_weights: [1] } : {}),
@@ -27,6 +40,7 @@ export function pipelinePatch(stages: RenderStage[], settings?: DLSSSettings): P
 }
 
 export function vsrOutputSize(settings: DLSSSettings, size: {width:number; height:number}): {width:number; height:number} {
+  if (vsrSameSize(settings)) return {...size}
   if (settings.vsr_output_mode === 'scale') {
     const factor = settings.vsr_scale ?? 2
     return {width:Math.floor(size.width * factor / 2 + .5) * 2,
@@ -40,6 +54,7 @@ export function vsrOutputSize(settings: DLSSSettings, size: {width:number; heigh
 }
 
 export function framegenOutputFps(settings: DLSSSettings, sourceFps: number): number {
+  if (settings.render_stage_enabled?.vfg === false) return sourceFps
   if (settings.frame_generation === 'vfg_dynamic') {
     const value = String(settings.framegen_target_fps ?? 60).split('/')
     return Number(value[0]) / (value.length === 2 ? Number(value[1]) : 1)
@@ -52,16 +67,16 @@ export function nativeOutputBlockers(settings: DLSSSettings, video: {width:numbe
   const reasons: string[] = []
   if (renderStages(settings).includes('vsr')) {
     const result = vsrOutputSize(settings, video)
-    if (settings.vsr_output_mode === 'scale' && (!Number.isFinite(settings.vsr_scale ?? 2) || (settings.vsr_scale ?? 2) <= 1 || (settings.vsr_scale ?? 2) > 4))
+    if (!vsrSameSize(settings) && settings.vsr_output_mode === 'scale' && (!Number.isFinite(settings.vsr_scale ?? 2) || (settings.vsr_scale ?? 2) <= 1 || (settings.vsr_scale ?? 2) > 4))
       reasons.push('VSR 倍率须大于 1 且不超过 4。')
     if ([result.width,result.height].some(n => !Number.isInteger(n) || n < 64 || n > 16384 || n % 2 !== 0))
       reasons.push('VSR 宽高须为 64–16384 范围内的偶数。')
-    else if (result.width <= video.width || result.height <= video.height || result.width > video.width * 4 || result.height > video.height * 4)
+    else if (!vsrSameSize(settings) && (result.width <= video.width || result.height <= video.height || result.width > video.width * 4 || result.height > video.height * 4))
       reasons.push('VSR 输出须放大原图，单轴倍率不超过 4。')
     else if (Math.abs(video.width / video.height - result.width / result.height) > .001)
       reasons.push('VSR 输出须保持素材宽高比。')
   }
-  if (settings.frame_generation === 'vfg_dynamic') {
+  if (settings.frame_generation === 'vfg_dynamic' && settings.render_stage_enabled?.vfg !== false) {
     const fps = framegenOutputFps(settings, video.fps)
     if (!Number.isFinite(fps) || fps <= video.fps)
       reasons.push('动态插帧的目标帧率须高于素材帧率。')

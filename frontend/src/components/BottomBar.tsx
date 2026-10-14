@@ -10,6 +10,7 @@ export function BottomBar({statusText='就绪', queueSummary='', onQueueClick,sy
   const ms=(value:unknown)=>typeof value==='number'&&Number.isFinite(value)?`${value.toFixed(1)} ms`:'—'
   return <footer className="status-bar"><span className="status-message" role="status" title={statusText}><Activity size={13}/>{statusText}</span>
     <div className="status-metrics" aria-label="运行指标">
+      {system?.gpu_memory?.process&&<span title={`本进程 DXGI 显存用量 / 系统分配预算；${system.gpu_memory.active?'最近':'上次'}帧间采样。分项见运行与诊断。`}>进程 {(system.gpu_memory.process.local_usage/1024**3).toFixed(2)} / {(system.gpu_memory.process.local_budget/1024**3).toFixed(2)} GiB</span>}
       <span title="整张显卡显存占用，包含其他程序；约每 5 秒采样。">显存 {system?.adapter_memory_used_gb==null?'—':`${system.adapter_memory_used_gb.toFixed(1)} / ${system.adapter_memory_total_gb?.toFixed(1)} GB`}</span>
       <span title={`最近一帧解码及预览处理耗时 ${ms(data?.processing_ms)}，换算为处理帧率；不等同于持续播放帧率。`}>渲染 {data?.cached_display?'缓存':typeof data?.processing_fps==='number'?`${data.processing_fps.toFixed(1)} FPS`:'—'}</span>
       {data?.playing&&<span title="实际呈现的帧率，包含解码、处理和显示等待；不是素材标称帧率。">显示 {Number(data.presentation_fps||0).toFixed(1)} FPS</span>}

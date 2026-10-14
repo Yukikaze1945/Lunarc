@@ -1,0 +1,114 @@
+{
+  "code_under_test_sha": "05f0ecc3e47809078b946f4302c9331a240746fc",
+  "worktree_clean_at_collection": true,
+  "worktree_dirty_paths_at_collection": [],
+  "collected_at_utc": "2026-09-19T09:13:03Z",
+  "gates": {
+    "pytest": {
+      "summary": "============================ 129 passed in 36.39s =============================",
+      "status": "DONE_PROVEN"
+    },
+    "performance_gate_quick": {
+      "status": "DONE_PROVEN",
+      "detail": {
+        "fps_100_percent": 4.793,
+        "fps_50_percent_native": 7.038,
+        "requirement": "fps_50_percent_native > fps_100_percent",
+        "passed": true,
+        "ratio": 1.468
+      }
+    },
+    "performance_gate_sustained": {
+      "status": "DONE_PROVEN",
+      "detail": {
+        "fps_100_percent": 5.429,
+        "fps_50_percent_native": 7.796,
+        "requirement": "fps_50_percent_native > fps_100_percent",
+        "passed": true,
+        "ratio": 1.436
+      }
+    },
+    "native_numeric": {
+      "status": "DONE_PROVEN",
+      "pytest_summary": "============================ 129 passed in 36.39s =============================",
+      "parity_with_python_reference": {
+        "0.75:[3840, 2160]->[2880, 1616]": {
+          "bit_equal_downsample": true,
+          "bit_equal_reconstruct": true,
+          "max_abs_diff": 0
+        },
+        "0.63:[3840, 2160]->[2416, 1360]": {
+          "bit_equal_downsample": true,
+          "bit_equal_reconstruct": true,
+          "max_abs_diff": 0
+        },
+        "0.5:[3840, 2160]->[1920, 1080]": {
+          "bit_equal_downsample": true,
+          "bit_equal_reconstruct": true,
+          "max_abs_diff": 0
+        },
+        "0.25:[3840, 2160]->[960, 544]": {
+          "bit_equal_downsample": true,
+          "bit_equal_reconstruct": true,
+          "max_abs_diff": 0
+        }
+      }
+    },
+    "resource_reuse_over_300_frames": {
+      "status": "DONE_PROVEN",
+      "per_scenario": {
+        "D": {
+          "frames": 300,
+          "plan_create_count": 1,
+          "scratch_alloc_count": 1,
+          "worker_create_count": 8,
+          "downsample_call_count": 300,
+          "reconstruct_call_count": 300
+        }
+      }
+    },
+    "sustained_resource_stability": {
+      "A": {
+        "status": "DONE_PROVEN",
+        "rss_growth_extrapolated_bytes": -82974384.9,
+        "of_peak": 0.0743,
+        "child_process_count_range": [
+          2,
+          12
+        ],
+        "thread_count_range": [
+          63,
+          67
+        ]
+      },
+      "D": {
+        "status": "DONE_PROVEN",
+        "rss_growth_extrapolated_bytes": -71446676.9,
+        "of_peak": 0.072,
+        "child_process_count_range": [
+          2,
+          14
+        ],
+        "thread_count_range": [
+          72,
+          76
+        ]
+      }
+    },
+    "output_integrity": "DONE_PROVEN",
+    "cancellation": {
+      "job_status": "cancelled",
+      "frames_at_cancel": 41,
+      "frames_requested": 600,
+      "cancel_latency_ms": 141.94,
+      "producer_threads_alive": [],
+      "queue_thread_alive": false,
+      "registry_after": 0,
+      "pids_still_running": [],
+      "written_packets": null,
+      "output_bytes": 0,
+      "status": "DONE_PROVEN"
+    }
+  },
+  "note": "DONE_PROVEN requires production code, a numeric test, a runtime test and the artifact in this directory; anything else is NOT_READY."
+}

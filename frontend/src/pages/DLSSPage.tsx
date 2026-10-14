@@ -136,12 +136,15 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
   }, [isActive])
 
   const requestRevisionRef = useRef(0)
+  const activeRef=useRef(isActive);activeRef.current=isActive
+  const recoverySeekRef=useRef(false)
   const settingsRevisionRef = useRef(0)
   const settingsPendingRef = useRef(false)
   const settingsTimingRef = useRef<{inputAt:number; settings_apply_ms?:number; settings_http_ms?:number}>({inputAt:0})
   const lastSeekRef = useRef<Record<string, unknown> | null>(null)
   const displayedBlobRef = useRef('')
   const sendPlayer = useCallback((command: Record<string, unknown>) => {
+    if(!activeRef.current&&command.action!=='pause')return
     setPreviewPending(command.action !== 'pause')
     const bounds = canvasRef.current?.getBoundingClientRect()
     const controls=viewControls.current
@@ -213,6 +216,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
         })
       }
       ws.onopen = () => {
+        if(!activeRef.current)return
         if(nativeRequiredRef.current&&!nativeReadyRef.current)return
         if (wantPlayingRef.current && lastPlayRef.current) {
           socket.send(JSON.stringify({action: 'play', ...lastPlayRef.current,
@@ -297,6 +301,19 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
     },
     [video, sendPlayer]
   )
+
+  useEffect(()=>{
+    const restored=()=>{
+      setPlayerError(null);setPreviewPending(false)
+      recoverySeekRef.current=true
+      if(activeRef.current){recoverySeekRef.current=false;requestFrame(currentFrameRef.current)}
+    }
+    window.addEventListener('lunarc:backend-restored',restored)
+    return()=>window.removeEventListener('lunarc:backend-restored',restored)
+  },[requestFrame])
+  useEffect(()=>{
+    if(isActive&&recoverySeekRef.current){recoverySeekRef.current=false;requestFrame(currentFrameRef.current)}
+  },[isActive,requestFrame])
 
   useEffect(() => {
     const pending = () => {

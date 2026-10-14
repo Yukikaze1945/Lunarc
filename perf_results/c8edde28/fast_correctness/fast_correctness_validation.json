@@ -1,0 +1,429 @@
+{
+  "code_under_test": "c8edde28e8ff5dbbfa3ddd97fe1d9ad93ce16a02",
+  "code_under_test_short": "c8edde28",
+  "deferred": {
+    "items": [
+      "the single formal 12-execution counterbalanced benchmark at this SHA - never started, no measurement taken, nothing contaminated",
+      "the unfinished 150-frame corroboration record",
+      "browser / Edge WebView2 / ChatGPT client GPU-client classification",
+      "Explorer ShellHost classification",
+      "further 1 Hz process-tree race work beyond the committed sample-local tree and read-order fixes",
+      "quiet-window policy extension (longer budgets, per-process grace, re-judge on refusal)",
+      "extending the long runtime contamination monitor"
+    ],
+    "rule": "§10: none of these makes an ordinary unit test fail - the suite passes at 376 with them as they are - so they are recorded and left alone.",
+    "status": "LONG_BENCHMARK_DEFERRED"
+  },
+  "evidence_files": {
+    "ab_single_pair.json": "the one reduced export and the one legacy control export, with their full steady-state counters and per-frame spans",
+    "output_identity.json": "the independent re-hash of both outputs and the container diff",
+    "py_compile_output.txt": "the raw Gate A transcript",
+    "pytest_output.txt": "the raw `pytest -q tests/unit` transcript"
+  },
+  "evidence_shas": {
+    "ab_single_pair.json": {
+      "bytes": 9925,
+      "sha256": "772a4f27e1ed45bb722888b2acefd41e6f4be889c6dede982cd7a6e569b1c302"
+    },
+    "output_identity.json": {
+      "bytes": 1314,
+      "sha256": "1b9c1819a24fd2e8d3cf2b0fef6359d9b2d699be0a02b1a0545f24e8c06f1660"
+    },
+    "py_compile_output.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "pytest_output.txt": {
+      "bytes": 518,
+      "sha256": "46d7fdb95043c0219cdea8c59a3d4451821772ced0a5184951296c08b55e1892"
+    }
+  },
+  "gates": {
+    "gate_a_py_compile": {
+      "command": "python -m py_compile pipeline.py optical_flow.py dlss_service.py dlss_engine.py residual_native.py",
+      "exit_status": 0,
+      "pass": true,
+      "transcript": "empty, which is what py_compile writes when nothing failed",
+      "transcript_bytes": 0
+    },
+    "gate_b_unit_suite": {
+      "command": "pytest -q tests/unit",
+      "counts": {
+        "passed": 376
+      },
+      "new_long_tests_added_this_round": 0,
+      "pass": true,
+      "summary_line": "376 passed in 93.24s (0:01:33)",
+      "transcript": "pytest_output.txt"
+    },
+    "gate_c_smoke_export": {
+      "command": "one reduced export and one legacy control export, 15 frames, 4K fixture, working scale 0.5, NVOF 4M, AV1 CQ18 - run once, not looped",
+      "pass": true
+    }
+  },
+  "generated_at_utc": "2026-09-22T10:44:24.704672+00:00",
+  "generated_by": "bench_out/round_d_fast_validation/build_artifact.py",
+  "historical_performance_evidence": {
+    "declared_for": "every directory listed in `records`",
+    "historical_performance_evidence_only": true,
+    "not_a_conclusion": "these are contaminated attempts, counterbalanced attempts, quiet preflights, runtime monitors and an unfinished 150-frame record from rounds whose purpose was the instrument. They are history, not this round's answer.",
+    "records": [
+      {
+        "code_under_test_recorded_in_files": [],
+        "files": 12,
+        "historical_performance_evidence_only": true,
+        "path": "perf_results/05f0ecc"
+      },
+      {
+        "code_under_test_recorded_in_files": [
+          "1dedec75"
+        ],
+        "files": 25,
+        "historical_performance_evidence_only": true,
+        "path": "perf_results/1dedec7/bench_stability"
+      },
+      {
+        "code_under_test_recorded_in_files": [
+          "36e808c1"
+        ],
+        "files": 4,
+        "historical_performance_evidence_only": true,
+        "path": "perf_results/36e808c/bench_stability"
+      },
+      {
+        "code_under_test_recorded_in_files": [],
+        "files": 4,
+        "historical_performance_evidence_only": true,
+        "path": "perf_results/44f4427"
+      },
+      {
+        "code_under_test_recorded_in_files": [
+          "740c78a0"
+        ],
+        "files": 41,
+        "historical_performance_evidence_only": true,
+        "path": "perf_results/740c78a/transfer_phase1"
+      },
+      {
+        "code_under_test_recorded_in_files": [
+          "7c1768fe"
+        ],
+        "files": 35,
+        "historical_performance_evidence_only": true,
+        "path": "perf_results/7c1768f/transfer_bench_fix"
+      },
+      {
+        "code_under_test_recorded_in_files": [],
+        "files": 9,
+        "historical_performance_evidence_only": true,
+        "path": "perf_results/b1668d3/cleanup"
+      },
+      {
+        "code_under_test_recorded_in_files": [],
+        "files": 9,
+        "historical_performance_evidence_only": true,
+        "path": "perf_results/b986788/cleanup"
+      },
+      {
+        "code_under_test_recorded_in_files": [],
+        "files": 7,
+        "historical_performance_evidence_only": true,
+        "path": "perf_results/e48b25b/tail_fix"
+      },
+      {
+        "code_under_test_recorded_in_files": [
+          "f7d35df5"
+        ],
+        "files": 14,
+        "historical_performance_evidence_only": true,
+        "path": "perf_results/f7d35df/bench_stability"
+      },
+      {
+        "code_under_test_recorded_in_files": [],
+        "files": 1,
+        "historical_performance_evidence_only": true,
+        "path": "perf_results/native_residual_microbenchmark.json"
+      },
+      {
+        "code_under_test_recorded_in_files": [],
+        "files": 1,
+        "historical_performance_evidence_only": true,
+        "path": "perf_results/reference_python_baseline.json"
+      }
+    ],
+    "rules_applied": [
+      "nothing deleted",
+      "nothing rewritten, so the committed JSONs still carry their own code_under_test and hashes",
+      "no execution was appended to any of them",
+      "none of them is read as a formal performance conclusion"
+    ]
+  },
+  "long_benchmark_this_round": {
+    "counterbalanced_benchmark_run": false,
+    "fifteen_frame_corroboration_run": false,
+    "note": "§1: nothing long was running when this round started - a psutil sweep found no run_transfer_stability_round, collector, monitor, ffmpeg or export process, so there was nothing to stop and no process was killed. §11: the formal 12-execution run that Round C was building toward was never started; it is marked LONG_BENCHMARK_DEFERRED below rather than executed.",
+    "one_hertz_runtime_monitor_run": false,
+    "quiet_preflight_run": false,
+    "stopped_processes": []
+  },
+  "native_binaries": {
+    "nvof_bridge.dll": {
+      "binary_git_blob_committed": "24d84408bbfe150d255e998b3905524fabf99ce3",
+      "binary_git_blob_working": "24d84408bbfe150d255e998b3905524fabf99ce3",
+      "binary_matches_commit": true,
+      "binary_path": "native/nvof_bridge.dll",
+      "binary_sha256": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80",
+      "binary_size_bytes": 161792,
+      "last_commit_touching_binary": "1352c71 perf(nvof): add native bgr input path",
+      "last_commit_touching_source": "1352c71 perf(nvof): add native bgr input path",
+      "source_git_blob_committed": "71f41a639bdc6826a20c30c51334fda2061d8861",
+      "source_git_blob_working": "71f41a639bdc6826a20c30c51334fda2061d8861",
+      "source_matches_commit": true,
+      "source_path": "native/nvof_bridge.cpp",
+      "source_sha256": "0d6d6d34a9b0362d094363b0ac7e057e552b88a39d4b58218006c4a7e50b6562"
+    },
+    "residual_bridge.dll": {
+      "binary_git_blob_committed": "cc578dfe4541c7336d7334210fe1a155468a3677",
+      "binary_git_blob_working": "cc578dfe4541c7336d7334210fe1a155468a3677",
+      "binary_matches_commit": true,
+      "binary_path": "native/residual_bridge.dll",
+      "binary_sha256": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2",
+      "binary_size_bytes": 200192,
+      "last_commit_touching_binary": "51c980c perf(residual): consume dlss rgba directly in reconstruction",
+      "last_commit_touching_source": "51c980c perf(residual): consume dlss rgba directly in reconstruction",
+      "source_git_blob_committed": "71a23fab702247a6b2427cf68a4aa4e7aca8d54d",
+      "source_git_blob_working": "71a23fab702247a6b2427cf68a4aa4e7aca8d54d",
+      "source_matches_commit": true,
+      "source_path": "native/residual_bridge.cpp",
+      "source_sha256": "c76d9aa2859f50b71625acfa061c47ae7a73635e43ce7aba405e15ca6b74be08"
+    }
+  },
+  "output_identity": {
+    "bitstream_identical": true,
+    "container_diff": {
+      "all_diffs_in_header": true,
+      "differing_bytes": 44,
+      "first_cluster_offset": 556,
+      "highest_differing_offset": 480,
+      "size_a": 5400011,
+      "size_b": 5400011,
+      "sizes_equal": true
+    },
+    "container_identical": false,
+    "frames_per_run": 15,
+    "note": "the only byte differences are inside the Matroska header, before the first Cluster, which is where the muxer writes its per-run random SegmentUID; the demuxed AV1 video bitstreams hash equal",
+    "per_run": {
+      "legacy": {
+        "bitstream_sha256": "284cb1be28892778cd6013bf0b75cc27b45231fb1b186e11a050ecba1d8344eb",
+        "bytes": 5400011,
+        "container_sha256": "3757dc44ed793e21c3a9cd67013280bd0d38097ea1bdb84f4118afc24963d638",
+        "matches_the_record": true,
+        "path": "bench_out/ledger_legacy_50_ab-e1r1-legacy.mkv"
+      },
+      "reduced": {
+        "bitstream_sha256": "284cb1be28892778cd6013bf0b75cc27b45231fb1b186e11a050ecba1d8344eb",
+        "bytes": 5400011,
+        "container_sha256": "d0e7bb8d0857552d28ad99f66b73f871be070bf1cc8b023e9ffbdd53afb84d07",
+        "matches_the_record": true,
+        "path": "bench_out/ledger_reduced_50_ab-e1r1-reduced.mkv"
+      }
+    },
+    "record_reproduced": true,
+    "runs_compared": 1,
+    "status": "DONE_PROVEN",
+    "working_scale": 0.5
+  },
+  "performance_statement": {
+    "forbidden_phrases_not_used": [
+      "Performance improved",
+      "Performance regressed",
+      "Performance non-regression proven"
+    ],
+    "value": "NOT_CHARACTERIZED",
+    "why": "§8: this round measured no performance gate. The single 15-frame pair was run for output and counter correctness; its elapsed times are recorded in smoke_export and in the copied pair file, and they are not a measurement of speed - one run of each arm, no counterbalancing, no quiet-window preflight."
+  },
+  "production_code_modified_this_round": false,
+  "production_files_checked": [
+    "pipeline.py",
+    "optical_flow.py",
+    "dlss_service.py",
+    "dlss_engine.py",
+    "residual_native.py",
+    "native/residual_bridge.cpp",
+    "native/residual_bridge.h",
+    "native/nvof_bridge.cpp",
+    "native/nvof_bridge.h"
+  ],
+  "production_files_dirty": [],
+  "purpose": "fast functional-correctness validation of the reduced-transfer path. The 1-3% performance question was removed from acceptance by §14 of the brief, so this file records logic correctness, output correctness, and the transfer counters that say the reduction actually happened.",
+  "round": "D",
+  "smoke_export": {
+    "all_checks_pass": true,
+    "codec": "av1",
+    "crashed": false,
+    "elapsed_sec": 13.561,
+    "executions": 1,
+    "export_completed": true,
+    "fell_back_to_legacy": false,
+    "ffprobe": {
+      "checks": {
+        "duration_within_1pct": true,
+        "fps_matches_source": true,
+        "packets": true,
+        "resolution": true
+      },
+      "codec": "av1",
+      "duration_sec": 0.25,
+      "expected_frames": 15,
+      "fps": 60.0,
+      "height": 2160,
+      "ok": true,
+      "packets": 15,
+      "width": 3840
+    },
+    "fixture": {
+      "path": "bench_out/fixture_4k_300.mp4",
+      "sha256": "1500839c8ef50e2bcd4d8d0c974041af1a17178921213222c78f958208bcca9f"
+    },
+    "frame_count_matches": true,
+    "frames_asked": 15,
+    "frames_recorded": 15,
+    "job_settings": {
+      "flow_engine": "nvof",
+      "flow_quality": "4M",
+      "guidance_mode": 1,
+      "intensity": 1.0,
+      "local_struct": 1.0,
+      "local_tone": 1.0,
+      "multi_pass": 1,
+      "preset": 1,
+      "residual_backend": "native",
+      "residual_pyramid": true,
+      "residual_strength": 1.0,
+      "skin_struct": 1.0,
+      "style": 0,
+      "transfer_mode": "reduced",
+      "ui_correction": 0,
+      "use_auto_mask": 1,
+      "working_scale": 0.5
+    },
+    "residual_backend_actual": "cpu_reference_native",
+    "resolution_matches_fixture_source": true,
+    "transfer_mode_actual": "reduced",
+    "transfer_mode_fallback_reason": null,
+    "transfer_mode_requested": "reduced",
+    "working_dims": [
+      1920,
+      1080
+    ]
+  },
+  "status": {
+    "functional_correctness": "DONE_PROVEN",
+    "output_identity": "DONE_PROVEN",
+    "performance_impact": "NOT_CHARACTERIZED",
+    "transfer_reduction": "DONE_PROVEN"
+  },
+  "time_budget": {
+    "gate_b_seconds": 93.24,
+    "gate_c_seconds": {
+      "legacy": 6.33,
+      "reduced": 13.561
+    },
+    "single_verification_over_two_minutes": "none designed; the unit suite is the existing one and took 93 s",
+    "target_minutes": 5
+  },
+  "transfer_correctness": {
+    "all_facts_pass": true,
+    "brief_section": "6",
+    "counters_are_steady_state_per_frame": true,
+    "facts": [
+      {
+        "counter": "cpu_bgr_to_rgba_calls",
+        "expected": 0,
+        "legacy_control_measured": 2,
+        "measured_reduced": 0,
+        "pass": true
+      },
+      {
+        "counter": "cpu_rgba_to_bgr_calls",
+        "expected": 0,
+        "legacy_control_measured": 1,
+        "measured_reduced": 0,
+        "pass": true
+      },
+      {
+        "counter": "nvof_h2d_bytes_measured",
+        "expected": 6220800,
+        "legacy_control_measured": 8294400,
+        "measured_reduced": 6220800,
+        "pass": true
+      },
+      {
+        "counter": "nvof_h2d_copy_count",
+        "expected": 1,
+        "legacy_control_measured": 1,
+        "measured_reduced": 1,
+        "pass": true
+      },
+      {
+        "counter": "nvof_d2h_bytes_measured",
+        "expected": 16588800,
+        "legacy_control_measured": 16588800,
+        "measured_reduced": 16588800,
+        "pass": true
+      },
+      {
+        "counter": "cpu_previous_frame_copy_bytes",
+        "expected": 0,
+        "legacy_control_measured": 0,
+        "measured_reduced": 0,
+        "pass": true
+      },
+      {
+        "counter": "decoder_pipe_bytes",
+        "expected": 12441600,
+        "legacy_control_measured": 12441600,
+        "measured_reduced": 12441600,
+        "pass": true
+      },
+      {
+        "counter": "encoder_pipe_bytes",
+        "expected": 24883200,
+        "legacy_control_measured": 24883200,
+        "measured_reduced": 24883200,
+        "pass": true
+      }
+    ],
+    "nvof_bgr_input_call_count_delta_reduced": 1,
+    "nvof_input_convert_launch_count_delta_reduced": 1,
+    "nvof_input_format_legacy_control": [
+      "rgba8_host"
+    ],
+    "nvof_input_format_reduced": [
+      "bgr24_host"
+    ],
+    "per_conversion_sites_pass": true,
+    "reduced_cpu_side_counters": {
+      "cpu_bgr_to_rgba@dlss_input_calls": 0,
+      "cpu_bgr_to_rgba@nvof_input_calls": 0,
+      "cpu_bgr_to_rgba_calls": 0,
+      "cpu_color_conversion_output_bytes": 0,
+      "cpu_previous_frame_copy_bytes": 0,
+      "cpu_rgba_to_bgr@residual_input_calls": 0,
+      "cpu_rgba_to_bgr_calls": 0
+    },
+    "reduction_shown_by": {
+      "cpu_color_conversion_calls": {
+        "legacy": 2,
+        "reduced": 0
+      },
+      "note": "the two pipe numbers and the NVOF D2H number are equal across the arms by design - §6 lists them as invariants the reduction must not disturb, so they are reported as unchanged rather than as a reduction",
+      "nvof_h2d_bytes_per_frame": {
+        "bytes_saved_per_frame": 2073600,
+        "legacy": 8294400,
+        "reduced": 6220800
+      }
+    }
+  },
+  "working_tree_clean_for_tracked_files": true
+}

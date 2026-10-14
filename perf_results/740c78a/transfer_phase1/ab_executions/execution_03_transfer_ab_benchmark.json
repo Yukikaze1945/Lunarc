@@ -1,0 +1,1509 @@
+{
+  "bytes_saved_per_steady_frame": {
+    "cpu_bgr_to_rgba_calls_per_frame": {
+      "legacy": 2,
+      "reduced": 0,
+      "saved": 2,
+      "saved_percent": 100.0
+    },
+    "cpu_color_conversion_output": {
+      "legacy": 22809600,
+      "reduced": 0,
+      "saved": 22809600,
+      "saved_percent": 100.0
+    },
+    "cpu_rgba_to_bgr_calls_per_frame": {
+      "legacy": 1,
+      "reduced": 0,
+      "saved": 1,
+      "saved_percent": 100.0
+    },
+    "decoder_pipe_unchanged": {
+      "legacy": 12441600,
+      "reduced": 12441600
+    },
+    "encoder_pipe_unchanged": {
+      "legacy": 24883200,
+      "reduced": 24883200
+    },
+    "nvof_d2h_download_unchanged": {
+      "legacy": 16588800,
+      "reduced": 16588800
+    },
+    "nvof_h2d_upload": {
+      "legacy": 8294400,
+      "reduced": 6220800,
+      "saved": 2073600,
+      "saved_percent": 25.0
+    }
+  },
+  "child_failures": [],
+  "code_under_test": "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee",
+  "commit_subject": "test(transfer): gate the performance verdict on the question \u640244 asks",
+  "configuration": {
+    "encoder_cq": 18,
+    "fixture": {
+      "fps": 60.0,
+      "height": 2160,
+      "path": "bench_out/fixture_4k_300.mp4",
+      "sha256": "1500839c8ef50e2bcd4d8d0c974041af1a17178921213222c78f958208bcca9f",
+      "width": 3840
+    },
+    "flow_engine": "nvof",
+    "flow_preset": "4M",
+    "frames_per_run": 60,
+    "identical_across_orders": "fixture, frame count, working scale, NVOF grid and preset, DLSS options, depth convention, encoder, CQ and output resolution; only transfer_mode differs",
+    "output_resolution": [
+      3840,
+      2160
+    ],
+    "runs_dropped_before_medians": 1,
+    "runs_interleaved": true,
+    "runs_per_mode": 3,
+    "working_scale": 0.5
+  },
+  "counter_keys": [
+    "cpu_bgr_to_rgba_calls",
+    "cpu_rgba_to_bgr_calls",
+    "cpu_bgr_to_rgba@dlss_input_calls",
+    "cpu_bgr_to_rgba@nvof_input_calls",
+    "cpu_rgba_to_bgr@residual_input_calls",
+    "cpu_color_conversion_output_bytes",
+    "nvof_h2d_bytes_measured",
+    "nvof_h2d_copy_count",
+    "nvof_d2h_bytes_measured",
+    "nvof_d2h_copy_count",
+    "cpu_previous_frame_copy_bytes",
+    "encoder_pipe_bytes",
+    "decoder_pipe_bytes",
+    "nvof_bgr_staging_alloc_count_delta",
+    "nvof_bgr_input_call_count_delta",
+    "nvof_input_convert_launch_count_delta"
+  ],
+  "fps": {
+    "legacy": 7.1861,
+    "reduced": 7.6139
+  },
+  "gates": {
+    "copy_gate": [
+      {
+        "actual": [
+          "reduced"
+        ],
+        "expected": [
+          "reduced"
+        ],
+        "ok": true,
+        "what": "transfer_mode_actual_is_what_was_asked"
+      },
+      {
+        "actual": [
+          "legacy"
+        ],
+        "expected": [
+          "legacy"
+        ],
+        "ok": true,
+        "what": "legacy_requested_legacy_and_got_it"
+      },
+      {
+        "actual": 0,
+        "expected": 0,
+        "ok": true,
+        "what": "cpu_bgr_to_rgba_calls"
+      },
+      {
+        "actual": 0,
+        "expected": 0,
+        "ok": true,
+        "what": "cpu_rgba_to_bgr_calls"
+      },
+      {
+        "actual": 0,
+        "expected": 0,
+        "ok": true,
+        "what": "cpu_bgr_to_rgba_at_dlss_input"
+      },
+      {
+        "actual": 0,
+        "expected": 0,
+        "ok": true,
+        "what": "cpu_bgr_to_rgba_at_nvof_input"
+      },
+      {
+        "actual": 0,
+        "expected": 0,
+        "ok": true,
+        "what": "cpu_rgba_to_bgr_at_residual_input"
+      },
+      {
+        "actual": 6220800,
+        "expected": 6220800,
+        "ok": true,
+        "what": "nvof_h2d_bytes_per_steady_frame"
+      },
+      {
+        "actual": 1,
+        "expected": 1,
+        "ok": true,
+        "what": "nvof_h2d_copy_count_per_steady_frame"
+      },
+      {
+        "actual": 16588800,
+        "expected": 16588800,
+        "ok": true,
+        "what": "nvof_d2h_bytes_per_steady_frame"
+      },
+      {
+        "actual": [
+          "bgr24_host"
+        ],
+        "expected": [
+          "bgr24_host"
+        ],
+        "ok": true,
+        "what": "nvof_input_format"
+      },
+      {
+        "actual": 0,
+        "expected": 0,
+        "ok": true,
+        "what": "cpu_previous_frame_copy_bytes"
+      },
+      {
+        "actual": 0,
+        "expected": 0,
+        "ok": true,
+        "what": "nvof_bgr_staging_allocations_per_frame"
+      },
+      {
+        "actual": 1,
+        "expected": 1,
+        "ok": true,
+        "what": "nvof_bgr_input_calls_per_frame"
+      },
+      {
+        "actual": 1,
+        "expected": 1,
+        "ok": true,
+        "what": "nvof_input_convert_launches_per_frame"
+      },
+      {
+        "actual": 2,
+        "expected": 2,
+        "ok": true,
+        "what": "legacy_control_cpu_bgr_to_rgba_calls"
+      },
+      {
+        "actual": 1,
+        "expected": 1,
+        "ok": true,
+        "what": "legacy_control_cpu_rgba_to_bgr_calls"
+      },
+      {
+        "actual": 8294400,
+        "expected": 8294400,
+        "ok": true,
+        "what": "legacy_control_nvof_h2d_bytes"
+      },
+      {
+        "actual": 1,
+        "expected": 1,
+        "ok": true,
+        "what": "legacy_control_nvof_h2d_copy_count"
+      },
+      {
+        "actual": 16588800,
+        "expected": 16588800,
+        "ok": true,
+        "what": "legacy_control_nvof_d2h_bytes"
+      },
+      {
+        "actual": [
+          "rgba8_host"
+        ],
+        "expected": [
+          "rgba8_host"
+        ],
+        "ok": true,
+        "what": "legacy_control_nvof_input_format"
+      }
+    ],
+    "output_integrity_gate": [
+      {
+        "actual": true,
+        "expected": true,
+        "ok": true,
+        "what": "legacy run 1 ffprobe reports a complete stream"
+      },
+      {
+        "actual": true,
+        "expected": true,
+        "ok": true,
+        "what": "legacy run 2 ffprobe reports a complete stream"
+      },
+      {
+        "actual": true,
+        "expected": true,
+        "ok": true,
+        "what": "legacy run 3 ffprobe reports a complete stream"
+      },
+      {
+        "actual": true,
+        "expected": true,
+        "ok": true,
+        "what": "reduced run 1 ffprobe reports a complete stream"
+      },
+      {
+        "actual": true,
+        "expected": true,
+        "ok": true,
+        "what": "reduced run 2 ffprobe reports a complete stream"
+      },
+      {
+        "actual": true,
+        "expected": true,
+        "ok": true,
+        "what": "reduced run 3 ffprobe reports a complete stream"
+      },
+      {
+        "actual": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+        "expected": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+        "ok": true,
+        "what": "run 1 video bitstream bit-identical between orders"
+      },
+      {
+        "actual": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+        "expected": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+        "ok": true,
+        "what": "run 2 video bitstream bit-identical between orders"
+      },
+      {
+        "actual": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+        "expected": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+        "ok": true,
+        "what": "run 3 video bitstream bit-identical between orders"
+      },
+      {
+        "actual": true,
+        "expected": true,
+        "ok": true,
+        "what": "one_bitstream_hash_across_every_run_of_both_orders"
+      }
+    ],
+    "performance_gate": [
+      {
+        "actual": true,
+        "expected": true,
+        "ok": true,
+        "what": "reduced_median_fps_at_least_legacy"
+      }
+    ]
+  },
+  "generated_by": "tests/unit/collect_transfer_ab.py",
+  "measurement_rules": {
+    "counters": "median over the frames after the first of each kept run, then median across those runs; the reset frame uploads twice and is excluded",
+    "fps": "frames recorded divided by the wall clock of export_dlss_stream() alone, the same window tests/unit/benchmark_e2e.py times, so the figures can be read against the recorded 5.164 and 7.247 FPS baselines. Session creation happens before the window opens and is not in either number.",
+    "spans": "p50 and p95 of every frame record of the kept runs, in ms",
+    "unavailable": "None means the run did not measure it; 0 means it measured zero"
+  },
+  "modes": {
+    "legacy": {
+      "fallback_reasons": [
+        "requested_legacy"
+      ],
+      "fps_of_every_run": {
+        "1": 7.3017,
+        "2": 7.1379,
+        "3": 7.2343
+      },
+      "median_fps": 7.1861,
+      "negotiated_modes": [
+        "legacy"
+      ],
+      "runs": [
+        {
+          "elapsed_sec": 8.217,
+          "ffprobe": {
+            "checks": {
+              "duration_within_1pct": true,
+              "fps_matches_source": true,
+              "packets": true,
+              "resolution": true
+            },
+            "codec": "av1",
+            "duration_sec": 1.0,
+            "expected_frames": 60,
+            "fps": 60.0,
+            "height": 2160,
+            "ok": true,
+            "packets": 60,
+            "width": 3840
+          },
+          "fixture": {
+            "path": "bench_out/fixture_4k_300.mp4",
+            "sha256": "1500839c8ef50e2bcd4d8d0c974041af1a17178921213222c78f958208bcca9f"
+          },
+          "fps": 7.3017,
+          "frames_recorded": 60,
+          "job_settings": {
+            "flow_engine": "nvof",
+            "flow_quality": "4M",
+            "guidance_mode": 1,
+            "intensity": 1.0,
+            "local_struct": 1.0,
+            "local_tone": 1.0,
+            "multi_pass": 1,
+            "preset": 1,
+            "residual_backend": "native",
+            "residual_pyramid": true,
+            "residual_strength": 1.0,
+            "skin_struct": 1.0,
+            "style": 0,
+            "transfer_mode": "legacy",
+            "ui_correction": 0,
+            "use_auto_mask": 1,
+            "working_scale": 0.5
+          },
+          "mode": "legacy",
+          "output": {
+            "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+            "bytes": 16577619,
+            "path": "ledger_legacy_50_ab1.mkv",
+            "sha256": "e25d6c87b4b04ac5662aedf900393b1b6384627079afafa9e98a9d2d0d5f5b44"
+          },
+          "output_path": "bench_out/ledger_legacy_50_ab1.mkv",
+          "pipeline_reported_fps": 8.1107,
+          "residual_backend_actual": "cpu_reference_native",
+          "run": 1,
+          "spans_ms": {
+            "dlss_process": {
+              "max": 53.4281,
+              "mean": 38.1265,
+              "min": 32.272,
+              "p50": 37.5784,
+              "p95": 43.8894
+            },
+            "frame_total": {
+              "max": 296.4755,
+              "mean": 110.8362,
+              "min": 93.283,
+              "p50": 103.7502,
+              "p95": 127.3395
+            },
+            "guidance_total": {
+              "max": 133.1325,
+              "mean": 9.9874,
+              "min": 6.2873,
+              "p50": 7.532,
+              "p95": 10.5665
+            },
+            "nvof_download_ms": {
+              "max": 6.9515,
+              "mean": 2.8331,
+              "min": 2.1162,
+              "p50": 2.5292,
+              "p95": 4.5232
+            },
+            "nvof_postprocess_wait_inclusive_ms": {
+              "max": 2.5616,
+              "mean": 1.0241,
+              "min": 0.7571,
+              "p50": 0.8894,
+              "p95": 2.323
+            },
+            "nvof_upload_ms": {
+              "max": 1.9549,
+              "mean": 1.3504,
+              "min": 0.9233,
+              "p50": 1.3177,
+              "p95": 1.8609
+            },
+            "pipe_write": {
+              "max": 201.4532,
+              "mean": 11.7414,
+              "min": 6.5742,
+              "p50": 7.9176,
+              "p95": 13.7688
+            },
+            "residual_pyramid": {
+              "max": 45.5649,
+              "mean": 32.1521,
+              "min": 26.1772,
+              "p50": 31.3507,
+              "p95": 39.4987
+            },
+            "working_color_prepare_ms": {
+              "max": 24.6942,
+              "mean": 18.3956,
+              "min": 15.2173,
+              "p50": 18.0135,
+              "p95": 23.4439
+            }
+          },
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 1,
+            "cpu_bgr_to_rgba@nvof_input_calls": 1,
+            "cpu_bgr_to_rgba_calls": 2,
+            "cpu_color_conversion_output_bytes": 22809600,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 1,
+            "cpu_rgba_to_bgr_calls": 1,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 0,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 8294400,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 0,
+            "nvof_input_format": [
+              "rgba8_host"
+            ]
+          },
+          "transfer_mode_actual": "legacy",
+          "transfer_mode_fallback_reason": "requested_legacy",
+          "transfer_mode_requested": "legacy",
+          "working_dims": [
+            1920,
+            1080
+          ]
+        },
+        {
+          "elapsed_sec": 8.406,
+          "ffprobe": {
+            "checks": {
+              "duration_within_1pct": true,
+              "fps_matches_source": true,
+              "packets": true,
+              "resolution": true
+            },
+            "codec": "av1",
+            "duration_sec": 1.0,
+            "expected_frames": 60,
+            "fps": 60.0,
+            "height": 2160,
+            "ok": true,
+            "packets": 60,
+            "width": 3840
+          },
+          "fixture": {
+            "path": "bench_out/fixture_4k_300.mp4",
+            "sha256": "1500839c8ef50e2bcd4d8d0c974041af1a17178921213222c78f958208bcca9f"
+          },
+          "fps": 7.1379,
+          "frames_recorded": 60,
+          "job_settings": {
+            "flow_engine": "nvof",
+            "flow_quality": "4M",
+            "guidance_mode": 1,
+            "intensity": 1.0,
+            "local_struct": 1.0,
+            "local_tone": 1.0,
+            "multi_pass": 1,
+            "preset": 1,
+            "residual_backend": "native",
+            "residual_pyramid": true,
+            "residual_strength": 1.0,
+            "skin_struct": 1.0,
+            "style": 0,
+            "transfer_mode": "legacy",
+            "ui_correction": 0,
+            "use_auto_mask": 1,
+            "working_scale": 0.5
+          },
+          "mode": "legacy",
+          "output": {
+            "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+            "bytes": 16577619,
+            "path": "ledger_legacy_50_ab2.mkv",
+            "sha256": "3b9650e9ca9d77a4fd3177bafe464ce3736b58631e30c0269befc679d322a761"
+          },
+          "output_path": "bench_out/ledger_legacy_50_ab2.mkv",
+          "pipeline_reported_fps": 7.9015,
+          "residual_backend_actual": "cpu_reference_native",
+          "run": 2,
+          "spans_ms": {
+            "dlss_process": {
+              "max": 63.1481,
+              "mean": 38.5859,
+              "min": 31.859,
+              "p50": 37.0744,
+              "p95": 53.1958
+            },
+            "frame_total": {
+              "max": 292.9993,
+              "mean": 111.9494,
+              "min": 87.9197,
+              "p50": 104.1825,
+              "p95": 143.4386
+            },
+            "guidance_total": {
+              "max": 148.1634,
+              "mean": 10.5328,
+              "min": 6.4142,
+              "p50": 7.6322,
+              "p95": 11.1922
+            },
+            "nvof_download_ms": {
+              "max": 6.7635,
+              "mean": 2.8553,
+              "min": 2.1276,
+              "p50": 2.5941,
+              "p95": 4.1774
+            },
+            "nvof_postprocess_wait_inclusive_ms": {
+              "max": 2.5447,
+              "mean": 1.0453,
+              "min": 0.7749,
+              "p50": 0.8845,
+              "p95": 2.2183
+            },
+            "nvof_upload_ms": {
+              "max": 5.3567,
+              "mean": 1.394,
+              "min": 0.9403,
+              "p50": 1.2738,
+              "p95": 1.8727
+            },
+            "pipe_write": {
+              "max": 188.7069,
+              "mean": 11.3826,
+              "min": 6.5111,
+              "p50": 7.9573,
+              "p95": 12.5194
+            },
+            "residual_pyramid": {
+              "max": 47.323,
+              "mean": 31.9671,
+              "min": 25.2028,
+              "p50": 31.2281,
+              "p95": 39.1336
+            },
+            "working_color_prepare_ms": {
+              "max": 31.8324,
+              "mean": 18.6874,
+              "min": 14.8781,
+              "p50": 17.4598,
+              "p95": 26.1967
+            }
+          },
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 1,
+            "cpu_bgr_to_rgba@nvof_input_calls": 1,
+            "cpu_bgr_to_rgba_calls": 2,
+            "cpu_color_conversion_output_bytes": 22809600,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 1,
+            "cpu_rgba_to_bgr_calls": 1,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 0,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 8294400,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 0,
+            "nvof_input_format": [
+              "rgba8_host"
+            ]
+          },
+          "transfer_mode_actual": "legacy",
+          "transfer_mode_fallback_reason": "requested_legacy",
+          "transfer_mode_requested": "legacy",
+          "working_dims": [
+            1920,
+            1080
+          ]
+        },
+        {
+          "elapsed_sec": 8.294,
+          "ffprobe": {
+            "checks": {
+              "duration_within_1pct": true,
+              "fps_matches_source": true,
+              "packets": true,
+              "resolution": true
+            },
+            "codec": "av1",
+            "duration_sec": 1.0,
+            "expected_frames": 60,
+            "fps": 60.0,
+            "height": 2160,
+            "ok": true,
+            "packets": 60,
+            "width": 3840
+          },
+          "fixture": {
+            "path": "bench_out/fixture_4k_300.mp4",
+            "sha256": "1500839c8ef50e2bcd4d8d0c974041af1a17178921213222c78f958208bcca9f"
+          },
+          "fps": 7.2343,
+          "frames_recorded": 60,
+          "job_settings": {
+            "flow_engine": "nvof",
+            "flow_quality": "4M",
+            "guidance_mode": 1,
+            "intensity": 1.0,
+            "local_struct": 1.0,
+            "local_tone": 1.0,
+            "multi_pass": 1,
+            "preset": 1,
+            "residual_backend": "native",
+            "residual_pyramid": true,
+            "residual_strength": 1.0,
+            "skin_struct": 1.0,
+            "style": 0,
+            "transfer_mode": "legacy",
+            "ui_correction": 0,
+            "use_auto_mask": 1,
+            "working_scale": 0.5
+          },
+          "mode": "legacy",
+          "output": {
+            "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+            "bytes": 16577619,
+            "path": "ledger_legacy_50_ab3.mkv",
+            "sha256": "a5d1d89acf98b2a4dcff5e241cd48a803ddb3633216e4cd5b268093072213d6d"
+          },
+          "output_path": "bench_out/ledger_legacy_50_ab3.mkv",
+          "pipeline_reported_fps": 8.011,
+          "residual_backend_actual": "cpu_reference_native",
+          "run": 3,
+          "spans_ms": {
+            "dlss_process": {
+              "max": 50.698,
+              "mean": 37.2886,
+              "min": 32.4208,
+              "p50": 36.5195,
+              "p95": 47.8683
+            },
+            "frame_total": {
+              "max": 325.8334,
+              "mean": 110.995,
+              "min": 92.6407,
+              "p50": 102.8239,
+              "p95": 128.15
+            },
+            "guidance_total": {
+              "max": 138.8286,
+              "mean": 10.2355,
+              "min": 6.4241,
+              "p50": 7.7622,
+              "p95": 10.48
+            },
+            "nvof_download_ms": {
+              "max": 4.9129,
+              "mean": 2.804,
+              "min": 2.0332,
+              "p50": 2.6392,
+              "p95": 4.1294
+            },
+            "nvof_postprocess_wait_inclusive_ms": {
+              "max": 2.6122,
+              "mean": 1.1035,
+              "min": 0.7902,
+              "p50": 0.8812,
+              "p95": 2.4795
+            },
+            "nvof_upload_ms": {
+              "max": 2.2216,
+              "mean": 1.3212,
+              "min": 1.0292,
+              "p50": 1.2439,
+              "p95": 1.8421
+            },
+            "pipe_write": {
+              "max": 203.7243,
+              "mean": 11.6568,
+              "min": 6.5135,
+              "p50": 8.0419,
+              "p95": 11.4873
+            },
+            "residual_pyramid": {
+              "max": 44.5933,
+              "mean": 32.6027,
+              "min": 25.0058,
+              "p50": 31.3388,
+              "p95": 42.9935
+            },
+            "working_color_prepare_ms": {
+              "max": 27.8801,
+              "mean": 18.344,
+              "min": 15.713,
+              "p50": 17.7401,
+              "p95": 23.1961
+            }
+          },
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 1,
+            "cpu_bgr_to_rgba@nvof_input_calls": 1,
+            "cpu_bgr_to_rgba_calls": 2,
+            "cpu_color_conversion_output_bytes": 22809600,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 1,
+            "cpu_rgba_to_bgr_calls": 1,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 0,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 8294400,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 0,
+            "nvof_input_format": [
+              "rgba8_host"
+            ]
+          },
+          "transfer_mode_actual": "legacy",
+          "transfer_mode_fallback_reason": "requested_legacy",
+          "transfer_mode_requested": "legacy",
+          "working_dims": [
+            1920,
+            1080
+          ]
+        }
+      ],
+      "runs_used_for_medians": [
+        2,
+        3
+      ],
+      "spans_ms": {
+        "dlss_process_p50_ms": 36.7969,
+        "dlss_process_p95_ms": 50.532,
+        "frame_total_p50_ms": 103.5032,
+        "frame_total_p95_ms": 135.7943,
+        "guidance_total_p50_ms": 7.6972,
+        "guidance_total_p95_ms": 10.8361,
+        "nvof_download_ms_p50_ms": 2.6166,
+        "nvof_download_ms_p95_ms": 4.1534,
+        "nvof_input_convert_wait_ms_p50_ms": null,
+        "nvof_input_convert_wait_ms_p95_ms": null,
+        "nvof_postprocess_wait_inclusive_ms_p50_ms": 0.8828,
+        "nvof_postprocess_wait_inclusive_ms_p95_ms": 2.3489,
+        "nvof_upload_ms_p50_ms": 1.2589,
+        "nvof_upload_ms_p95_ms": 1.8574,
+        "pipe_write_p50_ms": 7.9996,
+        "pipe_write_p95_ms": 12.0033,
+        "residual_pyramid_p50_ms": 31.2835,
+        "residual_pyramid_p95_ms": 41.0635,
+        "working_color_prepare_ms_p50_ms": 17.5999,
+        "working_color_prepare_ms_p95_ms": 24.6964
+      },
+      "steady_state_counters": {
+        "cpu_bgr_to_rgba@dlss_input_calls": 1,
+        "cpu_bgr_to_rgba@nvof_input_calls": 1,
+        "cpu_bgr_to_rgba_calls": 2,
+        "cpu_color_conversion_output_bytes": 22809600,
+        "cpu_previous_frame_copy_bytes": 0,
+        "cpu_rgba_to_bgr@residual_input_calls": 1,
+        "cpu_rgba_to_bgr_calls": 1,
+        "decoder_pipe_bytes": 12441600,
+        "encoder_pipe_bytes": 24883200,
+        "nvof_bgr_input_call_count_delta": 0,
+        "nvof_bgr_staging_alloc_count_delta": 0,
+        "nvof_d2h_bytes_measured": 16588800,
+        "nvof_d2h_copy_count": 1,
+        "nvof_h2d_bytes_measured": 8294400,
+        "nvof_h2d_copy_count": 1,
+        "nvof_input_convert_launch_count_delta": 0
+      }
+    },
+    "reduced": {
+      "fallback_reasons": [
+        "None"
+      ],
+      "fps_of_every_run": {
+        "1": 7.2123,
+        "2": 7.7141,
+        "3": 7.5136
+      },
+      "median_fps": 7.6139,
+      "negotiated_modes": [
+        "reduced"
+      ],
+      "runs": [
+        {
+          "elapsed_sec": 8.319,
+          "ffprobe": {
+            "checks": {
+              "duration_within_1pct": true,
+              "fps_matches_source": true,
+              "packets": true,
+              "resolution": true
+            },
+            "codec": "av1",
+            "duration_sec": 1.0,
+            "expected_frames": 60,
+            "fps": 60.0,
+            "height": 2160,
+            "ok": true,
+            "packets": 60,
+            "width": 3840
+          },
+          "fixture": {
+            "path": "bench_out/fixture_4k_300.mp4",
+            "sha256": "1500839c8ef50e2bcd4d8d0c974041af1a17178921213222c78f958208bcca9f"
+          },
+          "fps": 7.2123,
+          "frames_recorded": 60,
+          "job_settings": {
+            "flow_engine": "nvof",
+            "flow_quality": "4M",
+            "guidance_mode": 1,
+            "intensity": 1.0,
+            "local_struct": 1.0,
+            "local_tone": 1.0,
+            "multi_pass": 1,
+            "preset": 1,
+            "residual_backend": "native",
+            "residual_pyramid": true,
+            "residual_strength": 1.0,
+            "skin_struct": 1.0,
+            "style": 0,
+            "transfer_mode": "reduced",
+            "ui_correction": 0,
+            "use_auto_mask": 1,
+            "working_scale": 0.5
+          },
+          "mode": "reduced",
+          "output": {
+            "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+            "bytes": 16577619,
+            "path": "ledger_reduced_50_ab1.mkv",
+            "sha256": "91782e0e60ef1d23d74774b2e1912e94919a40440547998fbbaca337eae983b5"
+          },
+          "output_path": "bench_out/ledger_reduced_50_ab1.mkv",
+          "pipeline_reported_fps": 8.0279,
+          "residual_backend_actual": "cpu_reference_native",
+          "run": 1,
+          "spans_ms": {
+            "dlss_process": {
+              "max": 48.1203,
+              "mean": 37.6928,
+              "min": 32.3172,
+              "p50": 37.3464,
+              "p95": 45.5212
+            },
+            "frame_total": {
+              "max": 300.2584,
+              "mean": 111.424,
+              "min": 86.0963,
+              "p50": 105.0874,
+              "p95": 123.3214
+            },
+            "guidance_total": {
+              "max": 130.1025,
+              "mean": 8.4587,
+              "min": 5.0039,
+              "p50": 6.1287,
+              "p95": 8.9092
+            },
+            "nvof_download_ms": {
+              "max": 5.5479,
+              "mean": 2.6677,
+              "min": 2.0504,
+              "p50": 2.4975,
+              "p95": 3.8262
+            },
+            "nvof_input_convert_wait_ms": {
+              "max": 1.7814,
+              "mean": 0.2911,
+              "min": 0.1782,
+              "p50": 0.2303,
+              "p95": 0.4715
+            },
+            "nvof_postprocess_wait_inclusive_ms": {
+              "max": 2.6128,
+              "mean": 0.9312,
+              "min": 0.7735,
+              "p50": 0.8672,
+              "p95": 1.0294
+            },
+            "nvof_upload_ms": {
+              "max": 2.5973,
+              "mean": 1.207,
+              "min": 0.7901,
+              "p50": 1.0861,
+              "p95": 1.9538
+            },
+            "pipe_write": {
+              "max": 200.4118,
+              "mean": 12.2939,
+              "min": 6.56,
+              "p50": 8.3818,
+              "p95": 16.8263
+            },
+            "residual_pyramid": {
+              "max": 42.0156,
+              "mean": 32.2438,
+              "min": 24.5843,
+              "p50": 31.769,
+              "p95": 37.9229
+            },
+            "working_color_prepare_ms": {
+              "max": 32.3139,
+              "mean": 20.324,
+              "min": 16.1757,
+              "p50": 18.8981,
+              "p95": 26.9211
+            }
+          },
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 0,
+            "cpu_bgr_to_rgba@nvof_input_calls": 0,
+            "cpu_bgr_to_rgba_calls": 0,
+            "cpu_color_conversion_output_bytes": 0,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 0,
+            "cpu_rgba_to_bgr_calls": 0,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 1,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 6220800,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 1,
+            "nvof_input_format": [
+              "bgr24_host"
+            ]
+          },
+          "transfer_mode_actual": "reduced",
+          "transfer_mode_fallback_reason": null,
+          "transfer_mode_requested": "reduced",
+          "working_dims": [
+            1920,
+            1080
+          ]
+        },
+        {
+          "elapsed_sec": 7.778,
+          "ffprobe": {
+            "checks": {
+              "duration_within_1pct": true,
+              "fps_matches_source": true,
+              "packets": true,
+              "resolution": true
+            },
+            "codec": "av1",
+            "duration_sec": 1.0,
+            "expected_frames": 60,
+            "fps": 60.0,
+            "height": 2160,
+            "ok": true,
+            "packets": 60,
+            "width": 3840
+          },
+          "fixture": {
+            "path": "bench_out/fixture_4k_300.mp4",
+            "sha256": "1500839c8ef50e2bcd4d8d0c974041af1a17178921213222c78f958208bcca9f"
+          },
+          "fps": 7.7141,
+          "frames_recorded": 60,
+          "job_settings": {
+            "flow_engine": "nvof",
+            "flow_quality": "4M",
+            "guidance_mode": 1,
+            "intensity": 1.0,
+            "local_struct": 1.0,
+            "local_tone": 1.0,
+            "multi_pass": 1,
+            "preset": 1,
+            "residual_backend": "native",
+            "residual_pyramid": true,
+            "residual_strength": 1.0,
+            "skin_struct": 1.0,
+            "style": 0,
+            "transfer_mode": "reduced",
+            "ui_correction": 0,
+            "use_auto_mask": 1,
+            "working_scale": 0.5
+          },
+          "mode": "reduced",
+          "output": {
+            "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+            "bytes": 16577619,
+            "path": "ledger_reduced_50_ab2.mkv",
+            "sha256": "3d10d7ec5f6551502b9bfa4edcf058d3672c38d8a72e3514e80761622146dfe7"
+          },
+          "output_path": "bench_out/ledger_reduced_50_ab2.mkv",
+          "pipeline_reported_fps": 8.5832,
+          "residual_backend_actual": "cpu_reference_native",
+          "run": 2,
+          "spans_ms": {
+            "dlss_process": {
+              "max": 50.5699,
+              "mean": 36.6241,
+              "min": 31.9746,
+              "p50": 36.1013,
+              "p95": 42.6562
+            },
+            "frame_total": {
+              "max": 290.4424,
+              "mean": 103.5737,
+              "min": 89.7282,
+              "p50": 96.8331,
+              "p95": 114.9689
+            },
+            "guidance_total": {
+              "max": 133.1341,
+              "mean": 7.9303,
+              "min": 4.7443,
+              "p50": 5.625,
+              "p95": 7.406
+            },
+            "nvof_download_ms": {
+              "max": 6.7028,
+              "mean": 2.5136,
+              "min": 1.9847,
+              "p50": 2.3136,
+              "p95": 3.5749
+            },
+            "nvof_input_convert_wait_ms": {
+              "max": 0.3333,
+              "mean": 0.222,
+              "min": 0.1591,
+              "p50": 0.2192,
+              "p95": 0.2663
+            },
+            "nvof_postprocess_wait_inclusive_ms": {
+              "max": 1.8429,
+              "mean": 0.9009,
+              "min": 0.7669,
+              "p50": 0.8683,
+              "p95": 1.0383
+            },
+            "nvof_upload_ms": {
+              "max": 2.127,
+              "mean": 1.0068,
+              "min": 0.6778,
+              "p50": 0.8918,
+              "p95": 1.7348
+            },
+            "pipe_write": {
+              "max": 198.5954,
+              "mean": 11.1238,
+              "min": 6.4307,
+              "p50": 7.4073,
+              "p95": 12.2003
+            },
+            "residual_pyramid": {
+              "max": 34.6057,
+              "mean": 29.3463,
+              "min": 24.7225,
+              "p50": 29.0726,
+              "p95": 32.3796
+            },
+            "working_color_prepare_ms": {
+              "max": 28.4624,
+              "mean": 17.8833,
+              "min": 15.677,
+              "p50": 17.5579,
+              "p95": 20.1511
+            }
+          },
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 0,
+            "cpu_bgr_to_rgba@nvof_input_calls": 0,
+            "cpu_bgr_to_rgba_calls": 0,
+            "cpu_color_conversion_output_bytes": 0,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 0,
+            "cpu_rgba_to_bgr_calls": 0,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 1,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 6220800,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 1,
+            "nvof_input_format": [
+              "bgr24_host"
+            ]
+          },
+          "transfer_mode_actual": "reduced",
+          "transfer_mode_fallback_reason": null,
+          "transfer_mode_requested": "reduced",
+          "working_dims": [
+            1920,
+            1080
+          ]
+        },
+        {
+          "elapsed_sec": 7.986,
+          "ffprobe": {
+            "checks": {
+              "duration_within_1pct": true,
+              "fps_matches_source": true,
+              "packets": true,
+              "resolution": true
+            },
+            "codec": "av1",
+            "duration_sec": 1.0,
+            "expected_frames": 60,
+            "fps": 60.0,
+            "height": 2160,
+            "ok": true,
+            "packets": 60,
+            "width": 3840
+          },
+          "fixture": {
+            "path": "bench_out/fixture_4k_300.mp4",
+            "sha256": "1500839c8ef50e2bcd4d8d0c974041af1a17178921213222c78f958208bcca9f"
+          },
+          "fps": 7.5136,
+          "frames_recorded": 60,
+          "job_settings": {
+            "flow_engine": "nvof",
+            "flow_quality": "4M",
+            "guidance_mode": 1,
+            "intensity": 1.0,
+            "local_struct": 1.0,
+            "local_tone": 1.0,
+            "multi_pass": 1,
+            "preset": 1,
+            "residual_backend": "native",
+            "residual_pyramid": true,
+            "residual_strength": 1.0,
+            "skin_struct": 1.0,
+            "style": 0,
+            "transfer_mode": "reduced",
+            "ui_correction": 0,
+            "use_auto_mask": 1,
+            "working_scale": 0.5
+          },
+          "mode": "reduced",
+          "output": {
+            "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+            "bytes": 16577619,
+            "path": "ledger_reduced_50_ab3.mkv",
+            "sha256": "5166cbae11968176aea04dd0b0fc191f2b55bb0604a18e7b7a2b936de21c74f2"
+          },
+          "output_path": "bench_out/ledger_reduced_50_ab3.mkv",
+          "pipeline_reported_fps": 8.345,
+          "residual_backend_actual": "cpu_reference_native",
+          "run": 3,
+          "spans_ms": {
+            "dlss_process": {
+              "max": 51.5019,
+              "mean": 37.4393,
+              "min": 31.6142,
+              "p50": 37.0058,
+              "p95": 45.8844
+            },
+            "frame_total": {
+              "max": 299.4748,
+              "mean": 106.5264,
+              "min": 89.7139,
+              "p50": 99.7345,
+              "p95": 120.2175
+            },
+            "guidance_total": {
+              "max": 114.1949,
+              "mean": 7.9851,
+              "min": 4.7824,
+              "p50": 5.8583,
+              "p95": 8.9122
+            },
+            "nvof_download_ms": {
+              "max": 4.6609,
+              "mean": 2.6468,
+              "min": 1.9524,
+              "p50": 2.461,
+              "p95": 4.2672
+            },
+            "nvof_input_convert_wait_ms": {
+              "max": 0.8771,
+              "mean": 0.2451,
+              "min": 0.1954,
+              "p50": 0.2255,
+              "p95": 0.2775
+            },
+            "nvof_postprocess_wait_inclusive_ms": {
+              "max": 2.5309,
+              "mean": 0.9174,
+              "min": 0.7464,
+              "p50": 0.8723,
+              "p95": 1.0345
+            },
+            "nvof_upload_ms": {
+              "max": 2.1063,
+              "mean": 1.1025,
+              "min": 0.7164,
+              "p50": 0.9922,
+              "p95": 1.9925
+            },
+            "pipe_write": {
+              "max": 196.6054,
+              "mean": 11.4264,
+              "min": 6.34,
+              "p50": 7.6821,
+              "p95": 13.1315
+            },
+            "residual_pyramid": {
+              "max": 39.2246,
+              "mean": 30.8297,
+              "min": 24.9375,
+              "p50": 30.3456,
+              "p95": 38.0134
+            },
+            "working_color_prepare_ms": {
+              "max": 21.82,
+              "mean": 18.2092,
+              "min": 15.8393,
+              "p50": 17.8739,
+              "p95": 20.9539
+            }
+          },
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 0,
+            "cpu_bgr_to_rgba@nvof_input_calls": 0,
+            "cpu_bgr_to_rgba_calls": 0,
+            "cpu_color_conversion_output_bytes": 0,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 0,
+            "cpu_rgba_to_bgr_calls": 0,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 1,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 6220800,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 1,
+            "nvof_input_format": [
+              "bgr24_host"
+            ]
+          },
+          "transfer_mode_actual": "reduced",
+          "transfer_mode_fallback_reason": null,
+          "transfer_mode_requested": "reduced",
+          "working_dims": [
+            1920,
+            1080
+          ]
+        }
+      ],
+      "runs_used_for_medians": [
+        2,
+        3
+      ],
+      "spans_ms": {
+        "dlss_process_p50_ms": 36.5536,
+        "dlss_process_p95_ms": 44.2703,
+        "frame_total_p50_ms": 98.2838,
+        "frame_total_p95_ms": 117.5932,
+        "guidance_total_p50_ms": 5.7416,
+        "guidance_total_p95_ms": 8.1591,
+        "nvof_download_ms_p50_ms": 2.3873,
+        "nvof_download_ms_p95_ms": 3.9211,
+        "nvof_input_convert_wait_ms_p50_ms": 0.2223,
+        "nvof_input_convert_wait_ms_p95_ms": 0.2719,
+        "nvof_postprocess_wait_inclusive_ms_p50_ms": 0.8703,
+        "nvof_postprocess_wait_inclusive_ms_p95_ms": 1.0364,
+        "nvof_upload_ms_p50_ms": 0.942,
+        "nvof_upload_ms_p95_ms": 1.8636,
+        "pipe_write_p50_ms": 7.5447,
+        "pipe_write_p95_ms": 12.6659,
+        "residual_pyramid_p50_ms": 29.7091,
+        "residual_pyramid_p95_ms": 35.1965,
+        "working_color_prepare_ms_p50_ms": 17.7159,
+        "working_color_prepare_ms_p95_ms": 20.5525
+      },
+      "steady_state_counters": {
+        "cpu_bgr_to_rgba@dlss_input_calls": 0,
+        "cpu_bgr_to_rgba@nvof_input_calls": 0,
+        "cpu_bgr_to_rgba_calls": 0,
+        "cpu_color_conversion_output_bytes": 0,
+        "cpu_previous_frame_copy_bytes": 0,
+        "cpu_rgba_to_bgr@residual_input_calls": 0,
+        "cpu_rgba_to_bgr_calls": 0,
+        "decoder_pipe_bytes": 12441600,
+        "encoder_pipe_bytes": 24883200,
+        "nvof_bgr_input_call_count_delta": 1,
+        "nvof_bgr_staging_alloc_count_delta": 0,
+        "nvof_d2h_bytes_measured": 16588800,
+        "nvof_d2h_copy_count": 1,
+        "nvof_h2d_bytes_measured": 6220800,
+        "nvof_h2d_copy_count": 1,
+        "nvof_input_convert_launch_count_delta": 1
+      }
+    }
+  },
+  "output_identity": {
+    "bitstream_sha256_of_each_run": {
+      "legacy": {
+        "1": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+        "2": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+        "3": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+      },
+      "reduced": {
+        "1": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+        "2": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+        "3": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+      }
+    },
+    "container_sha256_of_each_run": {
+      "legacy": {
+        "1": "e25d6c87b4b04ac5662aedf900393b1b6384627079afafa9e98a9d2d0d5f5b44",
+        "2": "3b9650e9ca9d77a4fd3177bafe464ce3736b58631e30c0269befc679d322a761",
+        "3": "a5d1d89acf98b2a4dcff5e241cd48a803ddb3633216e4cd5b268093072213d6d"
+      },
+      "reduced": {
+        "1": "91782e0e60ef1d23d74774b2e1912e94919a40440547998fbbaca337eae983b5",
+        "2": "3d10d7ec5f6551502b9bfa4edcf058d3672c38d8a72e3514e80761622146dfe7",
+        "3": "5166cbae11968176aea04dd0b0fc191f2b55bb0604a18e7b7a2b936de21c74f2"
+      }
+    },
+    "note": "Matroska writes a random SegmentUID and a per-run timestamp into every file, so no two exports of this pipeline hash alike, two runs of the same order included. The numbers above are measured: the count of differing bytes and their position relative to the first Cluster, which is where the payload starts. A container hash is therefore reported here as a diagnostic and the gate compares the bitstream.",
+    "pairs": [
+      {
+        "bitstream_sha256s": [
+          "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+        ],
+        "compares": "legacy run 1 vs reduced run 1",
+        "container_sha256s": [
+          "e25d6c87b4b04ac5662aedf900393b1b6384627079afafa9e98a9d2d0d5f5b44",
+          "91782e0e60ef1d23d74774b2e1912e94919a40440547998fbbaca337eae983b5"
+        ],
+        "diff": {
+          "all_diffs_in_header": true,
+          "differing_bytes": 44,
+          "first_cluster_offset": 556,
+          "highest_differing_offset": 480,
+          "size_a": 16577619,
+          "size_b": 16577619,
+          "sizes_equal": true
+        },
+        "files": [
+          "ledger_legacy_50_ab1.mkv",
+          "ledger_reduced_50_ab1.mkv"
+        ]
+      },
+      {
+        "bitstream_sha256s": [
+          "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+        ],
+        "compares": "legacy run 2 vs reduced run 2",
+        "container_sha256s": [
+          "3b9650e9ca9d77a4fd3177bafe464ce3736b58631e30c0269befc679d322a761",
+          "3d10d7ec5f6551502b9bfa4edcf058d3672c38d8a72e3514e80761622146dfe7"
+        ],
+        "diff": {
+          "all_diffs_in_header": true,
+          "differing_bytes": 44,
+          "first_cluster_offset": 556,
+          "highest_differing_offset": 480,
+          "size_a": 16577619,
+          "size_b": 16577619,
+          "sizes_equal": true
+        },
+        "files": [
+          "ledger_legacy_50_ab2.mkv",
+          "ledger_reduced_50_ab2.mkv"
+        ]
+      },
+      {
+        "bitstream_sha256s": [
+          "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+        ],
+        "compares": "legacy run 3 vs reduced run 3",
+        "container_sha256s": [
+          "a5d1d89acf98b2a4dcff5e241cd48a803ddb3633216e4cd5b268093072213d6d",
+          "5166cbae11968176aea04dd0b0fc191f2b55bb0604a18e7b7a2b936de21c74f2"
+        ],
+        "diff": {
+          "all_diffs_in_header": true,
+          "differing_bytes": 44,
+          "first_cluster_offset": 556,
+          "highest_differing_offset": 480,
+          "size_a": 16577619,
+          "size_b": 16577619,
+          "sizes_equal": true
+        },
+        "files": [
+          "ledger_legacy_50_ab3.mkv",
+          "ledger_reduced_50_ab3.mkv"
+        ]
+      },
+      {
+        "bitstream_sha256s": [
+          "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+        ],
+        "compares": "legacy run 1 vs legacy run 2",
+        "container_sha256s": [
+          "e25d6c87b4b04ac5662aedf900393b1b6384627079afafa9e98a9d2d0d5f5b44",
+          "3b9650e9ca9d77a4fd3177bafe464ce3736b58631e30c0269befc679d322a761"
+        ],
+        "diff": {
+          "all_diffs_in_header": true,
+          "differing_bytes": 43,
+          "first_cluster_offset": 556,
+          "highest_differing_offset": 480,
+          "size_a": 16577619,
+          "size_b": 16577619,
+          "sizes_equal": true
+        },
+        "files": [
+          "ledger_legacy_50_ab1.mkv",
+          "ledger_legacy_50_ab2.mkv"
+        ]
+      },
+      {
+        "bitstream_sha256s": [
+          "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+        ],
+        "compares": "reduced run 1 vs reduced run 2",
+        "container_sha256s": [
+          "91782e0e60ef1d23d74774b2e1912e94919a40440547998fbbaca337eae983b5",
+          "3d10d7ec5f6551502b9bfa4edcf058d3672c38d8a72e3514e80761622146dfe7"
+        ],
+        "diff": {
+          "all_diffs_in_header": true,
+          "differing_bytes": 43,
+          "first_cluster_offset": 556,
+          "highest_differing_offset": 480,
+          "size_a": 16577619,
+          "size_b": 16577619,
+          "sizes_equal": true
+        },
+        "files": [
+          "ledger_reduced_50_ab1.mkv",
+          "ledger_reduced_50_ab2.mkv"
+        ]
+      }
+    ]
+  },
+  "span_keys": [
+    "frame_total",
+    "working_color_prepare_ms",
+    "guidance_total",
+    "nvof_upload_ms",
+    "nvof_input_convert_wait_ms",
+    "nvof_postprocess_wait_inclusive_ms",
+    "nvof_download_ms",
+    "dlss_process",
+    "residual_pyramid",
+    "pipe_write"
+  ],
+  "speedup_ratio_reduced_over_legacy": 1.0595,
+  "status": "DONE_PROVEN",
+  "untracked_paths": [
+    "perf_results/740c78a/"
+  ],
+  "working_tree_dirty": false,
+  "working_tree_paths": []
+}

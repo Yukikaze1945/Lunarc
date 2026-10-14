@@ -19,7 +19,17 @@ test('HDR and SDR10 constrain codec/container/profile without dropping track cop
     assert.equal(next.codec,'hevc_nvenc');assert.equal(next.container,'.mkv')
     assert.equal(next.profile,'auto');assert.equal(next.pixel_format,'auto');assert.equal(next.extra_args,'')
     assert.equal(next.audio_mode,'copy');assert.equal(next.copy_attachments,true)
-    assert.deepEqual(exportOptions(config,video,next).codec,['hevc_nvenc'])
+    assert.deepEqual(exportOptions(config,video,next).codec,['hevc_nvenc','av1_nvenc'])
+  }
+})
+
+test('wide AV1 stays selected and uses Main at 10-bit instead of HEVC Main10',()=>{
+  for(const settings of [{export_backend:'gpu_transfer',experimental_hdr_scrgb:true},{export_backend:'gpu_transfer',truehdr_enabled:true}]) {
+    const next=normalizeExportOptions({...tx,codec:'av1_nvenc',profile:'main10',pixel_format:'p010le',container:'.mkv'},settings as any,null)
+    assert.equal(next.codec,'av1_nvenc');assert.equal(next.profile,'auto')
+    assert.deepEqual(exportOptions(settings as any,null,next).profile,['auto','main'])
+    const main=normalizeExportOptions({...next,profile:'main'},settings as any,null)
+    assert.equal(main.profile,'main');assert.equal(main.pixel_format,'p010le')
   }
 })
 test('WebM audio and non-MKV attachments cannot carry incompatible requests',()=>{

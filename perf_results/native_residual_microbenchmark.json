@@ -1,0 +1,400 @@
+{
+  "kind": "residual_backend_microbenchmark",
+  "environment": {
+    "utc_timestamp": "2026-09-19T06:36:39Z",
+    "platform": "win32",
+    "os": null,
+    "cpu": "2102",
+    "cpu_count": 16,
+    "python": "3.11.15",
+    "numpy": "2.4.6",
+    "opencv": "5.0.0",
+    "ffmpeg": "8.1.2-full_build-www.gyan.dev",
+    "gpu": "NVIDIA GeForce RTX 5060 Ti, 616.92",
+    "rss_bytes": 47943680,
+    "peak_rss_bytes": 677793792,
+    "vram_bytes": 3532652544
+  },
+  "config": {
+    "backends": [
+      "python",
+      "native"
+    ],
+    "scales": [
+      0.75,
+      0.63,
+      0.5,
+      0.25
+    ],
+    "warmup": 3,
+    "iterations": 10,
+    "source": [
+      3840,
+      2160
+    ]
+  },
+  "results": [
+    {
+      "requested_backend": "python",
+      "actual_backend": "cpu_reference_python",
+      "backend_version": "axisplan-1",
+      "working_scale": 0.75,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        2880,
+        1616
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 828.861,
+        "p50_ms": 819.953,
+        "p95_ms": 914.725,
+        "min_ms": 797.062,
+        "max_ms": 914.725
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 826.08,
+        "p50_ms": 811.053,
+        "p95_ms": 910.893,
+        "min_ms": 796.802,
+        "max_ms": 910.893
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 229847040,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "python",
+      "actual_backend": "cpu_reference_python",
+      "backend_version": "axisplan-1",
+      "working_scale": 0.63,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        2416,
+        1360
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 737.103,
+        "p50_ms": 723.4,
+        "p95_ms": 852.218,
+        "min_ms": 698.785,
+        "max_ms": 852.218
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 742.23,
+        "p50_ms": 724.609,
+        "p95_ms": 816.837,
+        "min_ms": 707.141,
+        "max_ms": 816.837
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 201630720,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "python",
+      "actual_backend": "cpu_reference_python",
+      "backend_version": "axisplan-1",
+      "working_scale": 0.5,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        1920,
+        1080
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 579.667,
+        "p50_ms": 579.797,
+        "p95_ms": 642.902,
+        "min_ms": 557.074,
+        "max_ms": 642.902
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 665.947,
+        "p50_ms": 654.012,
+        "p95_ms": 748.838,
+        "min_ms": 633.581,
+        "max_ms": 748.838
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 174182400,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "python",
+      "actual_backend": "cpu_reference_python",
+      "backend_version": "axisplan-1",
+      "working_scale": 0.25,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        960,
+        544
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 395.064,
+        "p50_ms": 392.028,
+        "p95_ms": 414.872,
+        "min_ms": 383.464,
+        "max_ms": 414.872
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 468.542,
+        "p50_ms": 468.626,
+        "p95_ms": 478.719,
+        "min_ms": 463.494,
+        "max_ms": 478.719
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 130867200,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "native",
+      "actual_backend": "cpu_reference_native",
+      "backend_version": "api-0x00010000",
+      "working_scale": 0.75,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        2880,
+        1616
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 51.157,
+        "p50_ms": 51.097,
+        "p95_ms": 51.724,
+        "min_ms": 50.633,
+        "max_ms": 51.724
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 94.826,
+        "p50_ms": 94.446,
+        "p95_ms": 96.352,
+        "min_ms": 94.146,
+        "max_ms": 96.352
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_native",
+        "residual_backend_version": "api-0x00010000",
+        "plan_create_count": 1,
+        "plan_destroy_count": 0,
+        "scratch_alloc_count": 1,
+        "scratch_alloc_bytes": 130360320,
+        "native_scratch_bytes": 130360320,
+        "axis_plan_count": 4,
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "downsample_pixel_count": 60503040,
+        "reconstruct_pixel_count": 107827200,
+        "worker_create_count": 0,
+        "worker_count": 0,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "native",
+      "actual_backend": "cpu_reference_native",
+      "backend_version": "api-0x00010000",
+      "working_scale": 0.63,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        2416,
+        1360
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 41.584,
+        "p50_ms": 41.338,
+        "p95_ms": 43.441,
+        "min_ms": 40.617,
+        "max_ms": 43.441
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 90.748,
+        "p50_ms": 90.485,
+        "p95_ms": 92.931,
+        "min_ms": 89.518,
+        "max_ms": 92.931
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_native",
+        "residual_backend_version": "api-0x00010000",
+        "plan_create_count": 2,
+        "plan_destroy_count": 1,
+        "scratch_alloc_count": 2,
+        "scratch_alloc_bytes": 232504320,
+        "native_scratch_bytes": 102144000,
+        "axis_plan_count": 4,
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "downsample_pixel_count": 42714880,
+        "reconstruct_pixel_count": 107827200,
+        "worker_create_count": 0,
+        "worker_count": 0,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "native",
+      "actual_backend": "cpu_reference_native",
+      "backend_version": "api-0x00010000",
+      "working_scale": 0.5,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        1920,
+        1080
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 31.795,
+        "p50_ms": 31.607,
+        "p95_ms": 32.574,
+        "min_ms": 31.396,
+        "max_ms": 32.574
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 86.867,
+        "p50_ms": 86.759,
+        "p95_ms": 89.773,
+        "min_ms": 85.478,
+        "max_ms": 89.773
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_native",
+        "residual_backend_version": "api-0x00010000",
+        "plan_create_count": 3,
+        "plan_destroy_count": 2,
+        "scratch_alloc_count": 3,
+        "scratch_alloc_bytes": 307200000,
+        "native_scratch_bytes": 74695680,
+        "axis_plan_count": 4,
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "downsample_pixel_count": 26956800,
+        "reconstruct_pixel_count": 107827200,
+        "worker_create_count": 0,
+        "worker_count": 0,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "native",
+      "actual_backend": "cpu_reference_native",
+      "backend_version": "api-0x00010000",
+      "working_scale": 0.25,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        960,
+        544
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 20.238,
+        "p50_ms": 19.807,
+        "p95_ms": 22.704,
+        "min_ms": 19.592,
+        "max_ms": 22.704
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 79.018,
+        "p50_ms": 78.816,
+        "p95_ms": 80.241,
+        "min_ms": 78.343,
+        "max_ms": 80.241
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_native",
+        "residual_backend_version": "api-0x00010000",
+        "plan_create_count": 4,
+        "plan_destroy_count": 3,
+        "scratch_alloc_count": 4,
+        "scratch_alloc_bytes": 338580480,
+        "native_scratch_bytes": 31380480,
+        "axis_plan_count": 4,
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "downsample_pixel_count": 6789120,
+        "reconstruct_pixel_count": 107827200,
+        "worker_create_count": 0,
+        "worker_count": 0,
+        "closed": false
+      }
+    }
+  ],
+  "speedup_native_vs_python": {
+    "0.25": {
+      "downsample_speedup": 19.792,
+      "reconstruct_speedup": 5.946
+    },
+    "0.5": {
+      "downsample_speedup": 18.344,
+      "reconstruct_speedup": 7.538
+    },
+    "0.63": {
+      "downsample_speedup": 17.5,
+      "reconstruct_speedup": 8.008
+    },
+    "0.75": {
+      "downsample_speedup": 16.047,
+      "reconstruct_speedup": 8.587
+    }
+  }
+}

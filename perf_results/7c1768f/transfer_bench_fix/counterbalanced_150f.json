@@ -1,0 +1,656 @@
+{
+  "all_runs_per_order": {
+    "legacy": [
+      {
+        "execution": "execution-1",
+        "fps": 3.935,
+        "frames_per_run": 150,
+        "included_in_performance_verdict": false,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 1
+      },
+      {
+        "execution": "execution-1",
+        "fps": 4.2802,
+        "frames_per_run": 150,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 2
+      },
+      {
+        "execution": "execution-1",
+        "fps": 4.1666,
+        "frames_per_run": 150,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 3
+      }
+    ],
+    "reduced": [
+      {
+        "execution": "execution-1",
+        "fps": 4.3427,
+        "frames_per_run": 150,
+        "included_in_performance_verdict": false,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 1
+      },
+      {
+        "execution": "execution-1",
+        "fps": 4.0702,
+        "frames_per_run": 150,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 2
+      },
+      {
+        "execution": "execution-1",
+        "fps": 3.8784,
+        "frames_per_run": 150,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 3
+      }
+    ]
+  },
+  "code_under_test": "7c1768fe22f765b65e9c0bc9c99e8bc6e3b8e76a",
+  "corroborating_executions": [],
+  "execution_failures": [],
+  "executions": [
+    {
+      "code_under_test": "7c1768fe22f765b65e9c0bc9c99e8bc6e3b8e76a",
+      "execution": "execution-1",
+      "execution_order_index": 1,
+      "execution_schedule": [
+        {
+          "kept": false,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 1
+        },
+        {
+          "kept": true,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 2
+        },
+        {
+          "kept": true,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 3
+        }
+      ],
+      "frames_per_run": 150,
+      "gates": {
+        "copy_gate": {
+          "all_passed": true,
+          "checks_passed": 21,
+          "checks_total": 21,
+          "failed_checks": []
+        },
+        "order_balance_gate": {
+          "all_passed": true,
+          "checks_passed": 5,
+          "checks_total": 5,
+          "failed_checks": []
+        },
+        "output_integrity_gate": {
+          "all_passed": true,
+          "checks_passed": 10,
+          "checks_total": 10,
+          "failed_checks": []
+        },
+        "performance_gate": {
+          "all_passed": false,
+          "checks_passed": 0,
+          "checks_total": 1,
+          "failed_checks": [
+            {
+              "actual": false,
+              "expected": true,
+              "ok": false,
+              "what": "reduced_median_fps_at_least_legacy"
+            }
+          ]
+        }
+      },
+      "orders": {
+        "legacy": {
+          "cpu_bgr_to_rgba_calls": 2,
+          "cpu_rgba_to_bgr_calls": 1,
+          "decoder_pipe_bytes": 12441600,
+          "fps_of_every_run": {
+            "1": 3.935,
+            "2": 4.2802,
+            "3": 4.1666
+          },
+          "frame_total_p50_ms": 203.5428,
+          "frame_total_p95_ms": 259.1073,
+          "inter_run_spread_percent_of_all_runs": 8.77,
+          "inter_run_spread_percent_of_kept_runs": 2.73,
+          "median_fps_of_kept_runs": 4.2234,
+          "nvof_h2d_bytes_measured": 8294400,
+          "position_in_pair_of_every_run": {
+            "1": 1,
+            "2": 1,
+            "3": 2
+          },
+          "runs_used_for_medians": [
+            2,
+            3
+          ],
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 1,
+            "cpu_bgr_to_rgba@nvof_input_calls": 1,
+            "cpu_bgr_to_rgba_calls": 2,
+            "cpu_color_conversion_output_bytes": 22809600,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 1,
+            "cpu_rgba_to_bgr_calls": 1,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 0,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 8294400,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 0
+          },
+          "warmup_run_ids": [
+            1
+          ]
+        },
+        "reduced": {
+          "cpu_bgr_to_rgba_calls": 0,
+          "cpu_rgba_to_bgr_calls": 0,
+          "decoder_pipe_bytes": 12441600,
+          "fps_of_every_run": {
+            "1": 4.3427,
+            "2": 4.0702,
+            "3": 3.8784
+          },
+          "frame_total_p50_ms": 211.6828,
+          "frame_total_p95_ms": 273.7789,
+          "inter_run_spread_percent_of_all_runs": 11.97,
+          "inter_run_spread_percent_of_kept_runs": 4.95,
+          "median_fps_of_kept_runs": 3.9743,
+          "nvof_h2d_bytes_measured": 6220800,
+          "position_in_pair_of_every_run": {
+            "1": 2,
+            "2": 2,
+            "3": 1
+          },
+          "runs_used_for_medians": [
+            2,
+            3
+          ],
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 0,
+            "cpu_bgr_to_rgba@nvof_input_calls": 0,
+            "cpu_bgr_to_rgba_calls": 0,
+            "cpu_color_conversion_output_bytes": 0,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 0,
+            "cpu_rgba_to_bgr_calls": 0,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 1,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 6220800,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 1
+          },
+          "warmup_run_ids": [
+            1
+          ]
+        }
+      },
+      "protocol": {
+        "name": "counterbalanced-kept-runs-ab",
+        "version": 2
+      },
+      "runs_per_mode": 3,
+      "source_artifact": "perf_results/7c1768f/transfer_bench_fix/ab_executions_150f/execution_01_transfer_ab_benchmark.json",
+      "speedup_ratio_reduced_over_legacy": 0.941,
+      "status": "NOT_READY",
+      "unpoolable_reasons": [],
+      "working_scale": 0.5
+    }
+  ],
+  "generated_at": "2026-09-20T20:22:57",
+  "generated_by": "tests/unit/collect_transfer_performance.py",
+  "kept_runs_per_order": {
+    "legacy": [
+      {
+        "execution": "execution-1",
+        "fps": 4.2802,
+        "frames_per_run": 150,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 2
+      },
+      {
+        "execution": "execution-1",
+        "fps": 4.1666,
+        "frames_per_run": 150,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 3
+      }
+    ],
+    "reduced": [
+      {
+        "execution": "execution-1",
+        "fps": 4.0702,
+        "frames_per_run": 150,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 2
+      },
+      {
+        "execution": "execution-1",
+        "fps": 3.8784,
+        "frames_per_run": 150,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 3
+      }
+    ]
+  },
+  "pooled_all_runs_median_diagnostic": {
+    "legacy": 4.1666,
+    "reduced": 4.0702
+  },
+  "pooled_kept_runs_median": {
+    "legacy": 4.2234,
+    "reduced": 3.9743
+  },
+  "protocol": {
+    "child_process_per_run": true,
+    "defined_by": "tests/unit/collect_transfer_ab.py",
+    "executions_pooled": 1,
+    "executions_rejected": 0,
+    "frames_per_run": 150,
+    "kept_run_ids": [
+      2,
+      3
+    ],
+    "name": "counterbalanced-kept-runs-ab",
+    "pairs_interleaved_within_an_execution": true,
+    "runs_per_mode": 3,
+    "schedule_counterbalanced": true,
+    "version": 2,
+    "warmup_run_ids": [
+      1
+    ]
+  },
+  "run_counts_per_order": {
+    "legacy": {
+      "all": 3,
+      "kept": 2,
+      "warmup": 1
+    },
+    "reduced": {
+      "all": 3,
+      "kept": 2,
+      "warmup": 1
+    }
+  },
+  "verdict": {
+    "all_orders_diagnostic": {
+      "legacy": {
+        "executions": [
+          "execution-1"
+        ],
+        "max_fps": 4.2802,
+        "mean_fps": 4.1273,
+        "median_fps": 4.1666,
+        "min_fps": 3.935,
+        "per_execution_inter_run_spread_percent": {
+          "execution-1": 8.77
+        },
+        "run_count": 3,
+        "spread_percent": 8.77
+      },
+      "reduced": {
+        "executions": [
+          "execution-1"
+        ],
+        "max_fps": 4.3427,
+        "mean_fps": 4.0971,
+        "median_fps": 4.0702,
+        "min_fps": 3.8784,
+        "per_execution_inter_run_spread_percent": {
+          "execution-1": 11.97
+        },
+        "run_count": 3,
+        "spread_percent": 11.97
+      }
+    },
+    "all_required_checks_passed": false,
+    "corroboration": {},
+    "evidence_that_reduced_is_slower_p_value": 0.25,
+    "kept_orders": {
+      "legacy": {
+        "executions": [
+          "execution-1"
+        ],
+        "max_fps": 4.2802,
+        "mean_fps": 4.2234,
+        "median_fps": 4.2234,
+        "min_fps": 4.1666,
+        "per_execution_inter_run_spread_percent": {
+          "execution-1": 2.73
+        },
+        "run_count": 2,
+        "spread_percent": 2.73
+      },
+      "reduced": {
+        "executions": [
+          "execution-1"
+        ],
+        "max_fps": 4.0702,
+        "mean_fps": 3.9743,
+        "median_fps": 3.9743,
+        "min_fps": 3.8784,
+        "per_execution_inter_run_spread_percent": {
+          "execution-1": 4.95
+        },
+        "run_count": 2,
+        "spread_percent": 4.95
+      }
+    },
+    "kept_pairs": [
+      {
+        "execution": "execution-1",
+        "frames": 150,
+        "included_in_performance_verdict": true,
+        "legacy_fps": 4.2802,
+        "legacy_position_in_pair": 1,
+        "reduced_fps": 4.0702,
+        "reduced_minus_legacy_percent": -4.91,
+        "reduced_over_legacy_ratio": 0.9509,
+        "reduced_position_in_pair": 2,
+        "run": "2"
+      },
+      {
+        "execution": "execution-1",
+        "frames": 150,
+        "included_in_performance_verdict": true,
+        "legacy_fps": 4.1666,
+        "legacy_position_in_pair": 2,
+        "reduced_fps": 3.8784,
+        "reduced_minus_legacy_percent": -6.92,
+        "reduced_over_legacy_ratio": 0.9308,
+        "reduced_position_in_pair": 1,
+        "run": "3"
+      }
+    ],
+    "median_reduced_minus_legacy_percent": -5.92,
+    "no_end_to_end_regression": false,
+    "order_balance": {
+      "balanced": true,
+      "legacy_first": 1,
+      "pairs": 2,
+      "reduced_first": 1,
+      "unknown_position": 0
+    },
+    "pairwise_median_ratio": 0.9408,
+    "per_execution_outcome": {
+      "execution-1": {
+        "copy_gate_all_passed": true,
+        "decoder_pipe_bytes": {
+          "legacy": 12441600,
+          "reduced": 12441600
+        },
+        "inter_run_spread_percent": {
+          "legacy": 2.73,
+          "reduced": 4.95
+        },
+        "kept_pair_positions": [
+          {
+            "kept": false,
+            "order": [
+              "legacy",
+              "reduced"
+            ],
+            "run": 1
+          },
+          {
+            "kept": true,
+            "order": [
+              "legacy",
+              "reduced"
+            ],
+            "run": 2
+          },
+          {
+            "kept": true,
+            "order": [
+              "reduced",
+              "legacy"
+            ],
+            "run": 3
+          }
+        ],
+        "kept_run_ids": {
+          "legacy": [
+            2,
+            3
+          ],
+          "reduced": [
+            2,
+            3
+          ]
+        },
+        "median_fps_of_kept_runs": {
+          "legacy": 4.2234,
+          "reduced": 3.9743
+        },
+        "order_balance_gate_all_passed": true,
+        "output_integrity_gate_all_passed": true,
+        "own_performance_gate_all_passed": false,
+        "protocol": {
+          "name": "counterbalanced-kept-runs-ab",
+          "version": 2
+        },
+        "status": "NOT_READY",
+        "unpoolable_reasons": []
+      }
+    },
+    "performance_direction_consistent": true,
+    "pooled_all_runs_median_fps_diagnostic": {
+      "legacy": 4.1666,
+      "reduced": 4.0702
+    },
+    "pooled_all_runs_ratio_diagnostic": 0.9769,
+    "pooled_kept_median_fps": {
+      "legacy": 4.2234,
+      "reduced": 3.9743
+    },
+    "pooled_kept_ratio": 0.941,
+    "position_strata": {
+      "reduced_vs_legacy_when_reduced_first": {
+        "executions": [
+          "execution-1"
+        ],
+        "losses": 1,
+        "median_percent_change": -6.92,
+        "median_ratio": 0.9308,
+        "pair_count": 1,
+        "wins": 0
+      },
+      "reduced_vs_legacy_when_reduced_second": {
+        "executions": [
+          "execution-1"
+        ],
+        "losses": 1,
+        "median_percent_change": -4.91,
+        "median_ratio": 0.9509,
+        "pair_count": 1,
+        "wins": 0
+      }
+    },
+    "primary_question": "Does the reduced order regress end-to-end performance under a counterbalanced protocol?",
+    "primary_rule": "the pooled median of the reduced order's kept runs is at least the pooled median of the legacy order's kept runs",
+    "rejected_executions": [],
+    "required_checks": [
+      {
+        "actual": true,
+        "detail": "2 legacy / 2 reduced kept runs",
+        "expected": true,
+        "ok": true,
+        "what": "kept_runs_in_the_verdict"
+      },
+      {
+        "actual": true,
+        "detail": "0 of 1 executions rejected",
+        "expected": true,
+        "ok": true,
+        "what": "every_execution_poolable"
+      },
+      {
+        "actual": false,
+        "detail": "3.9743 vs 4.2234",
+        "expected": true,
+        "ok": false,
+        "what": "reduced_kept_median_at_least_legacy_kept"
+      },
+      {
+        "actual": true,
+        "detail": "every pooled and corroborating execution passed both",
+        "expected": true,
+        "ok": true,
+        "what": "copy_and_integrity_gates_passed_in_every_execution"
+      },
+      {
+        "actual": true,
+        "detail": "1 legacy-first / 1 reduced-first of 2 kept pairs",
+        "expected": true,
+        "ok": true,
+        "what": "kept_pairs_are_position_balanced"
+      },
+      {
+        "actual": true,
+        "detail": "{\"reduced_vs_legacy_when_reduced_first\": 1, \"reduced_vs_legacy_when_reduced_second\": 1}",
+        "expected": true,
+        "ok": true,
+        "what": "both_position_strata_have_samples"
+      },
+      {
+        "actual": true,
+        "detail": "pooled kept medians point - and the paired median ratio points -",
+        "expected": true,
+        "ok": true,
+        "what": "performance_direction_consistent"
+      }
+    ],
+    "required_companion_gates": [
+      "copy",
+      "output integrity",
+      "order balance",
+      "direction consistency"
+    ],
+    "rule": "Warmup pairs are published and excluded: an execution names its kept run ids and only those reach a median, a ratio, a pair or the sign test. The gate asks the non-regression question and nothing stronger - no p-value threshold is applied in either direction - but it does require the instrument to have been built balanced, and it requires the two readings of that instrument, the pooled medians and the paired ratios, to agree about which way they point. If they point opposite ways the honest answer is that the instrument gave a contradiction, which is NOT_READY rather than a choice of the nicer number.",
+    "run_census": {
+      "legacy": {
+        "all_run_count": 3,
+        "kept_run_count": 2,
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "warmup_run_count": 1,
+        "warmup_run_ids": [
+          1
+        ]
+      },
+      "reduced": {
+        "all_run_count": 3,
+        "kept_run_count": 2,
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "warmup_run_count": 1,
+        "warmup_run_ids": [
+          1
+        ]
+      }
+    },
+    "secondary_evidence": [
+      "paired median percent change",
+      "exact sign test over kept pairs",
+      "position-stratified ratios"
+    ],
+    "sign_test": {
+      "p_value_legacy_ahead_by_at_least_this_much": 0.25,
+      "p_value_reduced_ahead_by_at_least_this_much": 1.0,
+      "pairs": 2,
+      "runs_favouring_legacy": 2,
+      "runs_favouring_reduced": 0,
+      "used_for": "secondary evidence only; no threshold in this file reads it"
+    },
+    "status": "NOT_READY",
+    "warmup_pairs_diagnostics": [
+      {
+        "execution": "execution-1",
+        "frames": 150,
+        "included_in_performance_verdict": false,
+        "legacy_fps": 3.935,
+        "legacy_position_in_pair": 1,
+        "reduced_fps": 4.3427,
+        "reduced_minus_legacy_percent": 10.36,
+        "reduced_over_legacy_ratio": 1.1036,
+        "reduced_position_in_pair": 2,
+        "run": "1"
+      }
+    ]
+  },
+  "warmup_policy": "an execution publishes runs_used_for_medians; only those runs reach a pooled median, a paired ratio or the sign test. The warmup runs are still in this file, with included_in_performance_verdict=false",
+  "warmup_runs_per_order": {
+    "legacy": [
+      {
+        "execution": "execution-1",
+        "fps": 3.935,
+        "frames_per_run": 150,
+        "included_in_performance_verdict": false,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 1
+      }
+    ],
+    "reduced": [
+      {
+        "execution": "execution-1",
+        "fps": 4.3427,
+        "frames_per_run": 150,
+        "included_in_performance_verdict": false,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 1
+      }
+    ]
+  },
+  "why_pooled": "one execution of the protocol is a median of two runs, and the same order of the same code measures 1.2-52% apart between runs on this machine; that instrument cannot resolve the difference the performance gate is asked about, in either direction"
+}

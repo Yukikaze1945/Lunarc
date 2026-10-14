@@ -26,6 +26,8 @@ export const HDR_DERIVED_LEGAL_PEAK_SCRGB = 207.53
 
 export const HDR_CODEC = 'hevc_nvenc'
 export const HDR_PROFILE = 'main10'
+export const P010_CODECS: readonly string[] = ['hevc_nvenc', 'av1_nvenc']
+export const p010Profile = (codec: string) => codec === 'av1_nvenc' ? 'main' : 'main10'
 export const HDR_CONTAINER = '.mkv'
 
 // plan_hdr_encoder's own vocabularies, clause for clause.
@@ -233,13 +235,13 @@ export function hdrBlockers({
   if (!isHdrRequested(settings as unknown as Record<string, unknown>)) return reasons
 
   const codec = named(ts && ts.codec, HDR_CODEC)
-  if (codec !== HDR_CODEC) {
-    reasons.push(`codec=${codec}：HDR10 编码入口只有 ${HDR_CODEC} @ Main 10，不回退到别的编码器、`
+  if (!P010_CODECS.includes(codec)) {
+    reasons.push(`codec=${codec}：HDR10 支持 HEVC 或 AV1，不回退到别的编码器、`
       + '不降到 8-bit、也不降到 NV12')
   }
   const profile = named(ts && ts.profile, 'auto').trim()
-  if (!HDR_ALLOWED_PROFILES.includes(profile)) {
-    reasons.push(`profile=${profile}：该入口只编码 ${HDR_PROFILE}`)
+  if (!(codec === 'av1_nvenc' ? ['auto', '', 'None', 'none', 'main'] : HDR_ALLOWED_PROFILES).includes(profile)) {
+    reasons.push(`profile=${profile}：${codec} 使用 ${p010Profile(codec)}，10-bit`)
   }
   const pixelFormat = named(ts && ts.pixel_format, 'auto').trim().toLowerCase()
   if (!HDR_ALLOWED_PIXEL_FORMATS.includes(pixelFormat)) {
@@ -350,6 +352,8 @@ export interface HdrPreset {
 // the mapping it leaves alone, because an operator who selected audio and subtitles
 // would otherwise watch a readiness patch turn them off.
 export function buildHdrExportPreset({ settings, ts }: HdrFormInput): HdrPreset {
+  const selectedCodec = ts?.codec && P010_CODECS.includes(ts.codec) ? ts.codec : HDR_CODEC
+  const selectedProfile = p010Profile(selectedCodec)
   const js = settings as unknown as Record<string, unknown>
   const settingsPatch: Partial<DLSSSettings> = {
     experimental_hdr_scrgb: true,
@@ -358,8 +362,8 @@ export function buildHdrExportPreset({ settings, ts }: HdrFormInput): HdrPreset 
     multi_pass: 1,
   }
   const transcodePatch: Partial<TranscodeSettings> = {
-    codec: HDR_CODEC,
-    profile: HDR_PROFILE,
+    codec: selectedCodec,
+    profile: selectedProfile,
     pixel_format: 'p010le',
     container: HDR_CONTAINER,
     color_preset: 'preserve',
@@ -382,7 +386,7 @@ export function buildHdrExportPreset({ settings, ts }: HdrFormInput): HdrPreset 
   const summary = [
     '链路：export_backend=gpu_transfer · dlss_backend=gpu_flow_d3d12（本项目唯一的 GPU DLSS 宿主）',
     `重建：保留当前 reconstruction_mode=${String(js.reconstruction_mode ?? 'single')}、layer_scales、layer_weights、fusion_mode 与求解器参数；multi_pass=1（多层能力由后端实际闸门判定）`,
-    `编码器：codec=${HDR_CODEC} · profile=${HDR_PROFILE} · pixel_format=p010le（P010，10-bit 4:2:0）`,
+    `编码器：codec=${selectedCodec} · profile=${selectedProfile} · pixel_format=p010le（P010，10-bit 4:2:0）`,
     `容器：container=${HDR_CONTAINER}；编码入口写出单视频流 .mkv，请求携带非视频流时由复用的 `
       + 'gtx.build_mux_command copy pass 在编码结束后以 -c:v copy 重封装为同一个 .mkv（不再编一次）',
     '映射：audio_mode、subtitle_mode、copy_attachments、copy_metadata、copy_chapters '
@@ -391,7 +395,7 @@ export function buildHdrExportPreset({ settings, ts }: HdrFormInput): HdrPreset 
     '色彩：color_preset=preserve（写回源素材自己的 HDR10 声明，不做色调映射）；'
       + '清空与之冲突的 custom_color_space、custom_color_primaries、custom_color_transfer、'
       + 'custom_color_range',
-    'HDR 静态元数据：ST 2086 母版显示与 CTA-861.3 CLL/FALL 由编码器写在码流内 SEI，'
+    `HDR 静态元数据：母版显示（ST 2086）与 CLL/FALL 写入码流${selectedCodec === 'av1_nvenc' ? ' Metadata OBU' : ' SEI'}，`
       + '与容器级 FORMAT 元数据是否被 copy_metadata 携带无关，也不随该开关改变',
     `实验性 HDR：${HDR_SETTING}=true · ${HDR_PAPER_WHITE_SETTING}=${paperWhite}`
       + `（${paperWhiteLabel(paperWhite)}，整段作业固定，不逐帧变化）`,

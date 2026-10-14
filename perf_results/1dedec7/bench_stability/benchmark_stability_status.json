@@ -1,0 +1,3797 @@
+{
+  "allowed_status_values": [
+    "DONE_PROVEN",
+    "NOT_READY"
+  ],
+  "artifact_sha_coverage": {
+    "declared_shas": {
+      "ab_executions/execution_01_transfer_ab_benchmark.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "ab_executions/execution_02_transfer_ab_benchmark.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "ab_executions/execution_03_transfer_ab_benchmark.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "ab_executions/execution_04_transfer_ab_benchmark.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "ab_executions/execution_05_transfer_ab_benchmark.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "ab_executions/execution_06_transfer_ab_benchmark.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "ab_executions/execution_07_transfer_ab_benchmark.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "benchmark_environment": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "benchmark_runtime_monitor": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "counterbalanced_150f": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "counterbalanced_performance": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "environment": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "ffprobe_output": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "historical_warmup_recalc": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "protocol": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "status_consistency": "1dedec758dc0cced625ae8d12b118e6054e834de"
+    },
+    "declares_a_sha": 16,
+    "matching": 16,
+    "mismatched": [],
+    "missing": [],
+    "present": 16,
+    "required": 16,
+    "without_a_sha": []
+  },
+  "artifact_shas": {
+    "benchmark_environment": "1dedec758dc0cced625ae8d12b118e6054e834de",
+    "benchmark_runtime_monitor": "1dedec758dc0cced625ae8d12b118e6054e834de",
+    "counterbalanced_150f": "1dedec758dc0cced625ae8d12b118e6054e834de",
+    "counterbalanced_performance": "1dedec758dc0cced625ae8d12b118e6054e834de",
+    "environment": "1dedec758dc0cced625ae8d12b118e6054e834de",
+    "ffprobe_output": "1dedec758dc0cced625ae8d12b118e6054e834de",
+    "historical_warmup_recalc": "1dedec758dc0cced625ae8d12b118e6054e834de",
+    "protocol": "1dedec758dc0cced625ae8d12b118e6054e834de",
+    "status_consistency": "1dedec758dc0cced625ae8d12b118e6054e834de"
+  },
+  "baseline": "e3aa86c",
+  "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+  "commits": [
+    {
+      "native_binary_in_same_commit": [],
+      "native_source_touched": [],
+      "sha": "066eab9",
+      "subject": "fix(artifacts): require benchmark evidence sha coverage"
+    },
+    {
+      "native_binary_in_same_commit": [],
+      "native_source_touched": [],
+      "sha": "830fc8b",
+      "subject": "fix(artifacts): correct ffprobe codec aggregation"
+    },
+    {
+      "native_binary_in_same_commit": [],
+      "native_source_touched": [],
+      "sha": "460ec00",
+      "subject": "test(bench): add exclusive lock and quiet preflight"
+    },
+    {
+      "native_binary_in_same_commit": [],
+      "native_source_touched": [],
+      "sha": "daf01cb",
+      "subject": "test(bench): record runtime benchmark contamination"
+    },
+    {
+      "native_binary_in_same_commit": [],
+      "native_source_touched": [],
+      "sha": "1dedec7",
+      "subject": "test(bench): add benchmark environment regressions"
+    }
+  ],
+  "forbidden_phrases": [
+    "GPU pipeline complete",
+    "zero-copy complete",
+    "CPU round trips eliminated",
+    "full GPU acceleration complete"
+  ],
+  "gate_statuses": {
+    "artifact_provenance": "DONE_PROVEN",
+    "benchmark_lock": "DONE_PROVEN",
+    "benchmark_variance": "DONE_PROVEN",
+    "copy_gate": "DONE_PROVEN",
+    "corroboration_consistency": "NOT_READY",
+    "counterbalanced_order": "DONE_PROVEN",
+    "decoder_status_semantics": "DONE_PROVEN",
+    "ffprobe_schema": "DONE_PROVEN",
+    "full_unit_suite": "DONE_PROVEN",
+    "kept_run_pooling": "DONE_PROVEN",
+    "native_scope_unchanged": "DONE_PROVEN",
+    "order_balance": "DONE_PROVEN",
+    "output_integrity": "NOT_READY",
+    "performance_direction_consistency": "DONE_PROVEN",
+    "performance_non_regression": "DONE_PROVEN",
+    "position_stratification": "DONE_PROVEN",
+    "quiet_preflight": "NOT_READY",
+    "runtime_contamination": "NOT_READY",
+    "warmup_exclusion": "DONE_PROVEN"
+  },
+  "gates": {
+    "artifact_provenance": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": [],
+          "expected": true,
+          "ok": true,
+          "what": "every_required_artifact_was_written"
+        },
+        {
+          "actual": true,
+          "detail": [],
+          "expected": true,
+          "ok": true,
+          "what": "every_artifact_declares_its_code_under_test"
+        },
+        {
+          "actual": true,
+          "detail": [],
+          "expected": true,
+          "ok": true,
+          "what": "no_artifact_names_a_different_commit"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "declared": [
+              "1dedec758dc0cced625ae8d12b118e6054e834de"
+            ],
+            "shared_sha": "1dedec758dc0cced625ae8d12b118e6054e834de"
+          },
+          "expected": true,
+          "ok": true,
+          "what": "all_of_them_name_one_single_commit"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "primary": "1dedec758dc0cced625ae8d12b118e6054e834de",
+            "shared": "1dedec758dc0cced625ae8d12b118e6054e834de"
+          },
+          "expected": true,
+          "ok": true,
+          "what": "that_commit_is_the_one_the_runs_were_made_at"
+        }
+      ],
+      "detail": {
+        "artifact_sha_coverage": {
+          "declared_shas": {
+            "ab_executions/execution_01_transfer_ab_benchmark.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+            "ab_executions/execution_02_transfer_ab_benchmark.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+            "ab_executions/execution_03_transfer_ab_benchmark.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+            "ab_executions/execution_04_transfer_ab_benchmark.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+            "ab_executions/execution_05_transfer_ab_benchmark.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+            "ab_executions/execution_06_transfer_ab_benchmark.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+            "ab_executions/execution_07_transfer_ab_benchmark.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+            "benchmark_environment": "1dedec758dc0cced625ae8d12b118e6054e834de",
+            "benchmark_runtime_monitor": "1dedec758dc0cced625ae8d12b118e6054e834de",
+            "counterbalanced_150f": "1dedec758dc0cced625ae8d12b118e6054e834de",
+            "counterbalanced_performance": "1dedec758dc0cced625ae8d12b118e6054e834de",
+            "environment": "1dedec758dc0cced625ae8d12b118e6054e834de",
+            "ffprobe_output": "1dedec758dc0cced625ae8d12b118e6054e834de",
+            "historical_warmup_recalc": "1dedec758dc0cced625ae8d12b118e6054e834de",
+            "protocol": "1dedec758dc0cced625ae8d12b118e6054e834de",
+            "status_consistency": "1dedec758dc0cced625ae8d12b118e6054e834de"
+          },
+          "declares_a_sha": 16,
+          "matching": 16,
+          "mismatched": [],
+          "missing": [],
+          "present": 16,
+          "required": 16,
+          "without_a_sha": []
+        }
+      },
+      "evidence": [
+        "code_under_test in every required artifact and in every execution artifact",
+        "counterbalanced_performance.json code_under_test"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "benchmark_lock": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "lock_acquired": true
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_benchmark_declares_that_it_held_the_lock"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "accepted": [
+              "msvcrt.locking",
+              "fcntl.flock"
+            ],
+            "lock_mechanism": "msvcrt.locking",
+            "note": "a lockfile-existence check is not on this list, and cannot be made to be"
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_lock_is_a_mandatory_os_lock"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "expected_suffix": "bench_out/.transfer_benchmark.lock",
+            "lock_path": "F:\\dlss5standaloneV2\\bench_out\\.transfer_benchmark.lock"
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_lock_file_is_the_one_this_round_defines"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "missing": [],
+            "owner": {
+              "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+              "command": "tests/unit/run_transfer_stability_round.py --out perf_results/1dedec7/bench_stability --pytest-transcript bench_out/pytest_output.txt",
+              "hostname": "DESKTOP-N0P8IVT",
+              "lock_mechanism": "msvcrt.locking",
+              "pid": 56308,
+              "protocol": "counterbalanced-kept-runs-ab v2",
+              "started_utc": "2026-09-20T23:13:55Z"
+            },
+            "required": [
+              "pid",
+              "started_utc",
+              "code_under_test",
+              "command",
+              "hostname",
+              "protocol"
+            ]
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_owner_record_carries_every_field_section_9_asks_for"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "hostname": "DESKTOP-N0P8IVT",
+            "pid": 56308,
+            "started_utc": "2026-09-20T23:13:55Z"
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_owner_is_a_process_and_a_moment"
+        }
+      ],
+      "detail": {
+        "lock_record": {
+          "lock_acquired": true,
+          "lock_mechanism": "msvcrt.locking",
+          "lock_path": "F:\\dlss5standaloneV2\\bench_out\\.transfer_benchmark.lock"
+        }
+      },
+      "evidence": [
+        "benchmark_environment.json lock_acquired / lock_owner / lock_path / lock_mechanism"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "benchmark_variance": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "note": "\u00a728/\u00a733: an execution is not dropped because its spread was ugly",
+            "pooled": 7,
+            "rejected": [],
+            "usable": 7
+          },
+          "expected": true,
+          "ok": true,
+          "what": "no_execution_was_dropped_from_the_variance_judgement"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "rows_without_a_spread": []
+          },
+          "expected": true,
+          "ok": true,
+          "what": "each_order_of_each_execution_has_enough_kept_runs_to_have_a_spread"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "gate_formula": "(max - min) / median * 100",
+            "note": "the two figures differ only in the denominator, and dividing by the median is the smaller of the two; the gate applies \u00a733's definition and says so rather than choosing whichever number suits the answer",
+            "what_the_benchmark_publishes_beside_it": "(max - min) / min * 100",
+            "widest_pair": [
+              "recorded-3",
+              "reduced",
+              6.5,
+              6.72
+            ]
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_spread_is_measured_by_the_definition_this_round_froze"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "kept_run_spread_percent_at_most": 20.0,
+            "note": "\u00a734 fixed both before any measurement was seen",
+            "share_of_executions_allowed_over_that": 0.25
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_variance_thresholds_are_the_frozen_ones"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "executions": 7,
+            "expected": 14,
+            "kept_run_count": {
+              "legacy": 14,
+              "reduced": 14
+            },
+            "note": "\u00a726 fixes two kept runs per order per execution, so a pool of N executions carries 2N kept runs of each order; one fewer is a run somebody removed"
+          },
+          "expected": true,
+          "ok": true,
+          "what": "no_run_was_dropped_to_make_the_variance_look_stable"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "executions_judged": 7,
+            "executions_over_the_spread": [],
+            "not_ready_reason": null,
+            "share_over_the_spread": 0.0,
+            "spreads_by_execution": {
+              "recorded-1": {
+                "legacy": 1.78,
+                "reduced": 0.84
+              },
+              "recorded-2": {
+                "legacy": 0.41,
+                "reduced": 0.77
+              },
+              "recorded-3": {
+                "legacy": 2.29,
+                "reduced": 6.5
+              },
+              "recorded-4": {
+                "legacy": 3.37,
+                "reduced": 1.7
+              },
+              "recorded-5": {
+                "legacy": 1.33,
+                "reduced": 0.2
+              },
+              "recorded-6": {
+                "legacy": 2.25,
+                "reduced": 0.86
+              },
+              "recorded-7": {
+                "legacy": 2.02,
+                "reduced": 0.86
+              }
+            }
+          },
+          "expected": true,
+          "ok": true,
+          "what": "benchmark_variance_stable"
+        }
+      ],
+      "detail": {
+        "benchmark_variance_stable": true,
+        "executions_over_threshold": [],
+        "share_over_threshold": 0.0,
+        "spreads": [
+          {
+            "execution": "recorded-1",
+            "fps": [
+              7.391,
+              7.524
+            ],
+            "kept_run_ids": [
+              2,
+              3
+            ],
+            "kept_runs": 2,
+            "mode": "legacy",
+            "published_spread_percent": 1.8,
+            "source_artifact": "execution_01_transfer_ab_benchmark.json",
+            "spread_percent_vs_lowest_run": 1.8,
+            "spread_percent_vs_median": 1.78
+          },
+          {
+            "execution": "recorded-1",
+            "fps": [
+              7.6289,
+              7.6932
+            ],
+            "kept_run_ids": [
+              2,
+              3
+            ],
+            "kept_runs": 2,
+            "mode": "reduced",
+            "published_spread_percent": 0.84,
+            "source_artifact": "execution_01_transfer_ab_benchmark.json",
+            "spread_percent_vs_lowest_run": 0.84,
+            "spread_percent_vs_median": 0.84
+          },
+          {
+            "execution": "recorded-2",
+            "fps": [
+              7.4233,
+              7.454
+            ],
+            "kept_run_ids": [
+              2,
+              3
+            ],
+            "kept_runs": 2,
+            "mode": "legacy",
+            "published_spread_percent": 0.41,
+            "source_artifact": "execution_02_transfer_ab_benchmark.json",
+            "spread_percent_vs_lowest_run": 0.41,
+            "spread_percent_vs_median": 0.41
+          },
+          {
+            "execution": "recorded-2",
+            "fps": [
+              7.6513,
+              7.7101
+            ],
+            "kept_run_ids": [
+              2,
+              3
+            ],
+            "kept_runs": 2,
+            "mode": "reduced",
+            "published_spread_percent": 0.77,
+            "source_artifact": "execution_02_transfer_ab_benchmark.json",
+            "spread_percent_vs_lowest_run": 0.77,
+            "spread_percent_vs_median": 0.77
+          },
+          {
+            "execution": "recorded-3",
+            "fps": [
+              7.4874,
+              7.6605
+            ],
+            "kept_run_ids": [
+              2,
+              3
+            ],
+            "kept_runs": 2,
+            "mode": "legacy",
+            "published_spread_percent": 2.31,
+            "source_artifact": "execution_03_transfer_ab_benchmark.json",
+            "spread_percent_vs_lowest_run": 2.31,
+            "spread_percent_vs_median": 2.29
+          },
+          {
+            "execution": "recorded-3",
+            "fps": [
+              7.2798,
+              7.7692
+            ],
+            "kept_run_ids": [
+              2,
+              3
+            ],
+            "kept_runs": 2,
+            "mode": "reduced",
+            "published_spread_percent": 6.72,
+            "source_artifact": "execution_03_transfer_ab_benchmark.json",
+            "spread_percent_vs_lowest_run": 6.72,
+            "spread_percent_vs_median": 6.5
+          },
+          {
+            "execution": "recorded-4",
+            "fps": [
+              7.3407,
+              7.5925
+            ],
+            "kept_run_ids": [
+              2,
+              3
+            ],
+            "kept_runs": 2,
+            "mode": "legacy",
+            "published_spread_percent": 3.43,
+            "source_artifact": "execution_04_transfer_ab_benchmark.json",
+            "spread_percent_vs_lowest_run": 3.43,
+            "spread_percent_vs_median": 3.37
+          },
+          {
+            "execution": "recorded-4",
+            "fps": [
+              7.4692,
+              7.5976
+            ],
+            "kept_run_ids": [
+              2,
+              3
+            ],
+            "kept_runs": 2,
+            "mode": "reduced",
+            "published_spread_percent": 1.72,
+            "source_artifact": "execution_04_transfer_ab_benchmark.json",
+            "spread_percent_vs_lowest_run": 1.72,
+            "spread_percent_vs_median": 1.7
+          },
+          {
+            "execution": "recorded-5",
+            "fps": [
+              7.5613,
+              7.6626
+            ],
+            "kept_run_ids": [
+              2,
+              3
+            ],
+            "kept_runs": 2,
+            "mode": "legacy",
+            "published_spread_percent": 1.34,
+            "source_artifact": "execution_05_transfer_ab_benchmark.json",
+            "spread_percent_vs_lowest_run": 1.34,
+            "spread_percent_vs_median": 1.33
+          },
+          {
+            "execution": "recorded-5",
+            "fps": [
+              7.6516,
+              7.6667
+            ],
+            "kept_run_ids": [
+              2,
+              3
+            ],
+            "kept_runs": 2,
+            "mode": "reduced",
+            "published_spread_percent": 0.2,
+            "source_artifact": "execution_05_transfer_ab_benchmark.json",
+            "spread_percent_vs_lowest_run": 0.2,
+            "spread_percent_vs_median": 0.2
+          },
+          {
+            "execution": "recorded-6",
+            "fps": [
+              7.3936,
+              7.5617
+            ],
+            "kept_run_ids": [
+              2,
+              3
+            ],
+            "kept_runs": 2,
+            "mode": "legacy",
+            "published_spread_percent": 2.27,
+            "source_artifact": "execution_06_transfer_ab_benchmark.json",
+            "spread_percent_vs_lowest_run": 2.27,
+            "spread_percent_vs_median": 2.25
+          },
+          {
+            "execution": "recorded-6",
+            "fps": [
+              7.5497,
+              7.6148
+            ],
+            "kept_run_ids": [
+              2,
+              3
+            ],
+            "kept_runs": 2,
+            "mode": "reduced",
+            "published_spread_percent": 0.86,
+            "source_artifact": "execution_06_transfer_ab_benchmark.json",
+            "spread_percent_vs_lowest_run": 0.86,
+            "spread_percent_vs_median": 0.86
+          },
+          {
+            "execution": "recorded-7",
+            "fps": [
+              7.5183,
+              7.6717
+            ],
+            "kept_run_ids": [
+              2,
+              3
+            ],
+            "kept_runs": 2,
+            "mode": "legacy",
+            "published_spread_percent": 2.04,
+            "source_artifact": "execution_07_transfer_ab_benchmark.json",
+            "spread_percent_vs_lowest_run": 2.04,
+            "spread_percent_vs_median": 2.02
+          },
+          {
+            "execution": "recorded-7",
+            "fps": [
+              7.6433,
+              7.7093
+            ],
+            "kept_run_ids": [
+              2,
+              3
+            ],
+            "kept_runs": 2,
+            "mode": "reduced",
+            "published_spread_percent": 0.86,
+            "source_artifact": "execution_07_transfer_ab_benchmark.json",
+            "spread_percent_vs_lowest_run": 0.86,
+            "spread_percent_vs_median": 0.86
+          }
+        ],
+        "thresholds": {
+          "execution_share": 0.25,
+          "spread_percent": 20.0
+        }
+      },
+      "evidence": [
+        "counterbalanced_performance.json executions[].orders[].fps_of_every_run and runs_used_for_medians (recomputed, not read from a flag)",
+        "counterbalanced_performance.json verdict.run_census"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "copy_gate": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": 7,
+          "expected": true,
+          "ok": true,
+          "what": "copy_gate_passed_in_every_execution"
+        },
+        {
+          "actual": true,
+          "detail": [
+            6220800
+          ],
+          "expected": true,
+          "ok": true,
+          "what": "reduced_upload_is_6220800_bytes_in_every_execution"
+        },
+        {
+          "actual": true,
+          "detail": [
+            8294400
+          ],
+          "expected": true,
+          "ok": true,
+          "what": "legacy_upload_is_8294400_bytes_in_every_execution"
+        },
+        {
+          "actual": true,
+          "detail": [
+            [
+              0,
+              0
+            ]
+          ],
+          "expected": true,
+          "ok": true,
+          "what": "reduced_cpu_conversions_are_zero_in_every_execution"
+        },
+        {
+          "actual": true,
+          "detail": [
+            2
+          ],
+          "expected": true,
+          "ok": true,
+          "what": "legacy_cpu_conversions_are_the_control"
+        },
+        {
+          "actual": true,
+          "detail": [
+            0
+          ],
+          "expected": true,
+          "ok": true,
+          "what": "no_cpu_copy_of_the_previous_frame_anywhere"
+        }
+      ],
+      "detail": {
+        "legacy_h2d_values": [
+          8294400
+        ],
+        "reduced_h2d_values": [
+          6220800
+        ]
+      },
+      "evidence": [
+        "counterbalanced_performance.json executions[].gates.copy_gate",
+        "counterbalanced_performance.json executions[].orders[].steady_state_counters"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "corroboration_consistency": {
+      "checks": [
+        {
+          "actual": false,
+          "detail": {
+            "corroborating_executions": 0,
+            "corroborating_frames": [],
+            "primary_frames": [
+              "60"
+            ]
+          },
+          "expected": true,
+          "ok": false,
+          "what": "the_corroborating_batch_ran_at_its_own_frame_length"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "corroborating_executions": 0,
+            "corroborating_kept_runs_per_order": 0,
+            "note": "\u00a730: a 150-frame run is not another sample of the 60-frame experiment, so a primary pool that carried more than two kept runs per order per execution would have mixed the two",
+            "primary_executions": 7,
+            "primary_kept_runs_per_order": 14
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_corroborating_executions_were_never_pooled_into_the_primary_verdict"
+        },
+        {
+          "actual": false,
+          "detail": {
+            "as_corroboration_in_the_primary_file": {
+              "kept_runs": 0,
+              "legacy": null,
+              "reduced": null
+            },
+            "as_its_own_primary_batch": {
+              "kept_runs": 0,
+              "legacy": null,
+              "reduced": null
+            },
+            "kept_run_rows_identical": true,
+            "published_by_its_own_verdict": {}
+          },
+          "expected": true,
+          "ok": false,
+          "what": "the_two_files_describe_the_same_150_frame_runs"
+        },
+        {
+          "actual": false,
+          "detail": {
+            "balance": {
+              "balanced": false,
+              "legacy_first": 0,
+              "pairs": 0,
+              "reduced_first": 0
+            },
+            "expected_by_section_30": {
+              "legacy_first": 4,
+              "pairs": 8,
+              "reduced_first": 4
+            }
+          },
+          "expected": true,
+          "ok": false,
+          "what": "the_corroborating_batch_was_counterbalanced_too"
+        },
+        {
+          "actual": false,
+          "detail": {
+            "150f": {
+              "direction": null,
+              "legacy_kept_median_fps": null,
+              "pairwise_median_ratio": null,
+              "pairwise_rule_passed": false,
+              "passes_the_primary_rule": false,
+              "reduced_kept_median_fps": null
+            },
+            "60f": {
+              "direction": 1,
+              "legacy_kept_median_fps": 7.5212,
+              "passes_the_primary_rule": true,
+              "reduced_kept_median_fps": 7.6473
+            },
+            "not_ready_reason": "corroboration_conflicts_with_primary_run",
+            "note": "\u00a736: 60f passing with 150f failing is NOT_READY, and so is the other way round. Only agreement lets the round be DONE_PROVEN; neither length may rescue the other"
+          },
+          "expected": true,
+          "ok": false,
+          "what": "the_two_lengths_point_the_same_way"
+        }
+      ],
+      "detail": {
+        "corroborating": {
+          "legacy": null,
+          "pairwise_median_ratio": null,
+          "reduced": null,
+          "sign": null
+        },
+        "corroboration_balance": {
+          "balanced": false,
+          "legacy_first": 0,
+          "pairs": 0,
+          "reduced_first": 0
+        },
+        "primary": {
+          "legacy": 7.5212,
+          "reduced": 7.6473,
+          "sign": 1
+        }
+      },
+      "evidence": [
+        "counterbalanced_performance.json executions[] / corroborating_executions[] (kept-run fps recomputed from each run)",
+        "counterbalanced_performance.json verdict.corroboration[].kept_pair_positions",
+        "counterbalanced_150f.json verdict.pooled_kept_median_fps"
+      ],
+      "failed_checks": [
+        "the_corroborating_batch_ran_at_its_own_frame_length",
+        "the_corroborating_batch_was_counterbalanced_too",
+        "the_two_files_describe_the_same_150_frame_runs",
+        "the_two_lengths_point_the_same_way"
+      ],
+      "status": "NOT_READY"
+    },
+    "counterbalanced_order": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": 7,
+          "expected": true,
+          "ok": true,
+          "what": "every_execution_recorded_a_schedule"
+        },
+        {
+          "actual": true,
+          "detail": "all matched",
+          "expected": true,
+          "ok": true,
+          "what": "every_launch_sequence_matches_its_recorded_schedule"
+        },
+        {
+          "actual": true,
+          "detail": "all matched",
+          "expected": true,
+          "ok": true,
+          "what": "every_schedule_is_the_deterministic_rule"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "execution_01_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            },
+            "execution_02_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            },
+            "execution_03_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            },
+            "execution_04_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            },
+            "execution_05_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            },
+            "execution_06_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            },
+            "execution_07_transfer_ab_benchmark.json": {
+              "legacy_first": 1,
+              "reduced_first": 1
+            }
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_execution_had_kept_pairs_of_both_positions"
+        },
+        {
+          "actual": true,
+          "detail": null,
+          "expected": true,
+          "ok": true,
+          "what": "no_execution_ran_a_fixed_order"
+        }
+      ],
+      "detail": {
+        "recorded_schedule": [
+          [
+            {
+              "kept": false,
+              "order": [
+                "legacy",
+                "reduced"
+              ],
+              "run": 1
+            },
+            {
+              "kept": true,
+              "order": [
+                "legacy",
+                "reduced"
+              ],
+              "run": 2
+            },
+            {
+              "kept": true,
+              "order": [
+                "reduced",
+                "legacy"
+              ],
+              "run": 3
+            }
+          ],
+          [
+            {
+              "kept": false,
+              "order": [
+                "reduced",
+                "legacy"
+              ],
+              "run": 1
+            },
+            {
+              "kept": true,
+              "order": [
+                "reduced",
+                "legacy"
+              ],
+              "run": 2
+            },
+            {
+              "kept": true,
+              "order": [
+                "legacy",
+                "reduced"
+              ],
+              "run": 3
+            }
+          ]
+        ]
+      },
+      "evidence": [
+        "ab_executions/*_transfer_ab_benchmark.json execution_schedule",
+        "ab_executions/*_transfer_ab_benchmark.json run_launch_sequence",
+        "counterbalanced_performance.json verdict.per_execution_outcome[].kept_pair_positions"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "decoder_status_semantics": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "legacy_bytes": 12441600,
+            "reason": "the decoder is a child process writing a byte pipe; this round changed nothing on that path, and the two measurements agree",
+            "reduced_bytes": 12441600,
+            "status": "BLOCKED_PROVEN",
+            "unchanged_this_round": true
+          },
+          "expected": true,
+          "ok": true,
+          "what": "decoder_pipe_is_not_reported_as_reduced"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "legacy": 12441600,
+            "reduced": 12441600
+          },
+          "expected": true,
+          "ok": true,
+          "what": "decoder_pipe_reports_blocked_while_its_bytes_are_equal"
+        },
+        {
+          "actual": true,
+          "detail": [],
+          "expected": true,
+          "ok": true,
+          "what": "no_published_word_contradicts_its_own_numbers"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "decoder_pipe": "BLOCKED_PROVEN",
+            "encoder_pipe": "BLOCKED_PROVEN",
+            "nvof_flow_d2h_download": "BLOCKED_PROVEN"
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_row_whose_numbers_are_equal_says_blocked"
+        }
+      ],
+      "detail": {
+        "claims": [
+          {
+            "after": 6220800,
+            "before": 8294400,
+            "claim": "nvof_h2d_upload",
+            "consistent": true,
+            "derived_status": "REDUCED_PROVEN",
+            "problems": [],
+            "published_status": "REDUCED_PROVEN",
+            "saved": 2073600,
+            "saved_percent": 25.0
+          },
+          {
+            "after": 0,
+            "before": 2,
+            "claim": "cpu_bgr_to_rgba_calls",
+            "consistent": true,
+            "derived_status": "DONE_PROVEN",
+            "problems": [],
+            "published_status": "ELIMINATED_PROVEN",
+            "saved": 2,
+            "saved_percent": 100.0
+          },
+          {
+            "after": 0,
+            "before": 1,
+            "claim": "cpu_rgba_to_bgr_calls",
+            "consistent": true,
+            "derived_status": "DONE_PROVEN",
+            "problems": [],
+            "published_status": "ELIMINATED_PROVEN",
+            "saved": 1,
+            "saved_percent": 100.0
+          },
+          {
+            "after": 0,
+            "before": 22809600,
+            "claim": "cpu_color_conversion_output",
+            "consistent": true,
+            "derived_status": "DONE_PROVEN",
+            "problems": [],
+            "published_status": "ELIMINATED_PROVEN",
+            "saved": 22809600,
+            "saved_percent": 100.0
+          },
+          {
+            "after": 16588800,
+            "before": 16588800,
+            "claim": "nvof_flow_d2h_download",
+            "consistent": true,
+            "derived_status": "BLOCKED_PROVEN",
+            "problems": [],
+            "published_status": "BLOCKED_PROVEN",
+            "saved": 0,
+            "saved_percent": 0.0
+          },
+          {
+            "after": 12441600,
+            "before": 12441600,
+            "claim": "decoder_pipe",
+            "consistent": true,
+            "derived_status": "BLOCKED_PROVEN",
+            "problems": [],
+            "published_status": "BLOCKED_PROVEN",
+            "saved": 0,
+            "saved_percent": 0.0
+          },
+          {
+            "after": 24883200,
+            "before": 24883200,
+            "claim": "encoder_pipe",
+            "consistent": true,
+            "derived_status": "BLOCKED_PROVEN",
+            "problems": [],
+            "published_status": "BLOCKED_PROVEN",
+            "saved": 0,
+            "saved_percent": 0.0
+          }
+        ],
+        "reduced_proven_rows": [
+          {
+            "after": 6220800,
+            "before": 8294400,
+            "claim": "nvof_h2d_upload",
+            "saved": 2073600,
+            "saved_percent": 25.0,
+            "status": "REDUCED_PROVEN",
+            "unit": "bytes/frame"
+          }
+        ]
+      },
+      "evidence": [
+        "status_consistency.json",
+        "counterbalanced_performance.json executions[].orders[].steady_state_counters.decoder_pipe_bytes"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "ffprobe_schema": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+            "of_each_merged_source": {
+              "ab_executions/execution_01_ffprobe_output.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+              "ab_executions/execution_02_ffprobe_output.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+              "ab_executions/execution_03_ffprobe_output.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+              "ab_executions/execution_04_ffprobe_output.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+              "ab_executions/execution_05_ffprobe_output.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+              "ab_executions/execution_06_ffprobe_output.json": "1dedec758dc0cced625ae8d12b118e6054e834de",
+              "ab_executions/execution_07_ffprobe_output.json": "1dedec758dc0cced625ae8d12b118e6054e834de"
+            }
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_merged_ffprobe_artifact_declares_its_code_under_test"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "per_mode": {
+              "legacy": 21,
+              "reduced": 21
+            },
+            "runs_with_a_reading": 42,
+            "runs_without_one": 0
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_output_file_has_an_ffprobe_reading"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "codecs_seen": [
+              "av1"
+            ],
+            "rows_without_a_codec": []
+          },
+          "expected": true,
+          "ok": true,
+          "what": "codecs_seen_names_codecs_and_not_blanks"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "codecs_seen": [
+              "av1"
+            ],
+            "expected": [
+              "av1"
+            ],
+            "expected_variants": [
+              {
+                "codec": "av1",
+                "fps": 60.0,
+                "frames": 60,
+                "height": 2160,
+                "width": 3840
+              }
+            ]
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_observed_codecs_are_the_ones_the_encoder_was_set_to"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "legacy": [
+              "av1"
+            ],
+            "reduced": [
+              "av1"
+            ]
+          },
+          "expected": true,
+          "ok": true,
+          "what": "both_orders_were_encoded_the_same_way"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "fields_seen": [
+              "duration_within_1pct",
+              "fps_matches_source",
+              "packets",
+              "resolution"
+            ],
+            "required": [
+              "packets",
+              "resolution",
+              "duration_within_1pct",
+              "fps_matches_source"
+            ]
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_probe_ran_every_check_it_is_asked_to"
+        },
+        {
+          "actual": true,
+          "detail": [],
+          "expected": true,
+          "ok": true,
+          "what": "no_probe_record_carried_no_checks_at_all"
+        },
+        {
+          "actual": true,
+          "detail": [],
+          "expected": true,
+          "ok": true,
+          "what": "no_probe_check_failed"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "disagreeing": [],
+            "matching": 42
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_probed_frame_count_matched_its_own_expected_count"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "geometries_seen": [
+              "3840x2160@60.0"
+            ],
+            "mismatched": []
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_output_has_the_resolution_and_frame_rate_it_claimed"
+        }
+      ],
+      "detail": {
+        "codecs_seen_per_execution": {
+          "ab_executions/execution_01_ffprobe_output.json": [
+            "av1"
+          ],
+          "ab_executions/execution_02_ffprobe_output.json": [
+            "av1"
+          ],
+          "ab_executions/execution_03_ffprobe_output.json": [
+            "av1"
+          ],
+          "ab_executions/execution_04_ffprobe_output.json": [
+            "av1"
+          ],
+          "ab_executions/execution_05_ffprobe_output.json": [
+            "av1"
+          ],
+          "ab_executions/execution_06_ffprobe_output.json": [
+            "av1"
+          ],
+          "ab_executions/execution_07_ffprobe_output.json": [
+            "av1"
+          ]
+        }
+      },
+      "evidence": [
+        "ffprobe_output.json codecs_seen / expected_codecs / runs_by_batch",
+        "ab_executions*/*_ffprobe_output.json runs[].ffprobe",
+        "collect_transfer_ab.EXPECTED_OUTPUT_CODEC"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "full_unit_suite": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": "352 passed in 158.02s (0:02:38)",
+          "expected": true,
+          "ok": true,
+          "what": "the_suite_ran_and_its_transcript_is_here"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "passed": 352
+          },
+          "expected": true,
+          "ok": true,
+          "what": "nothing_failed"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "floor": 287,
+            "note": "a floor, not an expected count: tests added this round raise the number and must not require this check to be edited to match it",
+            "passed": 352
+          },
+          "expected": true,
+          "ok": true,
+          "what": "at_least_the_287_tests_the_previous_round_left_behind"
+        }
+      ],
+      "detail": {
+        "counts": {
+          "passed": 352
+        },
+        "summary_line": "352 passed in 158.02s (0:02:38)"
+      },
+      "evidence": [
+        "pytest_output.txt"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "kept_run_pooling": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "legacy": 7.5212,
+            "reduced": 7.6473
+          },
+          "expected": true,
+          "ok": true,
+          "what": "pooled_median_recomputed_from_the_kept_rows"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "legacy": "14 of 21",
+            "reduced": "14 of 21"
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_verdict_does_not_read_the_warmup_runs"
+        },
+        {
+          "actual": true,
+          "detail": null,
+          "expected": true,
+          "ok": true,
+          "what": "kept_and_all_run_counts_are_both_published"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "diagnostic": {
+              "legacy": 7.5491,
+              "reduced": 7.6513
+            }
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_all_runs_figure_is_labelled_a_diagnostic"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+            "correct_kept_median_legacy": 7.4485,
+            "correct_kept_median_reduced": 7.6178,
+            "correct_kept_run_count_per_order": {
+              "legacy": 24,
+              "reduced": 24
+            },
+            "correct_pair_count": 24,
+            "corrected_median_reduced_minus_legacy_percent": 2.46,
+            "corrected_ratio": 1.0227,
+            "corrected_sign_test": {
+              "p_value_legacy_ahead_by_at_least_this_much": 0.999228,
+              "p_value_reduced_ahead_by_at_least_this_much": 0.003305,
+              "pairs": 24,
+              "runs_favouring_legacy": 5,
+              "runs_favouring_reduced": 19,
+              "used_for": "secondary evidence only; no threshold in this file reads it"
+            },
+            "executions": 12,
+            "generated_by": "tests/unit/collect_transfer_performance.py",
+            "old_all_run_count_per_order": {
+              "legacy": 36,
+              "reduced": 36
+            },
+            "old_all_run_median_legacy": 7.4839,
+            "old_all_run_median_reduced": 7.5984,
+            "old_median_reduced_minus_legacy_percent": 2.46,
+            "old_pair_count": 36,
+            "old_ratio": 1.0153,
+            "old_sign_test": {
+              "p_value_legacy_ahead_by_at_least_this_much": 0.998033,
+              "p_value_reduced_ahead_by_at_least_this_much": 0.005665,
+              "pairs": 36,
+              "runs_favouring_legacy": 10,
+              "runs_favouring_reduced": 26,
+              "used_for": "secondary evidence only; no threshold in this file reads it"
+            },
+            "provenance_note": "code_under_test is the collector that recomputed these numbers; source_code_under_test is the code the source artifacts were measured on. The sources were opened read-only and none of their files was written to, so the earlier round's published verdict still stands beside this recalculation unchanged",
+            "read_only_source": [
+              "F:\\dlss5standaloneV2\\perf_results\\740c78a\\transfer_phase1",
+              "F:\\dlss5standaloneV2\\perf_results\\740c78a\\transfer_phase1\\ab_executions"
+            ],
+            "source_artifacts_read_only": true,
+            "source_code_under_test": "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee",
+            "source_code_under_test_values": [
+              "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee"
+            ],
+            "sources": [
+              "execution_01_transfer_ab_benchmark.json",
+              "execution_02_transfer_ab_benchmark.json",
+              "execution_03_transfer_ab_benchmark.json",
+              "execution_04_transfer_ab_benchmark.json",
+              "execution_05_transfer_ab_benchmark.json",
+              "execution_06_transfer_ab_benchmark.json",
+              "execution_07_transfer_ab_benchmark.json",
+              "execution_08_transfer_ab_benchmark.json",
+              "execution_09_transfer_ab_benchmark.json",
+              "execution_10_transfer_ab_benchmark.json",
+              "transfer_ab_benchmark.json",
+              "transfer_ab_benchmark_60f_e2.json"
+            ],
+            "verdict_would_change": false,
+            "warmup_run_count_per_order": {
+              "legacy": 12,
+              "reduced": 12
+            },
+            "what_this_does_not_prove": "anything about speed under a counterbalanced protocol. Every pair of this batch ran legacy first, so reduced always occupied the second position, and removing warmups does not remove that.",
+            "what_this_proves": "that the earlier pooled verdict read 36 runs per order where the protocol kept 24: it folded each execution's warmup pair back into the median and the sign test. The two columns below are the same runs, separated only by whether the warmup pair was allowed to count."
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_history_recalc_shows_the_same_split"
+        }
+      ],
+      "detail": {
+        "pooled_all_runs_median_fps_diagnostic": {
+          "legacy": 7.5491,
+          "reduced": 7.6513
+        },
+        "pooled_kept_median_fps": {
+          "legacy": 7.5212,
+          "reduced": 7.6473
+        }
+      },
+      "evidence": [
+        "counterbalanced_performance.json verdict.kept_orders",
+        "counterbalanced_performance.json verdict.all_orders_diagnostic",
+        "historical_warmup_recalc.json"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "native_scope_unchanged": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "nvof_bridge.dll": {
+              "baseline_commit": "e3aa86c",
+              "last_commit_touching_binary": "1352c71 perf(nvof): add native bgr input path",
+              "matches_baseline": true,
+              "matches_head": true,
+              "path": "native/nvof_bridge.dll",
+              "sha256_at_baseline": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80",
+              "sha256_at_head": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80",
+              "unchanged_since_baseline": true,
+              "working_tree_sha256": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80"
+            },
+            "residual_bridge.dll": {
+              "baseline_commit": "e3aa86c",
+              "last_commit_touching_binary": "51c980c perf(residual): consume dlss rgba directly in reconstruction",
+              "matches_baseline": true,
+              "matches_head": true,
+              "path": "native/residual_bridge.dll",
+              "sha256_at_baseline": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2",
+              "sha256_at_head": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2",
+              "unchanged_since_baseline": true,
+              "working_tree_sha256": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2"
+            }
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_native_binary_matches_the_baseline_commit"
+        },
+        {
+          "actual": true,
+          "detail": [],
+          "expected": true,
+          "ok": true,
+          "what": "no_native_source_was_touched"
+        },
+        {
+          "actual": true,
+          "detail": [],
+          "expected": true,
+          "ok": true,
+          "what": "every_file_this_round_changed_is_test_layer"
+        }
+      ],
+      "detail": {
+        "binaries": {
+          "nvof_bridge.dll": {
+            "baseline_commit": "e3aa86c",
+            "last_commit_touching_binary": "1352c71 perf(nvof): add native bgr input path",
+            "matches_baseline": true,
+            "matches_head": true,
+            "path": "native/nvof_bridge.dll",
+            "sha256_at_baseline": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80",
+            "sha256_at_head": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80",
+            "unchanged_since_baseline": true,
+            "working_tree_sha256": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80"
+          },
+          "residual_bridge.dll": {
+            "baseline_commit": "e3aa86c",
+            "last_commit_touching_binary": "51c980c perf(residual): consume dlss rgba directly in reconstruction",
+            "matches_baseline": true,
+            "matches_head": true,
+            "path": "native/residual_bridge.dll",
+            "sha256_at_baseline": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2",
+            "sha256_at_head": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2",
+            "unchanged_since_baseline": true,
+            "working_tree_sha256": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2"
+          }
+        },
+        "changed": [
+          "tests/unit/benchmark_environment.py",
+          "tests/unit/collect_transfer_ab.py",
+          "tests/unit/collect_transfer_performance.py",
+          "tests/unit/collect_transfer_status.py",
+          "tests/unit/run_transfer_stability_round.py",
+          "tests/unit/test_transfer_benchmark_environment.py",
+          "tests/unit/test_transfer_benchmark_ffprobe_evidence.py",
+          "tests/unit/test_transfer_benchmark_provenance.py"
+        ]
+      },
+      "evidence": [
+        "git object hashes at e3aa86c and in the working tree",
+        "git diff --name-only e3aa86c..HEAD"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "order_balance": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "legacy_first": 7,
+            "pairs": 14,
+            "reduced_first": 7
+          },
+          "expected": true,
+          "ok": true,
+          "what": "legacy_first_kept_pairs_equal_reduced_first"
+        },
+        {
+          "actual": true,
+          "detail": 0,
+          "expected": true,
+          "ok": true,
+          "what": "no_kept_pair_has_an_unknown_position"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "kept": {
+              "legacy": 14,
+              "reduced": 14
+            },
+            "pairs": 14
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_kept_run_is_in_exactly_one_balanced_pair"
+        },
+        {
+          "actual": true,
+          "detail": "the balance is enforced by the launch schedule, per execution",
+          "expected": true,
+          "ok": true,
+          "what": "the_balance_is_not_a_statistical_correction"
+        }
+      ],
+      "detail": {
+        "order_balance": {
+          "balanced": true,
+          "legacy_first": 7,
+          "pairs": 14,
+          "reduced_first": 7,
+          "unknown_position": 0
+        }
+      },
+      "evidence": [
+        "counterbalanced_performance.json verdict.order_balance",
+        "ab_executions/*_transfer_ab_benchmark.json gates.order_balance_gate"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "output_integrity": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": 7,
+          "expected": true,
+          "ok": true,
+          "what": "output_integrity_gate_passed_in_every_execution"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "execution_01_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            },
+            "execution_02_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            },
+            "execution_03_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            },
+            "execution_04_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            },
+            "execution_05_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            },
+            "execution_06_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            },
+            "execution_07_transfer_ab_benchmark.json": {
+              "legacy": 1,
+              "reduced": 1
+            }
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_execution_produced_a_bitstream_for_both_orders"
+        },
+        {
+          "actual": true,
+          "detail": "every execution",
+          "expected": true,
+          "ok": true,
+          "what": "legacy_and_reduced_bitstreams_are_the_same_bytes"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "note": "counted against the primary batch alone: ffprobe_output.json also carries the corroboration's files, and a total that spans both batches would either fail here or, worse, pass by propping one batch's count up with the other's",
+            "probed": 42,
+            "runs": 42
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_output_file_of_the_primary_batch_was_probed"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "probed": null,
+            "runs": 0
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_output_file_of_the_corroborating_batch_was_probed"
+        },
+        {
+          "actual": false,
+          "detail": [
+            "primary-60f stopped before execution 8: the runtime monitor recorded an external workload inside the batch (\u00a718)",
+            "\u00a730's precondition failed: the runtime monitor recorded an external workload, so the 150-frame corroboration was not run"
+          ],
+          "expected": true,
+          "ok": false,
+          "what": "no_execution_failed_or_crashed"
+        }
+      ],
+      "detail": {
+        "bitstream_digests_per_execution": {
+          "execution_01_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          },
+          "execution_02_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          },
+          "execution_03_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          },
+          "execution_04_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          },
+          "execution_05_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          },
+          "execution_06_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          },
+          "execution_07_transfer_ab_benchmark.json": {
+            "legacy": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ],
+            "reduced": [
+              "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4"
+            ]
+          }
+        }
+      },
+      "evidence": [
+        "counterbalanced_performance.json executions[].gates.output_integrity_gate",
+        "ab_executions/*_transfer_ab_benchmark.json output_identity",
+        "ffprobe_output.json runs_with_an_ffprobe_reading_by_batch"
+      ],
+      "failed_checks": [
+        "no_execution_failed_or_crashed"
+      ],
+      "status": "NOT_READY"
+    },
+    "performance_direction_consistency": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "pairwise_median_ratio": 1.0152,
+            "pooled_kept_ratio": 1.0168
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_pooled_medians_and_the_paired_ratios_point_the_same_way"
+        },
+        {
+          "actual": true,
+          "detail": null,
+          "expected": true,
+          "ok": true,
+          "what": "both_readings_are_published"
+        },
+        {
+          "actual": true,
+          "detail": "secondary evidence only; no threshold in this file reads it",
+          "expected": true,
+          "ok": true,
+          "what": "the_sign_test_is_evidence_not_a_gate"
+        }
+      ],
+      "detail": {
+        "median_reduced_minus_legacy_percent": 1.52,
+        "sign_test": {
+          "p_value_legacy_ahead_by_at_least_this_much": 0.99353,
+          "p_value_reduced_ahead_by_at_least_this_much": 0.028687,
+          "pairs": 14,
+          "runs_favouring_legacy": 3,
+          "runs_favouring_reduced": 11,
+          "used_for": "secondary evidence only; no threshold in this file reads it"
+        }
+      },
+      "evidence": [
+        "counterbalanced_performance.json verdict.performance_direction_consistent",
+        "counterbalanced_performance.json verdict.pairwise_median_ratio"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "performance_non_regression": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "legacy": 7.5212,
+            "reduced": 7.6473
+          },
+          "expected": true,
+          "ok": true,
+          "what": "reduced_kept_median_at_least_legacy_kept"
+        },
+        {
+          "actual": true,
+          "detail": null,
+          "expected": true,
+          "ok": true,
+          "what": "the_pooled_verdict_reports_no_regression"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "attempted": 7,
+            "recorded": 7
+          },
+          "expected": true,
+          "ok": true,
+          "what": "no_execution_was_dropped_to_get_there"
+        },
+        {
+          "actual": true,
+          "detail": [],
+          "expected": true,
+          "ok": true,
+          "what": "every_execution_that_ran_is_still_in_the_file"
+        }
+      ],
+      "detail": {
+        "executions_whose_own_median_ratios_came_out_below_one": [
+          "recorded-3"
+        ],
+        "kept_they_are_all_still_pooled": true,
+        "note": "\u00a733: an execution that measures the reduced order slower stays in the pool. It is named here so a reader can count them and check none went missing."
+      },
+      "evidence": [
+        "counterbalanced_performance.json verdict.no_end_to_end_regression",
+        "counterbalanced_performance.json verdict.pooled_kept_median_fps"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "position_stratification": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "reduced_vs_legacy_when_reduced_first": 7,
+            "reduced_vs_legacy_when_reduced_second": 7
+          },
+          "expected": true,
+          "ok": true,
+          "what": "both_position_strata_have_samples"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "pairs": 14,
+            "strata": 14
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_two_strata_partition_the_kept_pairs"
+        },
+        {
+          "actual": true,
+          "detail": null,
+          "expected": true,
+          "ok": true,
+          "what": "each_stratum_reports_its_own_ratio_and_wins"
+        }
+      ],
+      "detail": {
+        "note": "no gate requires both strata to favour either order; an empty stratum would mean the claimed balance never happened, and that is what fails here",
+        "strata": {
+          "reduced_vs_legacy_when_reduced_first": {
+            "executions": [
+              "recorded-1",
+              "recorded-2",
+              "recorded-3",
+              "recorded-4",
+              "recorded-5",
+              "recorded-6",
+              "recorded-7"
+            ],
+            "losses": 1,
+            "median_percent_change": 2.99,
+            "median_ratio": 1.0299,
+            "pair_count": 7,
+            "wins": 6
+          },
+          "reduced_vs_legacy_when_reduced_second": {
+            "executions": [
+              "recorded-1",
+              "recorded-2",
+              "recorded-3",
+              "recorded-4",
+              "recorded-5",
+              "recorded-6",
+              "recorded-7"
+            ],
+            "losses": 2,
+            "median_percent_change": 1.39,
+            "median_ratio": 1.0139,
+            "pair_count": 7,
+            "wins": 5
+          }
+        }
+      },
+      "evidence": [
+        "counterbalanced_performance.json verdict.position_strata"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    },
+    "quiet_preflight": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "interval_seconds": 1.0,
+            "samples_in_window_of_record": 30,
+            "samples_required": 30,
+            "window_seconds": 30
+          },
+          "expected": true,
+          "ok": true,
+          "what": "a_full_thirty_second_window_was_measured"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "frozen_in_the_module": {
+              "available_ram_at_least_bytes": 8589934592,
+              "cpu_median_percent_at_most": 20.0,
+              "cpu_p95_percent_at_most": 35.0,
+              "gpu_utilization_median_percent_at_most": 10.0,
+              "gpu_utilization_p95_percent_at_most": 25.0
+            },
+            "note": "\u00a712: fixed before any result was seen; a threshold changed to match a measurement fails this check instead of passing the round",
+            "recorded": {
+              "available_ram_at_least_bytes": 8589934592,
+              "cpu_median_percent_at_most": 20.0,
+              "cpu_p95_percent_at_most": 35.0,
+              "gpu_utilization_median_percent_at_most": 10.0,
+              "gpu_utilization_p95_percent_at_most": 25.0
+            }
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_thresholds_are_the_frozen_ones"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "missing_from_the_first_bad_sample": null,
+            "samples": 300
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_sample_records_what_section_11_asks_for"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "mismatched": [],
+            "window_of_record": 10
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_published_figures_are_the_ones_their_own_samples_give"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "failures_when_rejudged": [],
+            "note": "recomputed here from all_preflight_samples against the module's frozen thresholds; `preflight_status` is the same function's own answer, and the two agreeing is the check"
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_window_of_record_passes_when_its_samples_are_rejudged"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "preflight_status": "PASS",
+            "preflight_window_that_passed": 10,
+            "rejudged_ok": true
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_artifact_and_the_rejudgement_agree"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "budget_seconds": 600,
+            "window_that_passed": 10,
+            "windows_attempted": 10
+          },
+          "expected": true,
+          "ok": true,
+          "what": "one_window_passed_within_the_ten_minute_budget"
+        },
+        {
+          "actual": false,
+          "detail": {
+            "note": "recorded, not killed (\u00a713); \u00a715 stops the round instead",
+            "processes": [
+              "1736 git.exe",
+              "19692 git.exe",
+              "27524 git.exe",
+              "46000 git.exe"
+            ]
+          },
+          "expected": true,
+          "ok": false,
+          "what": "no_conflicting_repo_process_was_recorded"
+        },
+        {
+          "actual": false,
+          "detail": {
+            "note": "recorded, not killed (\u00a714)",
+            "processes": [
+              "26168 C:\\Windows\\explorer.exe [N/A]",
+              "41296 E:\\scsp\\build-h-marker-off\\Release\\scsp_dlss_smoke.exe [N/A]",
+              "50984 E:\\scsp\\build-h-marker-off-final\\Release\\scsp_dlss_smoke.exe [N/A]"
+            ]
+          },
+          "expected": true,
+          "ok": false,
+          "what": "no_external_gpu_compute_workload_was_recorded"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "note": "\u00a711: an unreadable field is recorded as unavailable, never as 0, and a threshold nobody read cannot be certified against anything",
+            "samples_without_a_cpu_figure": 0,
+            "samples_without_a_gpu_figure": 0,
+            "samples_without_a_ram_figure": 0
+          },
+          "expected": true,
+          "ok": true,
+          "what": "nothing_the_gate_needs_was_unmeasurable"
+        }
+      ],
+      "detail": {
+        "recomputed_summary": {
+          "available_ram_min_bytes": 18520727552,
+          "conflicting_repo_processes": [],
+          "cpu_median_percent": 14.7,
+          "cpu_p95_percent": 24.6,
+          "external_compute_processes": [],
+          "gpu_pstate_seen": [
+            "P3",
+            "P5",
+            "P8"
+          ],
+          "gpu_temperature_max_celsius": 40.0,
+          "gpu_utilization_median_percent": 6.0,
+          "gpu_utilization_p95_percent": 8.1,
+          "gpu_utilization_samples_unreadable": 0,
+          "sample_count": 30
+        },
+        "summary_of_record": {
+          "available_ram_min_bytes": 18520727552,
+          "conflicting_repo_processes": [],
+          "cpu_median_percent": 14.7,
+          "cpu_p95_percent": 24.6,
+          "external_compute_processes": [],
+          "gpu_pstate_seen": [
+            "P3",
+            "P5",
+            "P8"
+          ],
+          "gpu_temperature_max_celsius": 40.0,
+          "gpu_utilization_median_percent": 6.0,
+          "gpu_utilization_p95_percent": 8.1,
+          "gpu_utilization_samples_unreadable": 0,
+          "sample_count": 30
+        }
+      },
+      "evidence": [
+        "benchmark_environment.json all_preflight_samples / thresholds / preflight_status",
+        "benchmark_environment.THRESHOLDS (re-read, not copied)"
+      ],
+      "failed_checks": [
+        "no_conflicting_repo_process_was_recorded",
+        "no_external_gpu_compute_workload_was_recorded"
+      ],
+      "status": "NOT_READY"
+    },
+    "runtime_contamination": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "elapsed_seconds": 574.0,
+            "interval_seconds": 1.0,
+            "measurement_end": "2026-09-20T23:28:32Z",
+            "measurement_start": "2026-09-20T23:18:58Z",
+            "note": "a monitor that stopped early, or never started, cannot say the batch was clean - which is why this compares a count of samples against a span of time instead of reading a flag",
+            "samples": 573
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_monitor_recorded_the_length_of_the_batch"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "list_length": 573,
+            "note": "the same class of mistake as \u00a71's ffprobe aggregate: a scalar and a list written under one key, and whichever was written last won",
+            "sample_count": 573
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_sample_count_and_the_sample_list_agree"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "recorded": 1.0,
+            "required_by_section_17": 1.0
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_monitor_samples_at_one_hertz"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "samples_missing_a_list": 0
+          },
+          "expected": true,
+          "ok": true,
+          "what": "every_sample_names_who_was_on_the_machine"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "in_the_module": 3,
+            "note": "\u00a718: one transient process is not contamination; an outsider that stays is",
+            "recorded": 3
+          },
+          "expected": true,
+          "ok": true,
+          "what": "three_consecutive_samples_is_the_rule_that_was_applied"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "published": true,
+            "published_events": 42,
+            "recomputed": true,
+            "recomputed_reason": "gpu_compute workload pid 50876 (C:\\Windows\\System32\\ShellHost.exe) was present in 3 consecutive 1 Hz samples"
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_record_says_the_same_when_its_own_samples_are_rejudged"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "contaminated_with_every_sample_at_full_utilisation": true,
+            "note": "\u00a717: the benchmark loading the machine *is* the measurement, so the monitor may not read CPU or GPU utilisation as a failure. Re-running the recorded samples with utilisation pinned to 100 must not change the verdict.",
+            "published": true
+          },
+          "expected": true,
+          "ok": true,
+          "what": "utilisation_was_not_used_to_judge_the_batch"
+        },
+        {
+          "actual": false,
+          "detail": {
+            "benchmark_children": 699,
+            "events_inside_the_tree": [
+              [
+                17116,
+                "repo_workload"
+              ],
+              [
+                24100,
+                "repo_workload"
+              ],
+              [
+                24956,
+                "repo_workload"
+              ],
+              [
+                29520,
+                "repo_workload"
+              ],
+              [
+                3080,
+                "repo_workload"
+              ],
+              [
+                31720,
+                "repo_workload"
+              ],
+              [
+                35244,
+                "repo_workload"
+              ],
+              [
+                38400,
+                "repo_workload"
+              ],
+              [
+                41348,
+                "repo_workload"
+              ],
+              [
+                46156,
+                "repo_workload"
+              ],
+              [
+                4964,
+                "repo_workload"
+              ],
+              [
+                50668,
+                "repo_workload"
+              ],
+              [
+                55568,
+                "repo_workload"
+              ],
+              [
+                57112,
+                "repo_workload"
+              ],
+              [
+                57932,
+                "repo_workload"
+              ],
+              [
+                58544,
+                "repo_workload"
+              ],
+              [
+                59608,
+                "repo_workload"
+              ],
+              [
+                60052,
+                "repo_workload"
+              ],
+              [
+                61000,
+                "repo_workload"
+              ],
+              [
+                61024,
+                "repo_workload"
+              ],
+              [
+                62008,
+                "repo_workload"
+              ]
+            ],
+            "ffmpeg_children": 221,
+            "note": "\u00a719: this batch spawns FFmpeg on purpose. Its child pids are in the artifact so a reader can see that the transcoder in the GPU table is the one the batch started, not a neighbour's."
+          },
+          "expected": true,
+          "ok": false,
+          "what": "the_benchmarks_own_children_were_never_counted_as_contamination"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "batch": {
+              "corroborating_batch_not_run_because": "\u00a730's precondition failed: the runtime monitor recorded an external workload, so the 150-frame corroboration was not run",
+              "corroborating_executions_defined": 4,
+              "corroborating_executions_launched": 0,
+              "corroborating_frames_per_run": 150,
+              "execution_failures": [
+                "primary-60f stopped before execution 8: the runtime monitor recorded an external workload inside the batch (\u00a718)",
+                "\u00a730's precondition failed: the runtime monitor recorded an external workload, so the 150-frame corroboration was not run"
+              ],
+              "primary_executions_defined": 12,
+              "primary_executions_launched": 7,
+              "primary_frames_per_run": 60,
+              "primary_stopped_early_because": "primary-60f stopped before execution 8: the runtime monitor recorded an external workload inside the batch (\u00a718)",
+              "stopped_because_of_contamination": true
+            },
+            "note": "\u00a718: keep the completed executions and do not reroll, but stop launching further ones once the running child has finished safely",
+            "runtime_contaminated": true
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_batch_was_stopped_when_the_monitor_said_it_was_contaminated"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "events": [
+              {
+                "consecutive_samples": 59,
+                "first_seen_utc": "2026-09-20T23:27:34Z",
+                "kind": "gpu_compute",
+                "last_seen_utc": "2026-09-20T23:28:32Z",
+                "name": "C:\\Windows\\System32\\ShellHost.exe",
+                "pid": 50876,
+                "reached_contamination_threshold": true,
+                "sightings": 59,
+                "source": "\u00a714: it joined the GPU process list during the window"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:19:29Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:19:29Z",
+                "name": "ffmpeg.exe",
+                "pid": 15984,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:20:29Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:20:29Z",
+                "name": "ffmpeg.exe",
+                "pid": 17116,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:27:00Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:27:00Z",
+                "name": "ffprobe.exe",
+                "pid": 20108,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:24:13Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:24:13Z",
+                "name": "python.exe",
+                "pid": 24100,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:22:38Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:22:38Z",
+                "name": "ffmpeg.exe",
+                "pid": 24388,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:27:25Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:27:25Z",
+                "name": "python.exe",
+                "pid": 24956,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:23:04Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:23:04Z",
+                "name": "ffprobe.exe",
+                "pid": 25204,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:27:17Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:27:17Z",
+                "name": "ffmpeg.exe",
+                "pid": 29520,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:27:17Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:27:17Z",
+                "name": "ffmpeg.exe",
+                "pid": 3080,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:23:59Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:23:59Z",
+                "name": "ffprobe.exe",
+                "pid": 31408,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:20:50Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:20:50Z",
+                "name": "python.exe",
+                "pid": 31720,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:21:58Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:21:58Z",
+                "name": "ffprobe.exe",
+                "pid": 34904,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:23:20Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:23:20Z",
+                "name": "ffprobe.exe",
+                "pid": 35172,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:22:11Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:22:11Z",
+                "name": "ffprobe.exe",
+                "pid": 35244,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:20:37Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:20:37Z",
+                "name": "ffmpeg.exe",
+                "pid": 36844,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:22:11Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:22:11Z",
+                "name": "ffprobe.exe",
+                "pid": 37068,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:23:04Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:23:04Z",
+                "name": "ffprobe.exe",
+                "pid": 37160,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:22:51Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:22:51Z",
+                "name": "python.exe",
+                "pid": 38400,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:22:24Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:22:24Z",
+                "name": "ffprobe.exe",
+                "pid": 41348,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:27:37Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:27:37Z",
+                "name": "ffprobe.exe",
+                "pid": 44792,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:25:34Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:25:34Z",
+                "name": "ffprobe.exe",
+                "pid": 45268,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:24:34Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:24:34Z",
+                "name": "ffmpeg.exe",
+                "pid": 46156,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:19:06Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:19:06Z",
+                "name": "ffmpeg.exe",
+                "pid": 4964,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:22:24Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:22:24Z",
+                "name": "ffprobe.exe",
+                "pid": 50668,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:21:42Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:21:42Z",
+                "name": "ffprobe.exe",
+                "pid": 52248,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:25:00Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:25:00Z",
+                "name": "ffmpeg.exe",
+                "pid": 55568,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:26:08Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:26:08Z",
+                "name": "ffprobe.exe",
+                "pid": 55860,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:20:37Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:20:37Z",
+                "name": "ffmpeg.exe",
+                "pid": 55912,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:22:37Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:22:37Z",
+                "name": "ffprobe.exe",
+                "pid": 56484,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:21:08Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:21:08Z",
+                "name": "ffmpeg.exe",
+                "pid": 57112,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:27:37Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:27:37Z",
+                "name": "ffprobe.exe",
+                "pid": 57712,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:21:08Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:21:08Z",
+                "name": "ffmpeg.exe",
+                "pid": 57932,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:24:34Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:24:34Z",
+                "name": "ffmpeg.exe",
+                "pid": 58544,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:26:08Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:26:08Z",
+                "name": "ffprobe.exe",
+                "pid": 58808,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:22:51Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:22:51Z",
+                "name": "python.exe",
+                "pid": 59608,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:20:50Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:20:50Z",
+                "name": "python.exe",
+                "pid": 60052,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:21:03Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:21:03Z",
+                "name": "python.exe",
+                "pid": 61000,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:21:03Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:21:03Z",
+                "name": "python.exe",
+                "pid": 61024,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:20:29Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:20:29Z",
+                "name": "ffmpeg.exe",
+                "pid": 62008,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:23:59Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:23:59Z",
+                "name": "ffprobe.exe",
+                "pid": 62424,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              },
+              {
+                "consecutive_samples": 1,
+                "first_seen_utc": "2026-09-20T23:23:20Z",
+                "kind": "repo_workload",
+                "last_seen_utc": "2026-09-20T23:23:20Z",
+                "name": "ffprobe.exe",
+                "pid": 8700,
+                "reached_contamination_threshold": false,
+                "sightings": 1,
+                "source": "\u00a713: a repository workload outside the benchmark's process tree"
+              }
+            ],
+            "note": "every outsider the batch saw stays in this file, whether or not it stayed long enough to count (\u00a718)"
+          },
+          "expected": true,
+          "ok": true,
+          "what": "nothing_that_contaminated_the_round_was_deleted_from_it"
+        },
+        {
+          "actual": false,
+          "detail": {
+            "contamination_reason": "gpu_compute workload pid 50876 (C:\\Windows\\System32\\ShellHost.exe) was present in 3 consecutive 1 Hz samples",
+            "not_ready_reason": "external_workload_during_measurement",
+            "runtime_contaminated": true
+          },
+          "expected": true,
+          "ok": false,
+          "what": "the_round_is_not_reading_a_contaminated_batch_as_clean"
+        }
+      ],
+      "detail": {
+        "children": {
+          "benchmark": 699,
+          "ffmpeg": [
+            1840,
+            2384,
+            2408,
+            2732,
+            3080,
+            4268,
+            4492,
+            4620
+          ]
+        },
+        "contamination": {
+          "contamination_reason": "gpu_compute workload pid 50876 (C:\\Windows\\System32\\ShellHost.exe) was present in 3 consecutive 1 Hz samples",
+          "first_contamination_timestamp": "2026-09-20T23:27:34Z",
+          "runtime_contaminated": true
+        },
+        "monitor_span": {
+          "end": "2026-09-20T23:28:32Z",
+          "seconds": 574.0,
+          "start": "2026-09-20T23:18:58Z"
+        },
+        "recomputed": {
+          "contaminated": true,
+          "events": [
+            {
+              "consecutive_samples": 59,
+              "first_seen_utc": "2026-09-20T23:27:34Z",
+              "kind": "gpu_compute",
+              "last_seen_utc": "2026-09-20T23:28:32Z",
+              "name": "C:\\Windows\\System32\\ShellHost.exe",
+              "pid": 50876,
+              "reached_contamination_threshold": true,
+              "sightings": 59,
+              "source": "\u00a714: it joined the GPU process list during the window"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:19:29Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:19:29Z",
+              "name": "ffmpeg.exe",
+              "pid": 15984,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:20:29Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:20:29Z",
+              "name": "ffmpeg.exe",
+              "pid": 17116,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:27:00Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:27:00Z",
+              "name": "ffprobe.exe",
+              "pid": 20108,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:24:13Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:24:13Z",
+              "name": "python.exe",
+              "pid": 24100,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:22:38Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:22:38Z",
+              "name": "ffmpeg.exe",
+              "pid": 24388,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:27:25Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:27:25Z",
+              "name": "python.exe",
+              "pid": 24956,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:23:04Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:23:04Z",
+              "name": "ffprobe.exe",
+              "pid": 25204,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:27:17Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:27:17Z",
+              "name": "ffmpeg.exe",
+              "pid": 29520,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:27:17Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:27:17Z",
+              "name": "ffmpeg.exe",
+              "pid": 3080,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:23:59Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:23:59Z",
+              "name": "ffprobe.exe",
+              "pid": 31408,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:20:50Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:20:50Z",
+              "name": "python.exe",
+              "pid": 31720,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:21:58Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:21:58Z",
+              "name": "ffprobe.exe",
+              "pid": 34904,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:23:20Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:23:20Z",
+              "name": "ffprobe.exe",
+              "pid": 35172,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:22:11Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:22:11Z",
+              "name": "ffprobe.exe",
+              "pid": 35244,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:20:37Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:20:37Z",
+              "name": "ffmpeg.exe",
+              "pid": 36844,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:22:11Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:22:11Z",
+              "name": "ffprobe.exe",
+              "pid": 37068,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:23:04Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:23:04Z",
+              "name": "ffprobe.exe",
+              "pid": 37160,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:22:51Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:22:51Z",
+              "name": "python.exe",
+              "pid": 38400,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:22:24Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:22:24Z",
+              "name": "ffprobe.exe",
+              "pid": 41348,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:27:37Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:27:37Z",
+              "name": "ffprobe.exe",
+              "pid": 44792,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:25:34Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:25:34Z",
+              "name": "ffprobe.exe",
+              "pid": 45268,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:24:34Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:24:34Z",
+              "name": "ffmpeg.exe",
+              "pid": 46156,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:19:06Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:19:06Z",
+              "name": "ffmpeg.exe",
+              "pid": 4964,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:22:24Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:22:24Z",
+              "name": "ffprobe.exe",
+              "pid": 50668,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:21:42Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:21:42Z",
+              "name": "ffprobe.exe",
+              "pid": 52248,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:25:00Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:25:00Z",
+              "name": "ffmpeg.exe",
+              "pid": 55568,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:26:08Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:26:08Z",
+              "name": "ffprobe.exe",
+              "pid": 55860,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:20:37Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:20:37Z",
+              "name": "ffmpeg.exe",
+              "pid": 55912,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:22:37Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:22:37Z",
+              "name": "ffprobe.exe",
+              "pid": 56484,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:21:08Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:21:08Z",
+              "name": "ffmpeg.exe",
+              "pid": 57112,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:27:37Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:27:37Z",
+              "name": "ffprobe.exe",
+              "pid": 57712,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:21:08Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:21:08Z",
+              "name": "ffmpeg.exe",
+              "pid": 57932,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:24:34Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:24:34Z",
+              "name": "ffmpeg.exe",
+              "pid": 58544,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:26:08Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:26:08Z",
+              "name": "ffprobe.exe",
+              "pid": 58808,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:22:51Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:22:51Z",
+              "name": "python.exe",
+              "pid": 59608,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:20:50Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:20:50Z",
+              "name": "python.exe",
+              "pid": 60052,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:21:03Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:21:03Z",
+              "name": "python.exe",
+              "pid": 61000,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:21:03Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:21:03Z",
+              "name": "python.exe",
+              "pid": 61024,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:20:29Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:20:29Z",
+              "name": "ffmpeg.exe",
+              "pid": 62008,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:23:59Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:23:59Z",
+              "name": "ffprobe.exe",
+              "pid": 62424,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            },
+            {
+              "consecutive_samples": 1,
+              "first_seen_utc": "2026-09-20T23:23:20Z",
+              "kind": "repo_workload",
+              "last_seen_utc": "2026-09-20T23:23:20Z",
+              "name": "ffprobe.exe",
+              "pid": 8700,
+              "reached_contamination_threshold": false,
+              "sightings": 1,
+              "source": "\u00a713: a repository workload outside the benchmark's process tree"
+            }
+          ]
+        }
+      },
+      "evidence": [
+        "benchmark_runtime_monitor.json samples / external_workload_events / runtime_contaminated / benchmark_child_pids",
+        "benchmark_environment.judge_contamination (re-applied to the recorded samples)"
+      ],
+      "failed_checks": [
+        "the_benchmarks_own_children_were_never_counted_as_contamination",
+        "the_round_is_not_reading_a_contaminated_batch_as_clean"
+      ],
+      "status": "NOT_READY"
+    },
+    "warmup_exclusion": {
+      "checks": [
+        {
+          "actual": true,
+          "detail": {
+            "legacy": 7,
+            "reduced": 7
+          },
+          "expected": true,
+          "ok": true,
+          "what": "warmup_runs_were_measured_and_published"
+        },
+        {
+          "actual": true,
+          "detail": null,
+          "expected": true,
+          "ok": true,
+          "what": "warmup_rows_are_flagged_out_of_the_verdict"
+        },
+        {
+          "actual": true,
+          "detail": null,
+          "expected": true,
+          "ok": true,
+          "what": "kept_rows_are_flagged_into_the_verdict"
+        },
+        {
+          "actual": true,
+          "detail": null,
+          "expected": true,
+          "ok": true,
+          "what": "no_run_is_both_warmup_and_kept"
+        },
+        {
+          "actual": true,
+          "detail": {
+            "legacy": [
+              [
+                2,
+                3
+              ]
+            ],
+            "reduced": [
+              [
+                2,
+                3
+              ]
+            ]
+          },
+          "expected": true,
+          "ok": true,
+          "what": "the_execution_named_its_own_kept_run_ids"
+        }
+      ],
+      "detail": {
+        "run_census": {
+          "legacy": {
+            "all_run_count": 21,
+            "kept_run_count": 14,
+            "kept_run_ids": [
+              2,
+              3
+            ],
+            "warmup_run_count": 7,
+            "warmup_run_ids": [
+              1
+            ]
+          },
+          "reduced": {
+            "all_run_count": 21,
+            "kept_run_count": 14,
+            "kept_run_ids": [
+              2,
+              3
+            ],
+            "warmup_run_count": 7,
+            "warmup_run_ids": [
+              1
+            ]
+          }
+        }
+      },
+      "evidence": [
+        "counterbalanced_performance.json run_census",
+        "counterbalanced_performance.json kept_runs_per_order",
+        "counterbalanced_performance.json warmup_runs_per_order",
+        "executions[].orders[].runs_used_for_medians"
+      ],
+      "failed_checks": [],
+      "status": "DONE_PROVEN"
+    }
+  },
+  "generated_at_utc": "2026-09-20T23:28:35Z",
+  "generated_by": "tests/unit/collect_transfer_status.py",
+  "missing_artifacts": [],
+  "native_binaries": {
+    "nvof_bridge.dll": {
+      "binary_git_blob_committed": "24d84408bbfe150d255e998b3905524fabf99ce3",
+      "binary_git_blob_working": "24d84408bbfe150d255e998b3905524fabf99ce3",
+      "binary_matches_commit": true,
+      "binary_path": "native/nvof_bridge.dll",
+      "binary_sha256": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80",
+      "binary_size_bytes": 161792,
+      "last_commit_touching_binary": "1352c71 perf(nvof): add native bgr input path",
+      "last_commit_touching_source": "1352c71 perf(nvof): add native bgr input path",
+      "source_git_blob_committed": "71f41a639bdc6826a20c30c51334fda2061d8861",
+      "source_git_blob_working": "71f41a639bdc6826a20c30c51334fda2061d8861",
+      "source_matches_commit": true,
+      "source_path": "native/nvof_bridge.cpp",
+      "source_sha256": "0d6d6d34a9b0362d094363b0ac7e057e552b88a39d4b58218006c4a7e50b6562"
+    },
+    "residual_bridge.dll": {
+      "binary_git_blob_committed": "cc578dfe4541c7336d7334210fe1a155468a3677",
+      "binary_git_blob_working": "cc578dfe4541c7336d7334210fe1a155468a3677",
+      "binary_matches_commit": true,
+      "binary_path": "native/residual_bridge.dll",
+      "binary_sha256": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2",
+      "binary_size_bytes": 200192,
+      "last_commit_touching_binary": "51c980c perf(residual): consume dlss rgba directly in reconstruction",
+      "last_commit_touching_source": "51c980c perf(residual): consume dlss rgba directly in reconstruction",
+      "source_git_blob_committed": "71a23fab702247a6b2427cf68a4aa4e7aca8d54d",
+      "source_git_blob_working": "71a23fab702247a6b2427cf68a4aa4e7aca8d54d",
+      "source_matches_commit": true,
+      "source_path": "native/residual_bridge.cpp",
+      "source_sha256": "c76d9aa2859f50b71625acfa061c47ae7a73635e43ce7aba405e15ca6b74be08"
+    }
+  },
+  "performance_readings": {
+    "150_frame_corroboration": {
+      "rule": "no execution of the protocol produced an artifact",
+      "status": "NOT_READY"
+    },
+    "60f_against_150f": {
+      "corroborating": {
+        "legacy": null,
+        "pairwise_median_ratio": null,
+        "reduced": null,
+        "sign": null
+      },
+      "corroboration_balance": {
+        "balanced": false,
+        "legacy_first": 0,
+        "pairs": 0,
+        "reduced_first": 0
+      },
+      "primary": {
+        "legacy": 7.5212,
+        "reduced": 7.6473,
+        "sign": 1
+      }
+    },
+    "A_pooled_kept_median_legacy_fps": 7.5212,
+    "B_pooled_kept_median_reduced_fps": 7.6473,
+    "C_pooled_kept_ratio": 1.0168,
+    "D_pairwise_median_ratio": 1.0152,
+    "all_runs_median_diagnostic": {
+      "legacy": 7.5491,
+      "reduced": 7.6513
+    },
+    "benchmark_variance_stable": true,
+    "kept_run_spreads_by_execution": [
+      {
+        "execution": "recorded-1",
+        "fps": [
+          7.391,
+          7.524
+        ],
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "kept_runs": 2,
+        "mode": "legacy",
+        "published_spread_percent": 1.8,
+        "source_artifact": "execution_01_transfer_ab_benchmark.json",
+        "spread_percent_vs_lowest_run": 1.8,
+        "spread_percent_vs_median": 1.78
+      },
+      {
+        "execution": "recorded-1",
+        "fps": [
+          7.6289,
+          7.6932
+        ],
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "kept_runs": 2,
+        "mode": "reduced",
+        "published_spread_percent": 0.84,
+        "source_artifact": "execution_01_transfer_ab_benchmark.json",
+        "spread_percent_vs_lowest_run": 0.84,
+        "spread_percent_vs_median": 0.84
+      },
+      {
+        "execution": "recorded-2",
+        "fps": [
+          7.4233,
+          7.454
+        ],
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "kept_runs": 2,
+        "mode": "legacy",
+        "published_spread_percent": 0.41,
+        "source_artifact": "execution_02_transfer_ab_benchmark.json",
+        "spread_percent_vs_lowest_run": 0.41,
+        "spread_percent_vs_median": 0.41
+      },
+      {
+        "execution": "recorded-2",
+        "fps": [
+          7.6513,
+          7.7101
+        ],
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "kept_runs": 2,
+        "mode": "reduced",
+        "published_spread_percent": 0.77,
+        "source_artifact": "execution_02_transfer_ab_benchmark.json",
+        "spread_percent_vs_lowest_run": 0.77,
+        "spread_percent_vs_median": 0.77
+      },
+      {
+        "execution": "recorded-3",
+        "fps": [
+          7.4874,
+          7.6605
+        ],
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "kept_runs": 2,
+        "mode": "legacy",
+        "published_spread_percent": 2.31,
+        "source_artifact": "execution_03_transfer_ab_benchmark.json",
+        "spread_percent_vs_lowest_run": 2.31,
+        "spread_percent_vs_median": 2.29
+      },
+      {
+        "execution": "recorded-3",
+        "fps": [
+          7.2798,
+          7.7692
+        ],
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "kept_runs": 2,
+        "mode": "reduced",
+        "published_spread_percent": 6.72,
+        "source_artifact": "execution_03_transfer_ab_benchmark.json",
+        "spread_percent_vs_lowest_run": 6.72,
+        "spread_percent_vs_median": 6.5
+      },
+      {
+        "execution": "recorded-4",
+        "fps": [
+          7.3407,
+          7.5925
+        ],
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "kept_runs": 2,
+        "mode": "legacy",
+        "published_spread_percent": 3.43,
+        "source_artifact": "execution_04_transfer_ab_benchmark.json",
+        "spread_percent_vs_lowest_run": 3.43,
+        "spread_percent_vs_median": 3.37
+      },
+      {
+        "execution": "recorded-4",
+        "fps": [
+          7.4692,
+          7.5976
+        ],
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "kept_runs": 2,
+        "mode": "reduced",
+        "published_spread_percent": 1.72,
+        "source_artifact": "execution_04_transfer_ab_benchmark.json",
+        "spread_percent_vs_lowest_run": 1.72,
+        "spread_percent_vs_median": 1.7
+      },
+      {
+        "execution": "recorded-5",
+        "fps": [
+          7.5613,
+          7.6626
+        ],
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "kept_runs": 2,
+        "mode": "legacy",
+        "published_spread_percent": 1.34,
+        "source_artifact": "execution_05_transfer_ab_benchmark.json",
+        "spread_percent_vs_lowest_run": 1.34,
+        "spread_percent_vs_median": 1.33
+      },
+      {
+        "execution": "recorded-5",
+        "fps": [
+          7.6516,
+          7.6667
+        ],
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "kept_runs": 2,
+        "mode": "reduced",
+        "published_spread_percent": 0.2,
+        "source_artifact": "execution_05_transfer_ab_benchmark.json",
+        "spread_percent_vs_lowest_run": 0.2,
+        "spread_percent_vs_median": 0.2
+      },
+      {
+        "execution": "recorded-6",
+        "fps": [
+          7.3936,
+          7.5617
+        ],
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "kept_runs": 2,
+        "mode": "legacy",
+        "published_spread_percent": 2.27,
+        "source_artifact": "execution_06_transfer_ab_benchmark.json",
+        "spread_percent_vs_lowest_run": 2.27,
+        "spread_percent_vs_median": 2.25
+      },
+      {
+        "execution": "recorded-6",
+        "fps": [
+          7.5497,
+          7.6148
+        ],
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "kept_runs": 2,
+        "mode": "reduced",
+        "published_spread_percent": 0.86,
+        "source_artifact": "execution_06_transfer_ab_benchmark.json",
+        "spread_percent_vs_lowest_run": 0.86,
+        "spread_percent_vs_median": 0.86
+      },
+      {
+        "execution": "recorded-7",
+        "fps": [
+          7.5183,
+          7.6717
+        ],
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "kept_runs": 2,
+        "mode": "legacy",
+        "published_spread_percent": 2.04,
+        "source_artifact": "execution_07_transfer_ab_benchmark.json",
+        "spread_percent_vs_lowest_run": 2.04,
+        "spread_percent_vs_median": 2.02
+      },
+      {
+        "execution": "recorded-7",
+        "fps": [
+          7.6433,
+          7.7093
+        ],
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "kept_runs": 2,
+        "mode": "reduced",
+        "published_spread_percent": 0.86,
+        "source_artifact": "execution_07_transfer_ab_benchmark.json",
+        "spread_percent_vs_lowest_run": 0.86,
+        "spread_percent_vs_median": 0.86
+      }
+    ],
+    "note": "\u00a732 asks for all four readings plus both strata and the sign test, and forbids picking the prettiest one; the diagnostic column is the figure the warmup bug would have produced, published beside the one the verdict used",
+    "order_balance": {
+      "balanced": true,
+      "legacy_first": 7,
+      "pairs": 14,
+      "reduced_first": 7,
+      "unknown_position": 0
+    },
+    "reduced_vs_legacy_when_reduced_first": {
+      "executions": [
+        "recorded-1",
+        "recorded-2",
+        "recorded-3",
+        "recorded-4",
+        "recorded-5",
+        "recorded-6",
+        "recorded-7"
+      ],
+      "losses": 1,
+      "median_percent_change": 2.99,
+      "median_ratio": 1.0299,
+      "pair_count": 7,
+      "wins": 6
+    },
+    "reduced_vs_legacy_when_reduced_second": {
+      "executions": [
+        "recorded-1",
+        "recorded-2",
+        "recorded-3",
+        "recorded-4",
+        "recorded-5",
+        "recorded-6",
+        "recorded-7"
+      ],
+      "losses": 2,
+      "median_percent_change": 1.39,
+      "median_ratio": 1.0139,
+      "pair_count": 7,
+      "wins": 5
+    },
+    "run_census": {
+      "legacy": {
+        "all_run_count": 21,
+        "kept_run_count": 14,
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "warmup_run_count": 7,
+        "warmup_run_ids": [
+          1
+        ]
+      },
+      "reduced": {
+        "all_run_count": 21,
+        "kept_run_count": 14,
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "warmup_run_count": 7,
+        "warmup_run_ids": [
+          1
+        ]
+      }
+    },
+    "runtime_contamination": {
+      "contamination_reason": "gpu_compute workload pid 50876 (C:\\Windows\\System32\\ShellHost.exe) was present in 3 consecutive 1 Hz samples",
+      "first_contamination_timestamp": "2026-09-20T23:27:34Z",
+      "runtime_contaminated": true
+    },
+    "sign_test_over_kept_pairs": {
+      "p_value_legacy_ahead_by_at_least_this_much": 0.99353,
+      "p_value_reduced_ahead_by_at_least_this_much": 0.028687,
+      "pairs": 14,
+      "runs_favouring_legacy": 3,
+      "runs_favouring_reduced": 11,
+      "used_for": "secondary evidence only; no threshold in this file reads it"
+    }
+  },
+  "primary_question": "Does the reduced order regress end-to-end performance under a counterbalanced protocol?",
+  "required_artifacts": [
+    "protocol",
+    "counterbalanced_performance",
+    "counterbalanced_150f",
+    "historical_warmup_recalc",
+    "ffprobe_output",
+    "environment",
+    "status_consistency",
+    "benchmark_environment",
+    "benchmark_runtime_monitor"
+  ],
+  "round": "Transfer benchmark environment stability",
+  "rule": "Warmup pairs are published and excluded: an execution names its kept run ids and only those reach a median, a ratio, a pair or the sign test. The gate asks the non-regression question and nothing stronger - no p-value threshold is applied in either direction - but it does require the instrument to have been built balanced, and it requires the two readings of that instrument, the pooled medians and the paired ratios, to agree about which way they point. If they point opposite ways the honest answer is that the instrument gave a contradiction, which is NOT_READY rather than a choice of the nicer number.",
+  "status": "NOT_READY",
+  "what_this_round_did_not_claim": [
+    "no speedup claim: this round fixed the instrument, and the sign test it reports is evidence, not a gate",
+    "no reduction claim for any transfer whose two measurements are equal",
+    "no GPU pipeline, zero-copy or eliminated-round-trip claim of any kind"
+  ]
+}

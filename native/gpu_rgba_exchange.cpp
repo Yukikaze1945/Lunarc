@@ -30,6 +30,19 @@ struct Exchange {
 int fail(const char* what, HRESULT hr) {
     std::snprintf(error, sizeof(error), "%s: 0x%08lx", what, static_cast<unsigned long>(hr)); return -1;
 }
+int ensure_output_texture(Exchange* e) {
+    if (e->texture) return 0;
+    D3D12_RESOURCE_DESC desc{};
+    desc.Dimension=D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    desc.Width=e->footprint.Footprint.Width;
+    desc.Height=e->footprint.Footprint.Height;
+    desc.DepthOrArraySize=1; desc.MipLevels=1;
+    desc.Format=e->format; desc.SampleDesc.Count=1;
+    D3D12_HEAP_PROPERTIES heap{}; heap.Type=D3D12_HEAP_TYPE_DEFAULT;
+    HRESULT hr=e->device->CreateCommittedResource(&heap,D3D12_HEAP_FLAG_NONE,&desc,
+        D3D12_RESOURCE_STATE_COPY_SOURCE,nullptr,IID_PPV_ARGS(&e->texture));
+    return FAILED(hr) ? fail("exchange output texture",hr) : 0;
+}
 int begin(Exchange* e, ID3D12Fence* f, uint64_t v) {
     if (e->poisoned) return fail("exchange poisoned after unfinished GPU work", E_FAIL);
     HRESULT hr = f && v ? e->queue->Wait(f,v) : S_OK;
@@ -86,9 +99,8 @@ API int gpu_rgba_exchange_open2(ID3D12Device* device,void* context,uint32_t w,ui
        cuda_d3d12_color_get_device_pointer(e->bridge,&e->pointer,&e->pitch))
         return fail(nvof_d3d12_last_error(),E_FAIL);
     e->buffer=static_cast<ID3D12Resource*>(buffer);e->cuda_fence=static_cast<ID3D12Fence*>(fence);
-    D3D12_HEAP_PROPERTIES heap{};heap.Type=D3D12_HEAP_TYPE_DEFAULT;
-    HRESULT hr=device->CreateCommittedResource(&heap,D3D12_HEAP_FLAG_NONE,&desc,
-        D3D12_RESOURCE_STATE_COPY_SOURCE,nullptr,IID_PPV_ARGS(&e->texture));
+    // Imports need only the shared buffer; allocate the output on first export.
+    HRESULT hr=S_OK;
     D3D12_COMMAND_QUEUE_DESC q{};q.Type=D3D12_COMMAND_LIST_TYPE_DIRECT;
     if(SUCCEEDED(hr)) hr=device->CreateCommandQueue(&q,IID_PPV_ARGS(&e->queue));
     if(SUCCEEDED(hr)) hr=device->CreateCommandAllocator(q.Type,IID_PPV_ARGS(&e->allocator));
@@ -99,6 +111,16 @@ API int gpu_rgba_exchange_open2(ID3D12Device* device,void* context,uint32_t w,ui
     e->event=CreateEventW(nullptr,FALSE,FALSE,nullptr);
     if(!e->event)return fail("exchange event",HRESULT_FROM_WIN32(GetLastError()));
     *out=e.release();return 0;
+}
+// Allocation sizes describe owned GPU resources, not resident VRAM usage.
+API uint64_t gpu_rgba_exchange_allocated_bytes(Exchange* e) {
+    if (!e) return 0;
+    uint64_t bytes=0;
+    for (ID3D12Resource* r : {e->buffer,e->texture.Get()}) if (r) {
+        auto desc=r->GetDesc();
+        bytes+=e->device->GetResourceAllocationInfo(0,1,&desc).SizeInBytes;
+    }
+    return bytes;
 }
 API int gpu_rgba_exchange_open(ID3D12Device* device,void* context,uint32_t w,uint32_t h,Exchange** out) {
     return gpu_rgba_exchange_open2(device,context,w,h,4,out);
@@ -119,6 +141,7 @@ API int gpu_rgba_exchange_import(Exchange* e,ID3D12Resource* texture,ID3D12Fence
 }
 API int gpu_rgba_exchange_export(Exchange* e,uint64_t ptr,size_t pitch,void** texture,uint64_t* value) {
     if(!e||!ptr||!texture||!value)return fail("export arguments",E_INVALIDARG);
+    if (e->poisoned || ensure_output_texture(e)) return -1;
     uint64_t cv=0;
     // Always publish CUDA writes through the shared fence, including effects
     // that write directly into this exchange's allocation. CUDA completion

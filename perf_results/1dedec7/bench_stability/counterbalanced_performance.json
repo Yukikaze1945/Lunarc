@@ -1,0 +1,2915 @@
+{
+  "all_runs_per_order": {
+    "legacy": [
+      {
+        "execution": "recorded-1",
+        "fps": 6.27,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-1",
+        "fps": 7.524,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-1",
+        "fps": 7.391,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-2",
+        "fps": 7.6614,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-2",
+        "fps": 7.454,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-2",
+        "fps": 7.4233,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-3",
+        "fps": 7.5371,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-3",
+        "fps": 7.6605,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-3",
+        "fps": 7.4874,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-4",
+        "fps": 7.5491,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-4",
+        "fps": 7.5925,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-4",
+        "fps": 7.3407,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-5",
+        "fps": 7.5495,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-5",
+        "fps": 7.5613,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-5",
+        "fps": 7.6626,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-6",
+        "fps": 7.5775,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-6",
+        "fps": 7.3936,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-6",
+        "fps": 7.5617,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-7",
+        "fps": 7.6425,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-7",
+        "fps": 7.5183,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-7",
+        "fps": 7.6717,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 3
+      }
+    ],
+    "reduced": [
+      {
+        "execution": "recorded-1",
+        "fps": 7.5201,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-1",
+        "fps": 7.6289,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-1",
+        "fps": 7.6932,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-2",
+        "fps": 7.7668,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-2",
+        "fps": 7.7101,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-2",
+        "fps": 7.6513,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-3",
+        "fps": 7.6637,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-3",
+        "fps": 7.2798,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-3",
+        "fps": 7.7692,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-4",
+        "fps": 7.7125,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-4",
+        "fps": 7.4692,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-4",
+        "fps": 7.5976,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-5",
+        "fps": 7.5547,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-5",
+        "fps": 7.6516,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-5",
+        "fps": 7.6667,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-6",
+        "fps": 7.5136,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-6",
+        "fps": 7.6148,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-6",
+        "fps": 7.5497,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-7",
+        "fps": 7.8182,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-7",
+        "fps": 7.6433,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-7",
+        "fps": 7.7093,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 3
+      }
+    ]
+  },
+  "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+  "corroborating_executions": [],
+  "execution_failures": [
+    "primary-60f stopped before execution 8: the runtime monitor recorded an external workload inside the batch (\u00a718)",
+    "\u00a730's precondition failed: the runtime monitor recorded an external workload, so the 150-frame corroboration was not run"
+  ],
+  "executions": [
+    {
+      "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "execution": "recorded-1",
+      "execution_order_index": 1,
+      "execution_schedule": [
+        {
+          "kept": false,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 1
+        },
+        {
+          "kept": true,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 2
+        },
+        {
+          "kept": true,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 3
+        }
+      ],
+      "frames_per_run": 60,
+      "gates": {
+        "copy_gate": {
+          "all_passed": true,
+          "checks_passed": 21,
+          "checks_total": 21,
+          "failed_checks": []
+        },
+        "order_balance_gate": {
+          "all_passed": true,
+          "checks_passed": 5,
+          "checks_total": 5,
+          "failed_checks": []
+        },
+        "output_integrity_gate": {
+          "all_passed": true,
+          "checks_passed": 10,
+          "checks_total": 10,
+          "failed_checks": []
+        },
+        "performance_gate": {
+          "all_passed": true,
+          "checks_passed": 1,
+          "checks_total": 1,
+          "failed_checks": []
+        }
+      },
+      "orders": {
+        "legacy": {
+          "cpu_bgr_to_rgba_calls": 2,
+          "cpu_rgba_to_bgr_calls": 1,
+          "decoder_pipe_bytes": 12441600,
+          "fps_of_every_run": {
+            "1": 6.27,
+            "2": 7.524,
+            "3": 7.391
+          },
+          "frame_total_p50_ms": 103.4236,
+          "frame_total_p95_ms": 117.1103,
+          "inter_run_spread_percent_of_all_runs": 20.0,
+          "inter_run_spread_percent_of_kept_runs": 1.8,
+          "median_fps_of_kept_runs": 7.4575,
+          "nvof_h2d_bytes_measured": 8294400,
+          "position_in_pair_of_every_run": {
+            "1": 1,
+            "2": 1,
+            "3": 2
+          },
+          "runs_used_for_medians": [
+            2,
+            3
+          ],
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 1,
+            "cpu_bgr_to_rgba@nvof_input_calls": 1,
+            "cpu_bgr_to_rgba_calls": 2,
+            "cpu_color_conversion_output_bytes": 22809600,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 1,
+            "cpu_rgba_to_bgr_calls": 1,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 0,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 8294400,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 0
+          },
+          "warmup_run_ids": [
+            1
+          ]
+        },
+        "reduced": {
+          "cpu_bgr_to_rgba_calls": 0,
+          "cpu_rgba_to_bgr_calls": 0,
+          "decoder_pipe_bytes": 12441600,
+          "fps_of_every_run": {
+            "1": 7.5201,
+            "2": 7.6289,
+            "3": 7.6932
+          },
+          "frame_total_p50_ms": 100.221,
+          "frame_total_p95_ms": 110.3313,
+          "inter_run_spread_percent_of_all_runs": 2.3,
+          "inter_run_spread_percent_of_kept_runs": 0.84,
+          "median_fps_of_kept_runs": 7.661,
+          "nvof_h2d_bytes_measured": 6220800,
+          "position_in_pair_of_every_run": {
+            "1": 2,
+            "2": 2,
+            "3": 1
+          },
+          "runs_used_for_medians": [
+            2,
+            3
+          ],
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 0,
+            "cpu_bgr_to_rgba@nvof_input_calls": 0,
+            "cpu_bgr_to_rgba_calls": 0,
+            "cpu_color_conversion_output_bytes": 0,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 0,
+            "cpu_rgba_to_bgr_calls": 0,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 1,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 6220800,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 1
+          },
+          "warmup_run_ids": [
+            1
+          ]
+        }
+      },
+      "protocol": {
+        "name": "counterbalanced-kept-runs-ab",
+        "version": 2
+      },
+      "runs_per_mode": 3,
+      "source_artifact": "execution_01_transfer_ab_benchmark.json",
+      "speedup_ratio_reduced_over_legacy": 1.0273,
+      "status": "DONE_PROVEN",
+      "unpoolable_reasons": [],
+      "working_scale": 0.5
+    },
+    {
+      "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "execution": "recorded-2",
+      "execution_order_index": 2,
+      "execution_schedule": [
+        {
+          "kept": false,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 1
+        },
+        {
+          "kept": true,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 2
+        },
+        {
+          "kept": true,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 3
+        }
+      ],
+      "frames_per_run": 60,
+      "gates": {
+        "copy_gate": {
+          "all_passed": true,
+          "checks_passed": 21,
+          "checks_total": 21,
+          "failed_checks": []
+        },
+        "order_balance_gate": {
+          "all_passed": true,
+          "checks_passed": 5,
+          "checks_total": 5,
+          "failed_checks": []
+        },
+        "output_integrity_gate": {
+          "all_passed": true,
+          "checks_passed": 10,
+          "checks_total": 10,
+          "failed_checks": []
+        },
+        "performance_gate": {
+          "all_passed": true,
+          "checks_passed": 1,
+          "checks_total": 1,
+          "failed_checks": []
+        }
+      },
+      "orders": {
+        "legacy": {
+          "cpu_bgr_to_rgba_calls": 2,
+          "cpu_rgba_to_bgr_calls": 1,
+          "decoder_pipe_bytes": 12441600,
+          "fps_of_every_run": {
+            "1": 7.6614,
+            "2": 7.454,
+            "3": 7.4233
+          },
+          "frame_total_p50_ms": 104.7531,
+          "frame_total_p95_ms": 116.5584,
+          "inter_run_spread_percent_of_all_runs": 3.21,
+          "inter_run_spread_percent_of_kept_runs": 0.41,
+          "median_fps_of_kept_runs": 7.4386,
+          "nvof_h2d_bytes_measured": 8294400,
+          "position_in_pair_of_every_run": {
+            "1": 2,
+            "2": 2,
+            "3": 1
+          },
+          "runs_used_for_medians": [
+            2,
+            3
+          ],
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 1,
+            "cpu_bgr_to_rgba@nvof_input_calls": 1,
+            "cpu_bgr_to_rgba_calls": 2,
+            "cpu_color_conversion_output_bytes": 22809600,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 1,
+            "cpu_rgba_to_bgr_calls": 1,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 0,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 8294400,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 0
+          },
+          "warmup_run_ids": [
+            1
+          ]
+        },
+        "reduced": {
+          "cpu_bgr_to_rgba_calls": 0,
+          "cpu_rgba_to_bgr_calls": 0,
+          "decoder_pipe_bytes": 12441600,
+          "fps_of_every_run": {
+            "1": 7.7668,
+            "2": 7.7101,
+            "3": 7.6513
+          },
+          "frame_total_p50_ms": 99.7582,
+          "frame_total_p95_ms": 109.4298,
+          "inter_run_spread_percent_of_all_runs": 1.51,
+          "inter_run_spread_percent_of_kept_runs": 0.77,
+          "median_fps_of_kept_runs": 7.6807,
+          "nvof_h2d_bytes_measured": 6220800,
+          "position_in_pair_of_every_run": {
+            "1": 1,
+            "2": 1,
+            "3": 2
+          },
+          "runs_used_for_medians": [
+            2,
+            3
+          ],
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 0,
+            "cpu_bgr_to_rgba@nvof_input_calls": 0,
+            "cpu_bgr_to_rgba_calls": 0,
+            "cpu_color_conversion_output_bytes": 0,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 0,
+            "cpu_rgba_to_bgr_calls": 0,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 1,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 6220800,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 1
+          },
+          "warmup_run_ids": [
+            1
+          ]
+        }
+      },
+      "protocol": {
+        "name": "counterbalanced-kept-runs-ab",
+        "version": 2
+      },
+      "runs_per_mode": 3,
+      "source_artifact": "execution_02_transfer_ab_benchmark.json",
+      "speedup_ratio_reduced_over_legacy": 1.0325,
+      "status": "DONE_PROVEN",
+      "unpoolable_reasons": [],
+      "working_scale": 0.5
+    },
+    {
+      "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "execution": "recorded-3",
+      "execution_order_index": 3,
+      "execution_schedule": [
+        {
+          "kept": false,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 1
+        },
+        {
+          "kept": true,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 2
+        },
+        {
+          "kept": true,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 3
+        }
+      ],
+      "frames_per_run": 60,
+      "gates": {
+        "copy_gate": {
+          "all_passed": true,
+          "checks_passed": 21,
+          "checks_total": 21,
+          "failed_checks": []
+        },
+        "order_balance_gate": {
+          "all_passed": true,
+          "checks_passed": 5,
+          "checks_total": 5,
+          "failed_checks": []
+        },
+        "output_integrity_gate": {
+          "all_passed": true,
+          "checks_passed": 10,
+          "checks_total": 10,
+          "failed_checks": []
+        },
+        "performance_gate": {
+          "all_passed": false,
+          "checks_passed": 0,
+          "checks_total": 1,
+          "failed_checks": [
+            {
+              "actual": false,
+              "expected": true,
+              "ok": false,
+              "what": "reduced_median_fps_at_least_legacy"
+            }
+          ]
+        }
+      },
+      "orders": {
+        "legacy": {
+          "cpu_bgr_to_rgba_calls": 2,
+          "cpu_rgba_to_bgr_calls": 1,
+          "decoder_pipe_bytes": 12441600,
+          "fps_of_every_run": {
+            "1": 7.5371,
+            "2": 7.6605,
+            "3": 7.4874
+          },
+          "frame_total_p50_ms": 102.194,
+          "frame_total_p95_ms": 115.2425,
+          "inter_run_spread_percent_of_all_runs": 2.31,
+          "inter_run_spread_percent_of_kept_runs": 2.31,
+          "median_fps_of_kept_runs": 7.5739,
+          "nvof_h2d_bytes_measured": 8294400,
+          "position_in_pair_of_every_run": {
+            "1": 1,
+            "2": 1,
+            "3": 2
+          },
+          "runs_used_for_medians": [
+            2,
+            3
+          ],
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 1,
+            "cpu_bgr_to_rgba@nvof_input_calls": 1,
+            "cpu_bgr_to_rgba_calls": 2,
+            "cpu_color_conversion_output_bytes": 22809600,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 1,
+            "cpu_rgba_to_bgr_calls": 1,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 0,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 8294400,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 0
+          },
+          "warmup_run_ids": [
+            1
+          ]
+        },
+        "reduced": {
+          "cpu_bgr_to_rgba_calls": 0,
+          "cpu_rgba_to_bgr_calls": 0,
+          "decoder_pipe_bytes": 12441600,
+          "fps_of_every_run": {
+            "1": 7.6637,
+            "2": 7.2798,
+            "3": 7.7692
+          },
+          "frame_total_p50_ms": 100.6944,
+          "frame_total_p95_ms": 115.9822,
+          "inter_run_spread_percent_of_all_runs": 6.72,
+          "inter_run_spread_percent_of_kept_runs": 6.72,
+          "median_fps_of_kept_runs": 7.5245,
+          "nvof_h2d_bytes_measured": 6220800,
+          "position_in_pair_of_every_run": {
+            "1": 2,
+            "2": 2,
+            "3": 1
+          },
+          "runs_used_for_medians": [
+            2,
+            3
+          ],
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 0,
+            "cpu_bgr_to_rgba@nvof_input_calls": 0,
+            "cpu_bgr_to_rgba_calls": 0,
+            "cpu_color_conversion_output_bytes": 0,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 0,
+            "cpu_rgba_to_bgr_calls": 0,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 1,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 6220800,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 1
+          },
+          "warmup_run_ids": [
+            1
+          ]
+        }
+      },
+      "protocol": {
+        "name": "counterbalanced-kept-runs-ab",
+        "version": 2
+      },
+      "runs_per_mode": 3,
+      "source_artifact": "execution_03_transfer_ab_benchmark.json",
+      "speedup_ratio_reduced_over_legacy": 0.9935,
+      "status": "NOT_READY",
+      "unpoolable_reasons": [],
+      "working_scale": 0.5
+    },
+    {
+      "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "execution": "recorded-4",
+      "execution_order_index": 4,
+      "execution_schedule": [
+        {
+          "kept": false,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 1
+        },
+        {
+          "kept": true,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 2
+        },
+        {
+          "kept": true,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 3
+        }
+      ],
+      "frames_per_run": 60,
+      "gates": {
+        "copy_gate": {
+          "all_passed": true,
+          "checks_passed": 21,
+          "checks_total": 21,
+          "failed_checks": []
+        },
+        "order_balance_gate": {
+          "all_passed": true,
+          "checks_passed": 5,
+          "checks_total": 5,
+          "failed_checks": []
+        },
+        "output_integrity_gate": {
+          "all_passed": true,
+          "checks_passed": 10,
+          "checks_total": 10,
+          "failed_checks": []
+        },
+        "performance_gate": {
+          "all_passed": true,
+          "checks_passed": 1,
+          "checks_total": 1,
+          "failed_checks": []
+        }
+      },
+      "orders": {
+        "legacy": {
+          "cpu_bgr_to_rgba_calls": 2,
+          "cpu_rgba_to_bgr_calls": 1,
+          "decoder_pipe_bytes": 12441600,
+          "fps_of_every_run": {
+            "1": 7.5491,
+            "2": 7.5925,
+            "3": 7.3407
+          },
+          "frame_total_p50_ms": 104.0059,
+          "frame_total_p95_ms": 113.536,
+          "inter_run_spread_percent_of_all_runs": 3.43,
+          "inter_run_spread_percent_of_kept_runs": 3.43,
+          "median_fps_of_kept_runs": 7.4666,
+          "nvof_h2d_bytes_measured": 8294400,
+          "position_in_pair_of_every_run": {
+            "1": 2,
+            "2": 2,
+            "3": 1
+          },
+          "runs_used_for_medians": [
+            2,
+            3
+          ],
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 1,
+            "cpu_bgr_to_rgba@nvof_input_calls": 1,
+            "cpu_bgr_to_rgba_calls": 2,
+            "cpu_color_conversion_output_bytes": 22809600,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 1,
+            "cpu_rgba_to_bgr_calls": 1,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 0,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 8294400,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 0
+          },
+          "warmup_run_ids": [
+            1
+          ]
+        },
+        "reduced": {
+          "cpu_bgr_to_rgba_calls": 0,
+          "cpu_rgba_to_bgr_calls": 0,
+          "decoder_pipe_bytes": 12441600,
+          "fps_of_every_run": {
+            "1": 7.7125,
+            "2": 7.4692,
+            "3": 7.5976
+          },
+          "frame_total_p50_ms": 101.98,
+          "frame_total_p95_ms": 114.1102,
+          "inter_run_spread_percent_of_all_runs": 3.26,
+          "inter_run_spread_percent_of_kept_runs": 1.72,
+          "median_fps_of_kept_runs": 7.5334,
+          "nvof_h2d_bytes_measured": 6220800,
+          "position_in_pair_of_every_run": {
+            "1": 1,
+            "2": 1,
+            "3": 2
+          },
+          "runs_used_for_medians": [
+            2,
+            3
+          ],
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 0,
+            "cpu_bgr_to_rgba@nvof_input_calls": 0,
+            "cpu_bgr_to_rgba_calls": 0,
+            "cpu_color_conversion_output_bytes": 0,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 0,
+            "cpu_rgba_to_bgr_calls": 0,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 1,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 6220800,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 1
+          },
+          "warmup_run_ids": [
+            1
+          ]
+        }
+      },
+      "protocol": {
+        "name": "counterbalanced-kept-runs-ab",
+        "version": 2
+      },
+      "runs_per_mode": 3,
+      "source_artifact": "execution_04_transfer_ab_benchmark.json",
+      "speedup_ratio_reduced_over_legacy": 1.0089,
+      "status": "DONE_PROVEN",
+      "unpoolable_reasons": [],
+      "working_scale": 0.5
+    },
+    {
+      "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "execution": "recorded-5",
+      "execution_order_index": 5,
+      "execution_schedule": [
+        {
+          "kept": false,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 1
+        },
+        {
+          "kept": true,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 2
+        },
+        {
+          "kept": true,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 3
+        }
+      ],
+      "frames_per_run": 60,
+      "gates": {
+        "copy_gate": {
+          "all_passed": true,
+          "checks_passed": 21,
+          "checks_total": 21,
+          "failed_checks": []
+        },
+        "order_balance_gate": {
+          "all_passed": true,
+          "checks_passed": 5,
+          "checks_total": 5,
+          "failed_checks": []
+        },
+        "output_integrity_gate": {
+          "all_passed": true,
+          "checks_passed": 10,
+          "checks_total": 10,
+          "failed_checks": []
+        },
+        "performance_gate": {
+          "all_passed": true,
+          "checks_passed": 1,
+          "checks_total": 1,
+          "failed_checks": []
+        }
+      },
+      "orders": {
+        "legacy": {
+          "cpu_bgr_to_rgba_calls": 2,
+          "cpu_rgba_to_bgr_calls": 1,
+          "decoder_pipe_bytes": 12441600,
+          "fps_of_every_run": {
+            "1": 7.5495,
+            "2": 7.5613,
+            "3": 7.6626
+          },
+          "frame_total_p50_ms": 100.9911,
+          "frame_total_p95_ms": 110.602,
+          "inter_run_spread_percent_of_all_runs": 1.5,
+          "inter_run_spread_percent_of_kept_runs": 1.34,
+          "median_fps_of_kept_runs": 7.612,
+          "nvof_h2d_bytes_measured": 8294400,
+          "position_in_pair_of_every_run": {
+            "1": 1,
+            "2": 1,
+            "3": 2
+          },
+          "runs_used_for_medians": [
+            2,
+            3
+          ],
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 1,
+            "cpu_bgr_to_rgba@nvof_input_calls": 1,
+            "cpu_bgr_to_rgba_calls": 2,
+            "cpu_color_conversion_output_bytes": 22809600,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 1,
+            "cpu_rgba_to_bgr_calls": 1,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 0,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 8294400,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 0
+          },
+          "warmup_run_ids": [
+            1
+          ]
+        },
+        "reduced": {
+          "cpu_bgr_to_rgba_calls": 0,
+          "cpu_rgba_to_bgr_calls": 0,
+          "decoder_pipe_bytes": 12441600,
+          "fps_of_every_run": {
+            "1": 7.5547,
+            "2": 7.6516,
+            "3": 7.6667
+          },
+          "frame_total_p50_ms": 99.7126,
+          "frame_total_p95_ms": 118.0174,
+          "inter_run_spread_percent_of_all_runs": 1.48,
+          "inter_run_spread_percent_of_kept_runs": 0.2,
+          "median_fps_of_kept_runs": 7.6592,
+          "nvof_h2d_bytes_measured": 6220800,
+          "position_in_pair_of_every_run": {
+            "1": 2,
+            "2": 2,
+            "3": 1
+          },
+          "runs_used_for_medians": [
+            2,
+            3
+          ],
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 0,
+            "cpu_bgr_to_rgba@nvof_input_calls": 0,
+            "cpu_bgr_to_rgba_calls": 0,
+            "cpu_color_conversion_output_bytes": 0,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 0,
+            "cpu_rgba_to_bgr_calls": 0,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 1,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 6220800,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 1
+          },
+          "warmup_run_ids": [
+            1
+          ]
+        }
+      },
+      "protocol": {
+        "name": "counterbalanced-kept-runs-ab",
+        "version": 2
+      },
+      "runs_per_mode": 3,
+      "source_artifact": "execution_05_transfer_ab_benchmark.json",
+      "speedup_ratio_reduced_over_legacy": 1.0062,
+      "status": "DONE_PROVEN",
+      "unpoolable_reasons": [],
+      "working_scale": 0.5
+    },
+    {
+      "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "execution": "recorded-6",
+      "execution_order_index": 6,
+      "execution_schedule": [
+        {
+          "kept": false,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 1
+        },
+        {
+          "kept": true,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 2
+        },
+        {
+          "kept": true,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 3
+        }
+      ],
+      "frames_per_run": 60,
+      "gates": {
+        "copy_gate": {
+          "all_passed": true,
+          "checks_passed": 21,
+          "checks_total": 21,
+          "failed_checks": []
+        },
+        "order_balance_gate": {
+          "all_passed": true,
+          "checks_passed": 5,
+          "checks_total": 5,
+          "failed_checks": []
+        },
+        "output_integrity_gate": {
+          "all_passed": true,
+          "checks_passed": 10,
+          "checks_total": 10,
+          "failed_checks": []
+        },
+        "performance_gate": {
+          "all_passed": true,
+          "checks_passed": 1,
+          "checks_total": 1,
+          "failed_checks": []
+        }
+      },
+      "orders": {
+        "legacy": {
+          "cpu_bgr_to_rgba_calls": 2,
+          "cpu_rgba_to_bgr_calls": 1,
+          "decoder_pipe_bytes": 12441600,
+          "fps_of_every_run": {
+            "1": 7.5775,
+            "2": 7.3936,
+            "3": 7.5617
+          },
+          "frame_total_p50_ms": 103.2618,
+          "frame_total_p95_ms": 115.2376,
+          "inter_run_spread_percent_of_all_runs": 2.49,
+          "inter_run_spread_percent_of_kept_runs": 2.27,
+          "median_fps_of_kept_runs": 7.4777,
+          "nvof_h2d_bytes_measured": 8294400,
+          "position_in_pair_of_every_run": {
+            "1": 2,
+            "2": 2,
+            "3": 1
+          },
+          "runs_used_for_medians": [
+            2,
+            3
+          ],
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 1,
+            "cpu_bgr_to_rgba@nvof_input_calls": 1,
+            "cpu_bgr_to_rgba_calls": 2,
+            "cpu_color_conversion_output_bytes": 22809600,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 1,
+            "cpu_rgba_to_bgr_calls": 1,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 0,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 8294400,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 0
+          },
+          "warmup_run_ids": [
+            1
+          ]
+        },
+        "reduced": {
+          "cpu_bgr_to_rgba_calls": 0,
+          "cpu_rgba_to_bgr_calls": 0,
+          "decoder_pipe_bytes": 12441600,
+          "fps_of_every_run": {
+            "1": 7.5136,
+            "2": 7.6148,
+            "3": 7.5497
+          },
+          "frame_total_p50_ms": 100.1984,
+          "frame_total_p95_ms": 118.0731,
+          "inter_run_spread_percent_of_all_runs": 1.35,
+          "inter_run_spread_percent_of_kept_runs": 0.86,
+          "median_fps_of_kept_runs": 7.5823,
+          "nvof_h2d_bytes_measured": 6220800,
+          "position_in_pair_of_every_run": {
+            "1": 1,
+            "2": 1,
+            "3": 2
+          },
+          "runs_used_for_medians": [
+            2,
+            3
+          ],
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 0,
+            "cpu_bgr_to_rgba@nvof_input_calls": 0,
+            "cpu_bgr_to_rgba_calls": 0,
+            "cpu_color_conversion_output_bytes": 0,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 0,
+            "cpu_rgba_to_bgr_calls": 0,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 1,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 6220800,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 1
+          },
+          "warmup_run_ids": [
+            1
+          ]
+        }
+      },
+      "protocol": {
+        "name": "counterbalanced-kept-runs-ab",
+        "version": 2
+      },
+      "runs_per_mode": 3,
+      "source_artifact": "execution_06_transfer_ab_benchmark.json",
+      "speedup_ratio_reduced_over_legacy": 1.014,
+      "status": "DONE_PROVEN",
+      "unpoolable_reasons": [],
+      "working_scale": 0.5
+    },
+    {
+      "code_under_test": "1dedec758dc0cced625ae8d12b118e6054e834de",
+      "execution": "recorded-7",
+      "execution_order_index": 7,
+      "execution_schedule": [
+        {
+          "kept": false,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 1
+        },
+        {
+          "kept": true,
+          "order": [
+            "legacy",
+            "reduced"
+          ],
+          "run": 2
+        },
+        {
+          "kept": true,
+          "order": [
+            "reduced",
+            "legacy"
+          ],
+          "run": 3
+        }
+      ],
+      "frames_per_run": 60,
+      "gates": {
+        "copy_gate": {
+          "all_passed": true,
+          "checks_passed": 21,
+          "checks_total": 21,
+          "failed_checks": []
+        },
+        "order_balance_gate": {
+          "all_passed": true,
+          "checks_passed": 5,
+          "checks_total": 5,
+          "failed_checks": []
+        },
+        "output_integrity_gate": {
+          "all_passed": true,
+          "checks_passed": 10,
+          "checks_total": 10,
+          "failed_checks": []
+        },
+        "performance_gate": {
+          "all_passed": true,
+          "checks_passed": 1,
+          "checks_total": 1,
+          "failed_checks": []
+        }
+      },
+      "orders": {
+        "legacy": {
+          "cpu_bgr_to_rgba_calls": 2,
+          "cpu_rgba_to_bgr_calls": 1,
+          "decoder_pipe_bytes": 12441600,
+          "fps_of_every_run": {
+            "1": 7.6425,
+            "2": 7.5183,
+            "3": 7.6717
+          },
+          "frame_total_p50_ms": 101.3192,
+          "frame_total_p95_ms": 112.2632,
+          "inter_run_spread_percent_of_all_runs": 2.04,
+          "inter_run_spread_percent_of_kept_runs": 2.04,
+          "median_fps_of_kept_runs": 7.595,
+          "nvof_h2d_bytes_measured": 8294400,
+          "position_in_pair_of_every_run": {
+            "1": 1,
+            "2": 1,
+            "3": 2
+          },
+          "runs_used_for_medians": [
+            2,
+            3
+          ],
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 1,
+            "cpu_bgr_to_rgba@nvof_input_calls": 1,
+            "cpu_bgr_to_rgba_calls": 2,
+            "cpu_color_conversion_output_bytes": 22809600,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 1,
+            "cpu_rgba_to_bgr_calls": 1,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 0,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 8294400,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 0
+          },
+          "warmup_run_ids": [
+            1
+          ]
+        },
+        "reduced": {
+          "cpu_bgr_to_rgba_calls": 0,
+          "cpu_rgba_to_bgr_calls": 0,
+          "decoder_pipe_bytes": 12441600,
+          "fps_of_every_run": {
+            "1": 7.8182,
+            "2": 7.6433,
+            "3": 7.7093
+          },
+          "frame_total_p50_ms": 99.2156,
+          "frame_total_p95_ms": 111.1226,
+          "inter_run_spread_percent_of_all_runs": 2.29,
+          "inter_run_spread_percent_of_kept_runs": 0.86,
+          "median_fps_of_kept_runs": 7.6763,
+          "nvof_h2d_bytes_measured": 6220800,
+          "position_in_pair_of_every_run": {
+            "1": 2,
+            "2": 2,
+            "3": 1
+          },
+          "runs_used_for_medians": [
+            2,
+            3
+          ],
+          "steady_state_counters": {
+            "cpu_bgr_to_rgba@dlss_input_calls": 0,
+            "cpu_bgr_to_rgba@nvof_input_calls": 0,
+            "cpu_bgr_to_rgba_calls": 0,
+            "cpu_color_conversion_output_bytes": 0,
+            "cpu_previous_frame_copy_bytes": 0,
+            "cpu_rgba_to_bgr@residual_input_calls": 0,
+            "cpu_rgba_to_bgr_calls": 0,
+            "decoder_pipe_bytes": 12441600,
+            "encoder_pipe_bytes": 24883200,
+            "nvof_bgr_input_call_count_delta": 1,
+            "nvof_bgr_staging_alloc_count_delta": 0,
+            "nvof_d2h_bytes_measured": 16588800,
+            "nvof_d2h_copy_count": 1,
+            "nvof_h2d_bytes_measured": 6220800,
+            "nvof_h2d_copy_count": 1,
+            "nvof_input_convert_launch_count_delta": 1
+          },
+          "warmup_run_ids": [
+            1
+          ]
+        }
+      },
+      "protocol": {
+        "name": "counterbalanced-kept-runs-ab",
+        "version": 2
+      },
+      "runs_per_mode": 3,
+      "source_artifact": "execution_07_transfer_ab_benchmark.json",
+      "speedup_ratio_reduced_over_legacy": 1.0107,
+      "status": "DONE_PROVEN",
+      "unpoolable_reasons": [],
+      "working_scale": 0.5
+    }
+  ],
+  "generated_at": "2026-09-21T07:28:33",
+  "generated_by": "tests/unit/collect_transfer_performance.py",
+  "kept_runs_per_order": {
+    "legacy": [
+      {
+        "execution": "recorded-1",
+        "fps": 7.524,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-1",
+        "fps": 7.391,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-2",
+        "fps": 7.454,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-2",
+        "fps": 7.4233,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-3",
+        "fps": 7.6605,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-3",
+        "fps": 7.4874,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-4",
+        "fps": 7.5925,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-4",
+        "fps": 7.3407,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-5",
+        "fps": 7.5613,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-5",
+        "fps": 7.6626,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-6",
+        "fps": 7.3936,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-6",
+        "fps": 7.5617,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-7",
+        "fps": 7.5183,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-7",
+        "fps": 7.6717,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 3
+      }
+    ],
+    "reduced": [
+      {
+        "execution": "recorded-1",
+        "fps": 7.6289,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-1",
+        "fps": 7.6932,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-2",
+        "fps": 7.7101,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-2",
+        "fps": 7.6513,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-3",
+        "fps": 7.2798,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-3",
+        "fps": 7.7692,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-4",
+        "fps": 7.4692,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-4",
+        "fps": 7.5976,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-5",
+        "fps": 7.6516,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-5",
+        "fps": 7.6667,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-6",
+        "fps": 7.6148,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-6",
+        "fps": 7.5497,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 3
+      },
+      {
+        "execution": "recorded-7",
+        "fps": 7.6433,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 2
+      },
+      {
+        "execution": "recorded-7",
+        "fps": 7.7093,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": true,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 3
+      }
+    ]
+  },
+  "pooled_all_runs_median_diagnostic": {
+    "legacy": 7.5491,
+    "reduced": 7.6513
+  },
+  "pooled_kept_runs_median": {
+    "legacy": 7.5212,
+    "reduced": 7.6473
+  },
+  "protocol": {
+    "child_process_per_run": true,
+    "defined_by": "tests/unit/collect_transfer_ab.py",
+    "executions_pooled": 7,
+    "executions_rejected": 0,
+    "frames_per_run": 60,
+    "kept_run_ids": [
+      2,
+      3
+    ],
+    "name": "counterbalanced-kept-runs-ab",
+    "pairs_interleaved_within_an_execution": true,
+    "runs_per_mode": 3,
+    "schedule_counterbalanced": true,
+    "version": 2,
+    "warmup_run_ids": [
+      1
+    ]
+  },
+  "run_counts_per_order": {
+    "legacy": {
+      "all": 21,
+      "kept": 14,
+      "warmup": 7
+    },
+    "reduced": {
+      "all": 21,
+      "kept": 14,
+      "warmup": 7
+    }
+  },
+  "verdict": {
+    "all_orders_diagnostic": {
+      "legacy": {
+        "executions": [
+          "recorded-1",
+          "recorded-2",
+          "recorded-3",
+          "recorded-4",
+          "recorded-5",
+          "recorded-6",
+          "recorded-7"
+        ],
+        "max_fps": 7.6717,
+        "mean_fps": 7.4776,
+        "median_fps": 7.5491,
+        "min_fps": 6.27,
+        "per_execution_inter_run_spread_percent": {
+          "recorded-1": 20.0,
+          "recorded-2": 3.21,
+          "recorded-3": 2.31,
+          "recorded-4": 3.43,
+          "recorded-5": 1.5,
+          "recorded-6": 2.49,
+          "recorded-7": 2.04
+        },
+        "run_count": 21,
+        "spread_percent": 22.36
+      },
+      "reduced": {
+        "executions": [
+          "recorded-1",
+          "recorded-2",
+          "recorded-3",
+          "recorded-4",
+          "recorded-5",
+          "recorded-6",
+          "recorded-7"
+        ],
+        "max_fps": 7.8182,
+        "mean_fps": 7.6278,
+        "median_fps": 7.6513,
+        "min_fps": 7.2798,
+        "per_execution_inter_run_spread_percent": {
+          "recorded-1": 2.3,
+          "recorded-2": 1.51,
+          "recorded-3": 6.72,
+          "recorded-4": 3.26,
+          "recorded-5": 1.48,
+          "recorded-6": 1.35,
+          "recorded-7": 2.29
+        },
+        "run_count": 21,
+        "spread_percent": 7.4
+      }
+    },
+    "all_required_checks_passed": true,
+    "corroboration": {},
+    "evidence_that_reduced_is_slower_p_value": 0.99353,
+    "kept_orders": {
+      "legacy": {
+        "executions": [
+          "recorded-1",
+          "recorded-2",
+          "recorded-3",
+          "recorded-4",
+          "recorded-5",
+          "recorded-6",
+          "recorded-7"
+        ],
+        "max_fps": 7.6717,
+        "mean_fps": 7.5173,
+        "median_fps": 7.5212,
+        "min_fps": 7.3407,
+        "per_execution_inter_run_spread_percent": {
+          "recorded-1": 1.8,
+          "recorded-2": 0.41,
+          "recorded-3": 2.31,
+          "recorded-4": 3.43,
+          "recorded-5": 1.34,
+          "recorded-6": 2.27,
+          "recorded-7": 2.04
+        },
+        "run_count": 14,
+        "spread_percent": 4.51
+      },
+      "reduced": {
+        "executions": [
+          "recorded-1",
+          "recorded-2",
+          "recorded-3",
+          "recorded-4",
+          "recorded-5",
+          "recorded-6",
+          "recorded-7"
+        ],
+        "max_fps": 7.7692,
+        "mean_fps": 7.6168,
+        "median_fps": 7.6473,
+        "min_fps": 7.2798,
+        "per_execution_inter_run_spread_percent": {
+          "recorded-1": 0.84,
+          "recorded-2": 0.77,
+          "recorded-3": 6.72,
+          "recorded-4": 1.72,
+          "recorded-5": 0.2,
+          "recorded-6": 0.86,
+          "recorded-7": 0.86
+        },
+        "run_count": 14,
+        "spread_percent": 6.72
+      }
+    },
+    "kept_pairs": [
+      {
+        "execution": "recorded-1",
+        "frames": 60,
+        "included_in_performance_verdict": true,
+        "legacy_fps": 7.524,
+        "legacy_position_in_pair": 1,
+        "reduced_fps": 7.6289,
+        "reduced_minus_legacy_percent": 1.39,
+        "reduced_over_legacy_ratio": 1.0139,
+        "reduced_position_in_pair": 2,
+        "run": "2"
+      },
+      {
+        "execution": "recorded-1",
+        "frames": 60,
+        "included_in_performance_verdict": true,
+        "legacy_fps": 7.391,
+        "legacy_position_in_pair": 2,
+        "reduced_fps": 7.6932,
+        "reduced_minus_legacy_percent": 4.09,
+        "reduced_over_legacy_ratio": 1.0409,
+        "reduced_position_in_pair": 1,
+        "run": "3"
+      },
+      {
+        "execution": "recorded-2",
+        "frames": 60,
+        "included_in_performance_verdict": true,
+        "legacy_fps": 7.454,
+        "legacy_position_in_pair": 2,
+        "reduced_fps": 7.7101,
+        "reduced_minus_legacy_percent": 3.44,
+        "reduced_over_legacy_ratio": 1.0344,
+        "reduced_position_in_pair": 1,
+        "run": "2"
+      },
+      {
+        "execution": "recorded-2",
+        "frames": 60,
+        "included_in_performance_verdict": true,
+        "legacy_fps": 7.4233,
+        "legacy_position_in_pair": 1,
+        "reduced_fps": 7.6513,
+        "reduced_minus_legacy_percent": 3.07,
+        "reduced_over_legacy_ratio": 1.0307,
+        "reduced_position_in_pair": 2,
+        "run": "3"
+      },
+      {
+        "execution": "recorded-3",
+        "frames": 60,
+        "included_in_performance_verdict": true,
+        "legacy_fps": 7.6605,
+        "legacy_position_in_pair": 1,
+        "reduced_fps": 7.2798,
+        "reduced_minus_legacy_percent": -4.97,
+        "reduced_over_legacy_ratio": 0.9503,
+        "reduced_position_in_pair": 2,
+        "run": "2"
+      },
+      {
+        "execution": "recorded-3",
+        "frames": 60,
+        "included_in_performance_verdict": true,
+        "legacy_fps": 7.4874,
+        "legacy_position_in_pair": 2,
+        "reduced_fps": 7.7692,
+        "reduced_minus_legacy_percent": 3.76,
+        "reduced_over_legacy_ratio": 1.0376,
+        "reduced_position_in_pair": 1,
+        "run": "3"
+      },
+      {
+        "execution": "recorded-4",
+        "frames": 60,
+        "included_in_performance_verdict": true,
+        "legacy_fps": 7.5925,
+        "legacy_position_in_pair": 2,
+        "reduced_fps": 7.4692,
+        "reduced_minus_legacy_percent": -1.62,
+        "reduced_over_legacy_ratio": 0.9838,
+        "reduced_position_in_pair": 1,
+        "run": "2"
+      },
+      {
+        "execution": "recorded-4",
+        "frames": 60,
+        "included_in_performance_verdict": true,
+        "legacy_fps": 7.3407,
+        "legacy_position_in_pair": 1,
+        "reduced_fps": 7.5976,
+        "reduced_minus_legacy_percent": 3.5,
+        "reduced_over_legacy_ratio": 1.035,
+        "reduced_position_in_pair": 2,
+        "run": "3"
+      },
+      {
+        "execution": "recorded-5",
+        "frames": 60,
+        "included_in_performance_verdict": true,
+        "legacy_fps": 7.5613,
+        "legacy_position_in_pair": 1,
+        "reduced_fps": 7.6516,
+        "reduced_minus_legacy_percent": 1.19,
+        "reduced_over_legacy_ratio": 1.0119,
+        "reduced_position_in_pair": 2,
+        "run": "2"
+      },
+      {
+        "execution": "recorded-5",
+        "frames": 60,
+        "included_in_performance_verdict": true,
+        "legacy_fps": 7.6626,
+        "legacy_position_in_pair": 2,
+        "reduced_fps": 7.6667,
+        "reduced_minus_legacy_percent": 0.05,
+        "reduced_over_legacy_ratio": 1.0005,
+        "reduced_position_in_pair": 1,
+        "run": "3"
+      },
+      {
+        "execution": "recorded-6",
+        "frames": 60,
+        "included_in_performance_verdict": true,
+        "legacy_fps": 7.3936,
+        "legacy_position_in_pair": 2,
+        "reduced_fps": 7.6148,
+        "reduced_minus_legacy_percent": 2.99,
+        "reduced_over_legacy_ratio": 1.0299,
+        "reduced_position_in_pair": 1,
+        "run": "2"
+      },
+      {
+        "execution": "recorded-6",
+        "frames": 60,
+        "included_in_performance_verdict": true,
+        "legacy_fps": 7.5617,
+        "legacy_position_in_pair": 1,
+        "reduced_fps": 7.5497,
+        "reduced_minus_legacy_percent": -0.16,
+        "reduced_over_legacy_ratio": 0.9984,
+        "reduced_position_in_pair": 2,
+        "run": "3"
+      },
+      {
+        "execution": "recorded-7",
+        "frames": 60,
+        "included_in_performance_verdict": true,
+        "legacy_fps": 7.5183,
+        "legacy_position_in_pair": 1,
+        "reduced_fps": 7.6433,
+        "reduced_minus_legacy_percent": 1.66,
+        "reduced_over_legacy_ratio": 1.0166,
+        "reduced_position_in_pair": 2,
+        "run": "2"
+      },
+      {
+        "execution": "recorded-7",
+        "frames": 60,
+        "included_in_performance_verdict": true,
+        "legacy_fps": 7.6717,
+        "legacy_position_in_pair": 2,
+        "reduced_fps": 7.7093,
+        "reduced_minus_legacy_percent": 0.49,
+        "reduced_over_legacy_ratio": 1.0049,
+        "reduced_position_in_pair": 1,
+        "run": "3"
+      }
+    ],
+    "median_reduced_minus_legacy_percent": 1.52,
+    "no_end_to_end_regression": true,
+    "order_balance": {
+      "balanced": true,
+      "legacy_first": 7,
+      "pairs": 14,
+      "reduced_first": 7,
+      "unknown_position": 0
+    },
+    "pairwise_median_ratio": 1.0152,
+    "per_execution_outcome": {
+      "recorded-1": {
+        "copy_gate_all_passed": true,
+        "decoder_pipe_bytes": {
+          "legacy": 12441600,
+          "reduced": 12441600
+        },
+        "inter_run_spread_percent": {
+          "legacy": 1.8,
+          "reduced": 0.84
+        },
+        "kept_pair_positions": [
+          {
+            "kept": false,
+            "order": [
+              "legacy",
+              "reduced"
+            ],
+            "run": 1
+          },
+          {
+            "kept": true,
+            "order": [
+              "legacy",
+              "reduced"
+            ],
+            "run": 2
+          },
+          {
+            "kept": true,
+            "order": [
+              "reduced",
+              "legacy"
+            ],
+            "run": 3
+          }
+        ],
+        "kept_run_ids": {
+          "legacy": [
+            2,
+            3
+          ],
+          "reduced": [
+            2,
+            3
+          ]
+        },
+        "median_fps_of_kept_runs": {
+          "legacy": 7.4575,
+          "reduced": 7.661
+        },
+        "order_balance_gate_all_passed": true,
+        "output_integrity_gate_all_passed": true,
+        "own_performance_gate_all_passed": true,
+        "protocol": {
+          "name": "counterbalanced-kept-runs-ab",
+          "version": 2
+        },
+        "status": "DONE_PROVEN",
+        "unpoolable_reasons": []
+      },
+      "recorded-2": {
+        "copy_gate_all_passed": true,
+        "decoder_pipe_bytes": {
+          "legacy": 12441600,
+          "reduced": 12441600
+        },
+        "inter_run_spread_percent": {
+          "legacy": 0.41,
+          "reduced": 0.77
+        },
+        "kept_pair_positions": [
+          {
+            "kept": false,
+            "order": [
+              "reduced",
+              "legacy"
+            ],
+            "run": 1
+          },
+          {
+            "kept": true,
+            "order": [
+              "reduced",
+              "legacy"
+            ],
+            "run": 2
+          },
+          {
+            "kept": true,
+            "order": [
+              "legacy",
+              "reduced"
+            ],
+            "run": 3
+          }
+        ],
+        "kept_run_ids": {
+          "legacy": [
+            2,
+            3
+          ],
+          "reduced": [
+            2,
+            3
+          ]
+        },
+        "median_fps_of_kept_runs": {
+          "legacy": 7.4386,
+          "reduced": 7.6807
+        },
+        "order_balance_gate_all_passed": true,
+        "output_integrity_gate_all_passed": true,
+        "own_performance_gate_all_passed": true,
+        "protocol": {
+          "name": "counterbalanced-kept-runs-ab",
+          "version": 2
+        },
+        "status": "DONE_PROVEN",
+        "unpoolable_reasons": []
+      },
+      "recorded-3": {
+        "copy_gate_all_passed": true,
+        "decoder_pipe_bytes": {
+          "legacy": 12441600,
+          "reduced": 12441600
+        },
+        "inter_run_spread_percent": {
+          "legacy": 2.31,
+          "reduced": 6.72
+        },
+        "kept_pair_positions": [
+          {
+            "kept": false,
+            "order": [
+              "legacy",
+              "reduced"
+            ],
+            "run": 1
+          },
+          {
+            "kept": true,
+            "order": [
+              "legacy",
+              "reduced"
+            ],
+            "run": 2
+          },
+          {
+            "kept": true,
+            "order": [
+              "reduced",
+              "legacy"
+            ],
+            "run": 3
+          }
+        ],
+        "kept_run_ids": {
+          "legacy": [
+            2,
+            3
+          ],
+          "reduced": [
+            2,
+            3
+          ]
+        },
+        "median_fps_of_kept_runs": {
+          "legacy": 7.5739,
+          "reduced": 7.5245
+        },
+        "order_balance_gate_all_passed": true,
+        "output_integrity_gate_all_passed": true,
+        "own_performance_gate_all_passed": false,
+        "protocol": {
+          "name": "counterbalanced-kept-runs-ab",
+          "version": 2
+        },
+        "status": "NOT_READY",
+        "unpoolable_reasons": []
+      },
+      "recorded-4": {
+        "copy_gate_all_passed": true,
+        "decoder_pipe_bytes": {
+          "legacy": 12441600,
+          "reduced": 12441600
+        },
+        "inter_run_spread_percent": {
+          "legacy": 3.43,
+          "reduced": 1.72
+        },
+        "kept_pair_positions": [
+          {
+            "kept": false,
+            "order": [
+              "reduced",
+              "legacy"
+            ],
+            "run": 1
+          },
+          {
+            "kept": true,
+            "order": [
+              "reduced",
+              "legacy"
+            ],
+            "run": 2
+          },
+          {
+            "kept": true,
+            "order": [
+              "legacy",
+              "reduced"
+            ],
+            "run": 3
+          }
+        ],
+        "kept_run_ids": {
+          "legacy": [
+            2,
+            3
+          ],
+          "reduced": [
+            2,
+            3
+          ]
+        },
+        "median_fps_of_kept_runs": {
+          "legacy": 7.4666,
+          "reduced": 7.5334
+        },
+        "order_balance_gate_all_passed": true,
+        "output_integrity_gate_all_passed": true,
+        "own_performance_gate_all_passed": true,
+        "protocol": {
+          "name": "counterbalanced-kept-runs-ab",
+          "version": 2
+        },
+        "status": "DONE_PROVEN",
+        "unpoolable_reasons": []
+      },
+      "recorded-5": {
+        "copy_gate_all_passed": true,
+        "decoder_pipe_bytes": {
+          "legacy": 12441600,
+          "reduced": 12441600
+        },
+        "inter_run_spread_percent": {
+          "legacy": 1.34,
+          "reduced": 0.2
+        },
+        "kept_pair_positions": [
+          {
+            "kept": false,
+            "order": [
+              "legacy",
+              "reduced"
+            ],
+            "run": 1
+          },
+          {
+            "kept": true,
+            "order": [
+              "legacy",
+              "reduced"
+            ],
+            "run": 2
+          },
+          {
+            "kept": true,
+            "order": [
+              "reduced",
+              "legacy"
+            ],
+            "run": 3
+          }
+        ],
+        "kept_run_ids": {
+          "legacy": [
+            2,
+            3
+          ],
+          "reduced": [
+            2,
+            3
+          ]
+        },
+        "median_fps_of_kept_runs": {
+          "legacy": 7.612,
+          "reduced": 7.6592
+        },
+        "order_balance_gate_all_passed": true,
+        "output_integrity_gate_all_passed": true,
+        "own_performance_gate_all_passed": true,
+        "protocol": {
+          "name": "counterbalanced-kept-runs-ab",
+          "version": 2
+        },
+        "status": "DONE_PROVEN",
+        "unpoolable_reasons": []
+      },
+      "recorded-6": {
+        "copy_gate_all_passed": true,
+        "decoder_pipe_bytes": {
+          "legacy": 12441600,
+          "reduced": 12441600
+        },
+        "inter_run_spread_percent": {
+          "legacy": 2.27,
+          "reduced": 0.86
+        },
+        "kept_pair_positions": [
+          {
+            "kept": false,
+            "order": [
+              "reduced",
+              "legacy"
+            ],
+            "run": 1
+          },
+          {
+            "kept": true,
+            "order": [
+              "reduced",
+              "legacy"
+            ],
+            "run": 2
+          },
+          {
+            "kept": true,
+            "order": [
+              "legacy",
+              "reduced"
+            ],
+            "run": 3
+          }
+        ],
+        "kept_run_ids": {
+          "legacy": [
+            2,
+            3
+          ],
+          "reduced": [
+            2,
+            3
+          ]
+        },
+        "median_fps_of_kept_runs": {
+          "legacy": 7.4777,
+          "reduced": 7.5823
+        },
+        "order_balance_gate_all_passed": true,
+        "output_integrity_gate_all_passed": true,
+        "own_performance_gate_all_passed": true,
+        "protocol": {
+          "name": "counterbalanced-kept-runs-ab",
+          "version": 2
+        },
+        "status": "DONE_PROVEN",
+        "unpoolable_reasons": []
+      },
+      "recorded-7": {
+        "copy_gate_all_passed": true,
+        "decoder_pipe_bytes": {
+          "legacy": 12441600,
+          "reduced": 12441600
+        },
+        "inter_run_spread_percent": {
+          "legacy": 2.04,
+          "reduced": 0.86
+        },
+        "kept_pair_positions": [
+          {
+            "kept": false,
+            "order": [
+              "legacy",
+              "reduced"
+            ],
+            "run": 1
+          },
+          {
+            "kept": true,
+            "order": [
+              "legacy",
+              "reduced"
+            ],
+            "run": 2
+          },
+          {
+            "kept": true,
+            "order": [
+              "reduced",
+              "legacy"
+            ],
+            "run": 3
+          }
+        ],
+        "kept_run_ids": {
+          "legacy": [
+            2,
+            3
+          ],
+          "reduced": [
+            2,
+            3
+          ]
+        },
+        "median_fps_of_kept_runs": {
+          "legacy": 7.595,
+          "reduced": 7.6763
+        },
+        "order_balance_gate_all_passed": true,
+        "output_integrity_gate_all_passed": true,
+        "own_performance_gate_all_passed": true,
+        "protocol": {
+          "name": "counterbalanced-kept-runs-ab",
+          "version": 2
+        },
+        "status": "DONE_PROVEN",
+        "unpoolable_reasons": []
+      }
+    },
+    "performance_direction_consistent": true,
+    "pooled_all_runs_median_fps_diagnostic": {
+      "legacy": 7.5491,
+      "reduced": 7.6513
+    },
+    "pooled_all_runs_ratio_diagnostic": 1.0135,
+    "pooled_kept_median_fps": {
+      "legacy": 7.5212,
+      "reduced": 7.6473
+    },
+    "pooled_kept_ratio": 1.0168,
+    "position_strata": {
+      "reduced_vs_legacy_when_reduced_first": {
+        "executions": [
+          "recorded-1",
+          "recorded-2",
+          "recorded-3",
+          "recorded-4",
+          "recorded-5",
+          "recorded-6",
+          "recorded-7"
+        ],
+        "losses": 1,
+        "median_percent_change": 2.99,
+        "median_ratio": 1.0299,
+        "pair_count": 7,
+        "wins": 6
+      },
+      "reduced_vs_legacy_when_reduced_second": {
+        "executions": [
+          "recorded-1",
+          "recorded-2",
+          "recorded-3",
+          "recorded-4",
+          "recorded-5",
+          "recorded-6",
+          "recorded-7"
+        ],
+        "losses": 2,
+        "median_percent_change": 1.39,
+        "median_ratio": 1.0139,
+        "pair_count": 7,
+        "wins": 5
+      }
+    },
+    "primary_question": "Does the reduced order regress end-to-end performance under a counterbalanced protocol?",
+    "primary_rule": "the pooled median of the reduced order's kept runs is at least the pooled median of the legacy order's kept runs",
+    "rejected_executions": [],
+    "required_checks": [
+      {
+        "actual": true,
+        "detail": "14 legacy / 14 reduced kept runs",
+        "expected": true,
+        "ok": true,
+        "what": "kept_runs_in_the_verdict"
+      },
+      {
+        "actual": true,
+        "detail": "0 of 7 executions rejected",
+        "expected": true,
+        "ok": true,
+        "what": "every_execution_poolable"
+      },
+      {
+        "actual": true,
+        "detail": "7.6473 vs 7.5212",
+        "expected": true,
+        "ok": true,
+        "what": "reduced_kept_median_at_least_legacy_kept"
+      },
+      {
+        "actual": true,
+        "detail": "every pooled and corroborating execution passed both",
+        "expected": true,
+        "ok": true,
+        "what": "copy_and_integrity_gates_passed_in_every_execution"
+      },
+      {
+        "actual": true,
+        "detail": "7 legacy-first / 7 reduced-first of 14 kept pairs",
+        "expected": true,
+        "ok": true,
+        "what": "kept_pairs_are_position_balanced"
+      },
+      {
+        "actual": true,
+        "detail": "{\"reduced_vs_legacy_when_reduced_first\": 7, \"reduced_vs_legacy_when_reduced_second\": 7}",
+        "expected": true,
+        "ok": true,
+        "what": "both_position_strata_have_samples"
+      },
+      {
+        "actual": true,
+        "detail": "pooled kept medians point + and the paired median ratio points +",
+        "expected": true,
+        "ok": true,
+        "what": "performance_direction_consistent"
+      }
+    ],
+    "required_companion_gates": [
+      "copy",
+      "output integrity",
+      "order balance",
+      "direction consistency"
+    ],
+    "rule": "Warmup pairs are published and excluded: an execution names its kept run ids and only those reach a median, a ratio, a pair or the sign test. The gate asks the non-regression question and nothing stronger - no p-value threshold is applied in either direction - but it does require the instrument to have been built balanced, and it requires the two readings of that instrument, the pooled medians and the paired ratios, to agree about which way they point. If they point opposite ways the honest answer is that the instrument gave a contradiction, which is NOT_READY rather than a choice of the nicer number.",
+    "run_census": {
+      "legacy": {
+        "all_run_count": 21,
+        "kept_run_count": 14,
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "warmup_run_count": 7,
+        "warmup_run_ids": [
+          1
+        ]
+      },
+      "reduced": {
+        "all_run_count": 21,
+        "kept_run_count": 14,
+        "kept_run_ids": [
+          2,
+          3
+        ],
+        "warmup_run_count": 7,
+        "warmup_run_ids": [
+          1
+        ]
+      }
+    },
+    "secondary_evidence": [
+      "paired median percent change",
+      "exact sign test over kept pairs",
+      "position-stratified ratios"
+    ],
+    "sign_test": {
+      "p_value_legacy_ahead_by_at_least_this_much": 0.99353,
+      "p_value_reduced_ahead_by_at_least_this_much": 0.028687,
+      "pairs": 14,
+      "runs_favouring_legacy": 3,
+      "runs_favouring_reduced": 11,
+      "used_for": "secondary evidence only; no threshold in this file reads it"
+    },
+    "status": "DONE_PROVEN",
+    "warmup_pairs_diagnostics": [
+      {
+        "execution": "recorded-1",
+        "frames": 60,
+        "included_in_performance_verdict": false,
+        "legacy_fps": 6.27,
+        "legacy_position_in_pair": 1,
+        "reduced_fps": 7.5201,
+        "reduced_minus_legacy_percent": 19.94,
+        "reduced_over_legacy_ratio": 1.1994,
+        "reduced_position_in_pair": 2,
+        "run": "1"
+      },
+      {
+        "execution": "recorded-2",
+        "frames": 60,
+        "included_in_performance_verdict": false,
+        "legacy_fps": 7.6614,
+        "legacy_position_in_pair": 2,
+        "reduced_fps": 7.7668,
+        "reduced_minus_legacy_percent": 1.38,
+        "reduced_over_legacy_ratio": 1.0138,
+        "reduced_position_in_pair": 1,
+        "run": "1"
+      },
+      {
+        "execution": "recorded-3",
+        "frames": 60,
+        "included_in_performance_verdict": false,
+        "legacy_fps": 7.5371,
+        "legacy_position_in_pair": 1,
+        "reduced_fps": 7.6637,
+        "reduced_minus_legacy_percent": 1.68,
+        "reduced_over_legacy_ratio": 1.0168,
+        "reduced_position_in_pair": 2,
+        "run": "1"
+      },
+      {
+        "execution": "recorded-4",
+        "frames": 60,
+        "included_in_performance_verdict": false,
+        "legacy_fps": 7.5491,
+        "legacy_position_in_pair": 2,
+        "reduced_fps": 7.7125,
+        "reduced_minus_legacy_percent": 2.16,
+        "reduced_over_legacy_ratio": 1.0216,
+        "reduced_position_in_pair": 1,
+        "run": "1"
+      },
+      {
+        "execution": "recorded-5",
+        "frames": 60,
+        "included_in_performance_verdict": false,
+        "legacy_fps": 7.5495,
+        "legacy_position_in_pair": 1,
+        "reduced_fps": 7.5547,
+        "reduced_minus_legacy_percent": 0.07,
+        "reduced_over_legacy_ratio": 1.0007,
+        "reduced_position_in_pair": 2,
+        "run": "1"
+      },
+      {
+        "execution": "recorded-6",
+        "frames": 60,
+        "included_in_performance_verdict": false,
+        "legacy_fps": 7.5775,
+        "legacy_position_in_pair": 2,
+        "reduced_fps": 7.5136,
+        "reduced_minus_legacy_percent": -0.84,
+        "reduced_over_legacy_ratio": 0.9916,
+        "reduced_position_in_pair": 1,
+        "run": "1"
+      },
+      {
+        "execution": "recorded-7",
+        "frames": 60,
+        "included_in_performance_verdict": false,
+        "legacy_fps": 7.6425,
+        "legacy_position_in_pair": 1,
+        "reduced_fps": 7.8182,
+        "reduced_minus_legacy_percent": 2.3,
+        "reduced_over_legacy_ratio": 1.023,
+        "reduced_position_in_pair": 2,
+        "run": "1"
+      }
+    ]
+  },
+  "warmup_policy": "an execution publishes runs_used_for_medians; only those runs reach a pooled median, a paired ratio or the sign test. The warmup runs are still in this file, with included_in_performance_verdict=false",
+  "warmup_runs_per_order": {
+    "legacy": [
+      {
+        "execution": "recorded-1",
+        "fps": 6.27,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-2",
+        "fps": 7.6614,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-3",
+        "fps": 7.5371,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-4",
+        "fps": 7.5491,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-5",
+        "fps": 7.5495,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-6",
+        "fps": 7.5775,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "legacy",
+        "position_in_pair": 2,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-7",
+        "fps": 7.6425,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "legacy",
+        "position_in_pair": 1,
+        "run_index": 1
+      }
+    ],
+    "reduced": [
+      {
+        "execution": "recorded-1",
+        "fps": 7.5201,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-2",
+        "fps": 7.7668,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-3",
+        "fps": 7.6637,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-4",
+        "fps": 7.7125,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-5",
+        "fps": 7.5547,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-6",
+        "fps": 7.5136,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "reduced",
+        "position_in_pair": 1,
+        "run_index": 1
+      },
+      {
+        "execution": "recorded-7",
+        "fps": 7.8182,
+        "frames_per_run": 60,
+        "included_in_performance_verdict": false,
+        "mode": "reduced",
+        "position_in_pair": 2,
+        "run_index": 1
+      }
+    ]
+  },
+  "why_pooled": "one execution of the protocol is a median of two runs, and the same order of the same code measures 1.2-52% apart between runs on this machine; that instrument cannot resolve the difference the performance gate is asked about, in either direction"
+}

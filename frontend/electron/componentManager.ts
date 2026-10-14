@@ -7,7 +7,7 @@ import {AppUpdates} from './appUpdates.ts'
 import type {ComponentId, ComponentState} from '../src/types/components.ts'
 
 const PYTHON='3.10.18'
-const ffmpeg={name:'ffmpeg-8.1.2-essentials_build.zip',size:109728040,sha256:'db580001caa24ac104c8cb856cd113a87b0a443f7bdf47d8c12b1d740584a2ec',url:'https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-8.1.2-essentials_build.zip'}
+const ffmpeg={name:'ffmpeg-8.1.2-full_build-shared.7z',size:59459100,sha256:'cba748035c21ce1431d0823c7a3a711f38616f89f87a265dceddf9b7f6749d2d',url:'https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-8.1.2-full_build-shared.7z'}
 const raftModel={name:'raft_large_C_T_SKHT_V2-ff5fadd5.pth',size:21100755,sha256:'',url:'https://download.pytorch.org/models/raft_large_C_T_SKHT_V2-ff5fadd5.pth'}
 export function raftWheelLock(locked:string,file:string,sha256:string) {
   const block=/^torch==2\.10\.0\+cu128[ \t]+\\\r?\n(?:[ \t]+--hash=sha256:[a-f0-9]{64}(?:[ \t]+\\)?\r?\n)+/m
@@ -48,7 +48,7 @@ export class ComponentManager {
       const value=JSON.parse(fs.readFileSync(this.marker(id),'utf8'))
       if(value.identity!==this.identity(id)) return false
       if(id==='base') return fs.existsSync(this.python())
-      if(id==='ffmpeg') return ['ffmpeg.exe','ffprobe.exe'].every(n=>fs.existsSync(path.join(this.runtime(),'tools',n)))
+      if(id==='ffmpeg') return ['ffmpeg.exe','ffprobe.exe','avcodec-62.dll','avformat-62.dll','avfilter-11.dll','avutil-60.dll','swresample-6.dll','swscale-9.dll'].every(n=>fs.existsSync(path.join(this.runtime(),'tools',n)))
       return fs.existsSync(path.join(this.raftSite(),'torch','__init__.py')) && fs.existsSync(path.join(this.runtime(),'torch_home','hub','checkpoints',raftModel.name))
     } catch {return false}
   }
@@ -56,7 +56,7 @@ export class ComponentManager {
     const base=this.ready('base'), ff=this.ready('ffmpeg'), raft=this.ready('raft')
     this.state={...this.state,requiresSetup:!base||!ff,components:[
       {id:'base',label:'基础运行环境',installed:base,version:PYTHON,detail:'Python 与后端依赖，用于素材读取、预览和导出管理。'},
-      {id:'ffmpeg',label:'视频处理组件',installed:ff,version:'8.1.2',detail:'FFmpeg，用于读取素材、视频对比和导出封装。'},
+      {id:'ffmpeg',label:'视频处理组件',installed:ff,version:'8.1.2',detail:'FFmpeg 与编码运行库，用于读取素材、视频对比和导出。'},
       {id:'raft',label:'RAFT 光流',installed:raft,version:'Torch 2.10.0 / CUDA 12.8',detail:'可选。使用 RAFT 光流时需要，下载量较大；原生 NVIDIA / AMD 光流不需要。'},
     ]};this.notify(this.state);return this.state
   }

@@ -26,6 +26,10 @@ def build(output,prefix):
     for name in ('uv-LICENSE-MIT.txt','uv-LICENSE-APACHE.txt'):
         shutil.copy2(ROOT/'LICENSES'/name,output/'component-tools'/name)
     native=ROOT/'native';target=output/'native-deps';target.mkdir(exist_ok=True)
+    for obsolete in target.glob('*.dll'):
+        if obsolete.name.lower().startswith(('avcodec-','avformat-','avfilter-','avutil-',
+                                            'avdevice-','swresample-','swscale-')):
+            obsolete.unlink()
     candidates={}
     for directory in (prefix/'Library/bin',prefix,prefix/'DLLs',prefix/'Lib/site-packages/torch/lib'):
         for p in directory.glob('*.dll'):
@@ -40,6 +44,9 @@ def build(output,prefix):
         seen.add(str(file))
         for name in imports(file):
             key=name.lower()
+            # FFmpeg CLI and matching shared libraries are one online component.
+            if key.startswith(('avcodec-','avformat-','avfilter-','avutil-',
+                               'avdevice-','swresample-','swscale-')):continue
             if key in own or key in never or key.startswith(('api-ms-','ext-ms-')):continue
             source=candidates.get(key)
             if source is None and (system/name).is_file():continue

@@ -1,5 +1,6 @@
 import {completeSettings,DEFAULT_SETTINGS} from './workspace.ts'
-import {renderStages} from './renderPipeline.ts'
+import {configuredRenderStages} from './renderPipeline.ts'
+import {VSR_MODES} from './vsrModes.ts'
 import type {DLSSSettings} from '../types'
 
 export type Preset = {name:string; settings:DLSSSettings}
@@ -11,7 +12,11 @@ export function presetSettings(raw:Partial<DLSSSettings>):DLSSSettings {
   const settings=completeSettings({...OPTIONAL_DEFAULTS,
     raft_analysis_edge:quality==='Fast'?512:quality==='Quality'?1080:720,
     raft_iterations:quality==='Fast'?4:quality==='Quality'?12:6,...raw})
-  return {...settings,render_pipeline:renderStages(settings)}
+  const disabled=Object.fromEntries(Object.entries(settings.render_stage_enabled??{}).filter(([,value])=>value===false))
+  if(Object.keys(disabled).length)settings.render_stage_enabled=disabled
+  else delete settings.render_stage_enabled
+  if(settings.frame_generation!=='off')delete settings.frame_generation_saved_mode
+  return {...settings,render_pipeline:configuredRenderStages(settings)}
 }
 export const DEFAULT_PRESET=presetSettings(DEFAULT_SETTINGS)
 export function samePreset(a:Partial<DLSSSettings>,b:Partial<DLSSSettings>):boolean {
@@ -46,7 +51,7 @@ const labels:Record<string,string>={render_pipeline:'渲染顺序',style:'画面
   reconstruction_mode:'重建层数',layer_execution:'图层执行方式',layer_scales:'图层缩放',layer_weights:'图层权重',
   fusion_mode:'融合方式',fusion_beta:'融合 β',fusion_max_iterations:'求解迭代上限',fusion_relative_tolerance:'求解误差阈值',
   residual_strength:'残差倍率',residual_pyramid:'保留源细节',motion_scale_x:'运动 X',motion_scale_y:'运动 Y',
-  dlaa_preset:'DLAA 模型',vsr_quality:'VSR 强度',vsr_output_mode:'VSR 输出方式',vsr_target:'VSR 输出分辨率',
+  dlaa_preset:'DLAA 模型',vsr_quality:'VSR 档位',vsr_mode:'VSR 模式',vsr_strength:'VSR 效果强度',vsr_output_mode:'VSR 输出方式',vsr_target:'VSR 输出分辨率',
   vsr_scale:'VSR 放大倍率',vsr_width:'VSR 输出宽度',vsr_height:'VSR 输出高度',frame_generation:'插帧模式',
   frame_multiplier:'插帧倍率',framegen_target_fps:'插帧目标帧率',framegen_quality:'插帧质量',framegen_scene_detection:'镜头切换检测',
   truehdr_enabled:'TrueHDR',truehdr_contrast:'TrueHDR 对比度',truehdr_saturation:'TrueHDR 饱和度',
@@ -67,6 +72,8 @@ export function presetValue(key:string,value:unknown):string {
   if(typeof value==='boolean')return value?'开启':'关闭'
   if(key==='style')return ['默认','自然','电影'][Number(value)]??String(value)
   if(key==='vsr_quality')return ['低','中','高','极高'][Number(value)-1]??String(value)
+  if(key==='vsr_mode')return VSR_MODES.find(([mode])=>mode===value)?.[1]??String(value)
+  if(key==='vsr_strength')return `${Math.round(Number(value)*100)}%`
   if(key==='framegen_quality')return ['低','中','高'][Number(value)]??String(value)
   if(['use_auto_mask','ui_correction','guidance_mode'].includes(key))return value?'开启':'关闭'
   if(typeof value==='number')return Number(value.toFixed(4)).toString()
@@ -92,6 +99,13 @@ export function presetChanges(settings:DLSSSettings):PresetChange[] {
     }
     if(JSON.stringify(value)===JSON.stringify(base))return
     const key=path.split('.').pop()!
+    if(path.startsWith('render_stage_enabled.')) {
+      if(value===true)return
+      const stageNames:Record<string,string>={nr:'DLSSNR',dlaa:'DLAA',vsr:'RTX VSR',vfg:'NVIDIA VFG',truehdr:'TrueHDR'}
+      changes.push({key:path,label:`${stageNames[key]} 开关`,before:'启用',after:'停用'})
+      return
+    }
+    if(key==='frame_generation_saved_mode')return
     if(key==='preset'||key==='neural_mode'||key==='dlss_backend'||key.startsWith('_'))return
     const delta=typeof value==='number'&&typeof base==='number'&&
       !['style','use_auto_mask','ui_correction','guidance_mode','dlaa_preset','vsr_quality','framegen_quality','roi_kind','debug_mode'].includes(key)?value-base:undefined

@@ -184,7 +184,6 @@ test('opting in on the shipped form names the clauses it violates', () => {
   // so the shipped form's mapping choices are not a refusal. What is left is the encoder
   // the SDR defaults select and the colour clause that would contradict the source.
   assert.deepEqual(clauses(reasons), [
-    'codec',
     'custom_color_primaries',
     'custom_color_range',
     'custom_color_space',
@@ -195,7 +194,7 @@ test('opting in on the shipped form names the clauses it violates', () => {
   // Transfer, so opting in without moving the chain is a refusal, not a re-route.
   assert.deepEqual(clauses(hdrBlockers(form({ experimental_hdr_scrgb: true })))
     .concat(), [
-    'codec', 'custom_color_primaries', 'custom_color_range',
+    'custom_color_primaries', 'custom_color_range',
     'custom_color_space', 'custom_color_transfer', 'export_backend',
   ])
 })
@@ -350,7 +349,7 @@ test('this stage carries no caller-written FFmpeg arguments at all', () => {
 test('the preset leaves no form refusal standing', () => {
   const input = form({ ...ON, export_backend: 'auto', working_scale: 0.3 })
   const before = clauses(hdrBlockers(input))
-  assert.ok(before.includes('export_backend') && before.includes('codec'))
+  assert.ok(before.includes('export_backend') && before.includes('custom_color_transfer'))
 
   const preset = buildHdrExportPreset(input)
   const after = {
@@ -378,8 +377,8 @@ test('every key the click writes is named in the summary shown before it is clic
   assert.equal(preset.settingsPatch.dlss_backend, 'gpu_flow_d3d12')
   assert.equal(preset.settingsPatch.reconstruction_mode, undefined,
     'the HDR preset preserves the selected reconstruction mode')
-  assert.equal(preset.transcodePatch.codec, HDR_CODEC)
-  assert.equal(preset.transcodePatch.profile, HDR_PROFILE)
+  assert.equal(preset.transcodePatch.codec, 'av1_nvenc')
+  assert.equal(preset.transcodePatch.profile, 'main')
   assert.equal(preset.transcodePatch.container, HDR_CONTAINER)
 
   // What the click leaves alone is stated as kept, with the pass that carries it.
@@ -449,7 +448,7 @@ test('the preset only reaches for controls that would otherwise refuse', () => {
   assert.match(resampled.summary.join('\n'), /audio_mode=copy/)
   assert.match(resampled.summary.join('\n'), /subtitle_mode=copy/)
   assert.deepEqual(clauses(hdrBlockers(form(ON, { audio_mode: 'mp3' }))),
-    ['audio_mode', 'codec', 'custom_color_primaries', 'custom_color_range',
+    ['audio_mode', 'custom_color_primaries', 'custom_color_range',
      'custom_color_space', 'custom_color_transfer'])
 
   const unsafe = buildHdrExportPreset(form(ON, { extra_args: '-c:v libx265' }))

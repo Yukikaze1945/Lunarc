@@ -14,14 +14,14 @@ LEGACY_STAGES = {'nr': ['nr'], 'dlaa': ['dlaa'], 'vsr': ['vsr'],
 DLAA_PRESETS = (0, 5, 6, 10, 11, 12, 13)
 
 
-def stages(settings):
+def configured_stages(settings):
     value = settings.get('render_pipeline')
     if value is None:
         selected = str(settings.get('neural_mode') or 'nr')
         if selected not in LEGACY_STAGES:
             raise ValueError('Unknown native processing mode: ' + selected)
         value = list(LEGACY_STAGES[selected])
-    if not isinstance(value, (list, tuple)) or (not value and not (settings.get('truehdr_enabled') or settings.get('_truehdr_input_pipeline'))):
+    if not isinstance(value, (list, tuple)) or (not value and not (settings.get('truehdr_enabled') or settings.get('_truehdr_input_pipeline') or settings.get('_pipeline_bypass'))):
         raise ValueError('Render pipeline must contain at least one stage')
     if any(stage not in ('nr', 'dlaa', 'vsr', 'vfg', 'truehdr') for stage in value) or len(set(value)) != len(value):
         raise ValueError('Render pipeline stages must be unique NR, DLAA, VSR, VFG or TrueHDR')
@@ -31,6 +31,36 @@ def stages(settings):
     if settings.get('truehdr_enabled') and 'truehdr' not in ordered:
         ordered.append('truehdr')
     return ordered
+
+
+def stages(settings):
+    ordered = configured_stages(settings)
+    enabled = settings.get('render_stage_enabled', {})
+    if not isinstance(enabled, dict) or any(key not in ('nr','dlaa','vsr','vfg','truehdr') or
+                                            not isinstance(value, bool) for key,value in enabled.items()):
+        raise ValueError('Render stage switches must contain known stages and boolean values')
+    return [stage for stage in ordered if enabled.get(stage, True)]
+
+
+def execution_settings(settings):
+    """Materialize switches for processing without changing saved parameters/order."""
+    if not settings.get('render_stage_enabled'):
+        return dict(settings)
+    active = stages(settings)
+    result = dict(settings, render_pipeline=active, truehdr_enabled='truehdr' in active)
+    result.pop('render_stage_enabled', None)
+    result.pop('frame_generation_saved_mode', None)
+    if not active:
+        result['_pipeline_bypass'] = True
+    if 'vfg' not in active:
+        result['frame_generation'] = 'off'
+    if 'nr' not in active:
+        result.update(working_scale=1, reconstruction_mode='single', layer_scales=[1],
+                      layer_weights=[1], layer_settings=[], multi_pass=1,
+                      post_controls={}, temporal_controls={})
+    if not any(stage in active for stage in ('nr','dlaa')):
+        result['guidance_mode'] = 0
+    return result
 
 
 def nr_as_effect(settings):
@@ -59,6 +89,7 @@ def mode(settings):
 
 
 def validate(settings, source):
+    settings = execution_settings(settings)
     from vfx_framegen import config
     multiplier, _ = config(settings)
     if multiplier != 1:
@@ -102,9 +133,8 @@ def validate(settings, source):
     if not any(s in ordered for s in ('nr', 'dlaa')) and int(settings.get('guidance_mode', 0)):
         raise ValueError('RTX VSR standalone does not consume optical-flow guidance')
     if 'vsr' in ordered:
-        quality = int(settings.get('vsr_quality', 2))
-        if quality not in (1, 2, 3, 4):
-            raise ValueError('RTX VSR quality must be 1–4')
+        from vsr_config import configuration
+        configuration(settings)
         output_size(settings, (source['width'], source['height']))
 
 
@@ -112,6 +142,9 @@ def output_size(settings, size):
     if 'vsr' not in stages(settings):
         return tuple(size)
     import math
+    from vsr_config import configuration
+    if configuration(settings)['same_size']:
+        return tuple(size)
     mode = settings.get('vsr_output_mode', 'resolution')
     choices = {'720p': (1280, 720), '1080p': (1920, 1080),
                '1440p': (2560, 1440), '4k': (3840, 2160), '8k': (7680, 4320)}
@@ -158,6 +191,7 @@ def frame_at_size(frame, size):
 
 
 def make_live(width, height, settings, *, wide=False):
+    settings = execution_settings(settings)
     ordered = stages(settings)
     if nr_as_effect(settings):
         from gpu_transfer_export import multi_scale_config
@@ -171,10 +205,10 @@ def make_live(width, height, settings, *, wide=False):
         except Exception:
             owner.close()
             raise
-    if wide and ordered == ['dlaa']:
-        from dlaa_gpu_engine import Live
-        return Live(width, height, settings, dll_path=settings.get('dlss_dll_path'), is_hdr=True)
     if (settings.get('render_pipeline') is not None or 'vfg' in ordered) and 'nr' not in ordered:
+        # Explicit ordered DLAA runs in OutputEffect, including FP16. The core
+        # only forwards the decoded picture; evaluating its owner here as well
+        # would bind one DLAA host to two independent NVOF contexts in one frame.
         owner = None
         if 'dlaa' in ordered:
             from dlaa_gpu_engine import Live
@@ -318,17 +352,23 @@ class Passthrough:
                     vendor_feature='none; ordered model stages run separately')
 
     def close(self):
-        if self.exchange:
-            self.exchange.close(); self.exchange = None
-        if self.device:
-            if self.owner:
-                self.owner.close(); self.owner = None
-            else:
-                self.lib.gpu_effect_device_close(self.device)
-            self.device = None
-        for provider in self.stage_providers:
-            provider.close_independent_layer()
-        self.stage_providers.clear()
+        from gpu_cleanup import release_owned, finish_cleanup
+        errors = []
+        release_owned(self, 'exchange', errors)
+        if self.owner is not None:
+            self.device = None  # Borrowed from owner, never independently freed.
+            release_owned(self, 'owner', errors)
+        elif self.device:
+            release_owned(self, 'device', errors, self.lib.gpu_effect_device_close)
+        # The DLAA host imports motion memory in each provider's CUDA context.
+        # Keep these contexts alive until that host has released its imports.
+        providers, self.stage_providers = self.stage_providers, []
+        for provider in providers:
+            try:
+                provider.close_independent_layer()
+            except Exception as error:
+                errors.append(('stage_flow', error))
+        finish_cleanup(errors)
 
 
 class OutputEffect:
@@ -341,6 +381,7 @@ class OutputEffect:
         self.input = self.output = self.effect = self.guidance = None
         self.calls, self.resets = 0, []
         self.owns_effect = True
+        self.guidance_deferred = False
         self.wide = getattr(live, 'bytes_per_pixel', 4) == 8 if wide is None else wide
         self.output_hdr = hdr
         self.guide_bridge = None
@@ -352,8 +393,9 @@ class OutputEffect:
             if self.selected == 'nr_dlaa':
                 from dlaa_gpu_engine import Live
                 owner = getattr(self.live, 'owner', None)
-                if owner and getattr(owner, 'native_dlaa', False) and owner.bytes_per_pixel == (8 if self.wide else 4):
-                    self.effect, self.owns_effect = owner, False
+                primary = owner or self.live
+                if getattr(primary, 'native_dlaa', False) and primary.bytes_per_pixel == (8 if self.wide else 4):
+                    self.effect, self.owns_effect = primary, False
                 else:
                     self.effect = Live(*self.source_size, self.settings,
                         dll_path=self.settings.get('dlss_dll_path'), shared_with=owner or self.live, is_hdr=self.wide)
@@ -361,8 +403,10 @@ class OutputEffect:
                     if not callable(getattr(self.flow_provider, 'new_independent_layer', None)):
                         raise ValueError('DLAA guidance requires an independent device-flow history')
                     self.guidance = self.flow_provider.new_independent_layer()
+                    if not self.owns_effect:
+                        self.live.stage_providers.append(self.guidance)
+                        self.guidance_deferred = True
             else:
-                from rtx_vsr_engine import RtxVsr
                 from native_runtime_paths import vsr_runtime
                 runtime = vsr_runtime(self.settings.get('vsr_runtime_path'))
                 self.runtime = runtime
@@ -374,9 +418,13 @@ class OutputEffect:
                     hdr_picture = self.output_hdr or int(getattr(frame, 'color_transfer', 0)) == 16
                     self.input_codec = Codec(frame.cuda_context, self.source_size, runtime, hdr=hdr_picture)
                     self.output_codec = Codec(frame.cuda_context, self.target, runtime, hdr=hdr_picture)
-                self.effect = RtxVsr(bundle_paths.require_native('rtx_vsr_bridge.dll', 'RTX VSR'),
-                    runtime, frame.cuda_context, self.source_size, self.target,
-                    int(self.settings.get('vsr_quality', 2)), packed10=self.wide)
+        if self.selected != 'nr_dlaa' and self.effect is None:
+            from rtx_vsr_engine import RtxVsr
+            from vsr_config import configuration
+            options = configuration(self.settings)
+            self.effect = RtxVsr(bundle_paths.require_native('rtx_vsr_bridge.dll', 'RTX VSR'),
+                self.runtime, frame.cuda_context, self.source_size, self.target,
+                options['sdk_level'], packed10=self.wide, strength=options['strength'])
         color = self.input.color(candidate)
         if self.selected == 'nr_dlaa':
             if self.guidance:
@@ -389,7 +437,7 @@ class OutputEffect:
                         self.guide_bridge = hdr.GpuHdrBridge(d3d12_device=candidate['d3d12_device'],
                             cuda_context=frame.cuda_context, full_width=self.source_size[0], full_height=self.source_size[1],
                             working_width=self.source_size[0], working_height=self.source_size[1],
-                            paper_white_scrgb=float(self.settings.get('hdr_paper_white_scrgb', 8)))
+                            paper_white_scrgb=float(self.settings.get('hdr_paper_white_scrgb', 8)), purpose='guidance')
                     self.guide_bridge.import_master(color)
                     self.guide_bridge.downscale()
                     _, guide = self.guide_bridge.proxy()
@@ -416,8 +464,20 @@ class OutputEffect:
             result['output_hdr'] = True
         return result
 
+    def update_vsr(self, settings):
+        if self.selected == 'nr_dlaa': return False
+        from vsr_config import configuration
+        configuration(settings)
+        if output_size(settings, self.source_size) != self.target: return False
+        effect, self.effect = self.effect, None
+        if effect: effect.close()
+        self.settings = dict(settings)
+        return True
+
     def report(self):
-        return dict(mode=self.selected, input_size=self.source_size, output_size=self.target,
+        from vsr_config import configuration
+        return dict(vsr_options=configuration(self.settings) if self.selected != 'nr_dlaa' else None,
+                    mode=self.selected, input_size=self.source_size, output_size=self.target,
                     stage='dlaa' if self.selected == 'nr_dlaa' else 'vsr',
                     preset_requested=self.settings.get('dlaa_preset', 0) if self.selected == 'nr_dlaa' else None,
                     preset_effective=None,
@@ -431,12 +491,13 @@ class OutputEffect:
                     motion_proxy_counters=self.guide_bridge.transfer_counters() if self.guide_bridge else None,
                     vfx_encoding='rgb10a2' if self.input_codec else None,
                     vfx_colour_counters=self.input_codec.counters() if self.input_codec else None,
-                    limitation=('VSR quality selects SDK processing strength, not a sharpening amount'
+                    limitation=('VSR mode/quality and effect strength are separate SDK parameters'
                         if self.selected != 'nr_dlaa' else
                         'DLAA uses video flow and zero depth/jitter; requested model may be overridden'))
 
     def close(self):
-        for item in (self.effect if self.owns_effect else None, self.guidance, self.guide_bridge,
+        for item in (self.effect if self.owns_effect else None,
+                     self.guidance if not self.guidance_deferred else None, self.guide_bridge,
                      self.output_codec, self.input_codec, self.output, self.input):
             if item:
                 closer = getattr(item, 'close_independent_layer', None) or item.close
@@ -516,6 +577,42 @@ class EffectSeries:
                 item.close()
 
 
+def update_vsr_options(chain, settings):
+    """Replace only VSR effects when their output extent remains unchanged."""
+    owners = [effect for name in ('input_effect', 'output_effect')
+              for effect in getattr(getattr(chain, name, None), 'effects', [])
+              if getattr(effect, 'selected', None) in ('vsr', 'nr_vsr')]
+    from vsr_config import configuration
+    configuration(settings)
+    if any(output_size(settings, owner.source_size) != owner.target for owner in owners):
+        return False
+    for owner in owners:
+        if not owner.update_vsr(settings): return False
+    return True
+
+
+def update_dlaa_model(chain, settings):
+    """Change the DLAA feature while retaining the decoder and other stages."""
+    stages = []
+    for name in ('input_effect', 'output_effect'):
+        series = getattr(chain, name, None)
+        stages.extend(effect for effect in getattr(series, 'effects', [])
+                      if getattr(effect, 'selected', None) == 'nr_dlaa')
+    primary = getattr(chain.live, 'owner', None) or chain.live
+    owners = {id(stage.effect): stage.effect for stage in stages if stage.effect is not None}
+    if getattr(primary, 'native_dlaa', False):
+        owners[id(primary)] = primary
+    if any(not hasattr(owner, 'recreate_preset') or
+           not hasattr(owner._lib, 'dlss_gpu_host_recreate_dlaa') for owner in owners.values()):
+        return False  # Older hosts require a complete rebuild.
+    for owner in owners.values():
+        if not owner.recreate_preset(settings):
+            return False
+    for stage in stages:
+        stage.settings = dict(settings)
+    return True
+
+
 def install(chain, live, settings, source_size, provider):
     ordered = stages(settings)
     truehdr = 'truehdr' in ordered
@@ -561,7 +658,7 @@ def install(chain, live, settings, source_size, provider):
         from post_control import controls_from_settings
         chain.post_control.update_controls(controls_from_settings({}))
         from temporal_control import temporal_from_settings
-        chain.temporal_control.controls = temporal_from_settings({})
+        chain.temporal_control.update_controls(temporal_from_settings({'temporal_controls': {'scene_detection': False}}))
 
 
 def inline_nr_stage(chain):

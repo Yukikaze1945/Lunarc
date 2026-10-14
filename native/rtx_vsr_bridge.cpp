@@ -37,6 +37,8 @@ using CreateEffect = NvCV_Status (__cdecl*)(NvVFX_EffectSelector, NvVFX_Handle*)
 using DestroyEffect = void (__cdecl*)(NvVFX_Handle);
 using SetU32 = NvCV_Status (__cdecl*)(NvVFX_Handle, NvVFX_ParameterSelector, unsigned int);
 using SetF32 = NvCV_Status (__cdecl*)(NvVFX_Handle, NvVFX_ParameterSelector, float);
+using GetU32 = NvCV_Status (__cdecl*)(NvVFX_Handle, NvVFX_ParameterSelector, unsigned int*);
+using GetF32 = NvCV_Status (__cdecl*)(NvVFX_Handle, NvVFX_ParameterSelector, float*);
 using SetImage = NvCV_Status (__cdecl*)(NvVFX_Handle, NvVFX_ParameterSelector, NvCVImage*);
 using SetStream = NvCV_Status (__cdecl*)(NvVFX_Handle, NvVFX_ParameterSelector, CUstream);
 using LoadEffect = NvCV_Status (__cdecl*)(NvVFX_Handle);
@@ -58,6 +60,8 @@ static CreateEffect g_create = nullptr;
 static DestroyEffect g_destroy = nullptr;
 static SetU32 g_set_u32 = nullptr;
 static SetF32 g_set_f32 = nullptr;
+static GetU32 g_get_u32 = nullptr;
+static GetF32 g_get_f32 = nullptr;
 static SetImage g_set_image = nullptr;
 static SetStream g_set_stream = nullptr;
 static LoadEffect g_load = nullptr;
@@ -101,6 +105,7 @@ static void unload_runtime() {
     g_push = nullptr; g_pop = nullptr; g_create = nullptr; g_destroy = nullptr;
     g_set_u32 = nullptr; g_set_f32 = nullptr; g_set_image = nullptr; g_set_stream = nullptr;
     g_load = nullptr; g_run = nullptr; g_image_init = nullptr;
+    g_get_u32 = nullptr; g_get_f32 = nullptr;
 }
 
 static bool load_runtime(const wchar_t* root) {
@@ -148,6 +153,8 @@ static bool load_runtime(const wchar_t* root) {
     BIND(g_effects, "NvVFX_Load", g_load);
     BIND(g_effects, "NvVFX_Run", g_run);
     BIND(g_image, "NvCVImage_Init", g_image_init);
+    if (bind(g_effects, "NvVFX_GetU32", &p)) g_get_u32 = reinterpret_cast<GetU32>(p);
+    if (bind(g_effects, "NvVFX_GetF32", &p)) g_get_f32 = reinterpret_cast<GetF32>(p);
 #undef BIND
     g_runtime_path = base;
     return true;
@@ -165,13 +172,20 @@ static bool load_vsr_feature(const std::wstring& root) {
     fail("NVIDIA VideoSuperRes feature library is missing"); return false;
 }
 
-extern "C" RTX_VSR_API int32_t rtx_vsr_open2(void* context, uint32_t iw, uint32_t ih,
-    uint32_t ow, uint32_t oh, uint32_t quality, uint32_t component_type, const wchar_t* runtime, RtxVsrHandle** out) {
+static bool valid_vsr_level(uint32_t level) {
+    return level <= 4 || (level >= 8 && level <= 19) || level == 21 || level == 23;
+}
+static int32_t vsr_open_impl(void* context, uint32_t iw, uint32_t ih,
+    uint32_t ow, uint32_t oh, uint32_t quality, uint32_t component_type, const wchar_t* runtime, RtxVsrHandle** out, float strength) {
     std::lock_guard<std::mutex> lock(g_mutex);
     if (!out) return fail("out_handle is null"); *out = nullptr;
     if(component_type != NVCV_U8 && component_type != NVCV_F16 && component_type != NVCV_P32) return fail("unsupported VSR component type");
-    if (!context || iw < 64 || ih < 64 || ow < 64 || oh < 64 || iw > 16384 || ih > 16384 || ow > 16384 || oh > 16384 || quality < 1 || quality > 4)
-        return fail("invalid CUDA context, image extent, or VideoSuperRes quality (expected 1..4)");
+    if (!context || iw < 64 || ih < 64 || ow < 64 || oh < 64 || iw > 16384 || ih > 16384 || ow > 16384 || oh > 16384 || !valid_vsr_level(quality))
+        return fail("invalid CUDA context, extent or VideoSuperRes mode (reserved modes are not supported)");
+    if (!std::isfinite(strength) || (strength != -1.0f && (strength < 0 || strength > 1)))
+        return fail("VideoSuperRes Strength must be in 0..1, or -1 for SDK default");
+    if (quality >= 8 && quality <= 15 && (ow != iw || oh != ih))
+        return fail("VideoSuperRes denoise/deblur requires equal input/output dimensions");
     if (ow < iw || oh < ih || ow > iw * 4 || oh > ih * 4)
         return fail("VideoSuperRes output extent must upscale each axis by 1..4x");
     const std::wstring requested_path = normalized_path(runtime);
@@ -189,12 +203,14 @@ extern "C" RTX_VSR_API int32_t rtx_vsr_open2(void* context, uint32_t iw, uint32_
     h->component_type = component_type;
     auto status = g_create("VideoSuperRes", &h->effect);
     if (status == NVCV_SUCCESS) status = g_set_u32(h->effect, "QualityLevel", quality);
+    if (status == NVCV_SUCCESS && strength >= 0)
+        status = g_set_f32(h->effect, "Strength", strength);
     if (status == NVCV_SUCCESS && component_type == NVCV_P32)
         status = g_set_u32(h->effect, "ImageEncodingMode", 1);
     if (status != NVCV_SUCCESS) {
         if (h->effect) g_destroy(h->effect);
         g_pop(&old); delete h;
-        return fail("NvVFX_CreateEffect/QualityLevel failed", static_cast<int>(status));
+        return fail(("VideoSuperRes mode " + std::to_string(quality) + " CreateEffect/QualityLevel/Strength failed").c_str(), static_cast<int>(status));
     }
     g_pop(&old);
     h->counters.input_width = iw; h->counters.input_height = ih;
@@ -202,6 +218,28 @@ extern "C" RTX_VSR_API int32_t rtx_vsr_open2(void* context, uint32_t iw, uint32_
     *out = h; ++g_runtime_users; g_error.clear(); return 0;
 }
 
+extern "C" RTX_VSR_API int32_t rtx_vsr_open3(void* context, uint32_t iw, uint32_t ih,
+    uint32_t ow, uint32_t oh, uint32_t quality, uint32_t component_type,
+    float strength, const wchar_t* runtime, RtxVsrHandle** out) {
+    return vsr_open_impl(context,iw,ih,ow,oh,quality,component_type,runtime,out,strength);
+}
+extern "C" RTX_VSR_API int32_t rtx_vsr_open2(void* context, uint32_t iw, uint32_t ih,
+    uint32_t ow, uint32_t oh, uint32_t quality, uint32_t component_type,
+    const wchar_t* runtime, RtxVsrHandle** out) {
+    return vsr_open_impl(context,iw,ih,ow,oh,quality,component_type,runtime,out,-1.0f);
+}
+// known bit 0: actual SDK mode; bit 1: actual SDK strength. No inferred defaults.
+extern "C" RTX_VSR_API int32_t rtx_vsr_get_configuration(RtxVsrHandle* h,
+    uint32_t* mode, float* strength, uint32_t* known) {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    if (!h || !mode || !strength || !known) return fail("invalid VSR configuration query");
+    *known=0; *mode=0; *strength=0;
+    CUcontext old{};
+    if (g_push(h->context) != CUDA_SUCCESS) return fail("VSR configuration context activation failed");
+    if (g_get_u32 && g_get_u32(h->effect,"QualityLevel",mode)==NVCV_SUCCESS) *known |= 1;
+    if (g_get_f32 && g_get_f32(h->effect,"Strength",strength)==NVCV_SUCCESS && std::isfinite(*strength)) *known |= 2;
+    g_pop(&old); return 0;
+}
 extern "C" RTX_VSR_API int32_t rtx_vsr_open(void* context, uint32_t iw, uint32_t ih,
     uint32_t ow, uint32_t oh, uint32_t quality, const wchar_t* runtime, RtxVsrHandle** out) {
     return rtx_vsr_open2(context,iw,ih,ow,oh,quality,NVCV_U8,runtime,out);
@@ -223,9 +261,14 @@ extern "C" RTX_VSR_API int32_t rtx_vsr_process(RtxVsrHandle* h, uint64_t input, 
     if (status == NVCV_SUCCESS) { stage="NvVFX_SetCudaStream"; status = g_set_stream(h->effect, "CudaStream", static_cast<CUstream>(cuda_stream)); }
     ++h->counters.process_calls;
     if (status == NVCV_SUCCESS && !h->loaded) { stage="NvVFX_Load"; status = g_load(h->effect); h->loaded = status == NVCV_SUCCESS; h->counters.model_loaded = h->loaded ? 1u : 0u; }
+    uint32_t effective_mode=0;
+    if (status == NVCV_SUCCESS && g_get_u32 &&
+        g_get_u32(h->effect,"QualityLevel",&effective_mode)==NVCV_SUCCESS && effective_mode != h->quality) {
+        g_pop(&old); return fail("VideoSuperRes runtime changed the requested mode; no fallback is allowed");
+    }
     if (status == NVCV_SUCCESS) { stage="NvVFX_Run"; status = g_run(h->effect, 0); }
     g_pop(&old);
-    if (status != NVCV_SUCCESS) return fail(stage, static_cast<int>(status));
+    if (status != NVCV_SUCCESS) return fail((std::string("VideoSuperRes mode ") + std::to_string(h->quality) + " " + stage).c_str(), static_cast<int>(status));
     ++h->counters.successful_runs; g_error.clear(); return 0;
 }
 

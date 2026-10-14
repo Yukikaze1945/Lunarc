@@ -30,6 +30,71 @@ def test_legacy_keeps_original_order():
     assert effects.stages(dict(neural_mode='nr_dlaa', render_pipeline=['dlaa','nr'])) == ['dlaa','nr']
 
 
+@pytest.mark.parametrize('wide', [False, True])
+def test_explicit_solo_dlaa_evaluates_only_in_ordered_stage(monkeypatch, wide):
+    import dlaa_gpu_engine
+    opened = []
+    owner = SimpleNamespace(native_dlaa=True, bytes_per_pixel=8 if wide else 4)
+    def open_dlaa(*args, **kwargs):
+        opened.append((args, kwargs))
+        return owner
+    def passthrough(width, height, settings, owner=None, wide=False):
+        return SimpleNamespace(native_passthrough=True, owner=owner,
+                               bytes_per_pixel=8 if wide else 4)
+    monkeypatch.setattr(dlaa_gpu_engine, 'Live', open_dlaa)
+    monkeypatch.setattr(effects, 'Passthrough', passthrough)
+    settings = dict(render_pipeline=['dlaa'], guidance_mode=1)
+    live = effects.make_live(1280, 720, settings, wide=wide)
+    assert live.native_passthrough and live.owner is owner
+    assert len(opened) == 1 and opened[0][1]['is_hdr'] is wide
+    chain = SimpleNamespace(preview_consumer=lambda **kw: None)
+    effects.install(chain, live, settings, (1280, 720), None)
+    assert chain.output_effect.order == ['dlaa']
+    assert not hasattr(chain, 'input_effect')
+
+
+def test_legacy_solo_wide_dlaa_remains_the_core(monkeypatch):
+    import dlaa_gpu_engine
+    owner = SimpleNamespace(native_dlaa=True, bytes_per_pixel=8)
+    monkeypatch.setattr(dlaa_gpu_engine, 'Live', lambda *a, **kw: owner)
+    settings = dict(neural_mode='dlaa', guidance_mode=1)
+    live = effects.make_live(1280, 720, settings, wide=True)
+    chain = SimpleNamespace()
+    effects.install(chain, live, settings, (1280, 720), None)
+    assert live is owner and not hasattr(chain, 'output_effect')
+
+
+def test_borrowed_dlaa_keeps_motion_context_alive_until_host_close(monkeypatch):
+    events = []
+    owner = SimpleNamespace(native_dlaa=True, bytes_per_pixel=4,
+        process_device_color_flow_resource=lambda color, flow, reset:
+            events.append(('evaluate', flow, reset)) or color,
+        close=lambda: events.append('host_close'))
+    live = object.__new__(effects.Passthrough)
+    live.owner, live.device, live.exchange = owner, 123, None
+    live.bytes_per_pixel, live.stage_providers = 4, []
+    guidance = SimpleNamespace(
+        get_flow_device_rgba=lambda *a, **kw: {'cuda_context': 456},
+        close_independent_layer=lambda: events.append('flow_close'))
+    provider = SimpleNamespace(new_independent_layer=lambda: guidance)
+    monkeypatch.setattr(effects, 'Exchange', lambda *a, **kw: SimpleNamespace(
+        color=lambda candidate: candidate, close=lambda: events.append('exchange_close')))
+    stage = effects.OutputEffect(live, {'guidance_mode': 1}, (1280, 720),
+                                 provider, kind='dlaa')
+    frame = SimpleNamespace(cuda_context=999)
+    stage.process({'d3d12_device': 123}, frame, True)
+    stage.process({'d3d12_device': 123}, frame, False)
+    assert live.stage_providers == [guidance]
+    assert events == [('evaluate', {'cuda_context': 456}, True),
+                      ('evaluate', {'cuda_context': 456}, False)]
+    stage.close()
+    assert events[-1] == 'exchange_close'
+    assert 'flow_close' not in events and 'host_close' not in events
+    live.close()
+    live.close()
+    assert events[-2:] == ['host_close', 'flow_close']
+
+
 @pytest.mark.parametrize('order', [['dlaa'], ['dlaa', 'nr'], ['nr', 'dlaa']])
 @pytest.mark.parametrize('transfer', ['bt709', 'smpte2084'])
 def test_wide_dlaa_admission_preserves_source_domain(order, transfer):

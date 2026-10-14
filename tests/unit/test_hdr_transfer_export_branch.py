@@ -47,6 +47,15 @@ import hdr_fusion_engine as hfe          # noqa: E402
 import hdr_gpu_engine as hdr             # noqa: E402
 import pipeline                          # noqa: E402
 
+
+@pytest.fixture(autouse=True)
+def scene_observation_uses_no_real_device_in_cpu_contract_tests(monkeypatch):
+    # These owners carry synthetic device pointers. Native scene detection has
+    # its own real-GPU gate; the routing suite must never dereference a stub.
+    from temporal_control import GpuTemporalControl
+    monkeypatch.setattr(GpuTemporalControl, 'observe', lambda self, **kwargs:
+        {'scene_cut': False, 'classification': 'test_not_measured'})
+
 # The one source this chain was built for: the accepted HDR10 fixture's own ffprobe
 # answer, at the working scale the final gate runs - 50% of 1920x1080 is 960x544,
 # resolved by the shared rule rather than by a scale list of the HDR chain's own.
@@ -993,6 +1002,22 @@ def test_the_encoder_request_is_the_installed_entrys_own_declaration():
     assert struct["codec"] == b"hevc_nvenc" and struct["profile"] == b"main10"
     assert not any(name in htx.LOCKED_HDR_AV_OPTIONS
                    for name, _ in plan["av_options"])
+
+
+@pytest.mark.parametrize("probe,expected", [(False, "hq"), (True, "uhq"),
+                                            (None, "uhq")])
+def test_the_gate_forwards_the_tune_probe_the_encoder_request_is_judged_by(probe,
+                                                                           expected):
+    """The plan holds the downgrade rule, the caller holds the probe, the gate connects them.
+
+    The entry forwards tune verbatim, so a uhq the installed libavcodec does not list
+    is an EINVAL that refuses the open after the decode and the reconstruction have
+    already run - and nobody answering for the codec must not become a refusal either.
+    """
+    plan = _negotiate(transcode=dict(NO_MUX, tune="uhq"),
+                      **({} if probe is None else
+                         {"tune_available": lambda codec: probe}))["plan"]
+    assert plan["struct"]["tune"] == expected.encode()
 
 
 @pytest.mark.parametrize("transcode,fragment", [
@@ -2455,10 +2480,9 @@ def test_a_close_that_raises_still_removes_the_intermediate(stubbed, tmp_path, r
     with pytest.raises(RuntimeError, match="would not release"):
         _rich_run(tmp_path, remux, bridges={"nvenc": nvenc})
     _assert_intermediate_written_and_gone(nvenc, reserved_in_tmp_path)
-    # The reverse-owner order is not traded away for the cleanup: the encoder is the
-    # first thing released, and the run does not swallow the reason it failed to
-    # release it - what comes after that failure is the chain's own, unchanged, business.
-    assert TEARDOWN == ["encoder"], TEARDOWN
+    # Preserve the first failure while attempting every later owner in order;
+    # an encoder cleanup error must not leak the model and decoder context.
+    assert TEARDOWN == ["encoder", "colour bridge", "feature18", "context", "decoder"], TEARDOWN
     assert nvenc.symbols == ["nvenc_hdr_open"] + ["nvenc_encode_p010"] * 6 + \
         ["nvenc_finish", "nvenc_close"], nvenc.symbols
 

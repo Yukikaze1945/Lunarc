@@ -1,0 +1,2016 @@
+{
+  "bridge_binary": {
+    "abi_version": 3,
+    "bgr_entry_point_exported": true,
+    "export_count": 13,
+    "path": "native/nvof_bridge.dll",
+    "pe_tool": "E:\\Visual Studio\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\dumpbin.exe",
+    "pe_tool_version": "Microsoft (R) COFF/PE Dumper Version 14.44.35228.0",
+    "sha256": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80"
+  },
+  "checks_passed": 56,
+  "checks_total": 56,
+  "code_under_test": "740c78a0f96b3927bd3fc1c27efa3fc93d5c51ee",
+  "commit_subject": "test(transfer): gate the performance verdict on the question \u640244 asks",
+  "cpu_nvof_input_conversion": "ELIMINATED_PROVEN",
+  "errors": [],
+  "flow_preset": "4M",
+  "frames_per_sequence": 6,
+  "generated_at_utc": "2026-09-20T10:00:29Z",
+  "generated_by": "tests/unit/collect_nvof_bgr_parity.py",
+  "git_branch": "main",
+  "meaning": "the BGR input path and the RGBA input path returned the same flow field bit for bit on every frame, and the byte figures came from the bridge's own counters; the flow download is unchanged in size and in direction",
+  "measurement_source": "nvof_bridge_get_counters, read either side of each frame",
+  "nvof_flow_d2h": "BLOCKED_PROVEN",
+  "nvof_h2d_payload": "REDUCED_PROVEN",
+  "nvof_probe": {
+    "available": true,
+    "bgr_input": true,
+    "device": "NVIDIA GeForce RTX 5060 Ti",
+    "driver_version": 13040,
+    "error": null,
+    "hardware": true,
+    "max_api_version": "0x50",
+    "max_dims": [
+      8192,
+      8192
+    ],
+    "min_dims": [
+      32,
+      32
+    ],
+    "supported_grids": [
+      1,
+      2,
+      4
+    ]
+  },
+  "sequences": [
+    {
+      "bytes_saved_per_steady_frame": 2073600,
+      "checks": [
+        {
+          "actual": true,
+          "expected": true,
+          "ok": true,
+          "what": "flow_bit_exact_every_frame"
+        },
+        {
+          "actual": [
+            "bgr24_host"
+          ],
+          "expected": [
+            "bgr24_host"
+          ],
+          "ok": true,
+          "what": "bgr_path_input_format"
+        },
+        {
+          "actual": [
+            "rgba8_host"
+          ],
+          "expected": [
+            "rgba8_host"
+          ],
+          "ok": true,
+          "what": "legacy_path_input_format"
+        },
+        {
+          "actual": 6220800,
+          "expected": 6220800,
+          "ok": true,
+          "what": "bgr_steady_h2d_bytes"
+        },
+        {
+          "actual": 1,
+          "expected": 1,
+          "ok": true,
+          "what": "bgr_steady_h2d_copy_count"
+        },
+        {
+          "actual": 8294400,
+          "expected": 8294400,
+          "ok": true,
+          "what": "legacy_steady_h2d_bytes"
+        },
+        {
+          "actual": 12441600,
+          "expected": 12441600,
+          "ok": true,
+          "what": "bgr_reset_h2d_bytes"
+        },
+        {
+          "actual": 16588800,
+          "expected": 16588800,
+          "ok": true,
+          "what": "bgr_d2h_bytes_every_frame"
+        },
+        {
+          "actual": 0,
+          "expected": 0,
+          "ok": true,
+          "what": "bgr_staging_allocations_after_session_start"
+        },
+        {
+          "actual": 1,
+          "expected": 1,
+          "ok": true,
+          "what": "bgr_input_calls_per_frame"
+        },
+        {
+          "actual": 1,
+          "expected": 1,
+          "ok": true,
+          "what": "input_convert_launches_per_frame"
+        },
+        {
+          "actual": 0,
+          "expected": 0,
+          "ok": true,
+          "what": "cpu_conversions_at_nvof_input_bgr_path"
+        },
+        {
+          "actual": true,
+          "expected": true,
+          "ok": true,
+          "what": "cpu_conversions_at_nvof_input_legacy_path_gt_0"
+        },
+        {
+          "actual": true,
+          "expected": true,
+          "ok": true,
+          "what": "sequence_has_motion"
+        }
+      ],
+      "expected_payload_bytes": {
+        "bgr_upload": 6220800,
+        "flow_download": 16588800,
+        "rgba_upload": 8294400
+      },
+      "frames": 6,
+      "height": 1080,
+      "label": "synthetic",
+      "per_frame": [
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 12441600,
+              "nvof_h2d_copy_count_delta": 2,
+              "nvof_input_convert_launch_count_delta": 2,
+              "reset_count_delta": 1
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 0.0625,
+            "flow_mean_abs_px": 8e-06,
+            "flow_sha256": "ae789f53d0a7188f100b1390c29a910c006b4ad633e4c614f7384facb7f1db60",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 0,
+            "nvof_input_convert_wait_ms": 0.38820000000000005,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": true
+          },
+          "bit_exact": true,
+          "frame": 0,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 16588800,
+              "nvof_h2d_copy_count_delta": 2,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 1
+            },
+            "cur_bgr_to_rgba_ms": 0.9112000116147101,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 0.0625,
+            "flow_mean_abs_px": 8e-06,
+            "flow_sha256": "ae789f53d0a7188f100b1390c29a910c006b4ad633e4c614f7384facb7f1db60",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 0,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": true
+          },
+          "reset": true
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 6220800,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.100167,
+            "flow_sha256": "cc7be2d5c6346d5558e1cd7ace791fc16e0122f70bea3e4518dd85bbd7373e7a",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 1,
+            "nvof_input_convert_wait_ms": 0.2283,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 1,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 8294400,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.8757000323385,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.100167,
+            "flow_sha256": "cc7be2d5c6346d5558e1cd7ace791fc16e0122f70bea3e4518dd85bbd7373e7a",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 1,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 6220800,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.082547,
+            "flow_sha256": "036970330102ec0016436b5c0451f820404c2700b03bdd97045bd0ea2b011e65",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 2,
+            "nvof_input_convert_wait_ms": 0.2189,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 2,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 8294400,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.8379999781027436,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.082547,
+            "flow_sha256": "036970330102ec0016436b5c0451f820404c2700b03bdd97045bd0ea2b011e65",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 2,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 6220800,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.086874,
+            "flow_sha256": "1637dc472d3f1f694b9b88319d12f6aa8522fcd2b734cf58e5cb0f5da68f8cd1",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 3,
+            "nvof_input_convert_wait_ms": 0.221,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 3,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 8294400,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.8144000312313437,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.086874,
+            "flow_sha256": "1637dc472d3f1f694b9b88319d12f6aa8522fcd2b734cf58e5cb0f5da68f8cd1",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 3,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 6220800,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.094966,
+            "flow_sha256": "5d3fed45d1310f4c02bc2350682c1003cf3aa22d510a21068d13189262fdc096",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 4,
+            "nvof_input_convert_wait_ms": 0.21450000000000002,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 4,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 8294400,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.7730999495834112,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.094966,
+            "flow_sha256": "5d3fed45d1310f4c02bc2350682c1003cf3aa22d510a21068d13189262fdc096",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 4,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 6220800,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.098797,
+            "flow_sha256": "fbef538206a83262a68a2fc551a5a700c218f5e39efab30f307bcf7d22a9d9c0",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 5,
+            "nvof_input_convert_wait_ms": 0.2311,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 5,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 8294400,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.8135999669320881,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.098797,
+            "flow_sha256": "fbef538206a83262a68a2fc551a5a700c218f5e39efab30f307bcf7d22a9d9c0",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 5,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        }
+      ],
+      "seam_conversion_calls": {
+        "bgr_path": {
+          "cpu_bgr_to_rgba@dlss_input_calls": 0,
+          "cpu_bgr_to_rgba@nvof_input_calls": 0,
+          "cpu_bgr_to_rgba_calls": 0,
+          "cpu_rgba_to_bgr@residual_input_calls": 0,
+          "cpu_rgba_to_bgr_calls": 0
+        },
+        "legacy_path": {
+          "cpu_bgr_to_rgba@dlss_input_calls": 0,
+          "cpu_bgr_to_rgba@nvof_input_calls": 6,
+          "cpu_bgr_to_rgba_calls": 6,
+          "cpu_rgba_to_bgr@residual_input_calls": 0,
+          "cpu_rgba_to_bgr_calls": 0
+        }
+      },
+      "width": 1920
+    },
+    {
+      "bytes_saved_per_steady_frame": 2073600,
+      "checks": [
+        {
+          "actual": true,
+          "expected": true,
+          "ok": true,
+          "what": "flow_bit_exact_every_frame"
+        },
+        {
+          "actual": [
+            "bgr24_host"
+          ],
+          "expected": [
+            "bgr24_host"
+          ],
+          "ok": true,
+          "what": "bgr_path_input_format"
+        },
+        {
+          "actual": [
+            "rgba8_host"
+          ],
+          "expected": [
+            "rgba8_host"
+          ],
+          "ok": true,
+          "what": "legacy_path_input_format"
+        },
+        {
+          "actual": 6220800,
+          "expected": 6220800,
+          "ok": true,
+          "what": "bgr_steady_h2d_bytes"
+        },
+        {
+          "actual": 1,
+          "expected": 1,
+          "ok": true,
+          "what": "bgr_steady_h2d_copy_count"
+        },
+        {
+          "actual": 8294400,
+          "expected": 8294400,
+          "ok": true,
+          "what": "legacy_steady_h2d_bytes"
+        },
+        {
+          "actual": 12441600,
+          "expected": 12441600,
+          "ok": true,
+          "what": "bgr_reset_h2d_bytes"
+        },
+        {
+          "actual": 16588800,
+          "expected": 16588800,
+          "ok": true,
+          "what": "bgr_d2h_bytes_every_frame"
+        },
+        {
+          "actual": 0,
+          "expected": 0,
+          "ok": true,
+          "what": "bgr_staging_allocations_after_session_start"
+        },
+        {
+          "actual": 1,
+          "expected": 1,
+          "ok": true,
+          "what": "bgr_input_calls_per_frame"
+        },
+        {
+          "actual": 1,
+          "expected": 1,
+          "ok": true,
+          "what": "input_convert_launches_per_frame"
+        },
+        {
+          "actual": 0,
+          "expected": 0,
+          "ok": true,
+          "what": "cpu_conversions_at_nvof_input_bgr_path"
+        },
+        {
+          "actual": true,
+          "expected": true,
+          "ok": true,
+          "what": "cpu_conversions_at_nvof_input_legacy_path_gt_0"
+        },
+        {
+          "actual": true,
+          "expected": true,
+          "ok": true,
+          "what": "sequence_has_motion"
+        }
+      ],
+      "expected_payload_bytes": {
+        "bgr_upload": 6220800,
+        "flow_download": 16588800,
+        "rgba_upload": 8294400
+      },
+      "frames": 6,
+      "height": 1080,
+      "label": "fixture",
+      "per_frame": [
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 12441600,
+              "nvof_h2d_copy_count_delta": 2,
+              "nvof_input_convert_launch_count_delta": 2,
+              "reset_count_delta": 1
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 0.28125,
+            "flow_mean_abs_px": 0.032232,
+            "flow_sha256": "2eacc08d2f6578c6e7ed86184b44c9944230b52f9a5993b697ffd8976f8af291",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 0,
+            "nvof_input_convert_wait_ms": 0.2857,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": true
+          },
+          "bit_exact": true,
+          "frame": 0,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 16588800,
+              "nvof_h2d_copy_count_delta": 2,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 1
+            },
+            "cur_bgr_to_rgba_ms": 0.8828999707475305,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 0.28125,
+            "flow_mean_abs_px": 0.032232,
+            "flow_sha256": "2eacc08d2f6578c6e7ed86184b44c9944230b52f9a5993b697ffd8976f8af291",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 0,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": true
+          },
+          "reset": true
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 6220800,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 11.65625,
+            "flow_mean_abs_px": 3.10764,
+            "flow_sha256": "d2af5c9011e0980e2e732405c6110636dc8e65b3bc0e5b175794426ba39dc42f",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 1,
+            "nvof_input_convert_wait_ms": 0.2336,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 1,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 8294400,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.7748000207357109,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 11.65625,
+            "flow_mean_abs_px": 3.10764,
+            "flow_sha256": "d2af5c9011e0980e2e732405c6110636dc8e65b3bc0e5b175794426ba39dc42f",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 1,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 6220800,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 15.75,
+            "flow_mean_abs_px": 2.232157,
+            "flow_sha256": "136064d81ae781ee07e5f0f9e815fc426368b2a3a741258f703c63bc3029bc2c",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 2,
+            "nvof_input_convert_wait_ms": 0.231,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 2,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 8294400,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.7828000234439969,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 15.75,
+            "flow_mean_abs_px": 2.232157,
+            "flow_sha256": "136064d81ae781ee07e5f0f9e815fc426368b2a3a741258f703c63bc3029bc2c",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 2,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 6220800,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 21.59375,
+            "flow_mean_abs_px": 2.126053,
+            "flow_sha256": "3632414597edf03e685c6f25f33ad122603eeb18e0447fad03315504f64d59c1",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 3,
+            "nvof_input_convert_wait_ms": 0.2177,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 3,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 8294400,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.8563000010326505,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 21.59375,
+            "flow_mean_abs_px": 2.126053,
+            "flow_sha256": "3632414597edf03e685c6f25f33ad122603eeb18e0447fad03315504f64d59c1",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 3,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 6220800,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 29.0,
+            "flow_mean_abs_px": 4.15077,
+            "flow_sha256": "9ee5e1300f379b40264f7f8cfd64fbc658fa6c67397d78c74dfcbf6eb6e16fa4",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 4,
+            "nvof_input_convert_wait_ms": 0.2126,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 4,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 8294400,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.8208999643102288,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 29.0,
+            "flow_mean_abs_px": 4.15077,
+            "flow_sha256": "9ee5e1300f379b40264f7f8cfd64fbc658fa6c67397d78c74dfcbf6eb6e16fa4",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 4,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 6220800,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 56.0,
+            "flow_mean_abs_px": 7.187718,
+            "flow_sha256": "d9f6db0f8e2ede5c75dcb8171f32d5bb2336943ac3ad9e0c7d59361d016de847",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 5,
+            "nvof_input_convert_wait_ms": 0.22240000000000001,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 5,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 16588800,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 8294400,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.7936999900266528,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 56.0,
+            "flow_mean_abs_px": 7.187718,
+            "flow_sha256": "d9f6db0f8e2ede5c75dcb8171f32d5bb2336943ac3ad9e0c7d59361d016de847",
+            "flow_shape": [
+              1080,
+              1920,
+              2
+            ],
+            "frame": 5,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        }
+      ],
+      "seam_conversion_calls": {
+        "bgr_path": {
+          "cpu_bgr_to_rgba@dlss_input_calls": 0,
+          "cpu_bgr_to_rgba@nvof_input_calls": 0,
+          "cpu_bgr_to_rgba_calls": 0,
+          "cpu_rgba_to_bgr@residual_input_calls": 0,
+          "cpu_rgba_to_bgr_calls": 0
+        },
+        "legacy_path": {
+          "cpu_bgr_to_rgba@dlss_input_calls": 0,
+          "cpu_bgr_to_rgba@nvof_input_calls": 6,
+          "cpu_bgr_to_rgba_calls": 6,
+          "cpu_rgba_to_bgr@residual_input_calls": 0,
+          "cpu_rgba_to_bgr_calls": 0
+        }
+      },
+      "width": 1920
+    },
+    {
+      "bytes_saved_per_steady_frame": 230400,
+      "checks": [
+        {
+          "actual": true,
+          "expected": true,
+          "ok": true,
+          "what": "flow_bit_exact_every_frame"
+        },
+        {
+          "actual": [
+            "bgr24_host"
+          ],
+          "expected": [
+            "bgr24_host"
+          ],
+          "ok": true,
+          "what": "bgr_path_input_format"
+        },
+        {
+          "actual": [
+            "rgba8_host"
+          ],
+          "expected": [
+            "rgba8_host"
+          ],
+          "ok": true,
+          "what": "legacy_path_input_format"
+        },
+        {
+          "actual": 691200,
+          "expected": 691200,
+          "ok": true,
+          "what": "bgr_steady_h2d_bytes"
+        },
+        {
+          "actual": 1,
+          "expected": 1,
+          "ok": true,
+          "what": "bgr_steady_h2d_copy_count"
+        },
+        {
+          "actual": 921600,
+          "expected": 921600,
+          "ok": true,
+          "what": "legacy_steady_h2d_bytes"
+        },
+        {
+          "actual": 1382400,
+          "expected": 1382400,
+          "ok": true,
+          "what": "bgr_reset_h2d_bytes"
+        },
+        {
+          "actual": 1843200,
+          "expected": 1843200,
+          "ok": true,
+          "what": "bgr_d2h_bytes_every_frame"
+        },
+        {
+          "actual": 0,
+          "expected": 0,
+          "ok": true,
+          "what": "bgr_staging_allocations_after_session_start"
+        },
+        {
+          "actual": 1,
+          "expected": 1,
+          "ok": true,
+          "what": "bgr_input_calls_per_frame"
+        },
+        {
+          "actual": 1,
+          "expected": 1,
+          "ok": true,
+          "what": "input_convert_launches_per_frame"
+        },
+        {
+          "actual": 0,
+          "expected": 0,
+          "ok": true,
+          "what": "cpu_conversions_at_nvof_input_bgr_path"
+        },
+        {
+          "actual": true,
+          "expected": true,
+          "ok": true,
+          "what": "cpu_conversions_at_nvof_input_legacy_path_gt_0"
+        },
+        {
+          "actual": true,
+          "expected": true,
+          "ok": true,
+          "what": "sequence_has_motion"
+        }
+      ],
+      "expected_payload_bytes": {
+        "bgr_upload": 691200,
+        "flow_download": 1843200,
+        "rgba_upload": 921600
+      },
+      "frames": 6,
+      "height": 360,
+      "label": "synthetic",
+      "per_frame": [
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 1382400,
+              "nvof_h2d_copy_count_delta": 2,
+              "nvof_input_convert_launch_count_delta": 2,
+              "reset_count_delta": 1
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 0.03125,
+            "flow_mean_abs_px": 2.2e-05,
+            "flow_sha256": "f4f9e3856434e3b43bf020d1cbc496ac306f163a74c1d1d3f9e955c6cb7eb5dc",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 0,
+            "nvof_input_convert_wait_ms": 0.1749,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": true
+          },
+          "bit_exact": true,
+          "frame": 0,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 1843200,
+              "nvof_h2d_copy_count_delta": 2,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 1
+            },
+            "cur_bgr_to_rgba_ms": 0.21549995290115476,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 0.03125,
+            "flow_mean_abs_px": 2.2e-05,
+            "flow_sha256": "f4f9e3856434e3b43bf020d1cbc496ac306f163a74c1d1d3f9e955c6cb7eb5dc",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 0,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": true
+          },
+          "reset": true
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 691200,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.233065,
+            "flow_sha256": "5df54ad0fc633d5553e49a2736b1ab23f3d0749e2e0b3acbb5d89ae0b460e937",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 1,
+            "nvof_input_convert_wait_ms": 0.1831,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 1,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 921600,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.16409996896982193,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.233065,
+            "flow_sha256": "5df54ad0fc633d5553e49a2736b1ab23f3d0749e2e0b3acbb5d89ae0b460e937",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 1,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 691200,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.193205,
+            "flow_sha256": "c3542423bf7ab5644df2627e8fca8a6b411a276c628d7da8479a6efb347cebb2",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 2,
+            "nvof_input_convert_wait_ms": 0.2109,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 2,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 921600,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.07599999662488699,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.193205,
+            "flow_sha256": "c3542423bf7ab5644df2627e8fca8a6b411a276c628d7da8479a6efb347cebb2",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 2,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 691200,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.217461,
+            "flow_sha256": "fde70797effa065ba029bace31bc05aa468fcd0f9f2a02380b203c3b6c2eb60b",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 3,
+            "nvof_input_convert_wait_ms": 0.1078,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 3,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 921600,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.08540000999346375,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.217461,
+            "flow_sha256": "fde70797effa065ba029bace31bc05aa468fcd0f9f2a02380b203c3b6c2eb60b",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 3,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 691200,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.268356,
+            "flow_sha256": "d0773407a93096e283f10c7fe5246cbd0de363348df31a65dde3f444d09ac959",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 4,
+            "nvof_input_convert_wait_ms": 0.1178,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 4,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 921600,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.07810001261532307,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.268356,
+            "flow_sha256": "d0773407a93096e283f10c7fe5246cbd0de363348df31a65dde3f444d09ac959",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 4,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 691200,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.258667,
+            "flow_sha256": "935b09c363adde73151beff6d3dd75f7858a8e9489e428236f2328b5115df3fd",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 5,
+            "nvof_input_convert_wait_ms": 0.1126,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 5,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 921600,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0901000457815826,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 37.0,
+            "flow_mean_abs_px": 2.258667,
+            "flow_sha256": "935b09c363adde73151beff6d3dd75f7858a8e9489e428236f2328b5115df3fd",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 5,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        }
+      ],
+      "seam_conversion_calls": {
+        "bgr_path": {
+          "cpu_bgr_to_rgba@dlss_input_calls": 0,
+          "cpu_bgr_to_rgba@nvof_input_calls": 0,
+          "cpu_bgr_to_rgba_calls": 0,
+          "cpu_rgba_to_bgr@residual_input_calls": 0,
+          "cpu_rgba_to_bgr_calls": 0
+        },
+        "legacy_path": {
+          "cpu_bgr_to_rgba@dlss_input_calls": 0,
+          "cpu_bgr_to_rgba@nvof_input_calls": 6,
+          "cpu_bgr_to_rgba_calls": 6,
+          "cpu_rgba_to_bgr@residual_input_calls": 0,
+          "cpu_rgba_to_bgr_calls": 0
+        }
+      },
+      "width": 640
+    },
+    {
+      "bytes_saved_per_steady_frame": 230400,
+      "checks": [
+        {
+          "actual": true,
+          "expected": true,
+          "ok": true,
+          "what": "flow_bit_exact_every_frame"
+        },
+        {
+          "actual": [
+            "bgr24_host"
+          ],
+          "expected": [
+            "bgr24_host"
+          ],
+          "ok": true,
+          "what": "bgr_path_input_format"
+        },
+        {
+          "actual": [
+            "rgba8_host"
+          ],
+          "expected": [
+            "rgba8_host"
+          ],
+          "ok": true,
+          "what": "legacy_path_input_format"
+        },
+        {
+          "actual": 691200,
+          "expected": 691200,
+          "ok": true,
+          "what": "bgr_steady_h2d_bytes"
+        },
+        {
+          "actual": 1,
+          "expected": 1,
+          "ok": true,
+          "what": "bgr_steady_h2d_copy_count"
+        },
+        {
+          "actual": 921600,
+          "expected": 921600,
+          "ok": true,
+          "what": "legacy_steady_h2d_bytes"
+        },
+        {
+          "actual": 1382400,
+          "expected": 1382400,
+          "ok": true,
+          "what": "bgr_reset_h2d_bytes"
+        },
+        {
+          "actual": 1843200,
+          "expected": 1843200,
+          "ok": true,
+          "what": "bgr_d2h_bytes_every_frame"
+        },
+        {
+          "actual": 0,
+          "expected": 0,
+          "ok": true,
+          "what": "bgr_staging_allocations_after_session_start"
+        },
+        {
+          "actual": 1,
+          "expected": 1,
+          "ok": true,
+          "what": "bgr_input_calls_per_frame"
+        },
+        {
+          "actual": 1,
+          "expected": 1,
+          "ok": true,
+          "what": "input_convert_launches_per_frame"
+        },
+        {
+          "actual": 0,
+          "expected": 0,
+          "ok": true,
+          "what": "cpu_conversions_at_nvof_input_bgr_path"
+        },
+        {
+          "actual": true,
+          "expected": true,
+          "ok": true,
+          "what": "cpu_conversions_at_nvof_input_legacy_path_gt_0"
+        },
+        {
+          "actual": true,
+          "expected": true,
+          "ok": true,
+          "what": "sequence_has_motion"
+        }
+      ],
+      "expected_payload_bytes": {
+        "bgr_upload": 691200,
+        "flow_download": 1843200,
+        "rgba_upload": 921600
+      },
+      "frames": 6,
+      "height": 360,
+      "label": "fixture",
+      "per_frame": [
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 1382400,
+              "nvof_h2d_copy_count_delta": 2,
+              "nvof_input_convert_launch_count_delta": 2,
+              "reset_count_delta": 1
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 0.28125,
+            "flow_mean_abs_px": 0.031592,
+            "flow_sha256": "a42035ee256a5568914bc9d75f2e74a372d28455e6c5ee77481bfa9815d819ca",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 0,
+            "nvof_input_convert_wait_ms": 0.1774,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": true
+          },
+          "bit_exact": true,
+          "frame": 0,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 1843200,
+              "nvof_h2d_copy_count_delta": 2,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 1
+            },
+            "cur_bgr_to_rgba_ms": 0.17260003369301558,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 0.28125,
+            "flow_mean_abs_px": 0.031592,
+            "flow_sha256": "a42035ee256a5568914bc9d75f2e74a372d28455e6c5ee77481bfa9815d819ca",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 0,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": true
+          },
+          "reset": true
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 691200,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 5.0,
+            "flow_mean_abs_px": 1.124815,
+            "flow_sha256": "1770f66f05f4a8000b651708b840f8a2bf15116e3bd4b2065576fb4cf214bd96",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 1,
+            "nvof_input_convert_wait_ms": 0.1203,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 1,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 921600,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.06220000796020031,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 5.0,
+            "flow_mean_abs_px": 1.124815,
+            "flow_sha256": "1770f66f05f4a8000b651708b840f8a2bf15116e3bd4b2065576fb4cf214bd96",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 1,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 691200,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 5.0,
+            "flow_mean_abs_px": 1.057289,
+            "flow_sha256": "0c573b6a3e51cabf48644ba9d3a7f3eab4be9ea947d9736d70d08396488930b4",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 2,
+            "nvof_input_convert_wait_ms": 0.1023,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 2,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 921600,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.06750004831701517,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 5.0,
+            "flow_mean_abs_px": 1.057289,
+            "flow_sha256": "0c573b6a3e51cabf48644ba9d3a7f3eab4be9ea947d9736d70d08396488930b4",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 2,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 691200,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 3.0625,
+            "flow_mean_abs_px": 1.058311,
+            "flow_sha256": "9218b344cd8db890f4c8014e9b3f34832827a42629e53025b7b15f775f600c58",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 3,
+            "nvof_input_convert_wait_ms": 0.11460000000000001,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 3,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 921600,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.08120003622025251,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 3.0625,
+            "flow_mean_abs_px": 1.058311,
+            "flow_sha256": "9218b344cd8db890f4c8014e9b3f34832827a42629e53025b7b15f775f600c58",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 3,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 691200,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 3.46875,
+            "flow_mean_abs_px": 0.793653,
+            "flow_sha256": "9ea11a90ffc39164f0d7d69c4995b12634cb8a3b4b56bef322a2223471157343",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 4,
+            "nvof_input_convert_wait_ms": 0.4052,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 4,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 921600,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.06900000153109431,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 3.46875,
+            "flow_mean_abs_px": 0.793653,
+            "flow_sha256": "9ea11a90ffc39164f0d7d69c4995b12634cb8a3b4b56bef322a2223471157343",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 4,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        },
+        {
+          "bgr": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 1,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 691200,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 1,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.0,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 3.09375,
+            "flow_mean_abs_px": 0.825602,
+            "flow_sha256": "20abbc47f92bcb217dc4d20cade6486a3d3a3e2ab7e3e62626e4734ca711b32e",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 5,
+            "nvof_input_convert_wait_ms": 0.1206,
+            "nvof_input_format": "bgr24_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "bit_exact": true,
+          "frame": 5,
+          "legacy": {
+            "counters": {
+              "nvof_bgr_input_call_count_delta": 0,
+              "nvof_bgr_staging_alloc_count_delta": 0,
+              "nvof_d2h_bytes_delta": 1843200,
+              "nvof_d2h_copy_count_delta": 1,
+              "nvof_execute_count_delta": 1,
+              "nvof_h2d_bytes_delta": 921600,
+              "nvof_h2d_copy_count_delta": 1,
+              "nvof_input_convert_launch_count_delta": 0,
+              "reset_count_delta": 0
+            },
+            "cur_bgr_to_rgba_ms": 0.05570001667365432,
+            "flow_dtype": "float32",
+            "flow_max_abs_px": 3.09375,
+            "flow_mean_abs_px": 0.825602,
+            "flow_sha256": "20abbc47f92bcb217dc4d20cade6486a3d3a3e2ab7e3e62626e4734ca711b32e",
+            "flow_shape": [
+              360,
+              640,
+              2
+            ],
+            "frame": 5,
+            "nvof_input_convert_wait_ms": "unavailable",
+            "nvof_input_format": "rgba8_host",
+            "prev_bgr_to_rgba_ms": 0.0,
+            "reset": false
+          },
+          "reset": false
+        }
+      ],
+      "seam_conversion_calls": {
+        "bgr_path": {
+          "cpu_bgr_to_rgba@dlss_input_calls": 0,
+          "cpu_bgr_to_rgba@nvof_input_calls": 0,
+          "cpu_bgr_to_rgba_calls": 0,
+          "cpu_rgba_to_bgr@residual_input_calls": 0,
+          "cpu_rgba_to_bgr_calls": 0
+        },
+        "legacy_path": {
+          "cpu_bgr_to_rgba@dlss_input_calls": 0,
+          "cpu_bgr_to_rgba@nvof_input_calls": 6,
+          "cpu_bgr_to_rgba_calls": 6,
+          "cpu_rgba_to_bgr@residual_input_calls": 0,
+          "cpu_rgba_to_bgr_calls": 0
+        }
+      },
+      "width": 640
+    }
+  ],
+  "status": "DONE_PROVEN",
+  "untracked_paths": [
+    "perf_results/740c78a/"
+  ],
+  "working_tree_dirty": false,
+  "working_tree_paths": []
+}

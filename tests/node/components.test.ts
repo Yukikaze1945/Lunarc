@@ -34,6 +34,19 @@ test('missing base is independent of optional RAFT and unknown IDs are refused',
     assert(!fs.existsSync(path.join(f.root,'data/raft-ready.json')))
   }finally{f.close()}
 })
+
+test('CLI-only FFmpeg cannot satisfy native video processing component',()=>{
+  const f=fixture();try{
+    const data=path.join(f.root,'data')
+    const tools=path.join(f.m.runtime(),'tools');fs.mkdirSync(tools,{recursive:true})
+    const identity='cba748035c21ce1431d0823c7a3a711f38616f89f87a265dceddf9b7f6749d2d'
+    fs.writeFileSync(path.join(data,'ffmpeg-ready.json'),JSON.stringify({identity}))
+    for(const n of ['ffmpeg.exe','ffprobe.exe'])fs.writeFileSync(path.join(tools,n),'fixture')
+    f.m.refresh();assert(!f.m.state.components.find(c=>c.id==='ffmpeg')!.installed)
+    for(const n of ['avcodec-62.dll','avformat-62.dll','avfilter-11.dll','avutil-60.dll','swresample-6.dll','swscale-9.dll'])fs.writeFileSync(path.join(tools,n),'fixture')
+    f.m.refresh();assert(f.m.state.components.find(c=>c.id==='ffmpeg')!.installed)
+  }finally{f.close()}
+})
 test('corrupt install tool never executes and failed install remains retryable',async()=>{
   const f=fixture();try{
     fs.mkdirSync(path.join(f.resources,'component-tools'))

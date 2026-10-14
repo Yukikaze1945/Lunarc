@@ -1,0 +1,10 @@
+{
+  "platform": "Windows-10-10.0.26220-SP0",
+  "python_version": "3.10.18",
+  "processor": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+  "torch_version": "2.10.0+cu128",
+  "cuda_available": true,
+  "cuda_version": "12.8",
+  "gpu_name": "NVIDIA GeForce RTX 5060 Ti",
+  "gpu_count": 1
+}

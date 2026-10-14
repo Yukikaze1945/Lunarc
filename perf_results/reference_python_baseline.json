@@ -1,0 +1,194 @@
+{
+  "kind": "residual_backend_microbenchmark",
+  "environment": {
+    "utc_timestamp": "2026-09-19T06:15:54Z",
+    "platform": "win32",
+    "os": null,
+    "cpu": "2102",
+    "cpu_count": 16,
+    "python": "3.11.15",
+    "numpy": "2.4.6",
+    "opencv": "5.0.0",
+    "ffmpeg": "8.1.2-full_build-www.gyan.dev",
+    "gpu": "NVIDIA GeForce RTX 5060 Ti, 616.92",
+    "rss_bytes": 47550464,
+    "peak_rss_bytes": 677670912,
+    "vram_bytes": 3526361088
+  },
+  "config": {
+    "backends": [
+      "python"
+    ],
+    "scales": [
+      0.75,
+      0.63,
+      0.5,
+      0.25
+    ],
+    "warmup": 3,
+    "iterations": 10,
+    "source": [
+      3840,
+      2160
+    ]
+  },
+  "results": [
+    {
+      "requested_backend": "python",
+      "actual_backend": "cpu_reference_python",
+      "backend_version": "axisplan-1",
+      "working_scale": 0.75,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        2880,
+        1616
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 825.105,
+        "p50_ms": 824.712,
+        "p95_ms": 841.96,
+        "min_ms": 808.022,
+        "max_ms": 841.96
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 827.46,
+        "p50_ms": 830.616,
+        "p95_ms": 855.694,
+        "min_ms": 804.528,
+        "max_ms": 855.694
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 229847040,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "python",
+      "actual_backend": "cpu_reference_python",
+      "backend_version": "axisplan-1",
+      "working_scale": 0.63,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        2416,
+        1360
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 725.802,
+        "p50_ms": 725.881,
+        "p95_ms": 748.189,
+        "min_ms": 706.957,
+        "max_ms": 748.189
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 738.031,
+        "p50_ms": 730.805,
+        "p95_ms": 783.448,
+        "min_ms": 721.613,
+        "max_ms": 783.448
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 201630720,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "python",
+      "actual_backend": "cpu_reference_python",
+      "backend_version": "axisplan-1",
+      "working_scale": 0.5,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        1920,
+        1080
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 577.872,
+        "p50_ms": 577.959,
+        "p95_ms": 600.867,
+        "min_ms": 555.589,
+        "max_ms": 600.867
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 656.278,
+        "p50_ms": 655.17,
+        "p95_ms": 675.423,
+        "min_ms": 635.217,
+        "max_ms": 675.423
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 174182400,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    },
+    {
+      "requested_backend": "python",
+      "actual_backend": "cpu_reference_python",
+      "backend_version": "axisplan-1",
+      "working_scale": 0.25,
+      "source": [
+        3840,
+        2160
+      ],
+      "working": [
+        960,
+        544
+      ],
+      "working_color": {
+        "iterations": 10,
+        "mean_ms": 414.519,
+        "p50_ms": 411.875,
+        "p95_ms": 435.412,
+        "min_ms": 395.003,
+        "max_ms": 435.412
+      },
+      "reconstruct": {
+        "iterations": 10,
+        "mean_ms": 484.599,
+        "p50_ms": 480.059,
+        "p95_ms": 513.698,
+        "min_ms": 470.624,
+        "max_ms": 513.698
+      },
+      "backend_diagnostics": {
+        "residual_backend": "cpu_reference_python",
+        "residual_backend_version": "axisplan-1",
+        "downsample_call_count": 13,
+        "reconstruct_call_count": 13,
+        "python_scratch_bytes": 130867200,
+        "axis_plan_builds": 4,
+        "closed": false
+      }
+    }
+  ],
+  "speedup_native_vs_python": {}
+}

@@ -1,0 +1,4181 @@
+{
+  "codecs_seen": [
+    null
+  ],
+  "executions": {
+    "execution_01_ffprobe_output.json": {
+      "expected": {
+        "fps": 60.0,
+        "frames": 60,
+        "height": 2160,
+        "width": 3840
+      },
+      "runs": {
+        "legacy": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e1r1-legacy.mkv",
+              "sha256": "ee876f0e557951654e94b27beef202d237e63e087ec3c10a307ed3066aee9728"
+            },
+            "position_in_pair": 1,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e1r2-legacy.mkv",
+              "sha256": "c252432b88e641ece46f0b257a23608465b9e7b50419f697bb4f33d02bb51bb1"
+            },
+            "position_in_pair": 1,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e1r3-legacy.mkv",
+              "sha256": "0274ff3100577544cf8659b957518756dd902a8ae1a3c7fbe7f0dfce808e8d6c"
+            },
+            "position_in_pair": 2,
+            "run": 3
+          }
+        ],
+        "reduced": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e1r1-reduced.mkv",
+              "sha256": "b27234433ead2c97348289bb1c99df2e23f4aa8970ca539d452645ede14a79bf"
+            },
+            "position_in_pair": 2,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e1r2-reduced.mkv",
+              "sha256": "9813f29e1df2f8c6afa763fa91b9b94540640503cdb4afed6e5fcfa0865b999e"
+            },
+            "position_in_pair": 2,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e1r3-reduced.mkv",
+              "sha256": "93cdcf2d74a16a7f2b7a4c41eacc1393a143d3eb62662ab04ff9b553cbf54a74"
+            },
+            "position_in_pair": 1,
+            "run": 3
+          }
+        ]
+      },
+      "status": "NOT_READY"
+    },
+    "execution_02_ffprobe_output.json": {
+      "expected": {
+        "fps": 60.0,
+        "frames": 60,
+        "height": 2160,
+        "width": 3840
+      },
+      "runs": {
+        "legacy": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e2r1-legacy.mkv",
+              "sha256": "f8b9582e6b437ff10f3e3c6a4b346a6a9f9b99fc23cd99e185b93283c102d86a"
+            },
+            "position_in_pair": 2,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e2r2-legacy.mkv",
+              "sha256": "f5535ce807b78d877c42a6f2ea4d7bf3c072d6592fcbf1571dcc7cdb86a593af"
+            },
+            "position_in_pair": 2,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e2r3-legacy.mkv",
+              "sha256": "bb2b56f65ae6522e8029deff3eb8a967b5cfc58f243425be267c96d39c2591e0"
+            },
+            "position_in_pair": 1,
+            "run": 3
+          }
+        ],
+        "reduced": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e2r1-reduced.mkv",
+              "sha256": "e27f3cf2ec34f17c022ef48742a11eaf69a830ff76aa34f956948877cc19df3a"
+            },
+            "position_in_pair": 1,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e2r2-reduced.mkv",
+              "sha256": "72c95f8f6cbd756346055683dbd9adf4bdd4d1128e3379e5103bc2c5f0f59af5"
+            },
+            "position_in_pair": 1,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e2r3-reduced.mkv",
+              "sha256": "cc8fb9b89104730b1eccf925e060d4e277a61c6594e02d900056c354996365f2"
+            },
+            "position_in_pair": 2,
+            "run": 3
+          }
+        ]
+      },
+      "status": "DONE_PROVEN"
+    },
+    "execution_03_ffprobe_output.json": {
+      "expected": {
+        "fps": 60.0,
+        "frames": 60,
+        "height": 2160,
+        "width": 3840
+      },
+      "runs": {
+        "legacy": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e3r1-legacy.mkv",
+              "sha256": "e4e84c13fcb9928864ef77fd27e1b09d3e5fb7f18f8e2b8476330cbd3ee6a991"
+            },
+            "position_in_pair": 1,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e3r2-legacy.mkv",
+              "sha256": "04cfacd80be9fedc2bf1a2b7d7cf0018ca2d105da2bab3bede9a811fe09b05d4"
+            },
+            "position_in_pair": 1,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e3r3-legacy.mkv",
+              "sha256": "73832fef5b9ba945df13702ef17cf6fc32d669426647b0cd85c9988f7a2ed4dc"
+            },
+            "position_in_pair": 2,
+            "run": 3
+          }
+        ],
+        "reduced": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e3r1-reduced.mkv",
+              "sha256": "8e0617d93b93a07e43283819ffe4735402865618186437dc1ca0140dbbd1df23"
+            },
+            "position_in_pair": 2,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e3r2-reduced.mkv",
+              "sha256": "9c724adb4685d042f2122a56b8f89cfd261ff1ab6fb5227472622cba176bdc74"
+            },
+            "position_in_pair": 2,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e3r3-reduced.mkv",
+              "sha256": "e9f0e17e125083c783be99418de6c09072e85ad8c02232acc305c6c2386abb15"
+            },
+            "position_in_pair": 1,
+            "run": 3
+          }
+        ]
+      },
+      "status": "DONE_PROVEN"
+    },
+    "execution_04_ffprobe_output.json": {
+      "expected": {
+        "fps": 60.0,
+        "frames": 60,
+        "height": 2160,
+        "width": 3840
+      },
+      "runs": {
+        "legacy": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e4r1-legacy.mkv",
+              "sha256": "5b61543a595effa81a35575227ad325b55a9765c8f0d1548ee168de49445dd5f"
+            },
+            "position_in_pair": 2,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e4r2-legacy.mkv",
+              "sha256": "19426012f9d28ec909062e9a558bb577ad33120668546ad870445e85911d297e"
+            },
+            "position_in_pair": 2,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e4r3-legacy.mkv",
+              "sha256": "09c80607b40dcd80cb65033389ca97cc0849bb060065ea7c1b4a8e732c3a3e35"
+            },
+            "position_in_pair": 1,
+            "run": 3
+          }
+        ],
+        "reduced": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e4r1-reduced.mkv",
+              "sha256": "10cbf977fa9a6c7ff8d7f5a9a328912e01d35d7b71e4a09e8d07c2361fe10e4e"
+            },
+            "position_in_pair": 1,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e4r2-reduced.mkv",
+              "sha256": "add623978080f8086a917781bc63311a39b1fceed4e090e91517aaad373f04df"
+            },
+            "position_in_pair": 1,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e4r3-reduced.mkv",
+              "sha256": "710cfdd57932774830fd8d15e603e5106ab587c9d8b23dcf0e534c71bfb490a3"
+            },
+            "position_in_pair": 2,
+            "run": 3
+          }
+        ]
+      },
+      "status": "NOT_READY"
+    },
+    "execution_05_ffprobe_output.json": {
+      "expected": {
+        "fps": 60.0,
+        "frames": 60,
+        "height": 2160,
+        "width": 3840
+      },
+      "runs": {
+        "legacy": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e5r1-legacy.mkv",
+              "sha256": "2a1e4ca8a0f773133d4e6384cebfa0052b3f92f955cde8007963c978530be816"
+            },
+            "position_in_pair": 1,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e5r2-legacy.mkv",
+              "sha256": "4e63e69ba52f0222ae37ea96a4acf257f05529dbb2a1360657b84271fccc943a"
+            },
+            "position_in_pair": 1,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e5r3-legacy.mkv",
+              "sha256": "4586b09bad5962eb01ffc92ef5e8e89e51e04a904063a34cf900b680f2849331"
+            },
+            "position_in_pair": 2,
+            "run": 3
+          }
+        ],
+        "reduced": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e5r1-reduced.mkv",
+              "sha256": "81cfe05ff5bbf2d897afd9e05f078ed825a3dd5891bff23599d58316692a555e"
+            },
+            "position_in_pair": 2,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e5r2-reduced.mkv",
+              "sha256": "74eee0c44a00ae4fc31c03588d9e58971db166aee065094c973474842e3d70b6"
+            },
+            "position_in_pair": 2,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e5r3-reduced.mkv",
+              "sha256": "d1d4f196e4a5d91c5bb6426e9be3e97800645d1aef7945f10125f46eed2c97d9"
+            },
+            "position_in_pair": 1,
+            "run": 3
+          }
+        ]
+      },
+      "status": "NOT_READY"
+    },
+    "execution_06_ffprobe_output.json": {
+      "expected": {
+        "fps": 60.0,
+        "frames": 60,
+        "height": 2160,
+        "width": 3840
+      },
+      "runs": {
+        "legacy": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e6r1-legacy.mkv",
+              "sha256": "ab559ce9002ad2c8bce8b43835c5a407dd4beca02bf5e720e7a092052ad28ff3"
+            },
+            "position_in_pair": 2,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e6r2-legacy.mkv",
+              "sha256": "53af93a7a043fe2037282d11e2b5bed0286827ef5cd60b5d6bac22f2a3cf6b9d"
+            },
+            "position_in_pair": 2,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e6r3-legacy.mkv",
+              "sha256": "4e65be7e26681ef27e34a305d23b63c40f17afc374208648cbe8359e650c77ce"
+            },
+            "position_in_pair": 1,
+            "run": 3
+          }
+        ],
+        "reduced": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e6r1-reduced.mkv",
+              "sha256": "2be291875f1cf1cd173478a54e39887f83ee7eb461b014df4a16caa9f1e3e611"
+            },
+            "position_in_pair": 1,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e6r2-reduced.mkv",
+              "sha256": "a433f018a77223a77f8cd82468d1af59e30a469535d9e3f6a47a8ad48a4f33a5"
+            },
+            "position_in_pair": 1,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e6r3-reduced.mkv",
+              "sha256": "07b13dfdd569a66c9d92085ccdc6e07be3b1568c3aaf34da0832a4f3abb2c5cd"
+            },
+            "position_in_pair": 2,
+            "run": 3
+          }
+        ]
+      },
+      "status": "NOT_READY"
+    },
+    "execution_07_ffprobe_output.json": {
+      "expected": {
+        "fps": 60.0,
+        "frames": 60,
+        "height": 2160,
+        "width": 3840
+      },
+      "runs": {
+        "legacy": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e7r1-legacy.mkv",
+              "sha256": "58daf4f2cc04d36325e1a122e2be98afe57268ad3e346bd18f4bcbd030c75b47"
+            },
+            "position_in_pair": 1,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e7r2-legacy.mkv",
+              "sha256": "2404a5a915001ed957f116bbe5624c6d7bf5aaef298f3c8f9760a4b5f924a37e"
+            },
+            "position_in_pair": 1,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e7r3-legacy.mkv",
+              "sha256": "3cd76a91b31e3003830d4d95c7ea3fa51f104b331a94634bc90b2b6f60ffd16f"
+            },
+            "position_in_pair": 2,
+            "run": 3
+          }
+        ],
+        "reduced": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e7r1-reduced.mkv",
+              "sha256": "97ec44a19f446c3f277b7979e8ec07a31019ad3f8febcb1fe013e56f15f9cd8d"
+            },
+            "position_in_pair": 2,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e7r2-reduced.mkv",
+              "sha256": "79d0fadd9cdeee12c189f50e5ad03bba023123690e79153ff3d7dba702aae1b7"
+            },
+            "position_in_pair": 2,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e7r3-reduced.mkv",
+              "sha256": "70fec7465a0324824e2dce60efcf7ef6d31300389e55b5fdd42d4e63a54f4f28"
+            },
+            "position_in_pair": 1,
+            "run": 3
+          }
+        ]
+      },
+      "status": "DONE_PROVEN"
+    },
+    "execution_08_ffprobe_output.json": {
+      "expected": {
+        "fps": 60.0,
+        "frames": 60,
+        "height": 2160,
+        "width": 3840
+      },
+      "runs": {
+        "legacy": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e8r1-legacy.mkv",
+              "sha256": "f635a8a4f5cff1055fec8fa3d9d79a1da201e807301ac310e058175a8cc2f699"
+            },
+            "position_in_pair": 2,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e8r2-legacy.mkv",
+              "sha256": "ce973546412cb774de885e8c7216641bb1b4c70e2ff58971f29493d2f9ee84ed"
+            },
+            "position_in_pair": 2,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e8r3-legacy.mkv",
+              "sha256": "fb3ca63fea12848444c9c18e1a448dc3145fcc488a818cec801008dc7fcee220"
+            },
+            "position_in_pair": 1,
+            "run": 3
+          }
+        ],
+        "reduced": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e8r1-reduced.mkv",
+              "sha256": "5cbb453e5975588bebcbb84a82dbb94bf1670b43c538a5155f4ddd6cb1efd090"
+            },
+            "position_in_pair": 1,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e8r2-reduced.mkv",
+              "sha256": "a92ce4fe335401364996299110d91ab5e606efc7188fbd4fb2db99f7a36850e4"
+            },
+            "position_in_pair": 1,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e8r3-reduced.mkv",
+              "sha256": "2a7841b8c317edca328c1aeef6d91011fb1dcc76337d153f9006002603111ad8"
+            },
+            "position_in_pair": 2,
+            "run": 3
+          }
+        ]
+      },
+      "status": "DONE_PROVEN"
+    },
+    "execution_09_ffprobe_output.json": {
+      "expected": {
+        "fps": 60.0,
+        "frames": 60,
+        "height": 2160,
+        "width": 3840
+      },
+      "runs": {
+        "legacy": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e9r1-legacy.mkv",
+              "sha256": "2861ced80825b578727f0d22ce5777f17c99060955dffc32abe05f0a70316f09"
+            },
+            "position_in_pair": 1,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e9r2-legacy.mkv",
+              "sha256": "a983e33057850938ba198021f5e2168b7832737da118190e1dacc16d17845a08"
+            },
+            "position_in_pair": 1,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e9r3-legacy.mkv",
+              "sha256": "70363c3c91a3fca8c0e4ba28c74128f355e2f416152a4af60d057530cab78589"
+            },
+            "position_in_pair": 2,
+            "run": 3
+          }
+        ],
+        "reduced": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e9r1-reduced.mkv",
+              "sha256": "93f85053d08d88e5bc62c86fa4aaa8b4b1a853363692b81d7c5d812ee08ce7af"
+            },
+            "position_in_pair": 2,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e9r2-reduced.mkv",
+              "sha256": "be333b550bcddaabeba71585be1f0dc7f1fdba4284b3cebaf09c00693d91647d"
+            },
+            "position_in_pair": 2,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e9r3-reduced.mkv",
+              "sha256": "d68cf09f1b2a0b73464b70252cf6f842a85aa60a49c437c2025eef2792d21fea"
+            },
+            "position_in_pair": 1,
+            "run": 3
+          }
+        ]
+      },
+      "status": "DONE_PROVEN"
+    },
+    "execution_10_ffprobe_output.json": {
+      "expected": {
+        "fps": 60.0,
+        "frames": 60,
+        "height": 2160,
+        "width": 3840
+      },
+      "runs": {
+        "legacy": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e10r1-legacy.mkv",
+              "sha256": "563765d57ab5cac3a7848b3eb5e61787f5fe9fa3b6ca4a32121e57e61899b949"
+            },
+            "position_in_pair": 2,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e10r2-legacy.mkv",
+              "sha256": "bc84e23f8e85e492bd0e0d4fb2a2584e7b2be3f644271bea4caf4edc90a90b6d"
+            },
+            "position_in_pair": 2,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e10r3-legacy.mkv",
+              "sha256": "0ed786ec37bbc22a27649b414883045117edb5841b0c48bb9f09015db33b63f1"
+            },
+            "position_in_pair": 1,
+            "run": 3
+          }
+        ],
+        "reduced": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e10r1-reduced.mkv",
+              "sha256": "b4ba34c23614e5e4afabf43572def92452f7bc90bddb93b902455d63f3da1504"
+            },
+            "position_in_pair": 1,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e10r2-reduced.mkv",
+              "sha256": "283bd0ebb42968d069bb4dd77b972e092be84200bb327daed29e25e67a352949"
+            },
+            "position_in_pair": 1,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e10r3-reduced.mkv",
+              "sha256": "6b671fbbf5adffb225279699f5b89e9cf2e125ede7b65a3d6dfe7adc79427d5c"
+            },
+            "position_in_pair": 2,
+            "run": 3
+          }
+        ]
+      },
+      "status": "DONE_PROVEN"
+    },
+    "execution_11_ffprobe_output.json": {
+      "expected": {
+        "fps": 60.0,
+        "frames": 60,
+        "height": 2160,
+        "width": 3840
+      },
+      "runs": {
+        "legacy": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e11r1-legacy.mkv",
+              "sha256": "c8797b278432883fba4807cc075784a7237cad11d1c9a875b10dce795b472b1b"
+            },
+            "position_in_pair": 1,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e11r2-legacy.mkv",
+              "sha256": "d3efb1c87b93213908206d4b97a9b17a702b8dca79736e511d25ccaafc670aef"
+            },
+            "position_in_pair": 1,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e11r3-legacy.mkv",
+              "sha256": "ac30eb6da823c4b8a190dd3fd10021fa8c928ce285188f5438be54d8920cf904"
+            },
+            "position_in_pair": 2,
+            "run": 3
+          }
+        ],
+        "reduced": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e11r1-reduced.mkv",
+              "sha256": "7b60d01781d51b44e180c0b00b0e1f3c54778d657331a2d6c04b500739f3f2f7"
+            },
+            "position_in_pair": 2,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e11r2-reduced.mkv",
+              "sha256": "dddd7fdf5cdc00054e67214c8c34e12c354f190668015c526a963760a284bed3"
+            },
+            "position_in_pair": 2,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e11r3-reduced.mkv",
+              "sha256": "fed07d1ffd943cd28bc017b9b46f1094f3a1c932b7b79fe38b4db05552d0c5b3"
+            },
+            "position_in_pair": 1,
+            "run": 3
+          }
+        ]
+      },
+      "status": "DONE_PROVEN"
+    },
+    "execution_12_ffprobe_output.json": {
+      "expected": {
+        "fps": 60.0,
+        "frames": 60,
+        "height": 2160,
+        "width": 3840
+      },
+      "runs": {
+        "legacy": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e12r1-legacy.mkv",
+              "sha256": "25e37d80df34c40385e401ae7eb4da2a3fb741ab7a624d80ae094ba5e239a365"
+            },
+            "position_in_pair": 2,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e12r2-legacy.mkv",
+              "sha256": "e0fe5666241be0443d402c0777afb3a228318d769512f483c507b88dd4617e69"
+            },
+            "position_in_pair": 2,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_legacy_50_ab-e12r3-legacy.mkv",
+              "sha256": "52fb27abec26ffa7bede3f4169daa15430920320f29f231591594241b5033049"
+            },
+            "position_in_pair": 1,
+            "run": 3
+          }
+        ],
+        "reduced": [
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": false,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e12r1-reduced.mkv",
+              "sha256": "a9048ec95403224ee27dfeef004962ad6799442c8a4c92be9c28c44b9d54c8f3"
+            },
+            "position_in_pair": 1,
+            "run": 1
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e12r2-reduced.mkv",
+              "sha256": "f7899ebb61d9da73e3353720ce062f14b646f600e6badf3600c3956261f0f16a"
+            },
+            "position_in_pair": 1,
+            "run": 2
+          },
+          {
+            "ffprobe": {
+              "checks": {
+                "duration_within_1pct": true,
+                "fps_matches_source": true,
+                "packets": true,
+                "resolution": true
+              },
+              "codec": "av1",
+              "duration_sec": 1.0,
+              "expected_frames": 60,
+              "fps": 60.0,
+              "height": 2160,
+              "ok": true,
+              "packets": 60,
+              "width": 3840
+            },
+            "kept": true,
+            "output": {
+              "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+              "bytes": 16577619,
+              "path": "ledger_reduced_50_ab-e12r3-reduced.mkv",
+              "sha256": "26e4b319dba7fbdc3fdc3eba421677afc59df894f595d1b8686c6b0604876587"
+            },
+            "position_in_pair": 2,
+            "run": 3
+          }
+        ]
+      },
+      "status": "DONE_PROVEN"
+    }
+  },
+  "expected": {
+    "fps": 60.0,
+    "frames": 60,
+    "height": 2160,
+    "width": 3840
+  },
+  "generated_by": "tests/unit/collect_transfer_status.py",
+  "merged_from": [
+    "execution_01_ffprobe_output.json",
+    "execution_02_ffprobe_output.json",
+    "execution_03_ffprobe_output.json",
+    "execution_04_ffprobe_output.json",
+    "execution_05_ffprobe_output.json",
+    "execution_06_ffprobe_output.json",
+    "execution_07_ffprobe_output.json",
+    "execution_08_ffprobe_output.json",
+    "execution_09_ffprobe_output.json",
+    "execution_10_ffprobe_output.json",
+    "execution_11_ffprobe_output.json",
+    "execution_12_ffprobe_output.json"
+  ],
+  "note": "ffprobe read each file independently of the pipeline; a run with no reading here is a file that was written and could not be parsed, which the integrity gate treats as a failure rather than as an absent row",
+  "runs": {
+    "legacy": [
+      {
+        "execution": "execution_01_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e1r1-legacy.mkv",
+          "sha256": "ee876f0e557951654e94b27beef202d237e63e087ec3c10a307ed3066aee9728"
+        },
+        "position_in_pair": 1,
+        "run": 1
+      },
+      {
+        "execution": "execution_01_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e1r2-legacy.mkv",
+          "sha256": "c252432b88e641ece46f0b257a23608465b9e7b50419f697bb4f33d02bb51bb1"
+        },
+        "position_in_pair": 1,
+        "run": 2
+      },
+      {
+        "execution": "execution_01_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e1r3-legacy.mkv",
+          "sha256": "0274ff3100577544cf8659b957518756dd902a8ae1a3c7fbe7f0dfce808e8d6c"
+        },
+        "position_in_pair": 2,
+        "run": 3
+      },
+      {
+        "execution": "execution_02_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e2r1-legacy.mkv",
+          "sha256": "f8b9582e6b437ff10f3e3c6a4b346a6a9f9b99fc23cd99e185b93283c102d86a"
+        },
+        "position_in_pair": 2,
+        "run": 1
+      },
+      {
+        "execution": "execution_02_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e2r2-legacy.mkv",
+          "sha256": "f5535ce807b78d877c42a6f2ea4d7bf3c072d6592fcbf1571dcc7cdb86a593af"
+        },
+        "position_in_pair": 2,
+        "run": 2
+      },
+      {
+        "execution": "execution_02_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e2r3-legacy.mkv",
+          "sha256": "bb2b56f65ae6522e8029deff3eb8a967b5cfc58f243425be267c96d39c2591e0"
+        },
+        "position_in_pair": 1,
+        "run": 3
+      },
+      {
+        "execution": "execution_03_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e3r1-legacy.mkv",
+          "sha256": "e4e84c13fcb9928864ef77fd27e1b09d3e5fb7f18f8e2b8476330cbd3ee6a991"
+        },
+        "position_in_pair": 1,
+        "run": 1
+      },
+      {
+        "execution": "execution_03_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e3r2-legacy.mkv",
+          "sha256": "04cfacd80be9fedc2bf1a2b7d7cf0018ca2d105da2bab3bede9a811fe09b05d4"
+        },
+        "position_in_pair": 1,
+        "run": 2
+      },
+      {
+        "execution": "execution_03_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e3r3-legacy.mkv",
+          "sha256": "73832fef5b9ba945df13702ef17cf6fc32d669426647b0cd85c9988f7a2ed4dc"
+        },
+        "position_in_pair": 2,
+        "run": 3
+      },
+      {
+        "execution": "execution_04_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e4r1-legacy.mkv",
+          "sha256": "5b61543a595effa81a35575227ad325b55a9765c8f0d1548ee168de49445dd5f"
+        },
+        "position_in_pair": 2,
+        "run": 1
+      },
+      {
+        "execution": "execution_04_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e4r2-legacy.mkv",
+          "sha256": "19426012f9d28ec909062e9a558bb577ad33120668546ad870445e85911d297e"
+        },
+        "position_in_pair": 2,
+        "run": 2
+      },
+      {
+        "execution": "execution_04_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e4r3-legacy.mkv",
+          "sha256": "09c80607b40dcd80cb65033389ca97cc0849bb060065ea7c1b4a8e732c3a3e35"
+        },
+        "position_in_pair": 1,
+        "run": 3
+      },
+      {
+        "execution": "execution_05_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e5r1-legacy.mkv",
+          "sha256": "2a1e4ca8a0f773133d4e6384cebfa0052b3f92f955cde8007963c978530be816"
+        },
+        "position_in_pair": 1,
+        "run": 1
+      },
+      {
+        "execution": "execution_05_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e5r2-legacy.mkv",
+          "sha256": "4e63e69ba52f0222ae37ea96a4acf257f05529dbb2a1360657b84271fccc943a"
+        },
+        "position_in_pair": 1,
+        "run": 2
+      },
+      {
+        "execution": "execution_05_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e5r3-legacy.mkv",
+          "sha256": "4586b09bad5962eb01ffc92ef5e8e89e51e04a904063a34cf900b680f2849331"
+        },
+        "position_in_pair": 2,
+        "run": 3
+      },
+      {
+        "execution": "execution_06_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e6r1-legacy.mkv",
+          "sha256": "ab559ce9002ad2c8bce8b43835c5a407dd4beca02bf5e720e7a092052ad28ff3"
+        },
+        "position_in_pair": 2,
+        "run": 1
+      },
+      {
+        "execution": "execution_06_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e6r2-legacy.mkv",
+          "sha256": "53af93a7a043fe2037282d11e2b5bed0286827ef5cd60b5d6bac22f2a3cf6b9d"
+        },
+        "position_in_pair": 2,
+        "run": 2
+      },
+      {
+        "execution": "execution_06_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e6r3-legacy.mkv",
+          "sha256": "4e65be7e26681ef27e34a305d23b63c40f17afc374208648cbe8359e650c77ce"
+        },
+        "position_in_pair": 1,
+        "run": 3
+      },
+      {
+        "execution": "execution_07_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e7r1-legacy.mkv",
+          "sha256": "58daf4f2cc04d36325e1a122e2be98afe57268ad3e346bd18f4bcbd030c75b47"
+        },
+        "position_in_pair": 1,
+        "run": 1
+      },
+      {
+        "execution": "execution_07_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e7r2-legacy.mkv",
+          "sha256": "2404a5a915001ed957f116bbe5624c6d7bf5aaef298f3c8f9760a4b5f924a37e"
+        },
+        "position_in_pair": 1,
+        "run": 2
+      },
+      {
+        "execution": "execution_07_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e7r3-legacy.mkv",
+          "sha256": "3cd76a91b31e3003830d4d95c7ea3fa51f104b331a94634bc90b2b6f60ffd16f"
+        },
+        "position_in_pair": 2,
+        "run": 3
+      },
+      {
+        "execution": "execution_08_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e8r1-legacy.mkv",
+          "sha256": "f635a8a4f5cff1055fec8fa3d9d79a1da201e807301ac310e058175a8cc2f699"
+        },
+        "position_in_pair": 2,
+        "run": 1
+      },
+      {
+        "execution": "execution_08_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e8r2-legacy.mkv",
+          "sha256": "ce973546412cb774de885e8c7216641bb1b4c70e2ff58971f29493d2f9ee84ed"
+        },
+        "position_in_pair": 2,
+        "run": 2
+      },
+      {
+        "execution": "execution_08_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e8r3-legacy.mkv",
+          "sha256": "fb3ca63fea12848444c9c18e1a448dc3145fcc488a818cec801008dc7fcee220"
+        },
+        "position_in_pair": 1,
+        "run": 3
+      },
+      {
+        "execution": "execution_09_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e9r1-legacy.mkv",
+          "sha256": "2861ced80825b578727f0d22ce5777f17c99060955dffc32abe05f0a70316f09"
+        },
+        "position_in_pair": 1,
+        "run": 1
+      },
+      {
+        "execution": "execution_09_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e9r2-legacy.mkv",
+          "sha256": "a983e33057850938ba198021f5e2168b7832737da118190e1dacc16d17845a08"
+        },
+        "position_in_pair": 1,
+        "run": 2
+      },
+      {
+        "execution": "execution_09_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e9r3-legacy.mkv",
+          "sha256": "70363c3c91a3fca8c0e4ba28c74128f355e2f416152a4af60d057530cab78589"
+        },
+        "position_in_pair": 2,
+        "run": 3
+      },
+      {
+        "execution": "execution_10_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e10r1-legacy.mkv",
+          "sha256": "563765d57ab5cac3a7848b3eb5e61787f5fe9fa3b6ca4a32121e57e61899b949"
+        },
+        "position_in_pair": 2,
+        "run": 1
+      },
+      {
+        "execution": "execution_10_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e10r2-legacy.mkv",
+          "sha256": "bc84e23f8e85e492bd0e0d4fb2a2584e7b2be3f644271bea4caf4edc90a90b6d"
+        },
+        "position_in_pair": 2,
+        "run": 2
+      },
+      {
+        "execution": "execution_10_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e10r3-legacy.mkv",
+          "sha256": "0ed786ec37bbc22a27649b414883045117edb5841b0c48bb9f09015db33b63f1"
+        },
+        "position_in_pair": 1,
+        "run": 3
+      },
+      {
+        "execution": "execution_11_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e11r1-legacy.mkv",
+          "sha256": "c8797b278432883fba4807cc075784a7237cad11d1c9a875b10dce795b472b1b"
+        },
+        "position_in_pair": 1,
+        "run": 1
+      },
+      {
+        "execution": "execution_11_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e11r2-legacy.mkv",
+          "sha256": "d3efb1c87b93213908206d4b97a9b17a702b8dca79736e511d25ccaafc670aef"
+        },
+        "position_in_pair": 1,
+        "run": 2
+      },
+      {
+        "execution": "execution_11_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e11r3-legacy.mkv",
+          "sha256": "ac30eb6da823c4b8a190dd3fd10021fa8c928ce285188f5438be54d8920cf904"
+        },
+        "position_in_pair": 2,
+        "run": 3
+      },
+      {
+        "execution": "execution_12_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e12r1-legacy.mkv",
+          "sha256": "25e37d80df34c40385e401ae7eb4da2a3fb741ab7a624d80ae094ba5e239a365"
+        },
+        "position_in_pair": 2,
+        "run": 1
+      },
+      {
+        "execution": "execution_12_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e12r2-legacy.mkv",
+          "sha256": "e0fe5666241be0443d402c0777afb3a228318d769512f483c507b88dd4617e69"
+        },
+        "position_in_pair": 2,
+        "run": 2
+      },
+      {
+        "execution": "execution_12_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_legacy_50_ab-e12r3-legacy.mkv",
+          "sha256": "52fb27abec26ffa7bede3f4169daa15430920320f29f231591594241b5033049"
+        },
+        "position_in_pair": 1,
+        "run": 3
+      }
+    ],
+    "reduced": [
+      {
+        "execution": "execution_01_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e1r1-reduced.mkv",
+          "sha256": "b27234433ead2c97348289bb1c99df2e23f4aa8970ca539d452645ede14a79bf"
+        },
+        "position_in_pair": 2,
+        "run": 1
+      },
+      {
+        "execution": "execution_01_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e1r2-reduced.mkv",
+          "sha256": "9813f29e1df2f8c6afa763fa91b9b94540640503cdb4afed6e5fcfa0865b999e"
+        },
+        "position_in_pair": 2,
+        "run": 2
+      },
+      {
+        "execution": "execution_01_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e1r3-reduced.mkv",
+          "sha256": "93cdcf2d74a16a7f2b7a4c41eacc1393a143d3eb62662ab04ff9b553cbf54a74"
+        },
+        "position_in_pair": 1,
+        "run": 3
+      },
+      {
+        "execution": "execution_02_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e2r1-reduced.mkv",
+          "sha256": "e27f3cf2ec34f17c022ef48742a11eaf69a830ff76aa34f956948877cc19df3a"
+        },
+        "position_in_pair": 1,
+        "run": 1
+      },
+      {
+        "execution": "execution_02_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e2r2-reduced.mkv",
+          "sha256": "72c95f8f6cbd756346055683dbd9adf4bdd4d1128e3379e5103bc2c5f0f59af5"
+        },
+        "position_in_pair": 1,
+        "run": 2
+      },
+      {
+        "execution": "execution_02_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e2r3-reduced.mkv",
+          "sha256": "cc8fb9b89104730b1eccf925e060d4e277a61c6594e02d900056c354996365f2"
+        },
+        "position_in_pair": 2,
+        "run": 3
+      },
+      {
+        "execution": "execution_03_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e3r1-reduced.mkv",
+          "sha256": "8e0617d93b93a07e43283819ffe4735402865618186437dc1ca0140dbbd1df23"
+        },
+        "position_in_pair": 2,
+        "run": 1
+      },
+      {
+        "execution": "execution_03_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e3r2-reduced.mkv",
+          "sha256": "9c724adb4685d042f2122a56b8f89cfd261ff1ab6fb5227472622cba176bdc74"
+        },
+        "position_in_pair": 2,
+        "run": 2
+      },
+      {
+        "execution": "execution_03_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e3r3-reduced.mkv",
+          "sha256": "e9f0e17e125083c783be99418de6c09072e85ad8c02232acc305c6c2386abb15"
+        },
+        "position_in_pair": 1,
+        "run": 3
+      },
+      {
+        "execution": "execution_04_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e4r1-reduced.mkv",
+          "sha256": "10cbf977fa9a6c7ff8d7f5a9a328912e01d35d7b71e4a09e8d07c2361fe10e4e"
+        },
+        "position_in_pair": 1,
+        "run": 1
+      },
+      {
+        "execution": "execution_04_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e4r2-reduced.mkv",
+          "sha256": "add623978080f8086a917781bc63311a39b1fceed4e090e91517aaad373f04df"
+        },
+        "position_in_pair": 1,
+        "run": 2
+      },
+      {
+        "execution": "execution_04_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e4r3-reduced.mkv",
+          "sha256": "710cfdd57932774830fd8d15e603e5106ab587c9d8b23dcf0e534c71bfb490a3"
+        },
+        "position_in_pair": 2,
+        "run": 3
+      },
+      {
+        "execution": "execution_05_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e5r1-reduced.mkv",
+          "sha256": "81cfe05ff5bbf2d897afd9e05f078ed825a3dd5891bff23599d58316692a555e"
+        },
+        "position_in_pair": 2,
+        "run": 1
+      },
+      {
+        "execution": "execution_05_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e5r2-reduced.mkv",
+          "sha256": "74eee0c44a00ae4fc31c03588d9e58971db166aee065094c973474842e3d70b6"
+        },
+        "position_in_pair": 2,
+        "run": 2
+      },
+      {
+        "execution": "execution_05_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e5r3-reduced.mkv",
+          "sha256": "d1d4f196e4a5d91c5bb6426e9be3e97800645d1aef7945f10125f46eed2c97d9"
+        },
+        "position_in_pair": 1,
+        "run": 3
+      },
+      {
+        "execution": "execution_06_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e6r1-reduced.mkv",
+          "sha256": "2be291875f1cf1cd173478a54e39887f83ee7eb461b014df4a16caa9f1e3e611"
+        },
+        "position_in_pair": 1,
+        "run": 1
+      },
+      {
+        "execution": "execution_06_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e6r2-reduced.mkv",
+          "sha256": "a433f018a77223a77f8cd82468d1af59e30a469535d9e3f6a47a8ad48a4f33a5"
+        },
+        "position_in_pair": 1,
+        "run": 2
+      },
+      {
+        "execution": "execution_06_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e6r3-reduced.mkv",
+          "sha256": "07b13dfdd569a66c9d92085ccdc6e07be3b1568c3aaf34da0832a4f3abb2c5cd"
+        },
+        "position_in_pair": 2,
+        "run": 3
+      },
+      {
+        "execution": "execution_07_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e7r1-reduced.mkv",
+          "sha256": "97ec44a19f446c3f277b7979e8ec07a31019ad3f8febcb1fe013e56f15f9cd8d"
+        },
+        "position_in_pair": 2,
+        "run": 1
+      },
+      {
+        "execution": "execution_07_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e7r2-reduced.mkv",
+          "sha256": "79d0fadd9cdeee12c189f50e5ad03bba023123690e79153ff3d7dba702aae1b7"
+        },
+        "position_in_pair": 2,
+        "run": 2
+      },
+      {
+        "execution": "execution_07_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e7r3-reduced.mkv",
+          "sha256": "70fec7465a0324824e2dce60efcf7ef6d31300389e55b5fdd42d4e63a54f4f28"
+        },
+        "position_in_pair": 1,
+        "run": 3
+      },
+      {
+        "execution": "execution_08_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e8r1-reduced.mkv",
+          "sha256": "5cbb453e5975588bebcbb84a82dbb94bf1670b43c538a5155f4ddd6cb1efd090"
+        },
+        "position_in_pair": 1,
+        "run": 1
+      },
+      {
+        "execution": "execution_08_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e8r2-reduced.mkv",
+          "sha256": "a92ce4fe335401364996299110d91ab5e606efc7188fbd4fb2db99f7a36850e4"
+        },
+        "position_in_pair": 1,
+        "run": 2
+      },
+      {
+        "execution": "execution_08_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e8r3-reduced.mkv",
+          "sha256": "2a7841b8c317edca328c1aeef6d91011fb1dcc76337d153f9006002603111ad8"
+        },
+        "position_in_pair": 2,
+        "run": 3
+      },
+      {
+        "execution": "execution_09_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e9r1-reduced.mkv",
+          "sha256": "93f85053d08d88e5bc62c86fa4aaa8b4b1a853363692b81d7c5d812ee08ce7af"
+        },
+        "position_in_pair": 2,
+        "run": 1
+      },
+      {
+        "execution": "execution_09_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e9r2-reduced.mkv",
+          "sha256": "be333b550bcddaabeba71585be1f0dc7f1fdba4284b3cebaf09c00693d91647d"
+        },
+        "position_in_pair": 2,
+        "run": 2
+      },
+      {
+        "execution": "execution_09_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e9r3-reduced.mkv",
+          "sha256": "d68cf09f1b2a0b73464b70252cf6f842a85aa60a49c437c2025eef2792d21fea"
+        },
+        "position_in_pair": 1,
+        "run": 3
+      },
+      {
+        "execution": "execution_10_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e10r1-reduced.mkv",
+          "sha256": "b4ba34c23614e5e4afabf43572def92452f7bc90bddb93b902455d63f3da1504"
+        },
+        "position_in_pair": 1,
+        "run": 1
+      },
+      {
+        "execution": "execution_10_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e10r2-reduced.mkv",
+          "sha256": "283bd0ebb42968d069bb4dd77b972e092be84200bb327daed29e25e67a352949"
+        },
+        "position_in_pair": 1,
+        "run": 2
+      },
+      {
+        "execution": "execution_10_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e10r3-reduced.mkv",
+          "sha256": "6b671fbbf5adffb225279699f5b89e9cf2e125ede7b65a3d6dfe7adc79427d5c"
+        },
+        "position_in_pair": 2,
+        "run": 3
+      },
+      {
+        "execution": "execution_11_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e11r1-reduced.mkv",
+          "sha256": "7b60d01781d51b44e180c0b00b0e1f3c54778d657331a2d6c04b500739f3f2f7"
+        },
+        "position_in_pair": 2,
+        "run": 1
+      },
+      {
+        "execution": "execution_11_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e11r2-reduced.mkv",
+          "sha256": "dddd7fdf5cdc00054e67214c8c34e12c354f190668015c526a963760a284bed3"
+        },
+        "position_in_pair": 2,
+        "run": 2
+      },
+      {
+        "execution": "execution_11_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e11r3-reduced.mkv",
+          "sha256": "fed07d1ffd943cd28bc017b9b46f1094f3a1c932b7b79fe38b4db05552d0c5b3"
+        },
+        "position_in_pair": 1,
+        "run": 3
+      },
+      {
+        "execution": "execution_12_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": false,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e12r1-reduced.mkv",
+          "sha256": "a9048ec95403224ee27dfeef004962ad6799442c8a4c92be9c28c44b9d54c8f3"
+        },
+        "position_in_pair": 1,
+        "run": 1
+      },
+      {
+        "execution": "execution_12_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e12r2-reduced.mkv",
+          "sha256": "f7899ebb61d9da73e3353720ce062f14b646f600e6badf3600c3956261f0f16a"
+        },
+        "position_in_pair": 1,
+        "run": 2
+      },
+      {
+        "execution": "execution_12_ffprobe_output.json",
+        "ffprobe": {
+          "checks": {
+            "duration_within_1pct": true,
+            "fps_matches_source": true,
+            "packets": true,
+            "resolution": true
+          },
+          "codec": "av1",
+          "duration_sec": 1.0,
+          "expected_frames": 60,
+          "fps": 60.0,
+          "height": 2160,
+          "ok": true,
+          "packets": 60,
+          "width": 3840
+        },
+        "kept": true,
+        "output": {
+          "bitstream_sha256": "54e8ad90c90b4128b9cca7780bbda249759cb88382eebf53e7b2846c1bf588f4",
+          "bytes": 16577619,
+          "path": "ledger_reduced_50_ab-e12r3-reduced.mkv",
+          "sha256": "26e4b319dba7fbdc3fdc3eba421677afc59df894f595d1b8686c6b0604876587"
+        },
+        "position_in_pair": 2,
+        "run": 3
+      }
+    ]
+  },
+  "runs_per_mode": {
+    "legacy": 36,
+    "reduced": 36
+  },
+  "runs_whose_probed_frame_count_matches": 0,
+  "runs_with_an_ffprobe_reading": 72
+}

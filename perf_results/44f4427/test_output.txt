@@ -1,0 +1,53 @@
+Running test_queue_flow_buffer_independence...
+PASS: test_queue_flow_buffer_independence
+Running test_guidance_adapter_and_working_resolution_nvof...
+[flow] engine='dis' quality='FAST' provider=opencv-dis-cpu (hardware=False, device=cpu)
+PASS: test_guidance_adapter_and_working_resolution_nvof
+Running test_residual_reconstruction...
+PASS: test_residual_reconstruction
+Running test_stage_profiler_statistics...
+PASS: test_stage_profiler_statistics
+Running test_production_write_frame_bytes...
+PASS: test_production_write_frame_bytes
+Running test_frame_workspace_preallocations...
+PASS: test_frame_workspace_preallocations
+Running test_cuda_decode_probe...
+PASS: test_cuda_decode_probe
+Running test_sequential_nvof_execution_and_counters...
+[flow] engine='nvof' quality='4M' provider=nvidia-optical-flow (hardware=True, device=NVIDIA GeForce RTX 5060 Ti)
+[NVOF init] input=1920x1080 grid=4 output=480x270 preset=MEDIUM (NV_OF_INIT_PARAMS.outGridSize=4, perfLevel=10)
+PASS: test_sequential_nvof_execution_and_counters
+Running test_cancellation_lifecycle_and_process_cleanup...
+=====================================================================================
+ DLSS STREAM EXPORT PROFILER (2 FRAMES) (Frames: 2, FPS: 8.29)
+=====================================================================================
+Stage                    | Mean (ms)  | P50 (ms)   | P95 (ms)   | Min (ms)  | Max (ms) 
+-------------------------------------------------------------------------------------
+source_width             | 1920.00    | 1920.00    | 1920.00    | 1920.00   | 1920.00  
+source_height            | 1080.00    | 1080.00    | 1080.00    | 1080.00   | 1080.00  
+requested_working_scale  | 1.00       | 1.00       | 1.00       | 1.00      | 1.00     
+actual_working_width     | 1920.00    | 1920.00    | 1920.00    | 1920.00   | 1920.00  
+actual_working_height    | 1080.00    | 1080.00    | 1080.00    | 1080.00   | 1080.00  
+actual_dlss_feature_width | 1920.00    | 1920.00    | 1920.00    | 1920.00   | 1920.00  
+actual_dlss_feature_height | 1080.00    | 1080.00    | 1080.00    | 1080.00   | 1080.00  
+flow_grid                | 4.00       | 4.00       | 4.00       | 4.00      | 4.00     
+decode_wait              | 53.00      | 53.00      | 92.86      | 8.72      | 97.29    
+working_color_prepare_ms | 0.00       | 0.00       | 0.01       | 0.00      | 0.01     
+guidance_total           | 9.92       | 9.92       | 14.18      | 5.19      | 14.65    
+nvof_upload              | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_submit_cpu_ms       | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_dependency_wait_ms  | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_upscale             | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_download            | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+dlss_process             | 2.28       | 2.28       | 2.98       | 1.49      | 3.06     
+residual_pyramid         | 1.42       | 1.42       | 1.60       | 1.22      | 1.62     
+output_convert           | 0.00       | 0.00       | 0.01       | 0.00      | 0.01     
+cpu_previous_frame_copy_bytes | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_h2d_bytes_delta     | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+nvof_d2h_bytes_delta     | 0.00       | 0.00       | 0.00       | 0.00      | 0.00     
+pipe_write               | 2.60       | 2.60       | 2.95       | 2.21      | 2.98     
+frame_total              | 16.28      | 16.28      | 21.41      | 10.57     | 21.98    
+=====================================================================================
+PASS: test_cancellation_lifecycle_and_process_cleanup
+
+ALL PRODUCTION PIPELINE UNIT TESTS PASSED SUCCESSFULLY!

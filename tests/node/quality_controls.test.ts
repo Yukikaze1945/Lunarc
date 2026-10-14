@@ -17,9 +17,10 @@ test('strict post and temporal defaults are neutral and preserve their nested RO
     soft_compression: 0, roi_kind: 0, roi_bounds: [0, 0, 1, 1],
     roi_feather: 0.02, debug_mode: 0,
   })
-  assert.deepEqual(DEFAULT_TEMPORAL, { scene_detection: false, mode: 'off', history_weight: 0.6 })
-  assert.equal(hasExportControls({}), false)
-  assert.equal(hasExportControls({ post_controls: DEFAULT_POST, temporal_controls: DEFAULT_TEMPORAL }), false)
+  assert.deepEqual(DEFAULT_TEMPORAL, { scene_detection: true, mode: 'off', history_weight: 0.6 })
+  assert.equal(hasExportControls({}), true)
+  assert.equal(hasExportControls({ post_controls: DEFAULT_POST, temporal_controls: DEFAULT_TEMPORAL }), true)
+  assert.equal(hasExportControls({temporal_controls: {...DEFAULT_TEMPORAL, scene_detection: false}}), false)
 })
 
 test('only enabled post controls select the export processing path', () => {
@@ -27,7 +28,7 @@ test('only enabled post controls select the export processing path', () => {
   // Rectangle coordinates and feather are dormant while ROI is disabled.
   neutral.roi_bounds = [0.1, 0.2, 0.8, 0.9]
   neutral.roi_feather = 0.1
-  assert.equal(hasExportControls({ post_controls: neutral }), false)
+  assert.equal(hasExportControls({ post_controls: neutral, temporal_controls: {...DEFAULT_TEMPORAL, scene_detection: false} }), false)
 
   const activeCases = [
     { ...DEFAULT_POST, total_gain: 1.1 },
@@ -50,7 +51,7 @@ test('only enabled post controls select the export processing path', () => {
 })
 
 test('scene detection and static low-frequency mode select GPU export; dormant history weight does not', () => {
-  assert.equal(hasExportControls({ temporal_controls: { ...DEFAULT_TEMPORAL, history_weight: 0.8 } }), false)
+  assert.equal(hasExportControls({ temporal_controls: { ...DEFAULT_TEMPORAL, scene_detection: false, history_weight: 0.8 } }), false)
   assert.equal(hasExportControls({ temporal_controls: { ...DEFAULT_TEMPORAL, scene_detection: true } }), true)
   assert.equal(hasExportControls({ temporal_controls: { ...DEFAULT_TEMPORAL, mode: 'static_low_frequency' } }), true)
 })

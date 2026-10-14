@@ -1,0 +1,12 @@
+[quick] A: 100% working, NVOF 4M (60 frames)...
+  fps=4.803 p50=171.0112000000663ms ffprobe_ok=True
+[quick] D: 50% working, NVOF 4M + native residual (60 frames)...
+  fps=6.006 p50=98.28710000147112ms ffprobe_ok=True
+wrote perf_results/b1668d3/cleanup/benchmark_quick_AD.json
+{
+  "fps_100_percent": 4.803,
+  "fps_50_percent_native": 6.006,
+  "requirement": "fps_50_percent_native > fps_100_percent",
+  "passed": true,
+  "ratio": 1.25
+}

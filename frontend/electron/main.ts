@@ -8,6 +8,7 @@ import fs from 'node:fs'
 import {runtimeCandidates, runtimeDirectory, runtimeFingerprint, runtimeEnvironment, probeRuntime, type BackendStartup} from './backendRuntime'
 import {AppUpdates} from './appUpdates'
 import {ComponentManager} from './componentManager'
+import {BackendRecovery, mayRestartBackend, type BackendHealth} from './backendRecovery'
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -76,6 +77,57 @@ async function ensureBackend() {
 let pyProc: ChildProcess | null = null
 let backendStartup: BackendStartup = {state: 'checking', message: '正在检查运行环境'}
 const backendPort = process.env.E2E_TEST === '1' ? Number(process.env.E2E_BACKEND_PORT || 18923) : 18923
+let shuttingDown=false, recoveryTimer:ReturnType<typeof setInterval>|null=null, healthBusy=false, blockedIncident=''
+const recovery=new BackendRecovery(async()=>{
+  await stopOwnedBackend()
+  if(shuttingDown)throw new Error('工作台正在关闭')
+  if(!await ensureBackend())throw new Error(backendStartup.message)
+}, state=>{
+  if(!win?.isDestroyed())win?.webContents.send('backend-recovery',state)
+})
+
+function readBackendHealth():Promise<BackendHealth> {
+  return new Promise((resolve,reject)=>{
+    const request=http.get(`http://127.0.0.1:${backendPort}/api/backend/health`,
+      {headers:{'X-DLSS-Token':process.env.DLSS_LOCAL_TOKEN||''}},response=>{
+        let data='';response.on('data',chunk=>{data+=chunk;if(data.length>16384)request.destroy(new Error('后端健康报告过大'))})
+        response.on('end',()=>{try{if(response.statusCode!==200)throw new Error(`健康检查 ${response.statusCode}`);resolve(JSON.parse(data))}catch(error){reject(error)}})
+        response.on('error',reject)
+      })
+    request.on('error',reject);request.setTimeout(2000,()=>request.destroy(new Error('后端健康检查超时')))
+  })
+}
+
+async function stopOwnedBackend(){
+  const owned=pyProc
+  if(!owned)return
+  const exited=new Promise<void>((resolve,reject)=>{
+    const timer=setTimeout(()=>reject(new Error('旧后端未能退出，已停止恢复')),12000)
+    owned.once('exit',()=>{clearTimeout(timer);resolve()})
+    if(owned.exitCode!==null||owned.signalCode!==null){clearTimeout(timer);resolve()}
+  })
+  killPythonBackend()
+  await exited
+  // Reusing a listening port here could reconnect to the failed process or another app.
+  if(await checkServerListening(backendPort))throw new Error('旧后端端口仍被占用')
+}
+
+function startRecoveryMonitor(){
+  recoveryTimer=setInterval(async()=>{
+    if(shuttingDown||healthBusy||backendStartup.state!=='ready')return
+    healthBusy=true
+    try{
+      const health=await readBackendHealth()
+      if(!health.healthy&&health.incident_id&&health.queue_storage_error&&health.pid===pyProc?.pid&&blockedIncident!==health.incident_id){
+        blockedIncident=health.incident_id
+        win?.webContents.send('backend-recovery',{phase:'blocked',message:`队列存档失败，已停止自动重启：${health.queue_storage_error}`})
+      }
+      if(mayRestartBackend(health,pyProc?.pid||null))
+        await recovery.recover(health.incident_id!,health.reason||'GPU 处理失败')
+    }catch{/* A brief HTTP failure alone does not prove native corruption. */}
+    finally{healthBusy=false}
+  },2000)
+}
 
 function checkServerListening(port: number): Promise<boolean> {
   return new Promise((resolve) => {
@@ -191,17 +243,19 @@ async function startPythonBackend() {
     log.on('error', err => console.error('[Backend] log error:', err.message))
     log.write(`\n[${new Date().toISOString()}] Backend starting\n`)
     backendStartup = {...backendStartup, state: 'starting', message: '正在启动后端', logPath}
-    pyProc = spawn(pythonPath, ['-I', serverScript, '--port', String(backendPort)], {
+    const owned = spawn(pythonPath, ['-I', serverScript, '--port', String(backendPort)], {
       cwd: rootDir,
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
       env: { ...environment, DLSS_LOCAL_TOKEN: localToken },
     })
+    pyProc = owned
     pyProc.stdout?.pipe(log, {end: false})
     pyProc.stderr?.pipe(log, {end: false})
     console.log('Python backend spawned with PID:', pyProc.pid, 'using:', pythonPath)
     // Async spawn errors (e.g. ENOENT) do NOT throw synchronously — listen.
-    pyProc.on('error', (err) => {
+    owned.on('error', (err) => {
+      if(pyProc!==owned||shuttingDown)return
       backendStartup = {...backendStartup, state: 'error', message: `后端启动失败：${err.message}`}
       log.end()
       console.error('[Backend] spawn error:', err)
@@ -211,22 +265,19 @@ async function startPythonBackend() {
           `无法启动 Python 后端 (${pythonPath})：${(err as Error).message}\n请检查 PYTHON_PATH 后重试。`
         )
       }
-      pyProc = null
+      if(pyProc===owned)pyProc = null
     })
-    pyProc.on('exit', (code, signal) => {
+    owned.on('exit', (code, signal) => {
       log.end()
+      const unexpected=pyProc===owned&&!shuttingDown
+      if(!unexpected)return
+      pyProc=null
       backendStartup = {...backendStartup, state: 'error', message: `后端已退出（${code ?? signal}），请查看日志`}
       console.log(`[Backend] exited code=${code} signal=${signal}`)
       try {
         win?.webContents.send('backend-exit', { code, signal: String(signal) })
       } catch {}
-      if (process.env.E2E_TEST !== '1' && pyProc && (code !== 0 && code !== null)) {
-        dialog.showErrorBox(
-          '后端已退出',
-          `Python 后端异常退出（code=${code}）。请查看后端终端日志后重新启动应用。`
-        )
-      }
-      pyProc = null
+      void recovery.recover(`exit:${owned.pid}`, '后端意外退出')
     })
     return true
   } catch (err) {
@@ -379,23 +430,27 @@ ipcMain.handle('window:setTheme', (event, theme: unknown) => {
 })
 
 function killPythonBackend() {
-  if (pyProc && pyProc.pid) {
-    const pid = pyProc.pid
+  // Detach ownership first: its late exit event must not clear a new child.
+  const owned=pyProc
+  pyProc=null
+  if (owned && owned.pid) {
+    const pid = owned.pid
     try {
       if (process.platform === 'win32') {
         execFileSync('taskkill', ['/F', '/T', '/PID', String(pid)], { windowsHide: true, stdio: 'ignore', timeout: 10000 })
       } else {
-        pyProc.kill('SIGKILL')
+        owned.kill('SIGKILL')
       }
     } catch (error) {
       console.error('[Backend] process-tree cleanup failed:', error)
-      pyProc.kill('SIGKILL')
+      owned.kill('SIGKILL')
     }
     pyProc = null
   }
 }
 
 app.on('window-all-closed', () => {
+  shuttingDown=true;recovery.stop();if(recoveryTimer)clearInterval(recoveryTimer)
   killPythonBackend()
   if (process.platform !== 'darwin') {
     app.quit()
@@ -404,6 +459,7 @@ app.on('window-all-closed', () => {
 })
 
 app.on('before-quit', () => {
+  shuttingDown=true;recovery.stop();if(recoveryTimer)clearInterval(recoveryTimer)
   updates?.cancel()
   components?.cancel()
   killPythonBackend()
@@ -440,4 +496,5 @@ app.whenReady().then(async () => {
     await ensureBackend()
     createWindow()
   }
+  startRecoveryMonitor()
 })

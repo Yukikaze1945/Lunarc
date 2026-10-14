@@ -1,0 +1,147 @@
+{
+  "baseline": "e3aa86c",
+  "benchmark_settings": {
+    "encoder_cq": 18,
+    "flow_engine": "nvof",
+    "flow_preset": "4M",
+    "frames_per_run": 60,
+    "output_resolution": [
+      3840,
+      2160
+    ],
+    "working_scale": 0.5
+  },
+  "code_under_test": "f7d35df5511b8a8bfdf2b366f5da78621a0449d8",
+  "code_under_test_sha": "f7d35df5511b8a8bfdf2b366f5da78621a0449d8",
+  "commit_history": [
+    "f7d35df test(artifacts): record benchmark attempt evidence",
+    "36e808c test(bench): add benchmark environment regressions",
+    "3bca05d fix(bench): read the quiet window budget from the instrument",
+    "690e8db fix(bench): separate benchmark protocol v3 from v2 evidence",
+    "ae928c9 fix(bench): classify ambient windows gpu clients narrowly",
+    "d958719 fix(bench): audit cpu benchmark restrictions",
+    "bc91718 fix(bench): distinguish missing and conflicting corroboration",
+    "669117c fix(bench): accept the selected quiet preflight window"
+  ],
+  "commit_subject": "test(artifacts): record benchmark attempt evidence",
+  "cpu_arch": "AMD64",
+  "cpu_logical_cores": 16,
+  "cpu_model": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+  "cuda_version": "13.4",
+  "ffmpeg": "8.1.2-full_build-www.gyan.dev",
+  "files_changed_since_baseline": [
+    "perf_results/1dedec7/bench_stability/ab_executions/execution_01_ffprobe_output.json",
+    "perf_results/1dedec7/bench_stability/ab_executions/execution_01_transfer_ab_benchmark.json",
+    "perf_results/1dedec7/bench_stability/ab_executions/execution_02_ffprobe_output.json",
+    "perf_results/1dedec7/bench_stability/ab_executions/execution_02_transfer_ab_benchmark.json",
+    "perf_results/1dedec7/bench_stability/ab_executions/execution_03_ffprobe_output.json",
+    "perf_results/1dedec7/bench_stability/ab_executions/execution_03_transfer_ab_benchmark.json",
+    "perf_results/1dedec7/bench_stability/ab_executions/execution_04_ffprobe_output.json",
+    "perf_results/1dedec7/bench_stability/ab_executions/execution_04_transfer_ab_benchmark.json",
+    "perf_results/1dedec7/bench_stability/ab_executions/execution_05_ffprobe_output.json",
+    "perf_results/1dedec7/bench_stability/ab_executions/execution_05_transfer_ab_benchmark.json",
+    "perf_results/1dedec7/bench_stability/ab_executions/execution_06_ffprobe_output.json",
+    "perf_results/1dedec7/bench_stability/ab_executions/execution_06_transfer_ab_benchmark.json",
+    "perf_results/1dedec7/bench_stability/ab_executions/execution_07_ffprobe_output.json",
+    "perf_results/1dedec7/bench_stability/ab_executions/execution_07_transfer_ab_benchmark.json",
+    "perf_results/1dedec7/bench_stability/benchmark_environment.json",
+    "perf_results/1dedec7/bench_stability/benchmark_runtime_monitor.json",
+    "perf_results/1dedec7/bench_stability/benchmark_stability_status.json",
+    "perf_results/1dedec7/bench_stability/counterbalanced_150f.json",
+    "perf_results/1dedec7/bench_stability/counterbalanced_performance.json",
+    "perf_results/1dedec7/bench_stability/environment.json",
+    "perf_results/1dedec7/bench_stability/ffprobe_output.json",
+    "perf_results/1dedec7/bench_stability/historical_warmup_recalc.json",
+    "perf_results/1dedec7/bench_stability/protocol.json",
+    "perf_results/1dedec7/bench_stability/pytest_output.txt",
+    "perf_results/1dedec7/bench_stability/status_consistency.json",
+    "perf_results/36e808c/bench_stability/benchmark_environment.json",
+    "perf_results/36e808c/bench_stability/cpu_restriction_audit.json",
+    "perf_results/36e808c/bench_stability/preflight_refusal_observation.json",
+    "perf_results/36e808c/bench_stability/pytest_output.txt",
+    "tests/unit/benchmark_environment.py",
+    "tests/unit/collect_transfer_ab.py",
+    "tests/unit/collect_transfer_performance.py",
+    "tests/unit/collect_transfer_status.py",
+    "tests/unit/run_transfer_stability_round.py",
+    "tests/unit/test_transfer_benchmark_environment.py",
+    "tests/unit/test_transfer_benchmark_ffprobe_evidence.py",
+    "tests/unit/test_transfer_benchmark_provenance.py"
+  ],
+  "fixture": {
+    "fps": 60.0,
+    "height": 2160,
+    "path": "bench_out/fixture_4k_300.mp4",
+    "sha256": "1500839c8ef50e2bcd4d8d0c974041af1a17178921213222c78f958208bcca9f",
+    "width": 3840
+  },
+  "git_branch": "main",
+  "gpu": {
+    "driver_version": "616.92",
+    "memory_total_bytes": 17103323136,
+    "name": "NVIDIA GeForce RTX 5060 Ti"
+  },
+  "gpu_total_memory_used_bytes": 7172259840,
+  "native_binaries": {
+    "nvof_bridge.dll": {
+      "binary_git_blob_committed": "24d84408bbfe150d255e998b3905524fabf99ce3",
+      "binary_git_blob_working": "24d84408bbfe150d255e998b3905524fabf99ce3",
+      "binary_matches_commit": true,
+      "binary_path": "native/nvof_bridge.dll",
+      "binary_sha256": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80",
+      "binary_size_bytes": 161792,
+      "last_commit_touching_binary": "1352c71 perf(nvof): add native bgr input path",
+      "last_commit_touching_source": "1352c71 perf(nvof): add native bgr input path",
+      "source_git_blob_committed": "71f41a639bdc6826a20c30c51334fda2061d8861",
+      "source_git_blob_working": "71f41a639bdc6826a20c30c51334fda2061d8861",
+      "source_matches_commit": true,
+      "source_path": "native/nvof_bridge.cpp",
+      "source_sha256": "0d6d6d34a9b0362d094363b0ac7e057e552b88a39d4b58218006c4a7e50b6562"
+    },
+    "residual_bridge.dll": {
+      "binary_git_blob_committed": "cc578dfe4541c7336d7334210fe1a155468a3677",
+      "binary_git_blob_working": "cc578dfe4541c7336d7334210fe1a155468a3677",
+      "binary_matches_commit": true,
+      "binary_path": "native/residual_bridge.dll",
+      "binary_sha256": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2",
+      "binary_size_bytes": 200192,
+      "last_commit_touching_binary": "51c980c perf(residual): consume dlss rgba directly in reconstruction",
+      "last_commit_touching_source": "51c980c perf(residual): consume dlss rgba directly in reconstruction",
+      "source_git_blob_committed": "71a23fab702247a6b2427cf68a4aa4e7aca8d54d",
+      "source_git_blob_working": "71a23fab702247a6b2427cf68a4aa4e7aca8d54d",
+      "source_matches_commit": true,
+      "source_path": "native/residual_bridge.cpp",
+      "source_sha256": "c76d9aa2859f50b71625acfa061c47ae7a73635e43ce7aba405e15ca6b74be08"
+    }
+  },
+  "native_libraries": {
+    "dlssnr_host.dll": {
+      "bytes": 54272,
+      "sha256": "9ec879388e573bebbf7886dccbdc885641d945420fdf4bb80bac6c657094160c"
+    },
+    "native/nvof_bridge.dll": {
+      "bytes": 161792,
+      "sha256": "4c6a89f93c27e120168be3292e51c6ce5b9a0bfc94aaaf14f808ce129d303c80"
+    },
+    "native/residual_bridge.dll": {
+      "bytes": 200192,
+      "sha256": "19c6ff71c379de049e89748f26274f04b89406ab895b87f880cb912390fd54b2"
+    },
+    "nvngx_dlssnr.dll": {
+      "bytes": 165840496,
+      "sha256": "e16bcf15e16e13f527491cdf7845b2fe6521a738d8f7c9c721866a8496e1fc8e"
+    }
+  },
+  "numpy": "2.4.6",
+  "opencv": "5.0.0",
+  "os": "Windows-10-10.0.26220-SP0",
+  "peak_rss_bytes": 50917376,
+  "platform": "win32",
+  "process_gpu_memory_bytes": null,
+  "process_gpu_memory_source": "unavailable: this pid is not listed by nvidia-smi --query-compute-apps",
+  "python": "3.11.15",
+  "ram_total_bytes": 42852945920,
+  "round": "Transfer benchmark environment stability",
+  "rss_bytes": 49111040,
+  "utc_timestamp": "2026-09-22T08:32:27Z"
+}

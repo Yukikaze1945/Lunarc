@@ -83,6 +83,8 @@ GPU_TEMPORAL_API int32_t gpu_temporal_process(GpuTemporalBridge* bridge,
     const GpuPostCandidate* candidate, float history_weight, uint32_t reset,
     void** out_texture, void** out_fence, uint64_t* out_fence_value,
     GpuTemporalProcessReport* report);
+/* DEFAULT heap allocation bytes, not measured residency. */
+GPU_TEMPORAL_API uint64_t gpu_temporal_allocated_device_bytes(GpuTemporalBridge* bridge);
 GPU_TEMPORAL_API void gpu_temporal_close(GpuTemporalBridge* bridge);
 GPU_TEMPORAL_API const char* gpu_temporal_last_error(void);
 

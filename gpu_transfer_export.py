@@ -205,6 +205,8 @@ def ffmpeg_dll_directories() -> list:
     sdk = os.environ.get("FFMPEG_SDK_DIR")
     if sdk:
         candidates.append(os.path.join(sdk, "bin"))
+    candidates.append(os.path.join(os.environ.get('LUNARC_RUNTIME_DIR') or
+        os.path.join(bundle_paths.app_dir(), 'runtime'), 'tools'))
     if getattr(sys, "frozen", False):
         candidates.append(bundle_paths.contents_dir())
     bundled = pipeline._bundle_ffmpeg()
@@ -304,6 +306,22 @@ def guidance_requires_flow(job_settings) -> bool:
         return int(dict(job_settings or {}).get("guidance_mode", 0)) == 1
     except (TypeError, ValueError):
         return True
+
+
+def native_tune_probe(library, *, value_probe=True):
+    """Ask the loaded libavcodec, never a possibly different FFmpeg executable."""
+    answers = {}
+    def supports_uhq(codec):
+        if codec not in answers:
+            if value_probe:
+                rc = library.nvenc_option_value_available(codec.encode(), b'tune', b'uhq')
+            else:
+                raise BridgeError('UHQ capability requires the rebuilt nvenc_bridge.dll; restart Lunarc to apply it')
+            if rc < 0:
+                _bridge_error(library, 'nvenc_last_error', rc)
+            answers[codec] = rc == 1
+        return answers[codec]
+    return supports_uhq
 
 
 def load_bridges(requires_flow: bool = True, requires_multiscale: bool = False):
@@ -445,6 +463,9 @@ def load_bridges(requires_flow: bool = True, requires_multiscale: bool = False):
             "nvenc_close": (None, [C.c_void_p]),
             "nvenc_last_error": (C.c_char_p, [])})
         _require_abi(nvenc.nvenc_abi_version(), NVENC_ABI, "nvenc_bridge")
+        value_probe = _bind_optional(nvenc, {
+            "nvenc_option_value_available": (C.c_int32,
+                [C.c_char_p, C.c_char_p, C.c_char_p])})
 
         import dlss_gpu_engine
         nvof_probe = None
@@ -472,14 +493,18 @@ def load_bridges(requires_flow: bool = True, requires_multiscale: bool = False):
             Wrapped because the bridge takes bytes and the settings are text; a
             caller must be able to ask in the same terms it writes a setting in.
             """
-            return bool(_probe(str(codec).encode("utf-8"),
-                               str(name).encode("utf-8")))
+            return _probe(str(codec).encode("utf-8"),
+                          str(name).encode("utf-8")) == 1
+
+        tune_available = native_tune_probe(nvenc,
+            value_probe="nvenc_option_value_available" in value_probe)
 
         return {"nvdec": nvdec, "nv12": nv12, "lanczos": lanczos,
                 "residual": residual, "low_residual": low_residual,
                 "fusion": fusion,
                 "nvenc": nvenc, "cookies": cookies,
                 "option_available": option_available,
+                "tune_available": tune_available,
                 "optical_flow": flow_module,
                 # What this set does and does not have behind it. ``nvof_probe``
                 # is None on an unguided set because nothing was asked of the
@@ -909,7 +934,7 @@ def plan_encoder(transcode_settings, cq: int, source: dict,
 
     # Without transcode_settings the legacy command picks av1_nvenc/p7/hq/qres/
     # vbr/cq/b:v 0/g=fps*2/yuv420p, so this plan starts from the same place.
-    tune = "hq" if not ts else str(ts.get("tune", "auto"))
+    tune = requested_tune = "hq" if not ts else str(ts.get("tune", "auto"))
     # The legacy command downgrades uhq to hq only where the encoder cannot have
     # it; answering for the codec here would silently change a setting the caller
     # asked for, so the probe is the caller's and the value passes through when
@@ -995,6 +1020,8 @@ def plan_encoder(transcode_settings, cq: int, source: dict,
         unsupported.append(f"transcode_settings[{key!r}] has no equivalent this "
                            "encoder can be given")
     return {"struct": struct, "av_options": av_options, "codec": codec,
+            "tune_adjustment": {"requested": requested_tune, "applied": tune,
+                "reason": "loaded encoder does not support UHQ"} if tune != requested_tune else None,
             "unsupported": unsupported}
 
 
@@ -2242,42 +2269,22 @@ class Chain:
         # it after the decoder had released that memory faults inside NGX, which
         # is the order the verified in-process smoke tears down in. Live.close()
         # is idempotent, so the session owner may still call it afterwards.
-        self.post_control.close()
-        self.temporal_control.close()
-        for name in ('truehdr_tail','export_resize', 'framegen_tail', 'ordered_framegen', 'framegen', 'framegen_output', 'framegen_input'):
-            item = getattr(self, name, None)
-            if item:
-                item.close()
-                setattr(self, name, None)
-        if self.scene_observer is not None:
-            self.scene_observer.close()
-            self.scene_observer = None
-        if self.output_effect is not None:
-            self.output_effect.close()
-            self.output_effect = None
-        if self.input_effect is not None:
-            self.input_effect.close()
-            self.input_effect = None
-        if self.encoder:
-            self.b["nvenc"].nvenc_close(self.encoder)
-            self.encoder = None
-        if self.residual:
-            self.b["residual"].gpu_residual_close(self.residual)
-            self.residual = None
+        from gpu_cleanup import release_owned, finish_cleanup
+        errors = []
+        release_owned(self, 'post_control', errors)
+        release_owned(self, 'temporal_control', errors)
+        for name in ('truehdr_tail','export_resize', 'framegen_tail', 'ordered_framegen', 'framegen', 'framegen_output', 'framegen_input',
+                     'scene_observer', 'output_effect', 'input_effect'):
+            release_owned(self, name, errors)
+        release_owned(self, 'encoder', errors, lambda handle: self.b['nvenc'].nvenc_close(handle))
+        release_owned(self, 'residual', errors, lambda handle: self.b['residual'].gpu_residual_close(handle))
         if getattr(self.flow_provider, 'borrows_decoder_context', False):
-            self.flow_provider.close_independent_layer()
-        closer = getattr(self.live, "close", None)
-        if callable(closer):
-            closer()
-        if self.lanczos:
-            self.b["lanczos"].gpu_lanczos_close(self.lanczos)
-            self.lanczos = None
-        if self.nv12:
-            self.b["nv12"].nv12_rgba_close(self.nv12)
-            self.nv12 = None
-        if self.decoder:
-            self.b["nvdec"].nvdec_bridge_close(self.decoder)
-            self.decoder = None
+            release_owned(self, 'flow_provider', errors, method='close_independent_layer')
+        release_owned(self, 'live', errors)
+        release_owned(self, 'lanczos', errors, lambda handle: self.b['lanczos'].gpu_lanczos_close(handle))
+        release_owned(self, 'nv12', errors, lambda handle: self.b['nv12'].nv12_rgba_close(handle))
+        release_owned(self, 'decoder', errors, lambda handle: self.b['nvdec'].nvdec_bridge_close(handle))
+        finish_cleanup(errors)
 
 
 class MultiScaleObservationChain(Chain):
@@ -2517,31 +2524,27 @@ class MultiScaleObservationChain(Chain):
         return counters
 
     def close(self):
-        if self.fusion_handle:
-            self.b["fusion"].gpu_fusion_close(self.fusion_handle)
-            self.fusion_handle = None
+        from gpu_cleanup import release_owned, finish_cleanup
+        errors = []
+        release_owned(self, 'fusion_handle', errors,
+                      lambda handle: self.b['fusion'].gpu_fusion_close(handle))
         for layer in reversed(self.extra_layers):
-            if layer.get('sequential_residual'):
-                self.b['residual'].gpu_residual_close(layer['sequential_residual'])
-                layer['sequential_residual'] = None
-            if layer["low_residual"]:
-                self.b["low_residual"].gpu_low_residual_close(
-                    layer["low_residual"])
-                layer["low_residual"] = None
-            layer["live"].close()
-            if layer["lanczos"]:
-                self.b["lanczos"].gpu_lanczos_close(layer["lanczos"])
-                layer["lanczos"] = None
-            if layer["flow_provider"]:
-                layer["flow_provider"].close_independent_layer()
-        if self.base_low_residual:
-            self.b["low_residual"].gpu_low_residual_close(
-                self.base_low_residual)
-            self.base_low_residual = None
-        if getattr(self, 'sequential_exchange', None):
-            self.sequential_exchange.close()
-            self.sequential_exchange = None
-        super().close()
+            release_owned(layer, 'sequential_residual', errors,
+                          lambda handle: self.b['residual'].gpu_residual_close(handle))
+            release_owned(layer, 'low_residual', errors,
+                          lambda handle: self.b['low_residual'].gpu_low_residual_close(handle))
+            release_owned(layer, 'live', errors)
+            release_owned(layer, 'lanczos', errors,
+                          lambda handle: self.b['lanczos'].gpu_lanczos_close(handle))
+            release_owned(layer, 'flow_provider', errors, method='close_independent_layer')
+        release_owned(self, 'base_low_residual', errors,
+                      lambda handle: self.b['low_residual'].gpu_low_residual_close(handle))
+        release_owned(self, 'sequential_exchange', errors)
+        try:
+            super().close()
+        except Exception as error:
+            errors.append(('base_chain', error))
+        finish_cleanup(errors)
 
 
 def transfer_report(counters: dict, frames: int, src_w: int, src_h: int,
@@ -2861,6 +2864,8 @@ def _export_gpu_transfer(video, live, flow_provider, out_path, dims, frames,
             previous_timestamp = (int(frame.pts), int(frame.time_base_num),
                                   int(frame.time_base_den))
             frame_ms = (time.perf_counter() - t_frame) * 1000.0
+            from gpu_memory import capture
+            capture(chain, live, phase='export')
             after = (flow_provider.device_input_counters()
                      if uses_flow and hasattr(flow_provider, "device_input_counters")
                      else None)
@@ -2952,6 +2957,7 @@ def _export_gpu_transfer(video, live, flow_provider, out_path, dims, frames,
     report["gpu_transfer_color_matrix"] = negotiation["declared_color_space"]
     report["gpu_transfer_encoder_codec"] = plan["codec"]
     report["gpu_transfer_encoder_av_options"] = plan["av_options"]
+    report["gpu_transfer_encoder_tune_adjustment"] = plan.get("tune_adjustment")
     # The struct the bridge was actually handed, in the terms the plan wrote it in.
     # What a caller asked for and what the encoder received are two different facts --
     # a tune the loaded build does not have is downgraded here, and a constant quality

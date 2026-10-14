@@ -1,0 +1,125 @@
+{
+  "cuda_version": "13.4",
+  "native_libraries": {
+    "dlssnr_host.dll": {
+      "sha256": "9ec879388e573bebbf7886dccbdc885641d945420fdf4bb80bac6c657094160c",
+      "bytes": 54272
+    },
+    "nvngx_dlssnr.dll": {
+      "sha256": "e16bcf15e16e13f527491cdf7845b2fe6521a738d8f7c9c721866a8496e1fc8e",
+      "bytes": 165840496
+    },
+    "native/nvof_bridge.dll": {
+      "sha256": "3ac877318f19b6e0e125534f6dadf1c155327470b0c5be81b83c0dd24f16e717",
+      "bytes": 156160
+    },
+    "native/residual_bridge.dll": {
+      "sha256": "54621c1a8c4f91f745cbabdb400dff9973e715f598c9695f6d6ebc188a03246f",
+      "bytes": 189952
+    }
+  },
+  "utc_timestamp": "2026-09-19T09:13:03Z",
+  "platform": "win32",
+  "os": "Windows-10-10.0.26220-SP0",
+  "cpu_model": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+  "cpu_arch": "AMD64",
+  "cpu_logical_cores": 16,
+  "ram_total_bytes": 42852945920,
+  "python": "3.11.15",
+  "numpy": "2.4.6",
+  "opencv": "5.0.0",
+  "ffmpeg": "8.1.2-full_build-www.gyan.dev",
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 5060 Ti",
+    "driver_version": "616.92",
+    "memory_total_bytes": 17103323136
+  },
+  "rss_bytes": 41881600,
+  "peak_rss_bytes": 43700224,
+  "vram_bytes": 1741684736,
+  "code_under_test_sha": "05f0ecc3e47809078b946f4302c9331a240746fc",
+  "git_branch": "main",
+  "worktree_dirty_paths": [],
+  "worktree_clean": true,
+  "commit_subject": "test(artifacts): record the environment the task asks for, from measurements",
+  "commit_history": [
+    "05f0ecc test(artifacts): record the environment the task asks for, from measurements",
+    "a160908 docs(residual): stop pinning a test count that goes stale on the next test",
+    "41a02d6 test(cancellation): make the cancel-kill assertion able to fail",
+    "f2b949f test(nvof): measure the steady-state copy counts instead of inferring them from bytes",
+    "a8a2208 fix(harness): keep the evidence directory out of the cleanliness verdict",
+    "25d57c6 chore(repo): stop tracking nvof_bridge build intermediates"
+  ],
+  "fixtures": {
+    "tests/unit/fixture_1080p_600f.mp4": {
+      "path": "tests/unit/fixture_1080p_600f.mp4",
+      "bytes": 9340939,
+      "sha256": "787afb83fe88f2fc89e3697daeac351dfda6c9e2d8f83a54da0c89275ca50d08",
+      "used_by": [
+        "cancellation end-to-end test"
+      ],
+      "codec": "h264",
+      "width": 1920,
+      "height": 1080,
+      "fps": 60.0,
+      "frames": 600
+    },
+    "bench_out/fixture_4k_300.mp4": {
+      "path": "bench_out/fixture_4k_300.mp4",
+      "bytes": 15869886,
+      "sha256": "1500839c8ef50e2bcd4d8d0c974041af1a17178921213222c78f958208bcca9f",
+      "used_by": [
+        "e2e quick benchmark",
+        "e2e sustained benchmark"
+      ],
+      "codec": "h264",
+      "width": 3840,
+      "height": 2160,
+      "fps": 60.0,
+      "frames": 300
+    }
+  },
+  "encoder_settings": {
+    "encoder": "av1_nvenc (pipeline default; codec actually written is reported by ffprobe)",
+    "cq": 18,
+    "flow_engine": "nvof",
+    "flow_preset": "4M",
+    "observed_outputs": {
+      "A": {
+        "path": "e2e_A_100.mkv",
+        "codec": "av1",
+        "packets": 60,
+        "fps": 60.0,
+        "residual_backend": null
+      },
+      "B": {
+        "path": "e2e_B_75.mkv",
+        "codec": "av1",
+        "packets": 60,
+        "fps": 60.0,
+        "residual_backend": "cpu_reference_native"
+      },
+      "C": {
+        "path": "e2e_C_63.mkv",
+        "codec": "av1",
+        "packets": 60,
+        "fps": 60.0,
+        "residual_backend": "cpu_reference_native"
+      },
+      "D": {
+        "path": "e2e_D_50.mkv",
+        "codec": "av1",
+        "packets": 60,
+        "fps": 60.0,
+        "residual_backend": "cpu_reference_native"
+      },
+      "E": {
+        "path": "e2e_E_25.mkv",
+        "codec": "av1",
+        "packets": 60,
+        "fps": 60.0,
+        "residual_backend": "cpu_reference_native"
+      }
+    }
+  }
+}

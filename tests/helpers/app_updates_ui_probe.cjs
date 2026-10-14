@@ -52,4 +52,3 @@ const out=path.resolve(process.argv[2]);
   }catch(e){result.error=String(e);throw e}
   finally{fs.writeFileSync(path.join(out,'result.json'),JSON.stringify(result,null,2));if(app)await app.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});
-

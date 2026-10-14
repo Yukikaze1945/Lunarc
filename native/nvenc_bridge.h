@@ -65,6 +65,11 @@ NVENC_BRIDGE_API const char* nvenc_last_error(void);
 NVENC_BRIDGE_API int32_t nvenc_option_available(const char* codec,
                                                 const char* name);
 
+/* Validate a value against the loaded encoder's own AVOptions without opening
+ * a GPU session. 1 accepted, 0 unsupported, negative on lookup/allocation failure. */
+NVENC_BRIDGE_API int32_t nvenc_option_value_available(const char* codec,
+    const char* name, const char* value);
+
 /* d3d12_device is a borrowed ID3D12Device* that produces encode_texture inputs;
  * cuda_context is a borrowed CUcontext validated against the same adapter LUID.
  * This call must run on the thread whose current CUDA context is cuda_context
@@ -126,6 +131,7 @@ NVENC_BRIDGE_API void nvenc_close(NvencBridge* bridge);
  * ==================================================================== */
 #define NVENC_HDR_ABI_VERSION 1u
 #define NVENC_SDR10_ABI_VERSION 1u
+#define NVENC_P010_ABI_VERSION 1u
 
 /* Static HDR10 metadata exactly as the caller's source declared it. The
  * field order, types and meanings are the ones nvdec_bridge.h's
@@ -325,6 +331,48 @@ NVENC_BRIDGE_API int32_t nvenc_hdr_get_counters(NvencBridge* bridge,
     NvencHdrCounters* counters);
 NVENC_BRIDGE_API int32_t nvenc_hdr_get_contract(NvencBridge* bridge,
     NvencHdrContract* contract);
+
+/* Codec-independent P010 ABI. Existing HEVC entry layouts stay unchanged.
+ * color_mode: 0 = limited BT.709 SDR10, 1 = limited BT.2020/PQ HDR10.
+ * options.codec selects hevc_nvenc/main10 or av1_nvenc/main. */
+typedef NvencHdrOptions NvencP010Options;
+typedef NvencHdrContract NvencP010Contract;
+typedef struct NvencP010Capability {
+    uint32_t struct_size;
+    int32_t encoder_present, p010_supported, cuda_supported, profile_supported;
+    int32_t cuda_device_created, hdr_metadata_options, supported;
+    char encoder_name[64], profile_name[32];
+} NvencP010Capability;
+typedef struct NvencP010MetadataStatus {
+    uint32_t struct_size;
+    int32_t codec_kind, color_mode, writer_available, metadata_requested;
+    int32_t mastering_serialized, content_light_serialized, error;
+    uint64_t packets_seen, mastering_inserted, content_light_inserted;
+    uint64_t mastering_already_present, content_light_already_present, bytes_inserted;
+    /* AV1 RGB x/y, white x/y, max luminance, min luminance, CLL, FALL.
+     * Values use 0.16, 24.8, 18.14 fixed point and integer nits respectively. */
+    uint32_t wire_values[12];
+    double max_chromaticity_error, max_luminance_error;
+    char detail[256];
+} NvencP010MetadataStatus;
+NVENC_BRIDGE_API uint32_t nvenc_p010_abi_version(void);
+NVENC_BRIDGE_API int32_t nvenc_p010_capability(void* cuda_context,
+    uint32_t width, uint32_t height, const char* codec, NvencP010Capability* out);
+NVENC_BRIDGE_API int32_t nvenc_p010_open(void* cuda_context, uint32_t width,
+    uint32_t height, uint32_t fps_num, uint32_t fps_den, int32_t time_base_num,
+    int32_t time_base_den, const char* utf8_output_path,
+    const NvencP010Options* options, const NvencHdrMetadata* metadata,
+    int32_t color_mode, NvencBridge** out_bridge);
+NVENC_BRIDGE_API int32_t nvenc_p010_get_contract(NvencBridge* bridge,
+    NvencP010Contract* contract);
+NVENC_BRIDGE_API int32_t nvenc_p010_get_metadata_status(NvencBridge* bridge,
+    NvencP010MetadataStatus* status);
+/* CPU-only AV1 metadata parser/writer test boundary. Size query returns 1.
+ * No compressed frame bytes are re-encoded or changed. */
+NVENC_BRIDGE_API int32_t nvenc_av1_metadata_apply_packet(
+    const NvencHdrMetadata* metadata, const uint8_t* input, uint32_t input_size,
+    uint8_t* output, uint32_t output_capacity, uint32_t* output_size,
+    NvencP010MetadataStatus* status);
 
 /* ==================================================================== *
  * HDR10 in-bitstream metadata writer. Additive to the HDR section
