@@ -69,6 +69,7 @@ DXGI_R16G16B16A16_FLOAT = 10
 # space. Handed to the bridge as int32 and refused by it on any other combination;
 # named so a caller does not have to guess the numbers.
 AV_COLOR_RANGE_LIMITED = 1
+AV_COLOR_RANGE_FULL = 2
 AV_COLOR_PRIMARIES_BT2020 = 9
 AV_COLOR_TRANSFER_ST2084 = 16
 # AVCOL_SPC_BT2020_NCL in libavutil/pixfmt.h; 10 is AVCOL_SPC_BT2020_CL.
@@ -929,7 +930,8 @@ class GpuHdrBridge:
                support_ceiling_scrgb):
         """P010 -> full-resolution linear scRGB FP16. The AVColor* enums are the
         source's own, passed through for the bridge to refuse if they are not
-        limited-range BT.2020 NC with ST 2084. ``support_ceiling_scrgb`` is the
+        limited or full-range BT.2020 NC with ST 2084 (SDR10 remains limited
+        BT.709). ``support_ceiling_scrgb`` is the
         caller's declared domain ceiling; it is validated as finite and positive
         and never derived from anything here."""
         self._require_open()

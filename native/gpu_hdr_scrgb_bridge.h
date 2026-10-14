@@ -335,8 +335,8 @@ GPU_HDR_API double gpu_hdr_paper_white(const GpuHdrBridge* bridge);
 /* P010 -> linear scRGB FP16 at full resolution. The four colour arguments are
  * the source's own AVColorRange, AVColorPrimaries,
  * AVColorTransferCharacteristic and AVColorSpace as the decoder reported them,
- * and this entry refuses anything that is not limited-range BT.2020
- * non-constant-luminance with the ST 2084 transfer: HLG, full-range 10-bit and
+ * and this entry accepts limited or full-range BT.2020
+ * non-constant-luminance with the ST 2084 transfer: HLG and
  * an untagged source are all refused rather than assumed. PQ is decoded here,
  * before anything downstream sees a sample, so no later stage ever has to know
  * the transfer function. Nothing downloads the surface: the two planes are

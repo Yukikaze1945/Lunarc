@@ -49,6 +49,16 @@ class Codec:
         self._check(self.lib.vfx_sdr8_pack(self.handle, ptr, pitch, C.byref(output), C.byref(row)))
         return output.value, row.value
 
+    def hdr_to_sdr8(self, ptr, pitch):
+        fn=getattr(self.lib,'vfx_hdr_to_sdr8_pack',None)
+        if fn is None:
+            raise RuntimeError('HDR→SDR→TrueHDR 需要新版 rtx_vsr_bridge.dll；请重新构建原生桥接')
+        fn.argtypes=[C.c_void_p,C.c_uint64,C.c_uint32,C.POINTER(C.c_uint64),C.POINTER(C.c_uint32)]
+        fn.restype=C.c_int32
+        output,row=C.c_uint64(),C.c_uint32()
+        self._check(fn(self.handle,ptr,pitch,C.byref(output),C.byref(row)))
+        return output.value,row.value
+
     def unpack(self, ptr, pitch, output, opitch):
         self._check(self.lib.vfx_rgb10_unpack(self.handle, ptr, pitch, output, opitch))
 

@@ -113,13 +113,13 @@ HDR_CODEC = "hevc_nvenc"
 HDR_PROFILE = "main10"
 P010_PROFILES = {"hevc_nvenc": "main10", "av1_nvenc": "main"}
 HDR_CONTAINER = ".mkv"
-# The only source shape the decode accepts: 10-bit 4:2:0, limited range, BT.2020
+# The source shape the decode accepts: 10-bit 4:2:0, limited/full range, BT.2020
 # primaries, ST 2084 transfer, BT.2020 non-constant-luminance matrix. ffprobe's own
 # names, so the check is against what the probe reported rather than a second
 # vocabulary. HLG is refused by name because it is the one thing that looks like it
 # might be served by the same chain.
 HDR_SOURCE_PIX_FMTS = ("yuv420p10le",)
-HDR_SOURCE_RANGE = ("tv", "limited")
+HDR_SOURCE_RANGE = ("tv", "mpeg", "limited", "pc", "jpeg", "full")
 HDR_SOURCE_PRIMARIES = ("bt2020",)
 HDR_SOURCE_TRANSFER = ("smpte2084",)
 HDR_SOURCE_SPACE = ("bt2020ncl", "bt2020nc")
@@ -1206,9 +1206,9 @@ def negotiate_hdr(dims: dict, source: dict, job_settings, transcode_settings,
     range_name = str(source.get("color_range") or "")
     if not sdr10 and range_name not in HDR_SOURCE_RANGE:
         reasons.append(
-            f"color_range={range_name or 'unspecified'} is not limited range: the "
-            "HDR10 declaration this chain encodes is limited-range, and the bridge "
-            "refuses a full-range source rather than rescaling it")
+            f"color_range={range_name or 'unspecified'} must explicitly declare "
+            "limited or full range; the bridge normalizes the declared input "
+            "range and writes limited-range HDR10 P010")
     primaries = str(source.get("color_primaries") or "")
     if not sdr10 and primaries not in HDR_SOURCE_PRIMARIES:
         reasons.append(
@@ -1533,7 +1533,7 @@ class HdrChain:
         self.source_metadata = snapshot
         if self.sdr10 and (snapshot["has_mastering"] or snapshot["has_content_light"]):
             raise HdrExportError("SDR10 source unexpectedly carries HDR metadata; refused")
-        if self._half_present(snapshot):
+        if self._half_present(snapshot) and not getattr(self,'truehdr_tail',None):
             raise HdrExportError(
                 "the source declares a mastering display whose primaries and "
                 f"luminance are half present (primaries={snapshot['mastering_has_primaries']}, "
@@ -3258,7 +3258,7 @@ def _export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
     report['export_resize'] = counters.get('export_resize')
     report['truehdr'] = counters.get('truehdr')
     if js.get('truehdr_enabled'):
-        report['transfer_mode_actual'] = 'gpu_sdr10_truehdr_transfer'
+        report['transfer_mode_actual'] = 'gpu_sdr10_truehdr_transfer' if sdr10 else 'gpu_hdr10_sdr_truehdr_transfer'
         report['output_color_contract'] = 'BT.2020 / PQ / limited range / P010 / ' + negotiation['plan']['codec'] + ' / ' + negotiation['plan']['profile']
         report.setdefault('sdr10_not_claimed',{})['formal_hdr'] = 'TrueHDR HDR10 conversion; no formal conformance certification'
     report['extra_colour_bridges'] = {k: counters[k] for k in ('decode_bridge', 'encode_bridge', 'framegen_bridge', 'export_resize_bridge') if k in counters}
@@ -3268,7 +3268,8 @@ def _export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
     report["export_backend_actual"] = "gpu_transfer"
     report["export_backend_fallback_reason"] = None
     report["transfer_mode_requested"] = transfer_mode
-    report["transfer_mode_actual"] = 'gpu_sdr10_truehdr_transfer' if js.get('truehdr_enabled') else transfer_mode
+    report["transfer_mode_actual"] = (('gpu_sdr10_truehdr_transfer' if sdr10 else 'gpu_hdr10_sdr_truehdr_transfer')
+                                     if js.get('truehdr_enabled') else transfer_mode)
     report["experimental_hdr_scrgb"] = not sdr10
     report["dlss_backend_actual"] = "gpu_flow_d3d12"
     report["hdr_color_format"] = getattr(live, "color_format", None)
@@ -3309,7 +3310,8 @@ def _export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
         "hdr_video_stream_metadata")
     report["hdr_bridge_dll"] = (hdr_caps.get("colour_bridge") or {}).get("path")
     report["hdr_source_metadata"] = chain.source_metadata
-    report["hdr_mastering_wire_conversion"] = mastering_wire_report(chain.source_metadata, negotiation['plan']['codec'])
+    report["hdr_mastering_wire_conversion"] = (None if counters.get('truehdr') else
+        mastering_wire_report(chain.source_metadata, negotiation['plan']['codec']))
     report["hdr_pixel_readback_exports_bound"] = (
         (hdr_caps.get("colour_bridge") or {}).get("pixel_readback_exports_bound"))
     report["decoder_pixel_readback_entry_bound"] = bool(
@@ -3333,7 +3335,9 @@ def _export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
                "source's own technical stream tags "
                "(ENCODER, BPS, DURATION, frame counts) are never restated as facts "
                "about this run's encode",
-        "domains": "HLG, full-range, non-BT.2020 primaries, constant-luminance "
+        "domains": "HDR10 limited/full input range is normalized during GPU decode; "
+                   "encoded output is limited-range. HLG, unspecified range, "
+                   "non-BT.2020 primaries, constant-luminance "
                    "matrix and 8-bit are refused; final output resizing uses the GPU export resampler",
         "layers": "one, two or three reconstruction layers are supported; multi_pass "
                   "greater than 1 is not supported. Not every source and scale "

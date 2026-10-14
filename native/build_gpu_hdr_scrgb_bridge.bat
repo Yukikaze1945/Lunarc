@@ -10,6 +10,8 @@ cl.exe /nologo /LD /O2 /EHsc /std:c++17 /W4 /WX /utf-8 ^
  /Fe:"build\hdr_colour\gpu_hdr_scrgb_bridge.dll" ^
  /link /OUT:"build\hdr_colour\gpu_hdr_scrgb_bridge.dll" || exit /b 1
 copy /y "build\hdr_colour\gpu_hdr_scrgb_bridge.dll" "gpu_hdr_scrgb_bridge.dll" >nul || (
+  echo pending>"build\hdr_colour\pending.txt"
   echo Close applications using the colour bridge before replacing the DLL.
-  exit /b 1
+  exit /b 0
 )
+if exist "build\hdr_colour\pending.txt" del "build\hdr_colour\pending.txt"

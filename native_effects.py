@@ -104,8 +104,6 @@ def validate(settings, source):
     if 'truehdr' in ordered:
         from truehdr_engine import parameters, runtime_directory
         parameters(settings)
-        if source.get('color_transfer') in ('smpte2084','arib-std-b67'):
-            raise ValueError('TrueHDR converts SDR input; an HDR source already has HDR colour')
         runtime_directory(settings)
     if ordered == ['nr']:
         return
@@ -506,13 +504,14 @@ class OutputEffect:
 
 
 class TrueHDRStage:
-    def __init__(self, live, settings, size, wide, tail):
+    def __init__(self, live, settings, size, wide, tail, *, hdr=False):
         self.live, self.target, self.input_wide = live, tuple(size), wide
         self.wide, self.output_hdr = True, True
         self.tail = tail
+        self.input_hdr = bool(hdr)
 
     def process(self, candidate, frame, reset):
-        return self.tail.process(candidate, frame, at_stage=True)
+        return self.tail.process(dict(candidate,output_hdr=self.input_hdr), frame, at_stage=True)
 
     def report(self):
         return self.tail.effect.report() if self.tail.effect else dict(stage='truehdr', calls=0)
@@ -531,7 +530,7 @@ class EffectSeries:
         size = tuple(source_size)
         for kind in ordered:
             if kind == 'truehdr':
-                effect = TrueHDRStage(live, settings, size, wide, truehdr_tail)
+                effect = TrueHDRStage(live, settings, size, wide, truehdr_tail, hdr=hdr)
             elif kind == 'nr':
                 if not hdr:
                     raise ValueError('Inline NR requires the preceding TrueHDR FP16 output')
@@ -647,11 +646,12 @@ def install(chain, live, settings, source_size, provider):
     if active_vfg and getattr(getattr(chain, 'ordered_framegen', None), 'hdr_direct', False):
         return  # The VFG driver executes its HDR suffix on every emitted frame.
     tail = getattr(chain, 'truehdr_tail', None)
+    source_hdr = getattr(chain,'sdr10',None) is False
     if before:
-        chain.input_effect = EffectSeries(live, settings, getattr(chain, 'ordered_input_size', source_size), before, provider, truehdr_tail=tail)
+        chain.input_effect = EffectSeries(live, settings, getattr(chain, 'ordered_input_size', source_size), before, provider, hdr=source_hdr, truehdr_tail=tail)
     if after:
         chain.output_effect = EffectSeries(live, settings, chain.processing_size, after, provider,
-            hdr=bool(active_vfg and 'truehdr' in ordered[:ordered.index('vfg')]),
+            hdr=source_hdr or bool(active_vfg and 'truehdr' in ordered[:ordered.index('vfg')]),
             wide=True if active_vfg and 'truehdr' in ordered[:ordered.index('vfg')] else None, truehdr_tail=tail)
     if nr_as_effect(settings):
         # Post-NR controls belong to the HDR NR stage, not the SDR passthrough.

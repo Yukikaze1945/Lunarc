@@ -62,6 +62,14 @@ if exist "%~dp0native\build\vfx\pending.txt" (
     )
     del "%~dp0native\build\vfx\pending.txt"
 )
+if exist "%~dp0native\build\hdr_colour\pending.txt" (
+    copy /y "%~dp0native\build\hdr_colour\gpu_hdr_scrgb_bridge.dll" "%~dp0native\gpu_hdr_scrgb_bridge.dll" >nul
+    if errorlevel 1 (
+        echo [ERROR] Close the existing Lunarc window and backend before restarting.
+        goto :FAILED
+    )
+    del "%~dp0native\build\hdr_colour\pending.txt"
+)
 if exist "%~dp0native\build\fusion\pending.txt" (
     copy /y "%~dp0native\build\fusion\gpu_multiscale_fusion_bridge.dll" "%~dp0native\gpu_multiscale_fusion_bridge.dll" >nul
     if errorlevel 1 (

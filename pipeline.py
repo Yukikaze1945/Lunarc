@@ -3191,6 +3191,10 @@ def export_gpu_transfer_stream(video, live, frames, fps, cq, with_audio, out_pat
         dims['dst_w'], dims['dst_h'] = native_effects.output_size(js, (w, h))
 
     htx = hdr_module or __import__("gpu_hdr_transfer_export")
+    if 'truehdr' in native_effects.stages(js) and probe_pixel_info(video).get('color_transfer') == 'smpte2084':
+        # TrueHDR explicitly requests a new HDR output. Its HDR source must first
+        # enter the existing FP16/PQ decoder, then be mapped to SDR at that stage.
+        js['experimental_hdr_scrgb'] = True
     sdr10 = (not htx.hdr_requested(js) and
              getattr(htx, "sdr10_source", lambda source: False)(probe_pixel_info(video)))
     if htx.hdr_requested(js) or sdr10:

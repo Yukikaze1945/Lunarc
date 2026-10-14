@@ -1338,8 +1338,8 @@ int gates() {
             uv_buffer.ptr, frame.uv_pitch, 1, 9, 18, 10, kJob1Ceiling,
             &ptr, &pitch), "decode refuses HLG");
         expect_refusal(gpu_hdr_decode(bridge, y_buffer.ptr, frame.y_pitch,
-            uv_buffer.ptr, frame.uv_pitch, 2, 9, 16, 10, kJob1Ceiling,
-            &ptr, &pitch), "decode refuses full-range 10-bit");
+            uv_buffer.ptr, frame.uv_pitch, 0, 9, 16, 9, kJob1Ceiling,
+            &ptr, &pitch), "decode refuses unspecified range");
         expect_refusal(gpu_hdr_decode(bridge, y_buffer.ptr, frame.y_pitch,
             uv_buffer.ptr, frame.uv_pitch, 1, 9, 16, 9, kJob1Ceiling,
             &ptr, &pitch), "decode refuses a constant-luminance matrix");

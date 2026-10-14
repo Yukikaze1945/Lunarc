@@ -683,7 +683,7 @@ RWByteAddressBuffer Destination : register(u0);
 RWBuffer<uint> Counters : register(u1);
 cbuffer Frame : register(b0) {
     uint Width, Height, SourceYPitch, SourceUVPitch;
-    uint DestinationPitch, Unused0, Unused1, Unused2;
+    uint DestinationPitch, InputFullRange, Unused1, Unused2;
     float Ceiling;
 };
 [numthreads(8, 8, 1)]
@@ -696,9 +696,11 @@ void main_decode(uint3 id : SV_DispatchThreadID) {
     uint cWord = SourceUV.Load((id.y >> 1) * SourceUVPitch + (id.x >> 1) * 4u);
     float cbSample, crSample;
     unpack_p010(cWord, cbSample, crSample);
-    float Y = y_from_code(ySample);
-    float Cb = c_from_code(cbSample);
-    float Cr = c_from_code(crSample);
+    // AVColorRange full-range uses 1023 for both scales and chroma centre 512.
+    // The limited-range branch keeps its original arithmetic exactly.
+    float Y = InputFullRange ? ySample / 1023.0f : y_from_code(ySample);
+    float Cb = InputFullRange ? (cbSample - 512.0f) / 1023.0f : c_from_code(cbSample);
+    float Cr = InputFullRange ? (crSample - 512.0f) / 1023.0f : c_from_code(crSample);
     precise float3 encoded = float3(Y + CR_GAIN * Cr,
         Y - CG_CB * Cb - CG_CR * Cr, Y + CB_GAIN * Cb);
     precise float3 linear2020 = float3(pq_eotf(encoded.r), pq_eotf(encoded.g),
@@ -2246,6 +2248,7 @@ uint32_t groups(uint32_t extent, uint32_t threads) {
  * AVColorSpace values, named here so the decode entry can refuse a domain it
  * has no maths for without dragging the whole AV headers into a GPU bridge. */
 constexpr int32_t kRangeLimited = 1;
+constexpr int32_t kRangeFull = 2;
 constexpr int32_t kPrimariesBt2020 = 9;
 constexpr int32_t kTransferPq = 16;
 // AVCOL_SPC_BT2020_NCL is 9 in libavutil/pixfmt.h; 10 is AVCOL_SPC_BT2020_CL,
@@ -2611,13 +2614,14 @@ static int32_t gpu_decode_impl(
      * content that lands above the declared ceiling, because then the metadata
      * was a lie and the correction would be applied to a picture the job never
      * said it carried - so the source report counts it and the caller aborts. */
-    /* The one domain this stage has maths for. HLG, full-range 10-bit and an
+    /* The one domain this stage has maths for. HLG and an
      * untagged source are refused here rather than assumed, because guessing a
      * transfer function is how an HDR picture quietly becomes a different one. */
     const bool color_match = sdr10_mode
         ? (color_range == kRangeLimited && color_primaries == kPrimariesBt709 &&
            color_transfer == kTransferBt709 && color_space == kSpaceBt709)
-        : (color_range == kRangeLimited && color_primaries == kPrimariesBt2020 &&
+        : ((color_range == kRangeLimited || color_range == kRangeFull) &&
+           color_primaries == kPrimariesBt2020 &&
            color_transfer == kTransferPq && color_space == kSpaceBt2020Ncl);
     if (!color_match) {
         std::snprintf(last_error, sizeof(last_error),
@@ -2642,7 +2646,7 @@ static int32_t gpu_decode_impl(
     c.put(b->full_w); c.put(b->full_h);
     c.put(b->planes[kPlaneSourceY].pitch);
     c.put(b->planes[kPlaneSourceUV].pitch);
-    c.put(dst.pitch); c.put(0u); c.put(0u); c.put(0u);
+    c.put(dst.pitch); c.put(color_range == kRangeFull ? 1u : 0u); c.put(0u); c.put(0u);
     c.put(float(support_ceiling_scrgb));
     if (!run_pass(b, kPassDecode, c, groups(b->full_w, 8u),
                   groups(b->full_h, 8u)))

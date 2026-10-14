@@ -1577,6 +1577,9 @@ class DLSSService:
         # 45s test timeout and looking like a deadlock. Validate now.
         ts_job_early = job.get("transcode_settings") or {}
         source_precision = pipeline.probe_pixel_info(v_path)
+        import native_effects
+        if source_precision.get('color_transfer') == 'smpte2084' and 'truehdr' in native_effects.stages(job.get('settings') or self.settings):
+            job['settings'] = dict(job.get('settings') or self.settings, experimental_hdr_scrgb=True)
         import gpu_hdr_transfer_export as high_precision
         sdr10_job = (str((job.get("settings") or {}).get("export_backend")) == "gpu_transfer"
                      and not high_precision.hdr_requested(job.get("settings"))

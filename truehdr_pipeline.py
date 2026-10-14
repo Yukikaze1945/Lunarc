@@ -164,7 +164,7 @@ class Tail:
 
     def process(self, candidate, frame, *, at_stage=False):
         candidate = candidate.as_descriptor() if hasattr(candidate,'as_descriptor') else candidate
-        if candidate.get('output_hdr'):
+        if candidate.get('output_hdr') and not at_stage:
             return candidate
         if self.ordered and not at_stage:
             raise RuntimeError('Ordered TrueHDR output lost its HDR colour descriptor')
@@ -249,7 +249,7 @@ class Tail:
                 counters = _fields(counts)
         return dict(effect=self.effect.report() if self.effect else None,encoder_contract=contract,encoder_counters=counters,
                     output_contract=f"{contract['codec']} / {contract['profile_name']} / P010 / BT.2020 / PQ / limited range" if contract else 'P010 / BT.2020 / PQ / limited range',
-                    static_metadata='No source HDR metadata or measured MaxCLL invented')
+                    static_metadata='Source mastering/CLL are not reused after TrueHDR; no unmeasured output metadata invented')
 
     def close(self):
         if self.encoder:

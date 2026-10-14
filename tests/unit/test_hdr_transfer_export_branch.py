@@ -33,6 +33,13 @@ import sys
 import tempfile
 
 import pytest
+import gpu_memory
+
+
+@pytest.fixture(autouse=True)
+def no_native_memory_query_for_fake_devices(monkeypatch):
+    # This file intentionally supplies fake D3D12 addresses and no real GPU.
+    monkeypatch.setattr(gpu_memory,'capture',lambda *args,**kwargs:None)
 
 _UNIT_DIR = os.path.dirname(os.path.abspath(__file__))
 _ROOT = os.path.dirname(_UNIT_DIR)
@@ -366,7 +373,8 @@ def test_an_open_rgba8_session_is_refused_because_the_proxy_is_fp16():
     ({"pix_fmt": "yuv420p"}, "10-bit"),
     ({"color_transfer": "arib-std-b67"}, "HLG"),
     ({"color_transfer": "bt709"}, "smpte2084"),
-    ({"color_range": "pc"}, "limited range"),
+    ({"color_range": ""}, "limited or full range"),
+    ({"color_range": "unknown"}, "limited or full range"),
     ({"color_primaries": "bt709"}, "bt2020"),
     ({"color_space": "bt2020cl"}, "constant-luminance"),
     ({"color_space": ""}, "bt2020ncl"),
@@ -376,6 +384,12 @@ def test_a_source_outside_the_domain_this_bridge_converts_is_refused(change, fra
     negotiation = _negotiate(source=dict(HDR_SOURCE, **change))
     assert not negotiation["supported"]
     assert any(fragment in reason for reason in negotiation["reasons"]), fragment
+
+
+@pytest.mark.parametrize("range_name", ["tv", "mpeg", "limited", "pc", "jpeg", "full"])
+def test_hdr_source_explicit_range_is_normalized_by_decode(range_name):
+    negotiation = _negotiate(source=dict(HDR_SOURCE, color_range=range_name))
+    assert negotiation["supported"], negotiation["reasons"]
 
 
 @pytest.mark.parametrize("job_change,fragment", [

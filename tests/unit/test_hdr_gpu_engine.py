@@ -490,17 +490,18 @@ def test_encode_chroma_bpp_is_the_interleaved_pair_not_one_component():
         assert plane.width * plane.bytes_per_pixel == full_width * 2
 
 
-def test_decode_passes_the_native_color_enums_through():
+@pytest.mark.parametrize("input_range", [hdr.AV_COLOR_RANGE_LIMITED, hdr.AV_COLOR_RANGE_FULL])
+def test_decode_passes_the_native_color_enums_through(input_range):
     fake = FakeLibrary()
     bridge = _bridge(fake)
     bridge.decode(p010_y_ptr=1, p010_y_pitch=8, p010_uv_ptr=2, p010_uv_pitch=8,
-        color_range=hdr.AV_COLOR_RANGE_LIMITED,
+        color_range=input_range,
         color_primaries=hdr.AV_COLOR_PRIMARIES_BT2020,
         color_transfer=hdr.AV_COLOR_TRANSFER_ST2084,
         color_space=hdr.AV_COLOR_SPACE_BT2020_NC, support_ceiling_scrgb=12.5)
     args = [a for s, a in fake.calls if s == "gpu_hdr_decode"][0]
     assert (args[5], args[6], args[7], args[8]) == (
-        hdr.AV_COLOR_RANGE_LIMITED, hdr.AV_COLOR_PRIMARIES_BT2020,
+        input_range, hdr.AV_COLOR_PRIMARIES_BT2020,
         hdr.AV_COLOR_TRANSFER_ST2084, hdr.AV_COLOR_SPACE_BT2020_NC)
 
 

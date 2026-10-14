@@ -44,6 +44,7 @@ class TrueHDR:
         self.handle = C.c_void_p()
         self.input = self.output = self.input_codec = self.output_codec = None
         self.calls = 0
+        self.hdr_input_calls = 0
         self._check(self.lib.vfx_truehdr_open(context,*size,*self.options,self.runtime,C.byref(self.handle)))
         try:
             from native_effects import Exchange
@@ -71,7 +72,12 @@ class TrueHDR:
     def process(self, candidate, frame, reset=False):
         color = candidate if 'device_ptr' in candidate else self.input.color(candidate)
         ptr, pitch = color['device_ptr'], color['pitch_bytes']
-        if self.wide:
+        if candidate.get('output_hdr'):
+            if not self.wide:
+                raise ValueError('TrueHDR HDR→SDR 输入转换需要线性 scRGB FP16 图像')
+            ptr, pitch = self.input_codec.hdr_to_sdr8(ptr,pitch)
+            self.hdr_input_calls += 1
+        elif self.wide:
             ptr, pitch = self.input_codec.sdr8(ptr,pitch)
         packed, packed_pitch = self.output_codec.pointer()
         self._check(self.lib.vfx_truehdr_process(self.handle,ptr,pitch,packed,packed_pitch))
@@ -85,6 +91,10 @@ class TrueHDR:
 
     def report(self):
         return dict(stage='truehdr',calls=self.calls,output_hdr=True,
+                    hdr_to_sdr_calls=self.hdr_input_calls,
+                    hdr_to_sdr_mapping=(dict(reference_white_nits=203,curve='rgb / (203/80 + max(BT709_luminance,0))',
+                        domain='linear scRGB FP16 → BT.709 SDR → RGBA8 SDK input',exposure='fixed across frames',
+                        gamut='SDR boundary clamp only') if self.hdr_input_calls else None),
                     input_encoding='RGBA8 SDR (explicit NVIDIA SDK boundary)',
                     output_encoding='BT.2020 PQ RGB10A2 → linear scRGB FP16',
                     parameters=dict(zip(DEFAULTS,(*self.options[:4],not self.options[4]))),

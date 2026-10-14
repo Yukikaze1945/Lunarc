@@ -1,6 +1,6 @@
 # TrueHDR
 
-TrueHDR 将 SDR 转为 HDR10。它与 DLAA、DLSSNR、RTX VSR、NVIDIA VFG 共用渲染顺序列表，拖动左侧手柄或使用上下箭头调整顺序。旧项目中单独启用的 TrueHDR 会迁移到列表末尾。原生 HDR 素材不适用此转换。
+TrueHDR 将 SDR 转为 HDR10。它与 DLAA、DLSSNR、RTX VSR、NVIDIA VFG 共用渲染顺序列表，拖动左侧手柄或使用上下箭头调整顺序。旧项目中单独启用的 TrueHDR 会迁移到列表末尾。HDR10 素材也可以使用：在 TrueHDR 所处的位置先映射为 SDR，再交给 TrueHDR 生成新的 HDR 画面。
 
 ## 控件
 
@@ -24,7 +24,11 @@ NVIDIA 特效 DLL、模型和许可文件由用户安装，不随本项目源码
 
 SDR10 的解码、NR 和重建保持原有线性 FP16 链路。TrueHDR 官方接口接收 RGBA8 SDR，所以仅在进入此特效时显式转换；不能把它描述为全程 10-bit 无损转换。特效输出为 BT.2020/PQ RGB10A2，再转回线性 scRGB FP16，供预览映射或最终编码。
 
-TrueHDR 之前的阶段处理 SDR，之后的阶段处理线性 FP16 HDR。NR 位于转换之后时，独立 FP16 会话及既有 HDR 重建／多层融合处理转换后的主画面；VSR 和 VFG 使用 PQ/BT.2020 的 RGB10A2 接口。最终 HDR 编码不会再次执行 TrueHDR 转换。预览不执行导出插帧，但其他阶段保持列表中的顺序。
+TrueHDR 之前的阶段保持输入的色彩域，之后的阶段处理线性 FP16 HDR。HDR10 输入会在进入 TrueHDR 的边界执行固定 203 nit 参考的亮度肩部映射，并转换为 BT.709 SDR；不随帧或原视频 MaxCLL 改变曝光。SDK 输入仍为 RGBA8。NR 位于转换之后时，独立 FP16 会话及既有 HDR 重建／多层融合处理转换后的主画面；VSR 和 VFG 使用 PQ/BT.2020 的 RGB10A2 接口。最终 HDR 编码不会再次执行 TrueHDR 转换。预览不执行导出插帧，但其他阶段保持列表中的顺序。
+
+HDR→SDR→TrueHDR 会重新解释原片的亮度和色彩，不是恢复原 HDR 的无损往返。转换后仍输出 P010 / 10-bit / BT.2020 / PQ；原输入的母版显示和 CLL 描述不再被当作新画面的静态 HDR 元数据。音轨、字幕和章节仍按导出选择封装。诊断记录 `hdr_to_sdr_calls`、映射参数、SDK 转换主机图像计数和标量回读。HLG 保持现有明确拒绝。
+
+HDR10 输入支持明确标记的有限范围或全范围。GPU 解码按每帧实际报告的范围归一化；部分 PS5 WebM 的容器标记为有限范围，而解码帧报告全范围，此时以解码帧为准。输出继续使用有限范围 P010，不通过改标签冒充范围转换。
 
 导出使用现有 P010 / HEVC Main10 / BT.2020 / PQ / limited-range 编码路径，界面限制可选格式。不会为 SDR 源编造 mastering display 或测得的 MaxCLL 元数据。
 

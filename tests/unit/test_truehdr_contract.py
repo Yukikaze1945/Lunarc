@@ -43,6 +43,30 @@ def test_ordered_encoder_refuses_a_lost_hdr_descriptor_instead_of_converting_twi
     assert tail.process(picture, None) is picture
 
 
+def test_hdr_input_runs_truehdr_at_its_stage_then_tail_does_not_run_it_twice():
+    from types import SimpleNamespace
+    from truehdr_pipeline import Tail
+    from native_effects import TrueHDRStage
+    calls=[]
+    tail=Tail(SimpleNamespace(),{},ordered=True)
+    tail.effect=SimpleNamespace(process=lambda candidate,frame:calls.append(candidate) or dict(candidate,output_hdr=True))
+    stage=TrueHDRStage(None,{},(16,8),True,tail,hdr=True)
+    output=stage.process(dict(dxgi_format=10,width=16,height=8),None,True)
+    assert calls[0]['output_hdr'] is True and len(calls)==1
+    assert tail.process(output,None) is output and len(calls)==1
+
+
+def test_hdr_source_with_truehdr_is_admitted_but_hlg_keeps_existing_refusal(monkeypatch):
+    import native_effects
+    import truehdr_engine
+    monkeypatch.setattr(truehdr_engine,'runtime_directory',lambda _: 'test-vfx')
+    options=dict(render_pipeline=['truehdr'],export_backend='gpu_transfer',guidance_mode=0)
+    source=dict(pix_fmt='yuv420p10le',color_transfer='smpte2084')
+    native_effects.validate(options,source)
+    with pytest.raises(ValueError,match='HLG'):
+        native_effects.validate(options,dict(source,color_transfer='arib-std-b67'))
+
+
 def test_primary_feature_closes_before_its_borrowed_motion_provider():
     from types import SimpleNamespace
     from native_effects import Passthrough
