@@ -13,7 +13,7 @@ from vfx_framegen import Interpolator, encoder_timing
 def install_ordered_vfg(chain, live, settings, source_size, provider, order):
     boundary = order.index('vfg')
     before, after = order[:boundary], order[boundary + 1:]
-    size = output_size(settings, source_size) if 'vsr' in before else tuple(source_size)
+    size = output_size(settings,source_size,before)
     chain.framegen_stage_index = boundary
     chain.framegen_stage_size = size
     chain.framegen_hdr = 'truehdr' in before

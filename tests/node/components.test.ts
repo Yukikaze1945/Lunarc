@@ -9,7 +9,7 @@ import {ComponentManager,raftWheelLock} from '../../frontend/electron/componentM
 function fixture(){
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'lunarc-components-'))
   const resources=path.join(root,'resources');fs.mkdirSync(path.join(resources,'components'),{recursive:true})
-  for(const name of ['base.lock','raft.lock','raft-model.json','raft-wheel.json'])fs.copyFileSync(path.resolve('packaging/components',name),path.join(resources,'components',name))
+  for(const name of ['base.lock','image-models.lock','raft.lock','raft-model.json','raft-wheel.json'])fs.copyFileSync(path.resolve('packaging/components',name),path.join(resources,'components',name))
   const m=new ComponentManager(resources,path.join(root,'data'),()=>{})
   return {m,root,resources,close:()=>fs.rmSync(root,{recursive:true,force:true})}
 }
@@ -32,6 +32,15 @@ test('missing base is independent of optional RAFT and unknown IDs are refused',
     await assert.rejects(f.m.install('../evil'),/未知/)
     await f.m.install('raft');assert.match(f.m.state.error!,/先安装基础/)
     assert(!fs.existsSync(path.join(f.root,'data/raft-ready.json')))
+  }finally{f.close()}
+})
+
+test('image inference extension requires the shared AI environment',async()=>{
+  const f=fixture();try{
+    assert(f.m.state.components.some(c=>c.id==='image-models'&&!c.installed))
+    await f.m.install('image-models')
+    assert.match(f.m.state.error!,/AI 模型运行环境/)
+    assert(!fs.existsSync(path.join(f.root,'data/image-models-ready.json')))
   }finally{f.close()}
 })
 

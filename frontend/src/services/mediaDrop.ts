@@ -1,4 +1,4 @@
-const MEDIA_EXTENSION = /\.(mp4|mkv|mov|avi|wmv|flv|webm|m4v|mpg|mpeg|ts|mts|m2ts|png|jpe?g|bmp|webp|tiff?)$/i
+const MEDIA_EXTENSION = /\.(mp4|mkv|mov|avi|wmv|flv|webm|m4v|mpg|mpeg|ts|mts|m2ts|png|jpe?g|bmp|webp|tiff?|avif|heic|heif)$/i
 
 export function droppedMediaPath(files: Iterable<File>, resolve: (file: File) => string): string | null {
   for (const file of files) {

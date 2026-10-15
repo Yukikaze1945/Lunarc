@@ -843,6 +843,9 @@ def probe_source(video: str, ffprobe=None, include_chapters: bool = False,
       set flags of its ``disposition``. No other caller reads them, and the SDR chain's
       probe and its answers are unchanged by them either way.
     """
+    from image_source import is_image, probe
+    if is_image(video):
+        return probe(video)
     ffprobe = ffprobe or pipeline._bundle_ffprobe()
     if not ffprobe:
         raise BridgeError("ffprobe not found, so the source cannot be checked "
@@ -1702,15 +1705,16 @@ def negotiate(dims: dict, source: dict, job_settings, transcode_settings,
     if source.get("video_stream_count") != 1:
         reasons.append(f"{source.get('video_stream_count')} video streams: the "
                        "decoder bridge opens exactly one")
-    if source.get("pix_fmt") not in ("yuv420p", "nv12"):
+    image_input = source.get('media_type') == 'image' and source.get('pix_fmt') == 'rgba'
+    if not image_input and source.get("pix_fmt") not in ("yuv420p", "nv12"):
         reasons.append(f"pix_fmt={source.get('pix_fmt')} is not 8-bit 4:2:0, "
                        "which is the only thing NVDEC yields here as NV12")
     if str(source.get("color_transfer") or "") in ("smpte2084", "arib-std-b67"):
         reasons.append("HDR transfer: the chain carries 8-bit SDR pixels")
-    if source.get("color_range") in ("pc", "jpeg"):
+    if not image_input and source.get("color_range") in ("pc", "jpeg"):
         reasons.append("full-range NV12: the GPU converter only handles limited range")
     source_matrix = source.get("color_space")
-    if source_matrix not in BT601_FAMILY and source_matrix != "bt709":
+    if not image_input and source_matrix not in BT601_FAMILY and source_matrix != "bt709":
         reasons.append(f"color_space={source.get('color_space')} is not the "
                        "supported BT.601 or BT.709 matrix")
     color_matrix = (COLOR_MATRIX_BT709 if source_matrix == "bt709"
@@ -1816,6 +1820,8 @@ class Chain:
         self.flow_calls = 0
         self.zero_motion_calls = 0
         self.decoder = None
+        self.image_decoder = None
+        self._color_stages_opened = False
         self.nv12 = None
         self.lanczos = None
         self.residual = None
@@ -1837,6 +1843,10 @@ class Chain:
         return native_effects.frame_at_size(frame, size) if size != (frame.width, frame.height) else frame
 
     def open_decoder(self):
+        from image_source import is_image, DeviceImage
+        if is_image(self.video):
+            self.image_decoder = DeviceImage(self.video)
+            return
         handle = C.c_void_p()
         code = self.b["nvdec"].nvdec_bridge_open(os.fsencode(self.video),
                                                  C.byref(handle))
@@ -1845,6 +1855,8 @@ class Chain:
         self.decoder = handle
 
     def next_frame(self, frame):
+        if self.image_decoder is not None:
+            return self.image_decoder.frame(frame)
         return int(self.b["nvdec"].nvdec_bridge_next(self.decoder,
                                                      C.byref(frame)))
 
@@ -1853,13 +1865,17 @@ class Chain:
             self.b["nvdec"].nvdec_bridge_cancel(self.decoder)
 
     def _open_color_stages(self, frame):
+        if self._color_stages_opened:
+            return
+        self._color_stages_opened = True
         nv12 = self.b["nv12"]
         handle = C.c_void_p()
-        code = nv12.nv12_rgba_open_matrix(frame.cuda_context, frame.width,
-            frame.height, self.plan["decoder_color_matrix"], C.byref(handle))
-        if code:
-            _bridge_error(nv12, "nv12_rgba_last_error", code)
-        self.nv12 = handle
+        if not hasattr(frame, 'image_rgba'):
+            code = nv12.nv12_rgba_open_matrix(frame.cuda_context, frame.width,
+                frame.height, self.plan["decoder_color_matrix"], C.byref(handle))
+            if code:
+                _bridge_error(nv12, "nv12_rgba_last_error", code)
+            self.nv12 = handle
         frame = self._processing_frame(frame)
         if not self.downscaled:
             # The 1.0 chain has no working-color stage to open: the full RGBA
@@ -1993,7 +2009,9 @@ class Chain:
         mark = time.perf_counter()
         full_ptr, full_pitch = C.c_uint64(), C.c_uint32()
         supplied = getattr(self, '_ordered_color', None)
-        if supplied is None:
+        if supplied is None and hasattr(frame, 'image_rgba'):
+            full_ptr.value, full_pitch.value = frame.image_rgba
+        elif supplied is None:
             code = nv12.nv12_rgba_convert(self.nv12, frame.y_device_ptr,
                 frame.y_pitch_bytes, frame.uv_device_ptr, frame.uv_pitch_bytes,
                 C.byref(full_ptr), C.byref(full_pitch))
@@ -2284,6 +2302,7 @@ class Chain:
         release_owned(self, 'lanczos', errors, lambda handle: self.b['lanczos'].gpu_lanczos_close(handle))
         release_owned(self, 'nv12', errors, lambda handle: self.b['nv12'].nv12_rgba_close(handle))
         release_owned(self, 'decoder', errors, lambda handle: self.b['nvdec'].nvdec_bridge_close(handle))
+        release_owned(self, 'image_decoder', errors)
         finish_cleanup(errors)
 
 

@@ -12,7 +12,8 @@ uvicorn>=0.29
 websockets>=13
 pydantic>=2.5
 # ---- desktop GUI (gui.py) ----
-Pillow>=10.0
+Pillow>=11.3
+pillow-heif==1.8.1
 # ---- optional: faster/more robust decode path (SmartCapture falls back to
 # ---- FFmpeg CLI pipe when PyAV is absent, so this is recommended, not required)
 av>=11.0

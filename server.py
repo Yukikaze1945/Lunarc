@@ -364,6 +364,33 @@ class RuntimeSourceRequest(BaseModel):
     archive_sha256: str = ''
 
 
+class ImageModelRequest(BaseModel):
+    key: str
+    path: Optional[str] = None
+
+
+@app.get('/api/image/models')
+def image_model_status():
+    from image_model_store import store
+    return store.status()
+
+
+@app.post('/api/image/models/download')
+def image_model_download(body: ImageModelRequest):
+    from image_model_store import store
+    try:return store.start(body.key)
+    except ValueError as error:raise HTTPException(400,str(error)) from error
+
+
+@app.post('/api/image/models/import')
+def image_model_import(body: ImageModelRequest):
+    from image_model_store import store
+    try:
+        if not body.path:raise ValueError('请选择模型文件')
+        return store.import_model(body.key,body.path)
+    except (ValueError,OSError) as error:raise HTTPException(400,str(error)) from error
+
+
 class RuntimeImportRequest(BaseModel):
     path: Optional[str] = None
     source_id: Optional[str] = None
@@ -473,9 +500,9 @@ def dialog_open_file():
         path = filedialog.askopenfilename(
             title="选择导入素材 (视频 / 图像)",
             filetypes=[
-                ("所有支持的媒体", "*.mp4;*.mkv;*.mov;*.avi;*.wmv;*.flv;*.png;*.jpg;*.jpeg"),
+                ("所有支持的媒体", "*.mp4;*.mkv;*.mov;*.avi;*.wmv;*.flv;*.png;*.jpg;*.jpeg;*.bmp;*.webp;*.tif;*.tiff;*.avif;*.heic;*.heif"),
                 ("视频文件", "*.mp4;*.mkv;*.mov;*.avi;*.wmv;*.flv"),
-                ("图像文件", "*.png;*.jpg;*.jpeg"),
+                ("图像文件", "*.png;*.jpg;*.jpeg;*.bmp;*.webp;*.tif;*.tiff;*.avif;*.heic;*.heif"),
                 ("所有文件", "*.*")
             ]
         )
@@ -522,9 +549,92 @@ def current_video():
     }
 
 
+class ImageExportRequest(BaseModel):
+    path: str
+    output_path: str
+    format: str = 'png'
+    quality: int = 95
+    preserve_alpha: bool = True
+    overwrite: bool = False
+
+
+@app.post('/api/image/export')
+def export_image(req: ImageExportRequest):
+    try:
+        result = dlss_service.export_image(req.path, req.output_path, req.format,
+            req.quality, req.preserve_alpha, req.overwrite)
+        return {'status': 'ok', 'image': result}
+    except Exception as error:
+        raise HTTPException(status_code=400, detail=str(error))
+
+
+@app.get('/api/image/thumbnail')
+def image_thumbnail(path: str, edge: int = Query(720,ge=0,le=8192)):
+    from image_source import is_image, read_rgba
+    import cv2
+    if not is_image(path):
+        raise HTTPException(status_code=400, detail='请选择图片素材')
+    try:
+        rgba = read_rgba(path)
+        ratio = min(1, edge / max(rgba.shape[:2])) if edge else 1
+        if ratio < 1:
+            rgba = cv2.resize(rgba, (max(1,round(rgba.shape[1]*ratio)),max(1,round(rgba.shape[0]*ratio))), interpolation=cv2.INTER_AREA)
+        ok, encoded = cv2.imencode('.png', cv2.cvtColor(rgba,cv2.COLOR_RGBA2BGRA))
+        if not ok:
+            raise ValueError('图片编码失败')
+        return Response(encoded.tobytes(), media_type='image/png')
+    except Exception as error:
+        raise HTTPException(status_code=400, detail=str(error))
+
+
+@app.get('/api/image/formats')
+def image_formats():
+    from image_source import export_formats
+    return {'formats': export_formats()}
+
+
 @app.get("/api/preview/diagnostics")
 def preview_diagnostics():
     return dlss_service.preview_diagnostics()
+
+
+@app.get('/api/preview/memory')
+def preview_memory_status():
+    return dlss_service.preview_memory_state()
+
+
+@app.post('/api/preview/memory/release')
+async def release_preview_memory():
+    from preview_player import render_gate,notify_memory
+    try:dlss_service.begin_preview_release()
+    except (ValueError,RuntimeError) as error:raise HTTPException(409,str(error)) from error
+    notify_memory(dlss_service,pause=True)
+    try:
+        # Do not cancel an in-flight CUDA/NGX call. Retain the global render slot
+        # through completion before acquiring the service GPU ownership lock.
+        async with render_gate():
+            task=asyncio.create_task(asyncio.to_thread(dlss_service.release_preview_memory))
+            try:report=await asyncio.shield(task)
+            except asyncio.CancelledError:
+                await task
+                raise
+        return dict(dlss_service.preview_memory_state(),releasing=False,report=report)
+    except Exception as error:
+        dlss_service._preview_release_error=str(error)
+        raise HTTPException(409,str(error)) from error
+    finally:
+        dlss_service._preview_release_busy=False
+        notify_memory(dlss_service)
+
+
+@app.post('/api/preview/memory/resume')
+async def resume_preview_memory():
+    from preview_player import render_gate,notify_memory
+    async with render_gate():
+        try:state=dlss_service.resume_preview_memory()
+        except (ValueError,RuntimeError) as error:raise HTTPException(409,str(error)) from error
+    notify_memory(dlss_service)
+    return state
 
 
 @app.get("/api/frame")

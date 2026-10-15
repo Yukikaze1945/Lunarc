@@ -8,6 +8,7 @@ from dlss_gpu_engine import Live
 from gpu_preview_engine import GpuPreview
 from gpu_transfer_export import Chain
 from dlss_service import DLSSService
+from native_effects import EffectSeries, OutputEffect
 
 
 def test_native_close_fault_never_reuses_deleted_host_address():
@@ -92,6 +93,9 @@ def test_preview_native_fault_stops_subsequent_dll_calls():
     service._native_degraded = None
     service._live_lock = threading.Lock()
     service._settings_lock = threading.Lock()
+    service._queue_lock = threading.Lock()
+    service._queue_store = None
+    service._persist_queue = lambda: None
     service.settings, service.video_path = {}, 'fixture.mkv'
     service._gpu_preview = SimpleNamespace(render=fail, lifecycle_phase='open new pipeline')
     service._get_gpu_preview = lambda: service._gpu_preview
@@ -99,3 +103,46 @@ def test_preview_native_fault_stops_subsequent_dll_calls():
     second = service._render_gpu_preview(0, 'split', .5, 1., (.5, .5), False)
     assert 'access violation' in first[1] and '重启后端' in second[1]
     assert calls == ['native']
+
+
+def test_series_attempts_every_stage_after_a_failed_close():
+    calls=[]
+    def fail():
+        calls.append('last stage');raise RuntimeError('stage close failed')
+    series=EffectSeries.__new__(EffectSeries)
+    series.exit=SimpleNamespace(close=lambda:calls.append('exit'))
+    series.entry=SimpleNamespace(close=lambda:calls.append('entry'))
+    series.effects=[SimpleNamespace(close=lambda:calls.append('first stage')),SimpleNamespace(close=fail)]
+    with pytest.raises(RuntimeError,match='stage close failed'):series.close()
+    assert calls==['exit','last stage','first stage','entry']
+    series.close()
+    assert len(calls)==4
+
+
+def test_vsr_close_failure_still_releases_codecs_and_transfers():
+    calls=[]
+    def fail():
+        calls.append('model');raise RuntimeError('SDK release failed')
+    effect=OutputEffect.__new__(OutputEffect)
+    effect.owns_effect=True;effect.guidance_deferred=False
+    effect.effect=SimpleNamespace(close=fail)
+    effect.guidance=SimpleNamespace(close_independent_layer=lambda:calls.append('flow'))
+    for name in ('guide_bridge','output_codec','input_codec','output','input'):
+        setattr(effect,name,SimpleNamespace(close=lambda key=name:calls.append(key)))
+    with pytest.raises(RuntimeError,match='SDK release failed'):effect.close()
+    assert calls==['model','flow','guide_bridge','output_codec','input_codec','output','input']
+    effect.close()
+    assert len(calls)==7
+
+
+def test_image_model_transfer_close_failure_does_not_skip_input():
+    from image_upscale import ImageModelEffect
+    calls=[]
+    def fail():
+        calls.append('output');raise RuntimeError('transfer release failed')
+    effect=ImageModelEffect.__new__(ImageModelEffect)
+    effect.model=None;effect.output=SimpleNamespace(close=fail)
+    effect.input=SimpleNamespace(close=lambda:calls.append('input'))
+    with pytest.raises(RuntimeError,match='transfer release failed'):effect.close()
+    effect.close()
+    assert calls==['output','input']

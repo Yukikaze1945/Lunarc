@@ -2,7 +2,7 @@ import {jobComparison} from '../services/jobComparison'
 import {DEFAULT_EXPORT_SETTINGS,readTranscodeDraft,TRANSCODE_DRAFT_KEY,TRANSCODE_DRAFT_VERSION} from '../services/exportSettings'
 import {publishExportSettings,useFrameSelection} from '../services/segmentSelection'
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { renderStages, vsrOutputSize, framegenOutputFps, nativeOutputBlockers } from '../services/renderPipeline'
+import { renderStages, hasScaleStages, vsrOutputSize, framegenOutputFps, nativeOutputBlockers } from '../services/renderPipeline'
 import {
   Film,
   Plus,
@@ -300,12 +300,12 @@ export const DeliverPage: React.FC<DeliverPageProps> = React.memo(({
     }
   }
 
-  const renderDimensions = renderStages(dlssSettings).includes('vsr')
+  const renderDimensions = hasScaleStages(dlssSettings)
     ? vsrOutputSize(dlssSettings, video ?? {width:1920,height:1080})
     : {width:video?.width ?? 1920,height:video?.height ?? 1080}
   // Export resize happens after all selected rendering stages.
   const outputDimensions = useMemo(() => {
-    if (txSettings.resolution_mode === 'original' && renderStages(dlssSettings).includes('vsr')) {
+    if (txSettings.resolution_mode === 'original' && hasScaleStages(dlssSettings)) {
       return vsrOutputSize(dlssSettings, video ?? {width:1920,height:1080})
     }
     const origW = video ? video.width : 1920

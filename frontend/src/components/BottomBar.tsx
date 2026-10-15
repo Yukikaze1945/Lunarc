@@ -2,7 +2,7 @@ import {Activity} from 'lucide-react'
 import {useSyncExternalStore} from 'react'
 import type {SystemInfo} from '../types'
 import {subscribePreviewMetrics,previewMetricsSnapshot} from '../services/previewMetrics'
-export type TabType = 'home'|'dlss'|'deliver'|'compare'|'diagnostics'|'presets'|'settings'|'about'|'guide'
+export type TabType = 'home'|'dlss'|'deliver'|'image-deliver'|'compare'|'diagnostics'|'presets'|'settings'|'about'|'guide'
 export function BottomBar({statusText='就绪', queueSummary='', onQueueClick,system}: {statusText?:string; queueSummary?:string; onQueueClick?:()=>void;system?:SystemInfo|null}) {
   const data=useSyncExternalStore(subscribePreviewMetrics,previewMetricsSnapshot)
   const effects=[...(data?.native_input_effect?.stages||[]),...(data?.native_output_effect?.stages||[])]
@@ -17,7 +17,7 @@ export function BottomBar({statusText='就绪', queueSummary='', onQueueClick,sy
       {(data?.render_pipeline||[]).map((stage:string)=>{
         const measured=effects.find((effect:any)=>effect.stage===stage)
         const nr=stage==='nr'&&!measured
-        return <span key={stage} title={nr?'DLSSNR 各层模型推理合计；光流、融合和显示耗时另计。':'最近一次完成的原生调用墙钟耗时；不是 GPU 时间戳。'}>{names[stage]||stage}{nr?' 推理':''} {stage==='vfg'?'仅导出':stage==='nr'&&data?.inference_reused?'缓存':ms(measured?.process_ms??(nr?(data?.stages?.nr_total_ms??data?.stages?.dlss_inference):undefined))}</span>
+        return <span key={stage} title={nr?'DLSSNR 各层模型推理合计；光流、融合和显示耗时另计。':'最近一次完成的原生调用墙钟耗时；不是 GPU 时间戳。'}>{names[stage.split(':')[0]]||({illustration:'IllustrationJaNai',animesharp:'AnimeSharp'} as Record<string,string>)[stage]||stage}{nr?' 推理':''} {stage==='vfg'?'仅导出':stage==='nr'&&data?.inference_reused?'缓存':ms(measured?.process_ms??(nr?(data?.stages?.nr_total_ms??data?.stages?.dlss_inference):undefined))}</span>
       })}
       {data?.solver&&<span title="数据一致性融合求解耗时">融合 {ms(data.stages?.hdr_fusion??data.stages?.fusion??data.stages?.fusion_solve??data.solver?.solve_ms)}</span>}
     </div>

@@ -21,5 +21,13 @@ def configure():
         site = root / 'raft-v1/site'
         if (site / 'torch/__init__.py').is_file():
             sys.path.insert(0, str(site))
+            try:
+                image_marker=json.loads((root/'image-models-ready.json').read_text(encoding='utf-8'))
+                image_hash=hashlib.sha256(b'3.10.18')
+                image_hash.update((resources/'components/image-models.lock').read_text(encoding='utf-8').replace('\r\n','\n').encode('utf-8'))
+                image_site=root/'image-models-v1/site'
+                if image_marker.get('identity')==image_hash.hexdigest() and (image_site/'spandrel/__init__.py').is_file():
+                    sys.path.insert(0,str(image_site))
+            except (OSError,ValueError):pass
     except (OSError, ValueError):
         return

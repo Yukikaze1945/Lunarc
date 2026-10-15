@@ -15,7 +15,7 @@
 .render-pipeline button.render-grip { cursor: grab; opacity: .6; touch-action: none; user-select: none; padding: 4px 2px; }
 .render-pipeline .render-dragging button.render-grip { cursor: grabbing; opacity: 1; }
 .render-index { font-size: 11px; opacity: .5; font-variant-numeric: tabular-nums; }
-.render-stage-head strong { flex: 1; font-size: 12px; font-weight: 550; }
+.render-stage-head strong { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 12px; font-weight: 550; }
 .render-pipeline button { display: inline-flex; align-items: center; justify-content: center; color: inherit; background: transparent; border: 0; padding: 3px; cursor: pointer; }
 .render-pipeline button:disabled { opacity: .2; cursor: default; }
 .render-pipeline button:hover:not(:disabled) { background: #8882; }
@@ -23,7 +23,10 @@
 .render-stage-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 9px 0 2px 25px; }
 .render-stage-options label { display: flex; align-items: center; gap: 8px; font-size: 11px; }
 .render-stage-options select { min-width: 0; flex: 1; padding: 3px; color: inherit; background: var(--color-lunarc-panel); border: 1px solid var(--color-lunarc-border); }
-.render-add { display: flex; gap: 12px; margin-top: 8px; font-size: 11px; }
+.render-add { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 8px; font-size: 11px; }
+.render-add button { flex: none; white-space: nowrap; gap: 4px; }
+.render-image-add { margin-top: 12px; }
+.render-image-add > span { display: block; font-size: 11px; color: var(--color-lunarc-muted); }
 .render-stage-single { grid-template-columns: 1fr; }
 .render-framegen-card { margin-top: 12px; }
 .render-framegen-card .render-stage-head { padding-left: 25px; }

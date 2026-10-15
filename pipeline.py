@@ -567,7 +567,10 @@ class SmartCapture:
 
 
 def open_capture(path):
-    """Open video file and return a unified capture object (SmartCapture)."""
+    """Open video or one decoded still picture through the capture interface."""
+    from image_source import is_image, Capture
+    if is_image(path):
+        return Capture(path)
     return SmartCapture(path)
 
 

@@ -1,9 +1,10 @@
 import {useCallback, useEffect, useRef, useState, useSyncExternalStore, type DragEvent} from 'react'
-import {Home, Layers3, Film, Activity, Bookmark, Settings2, Info, Aperture, ArrowLeftRight, BookOpen} from 'lucide-react'
+import {Home, Layers3, Film, Image as ImageIcon, Activity, Bookmark, Settings2, Info, Aperture, ArrowLeftRight, BookOpen} from 'lucide-react'
 import {Header} from './components/Header'
 import {BottomBar, type TabType} from './components/BottomBar'
 import {DLSSPage} from './pages/DLSSPage'
 import {DeliverPage} from './pages/DeliverPage'
+import {ImageDeliverPage} from './pages/ImageDeliverPage'
 import {WorkspacePages} from './pages/WorkspacePages'
 import {ComparePage} from './pages/ComparePage'
 import type {VideoInfo, DLSSSettings, SystemInfo} from './types'
@@ -19,6 +20,7 @@ const NAV: {id:TabType;label:string;icon:typeof Home}[] = [
   {id:'home',label:'首页',icon:Home},
   {id:'dlss',label:'重建工作台',icon:Layers3},
   {id:'deliver',label:'导出与队列',icon:Film},
+  {id:'image-deliver',label:'图片导出',icon:ImageIcon},
   {id:'compare',label:'视频对比',icon:ArrowLeftRight},
   {id:'diagnostics',label:'运行与诊断',icon:Activity},
   {id:'presets',label:'预设管理',icon:Bookmark},
@@ -129,12 +131,13 @@ function WorkspaceApp() {
     onDrop={dropMedia}>
     {dragging&&<div className="media-drop-overlay" role="status"><span>松开以载入素材</span></div>}
     <aside className="navigation"><div className="rail-mark" aria-hidden="true"><Aperture size={23}/></div><nav aria-label="主导航">{NAV.map(n=><button key={n.id} aria-label={n.label} title={n.label} className={activeTab===n.id?'active':''} onClick={()=>setActiveTab(n.id)} aria-current={activeTab===n.id?'page':undefined}><n.icon size={20}/></button>)}</nav></aside>
-    <div className="app-content"><Header activeTab={activeTab} onNavigate={setActiveTab} theme={theme} onThemeChange={()=>setTheme(t=>t==='dark'?'light':'dark')} onFileLoaded={importFile} onError={setStatusText}/><main className="page-host">
+    <div className="app-content"><Header activeTab={activeTab} onNavigate={setActiveTab} theme={theme} onThemeChange={()=>setTheme(t=>t==='dark'?'light':'dark')} onFileLoaded={importFile} onError={setStatusText} image={video?.media_type==='image'}/><main className="page-host">
       <div className={`mounted-page ${activeTab==='dlss'?'':'hidden'}`}><DLSSPage video={video} settings={settings} onSettingsChange={updateSettings} currentFrame={currentFrame} setCurrentFrame={setCurrentFrame} onStatusChange={setStatusText} isActive={ready&&activeTab==='dlss'}/></div>
-      <div className={`mounted-page ${activeTab==='deliver'?'':'hidden'}`}><DeliverPage video={video} settings={settings} onSettingsChange={updateSettings} onStatusChange={setStatusText} isActive={activeTab==='deliver'}/></div>
+      <div className={`mounted-page ${activeTab==='deliver'?'':'hidden'}`}><DeliverPage video={video?.media_type==='image'?null:video} settings={settings} onSettingsChange={updateSettings} onStatusChange={setStatusText} isActive={activeTab==='deliver'}/></div>
+      <div className={`mounted-page ${activeTab==='image-deliver'?'':'hidden'}`}>{video?.media_type==='image'?<ImageDeliverPage video={video} settings={settings} onStatusChange={setStatusText}/>:<div className="workspace-page"><h1>图片导出</h1><p>先导入一张图片，再选择格式与保存位置。</p></div>}</div>
       {activeTab==='compare'&&<ComparePage initialPair={comparePair}/>}
       {activeTab==='guide'&&<Guide/>}
-      {!['dlss','deliver','compare','guide'].includes(activeTab)&&<WorkspacePages page={activeTab} video={video} system={system} settings={settings} recent={recent} onImport={importFile} onNavigate={setActiveTab} onApply={applySettings} onStatus={setStatusText}/>}
+      {!['dlss','deliver','image-deliver','compare','guide'].includes(activeTab)&&<WorkspacePages page={activeTab} video={video} system={system} settings={settings} recent={recent} onImport={importFile} onNavigate={setActiveTab} onApply={applySettings} onStatus={setStatusText}/>}
     </main><BottomBar system={system} statusText={statusText} queueSummary={queueSummary} onQueueClick={()=>setActiveTab('deliver')}/></div>
   </div>
 }

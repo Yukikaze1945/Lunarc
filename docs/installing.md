@@ -1,10 +1,10 @@
 # 安装 Lunarc
 
-[下载 Lunarc 1.1.0-beta](https://github.com/Yukikaze1945/Lunarc/releases/tag/v1.1.0-beta)
+[下载 Lunarc 1.2.2](https://github.com/Yukikaze1945/Lunarc/releases/tag/v1.2.2)
 
 ## 首次安装
 
-1. 下载并运行 **Lunarc-1.1.0-beta-x64-Setup.exe**，约 146.7 MB（139.9 MiB）。
+1. 下载并运行 **Lunarc-1.2.2-x64-Setup.exe**。
 2. 启动 Lunarc，先安装 **基础运行环境**，再安装 **视频处理组件**。
 3. 按教程进入工作台。教程也可以从侧栏或软件设置重新打开。
 4. 在 **运行与诊断 → DLSSNR 运行库** 中下载或导入 DLL / ZIP，再选择“使用”。
@@ -27,7 +27,7 @@ FFmpeg、PyTorch/CUDA 主包和 RAFT 模型支持断点续传。其他 Python �
 
 ## 更新软件
 
-在 **关于 Lunarc → 软件更新** 中检查和下载更新。退出 Lunarc 后运行新版安装程序。1.1.0-beta 为预发布版，检查更新时需勾选“包含预发布版本”。
+在 **关于 Lunarc → 软件更新** 中检查和下载更新。退出 Lunarc 后运行新版安装程序。1.2.2 是正式版本，无需勾选“包含预发布版本”。
 
 本次从 1.0.0 Beta 重新编号，旧发布版已下架。使用 2.x 的用户需要手动下载安装 1.0.0-beta 一次；此后的更新可通过软件内更新器获取。使用原安装目录即可，已有组件和用户设置会保留。
 

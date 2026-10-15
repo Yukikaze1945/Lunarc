@@ -14,6 +14,31 @@ LEGACY_STAGES = {'nr': ['nr'], 'dlaa': ['dlaa'], 'vsr': ['vsr'],
 DLAA_PRESETS = (0, 5, 6, 10, 11, 12, 13)
 
 
+def stage_kind(stage):
+    if not isinstance(stage,str): return None
+    head, separator, suffix = stage.partition(':')
+    if head not in ('nr','dlaa','vsr','vfg','truehdr','illustration','animesharp'): return None
+    if separator and (head != 'vsr' or not suffix or len(suffix)>64 or not all(c.isalnum() or c=='-' for c in suffix)): return None
+    return head
+
+
+def stage_settings(settings, stage):
+    options=settings.get('render_stage_options',{})
+    if not isinstance(options,dict): raise ValueError('Render stage options must be a map')
+    result=dict(settings)
+    patch=options.get(stage,{})
+    if not isinstance(patch,dict): raise ValueError('Render stage parameters must be a map')
+    allowed=('vsr_','image_model_')
+    if any(not isinstance(key,str) or not key.startswith(allowed) for key in patch):
+        raise ValueError('Stage parameters must contain only VSR or image model options')
+    result.update(patch)
+    return result
+
+
+def has_stage(settings, kind):
+    return any(stage_kind(stage)==kind for stage in stages(settings))
+
+
 def configured_stages(settings):
     value = settings.get('render_pipeline')
     if value is None:
@@ -23,8 +48,8 @@ def configured_stages(settings):
         value = list(LEGACY_STAGES[selected])
     if not isinstance(value, (list, tuple)) or (not value and not (settings.get('truehdr_enabled') or settings.get('_truehdr_input_pipeline') or settings.get('_pipeline_bypass'))):
         raise ValueError('Render pipeline must contain at least one stage')
-    if any(stage not in ('nr', 'dlaa', 'vsr', 'vfg', 'truehdr') for stage in value) or len(set(value)) != len(value):
-        raise ValueError('Render pipeline stages must be unique NR, DLAA, VSR, VFG or TrueHDR')
+    if any(stage_kind(stage) is None for stage in value) or len(set(value)) != len(value):
+        raise ValueError('Render pipeline contains unknown or duplicate stage IDs')
     ordered = list(value)
     if settings.get('frame_generation', 'off') != 'off' and 'vfg' not in ordered:
         ordered.append('vfg')
@@ -36,7 +61,7 @@ def configured_stages(settings):
 def stages(settings):
     ordered = configured_stages(settings)
     enabled = settings.get('render_stage_enabled', {})
-    if not isinstance(enabled, dict) or any(key not in ('nr','dlaa','vsr','vfg','truehdr') or
+    if not isinstance(enabled, dict) or any(stage_kind(key) is None or
                                             not isinstance(value, bool) for key,value in enabled.items()):
         raise ValueError('Render stage switches must contain known stages and boolean values')
     return [stage for stage in ordered if enabled.get(stage, True)]
@@ -112,10 +137,11 @@ def validate(settings, source):
         raise ValueError('HLG is unsupported by the existing native HDR10/PQ chain')
     if source.get('color_transfer') == 'smpte2084' and not wide:
         raise ValueError('HDR10 native stages require a 10-bit P010 source')
-    if 'vsr' in ordered and (wide or ('truehdr' in ordered and ordered.index('truehdr') < ordered.index('vsr'))):
+    if any(stage_kind(stage)=='vsr' and (wide or 'truehdr' in ordered[:index]) for index,stage in enumerate(ordered)):
         from native_runtime_paths import wide_vfx_runtime
         wide_vfx_runtime(settings.get('vsr_runtime_path'))
-    if source.get('pix_fmt') not in ('yuv420p', 'nv12', 'yuv420p10le', 'p010le', 'p010'):
+    image_input = source.get('media_type') == 'image' and source.get('pix_fmt') == 'rgba'
+    if not image_input and source.get('pix_fmt') not in ('yuv420p', 'nv12', 'yuv420p10le', 'p010le', 'p010'):
         raise ValueError('Native stages require a supported 8-bit or 10-bit YUV source')
     if settings.get('export_backend') != 'gpu_transfer':
         raise ValueError('Native DLAA / RTX VSR requires GPU Transfer')
@@ -130,15 +156,33 @@ def validate(settings, source):
         raise ValueError('Standalone DLAA / RTX VSR requires Single at 100% input')
     if not any(s in ordered for s in ('nr', 'dlaa')) and int(settings.get('guidance_mode', 0)):
         raise ValueError('RTX VSR standalone does not consume optical-flow guidance')
-    if 'vsr' in ordered:
-        from vsr_config import configuration
-        configuration(settings)
-        output_size(settings, (source['width'], source['height']))
+    for index,stage in enumerate(ordered):
+        local=stage_settings(settings,stage)
+        if stage_kind(stage)=='vsr':
+            from vsr_config import configuration
+            configuration(local)
+        elif stage_kind(stage) in ('illustration','animesharp'):
+            if not image_input or wide or 'truehdr' in ordered[:index]:
+                raise ValueError('图片放大模型需要 SDR 图片输入，请放在 TrueHDR 前面')
+            from image_upscale import model_config
+            model_config(local,stage_kind(stage))
+    output_size(settings,(source['width'],source['height']))
 
 
-def output_size(settings, size):
-    if 'vsr' not in stages(settings):
-        return tuple(size)
+def output_size(settings, size, ordered=None):
+    size=tuple(size)
+    for stage in stages(settings) if ordered is None else ordered:
+        kind=stage_kind(stage);local=stage_settings(settings,stage)
+        if kind=='vsr': size=vsr_output_size(local,size)
+        elif kind in ('illustration','animesharp'):
+            from image_upscale import model_config
+            factor=model_config(local,kind)['scale']
+            size=tuple(value*factor for value in size)
+            if max(size)>16384: raise ValueError('图片放大链输出单轴不能超过 16384 像素')
+    return size
+
+
+def vsr_output_size(settings, size):
     import math
     from vsr_config import configuration
     if configuration(settings)['same_size']:
@@ -177,8 +221,8 @@ def processing_size(settings, size):
     ordered = stages(settings)
     if nr_as_effect(settings) and not settings.get('_inline_hdr_nr'):
         return tuple(size)
-    if 'nr' in ordered and 'vsr' in ordered[:ordered.index('nr')]:
-        return output_size(settings, size)
+    if 'nr' in ordered:
+        return output_size(settings,size,ordered[:ordered.index('nr')])
     return tuple(size)
 
 
@@ -195,7 +239,7 @@ def make_live(width, height, settings, *, wide=False):
         from gpu_transfer_export import multi_scale_config
         from dlss_gpu_engine import Live
         nr_settings = nr_effect_settings(settings)
-        size = output_size(settings, (width, height)) if 'vsr' in ordered[:ordered.index('nr')] else (width, height)
+        size = output_size(settings,(width,height),ordered[:ordered.index('nr')])
         multi = multi_scale_config(nr_settings, *size)
         owner = Live(*multi['dims'][0], settings, color_format='rgba16f')
         try:
@@ -210,7 +254,7 @@ def make_live(width, height, settings, *, wide=False):
         owner = None
         if 'dlaa' in ordered:
             from dlaa_gpu_engine import Live
-            size = output_size(settings, (width, height)) if 'vsr' in ordered[:ordered.index('dlaa')] else (width, height)
+            size = output_size(settings,(width,height),ordered[:ordered.index('dlaa')])
             hdr_at_dlaa = 'truehdr' in ordered[:ordered.index('dlaa')]
             owner = Live(*size, settings, dll_path=settings.get('dlss_dll_path'), is_hdr=wide or hdr_at_dlaa)
         try:
@@ -374,7 +418,7 @@ class OutputEffect:
     def __init__(self, live, settings, source_size, flow_provider=None, *, kind=None, wide=None, hdr=False):
         self.live, self.settings, self.source_size = live, dict(settings), tuple(source_size)
         self.selected = ('nr_dlaa' if kind == 'dlaa' else 'vsr') if kind else mode(settings)
-        self.target = self.source_size if self.selected == 'nr_dlaa' else output_size(settings, source_size)
+        self.target = self.source_size if self.selected == 'nr_dlaa' else vsr_output_size(settings, source_size)
         self.flow_provider = flow_provider
         self.input = self.output = self.effect = self.guidance = None
         self.calls, self.resets = 0, []
@@ -466,7 +510,7 @@ class OutputEffect:
         if self.selected == 'nr_dlaa': return False
         from vsr_config import configuration
         configuration(settings)
-        if output_size(settings, self.source_size) != self.target: return False
+        if vsr_output_size(settings, self.source_size) != self.target: return False
         effect, self.effect = self.effect, None
         if effect: effect.close()
         self.settings = dict(settings)
@@ -494,13 +538,16 @@ class OutputEffect:
                         'DLAA uses video flow and zero depth/jitter; requested model may be overridden'))
 
     def close(self):
-        for item in (self.effect if self.owns_effect else None,
-                     self.guidance if not self.guidance_deferred else None, self.guide_bridge,
-                     self.output_codec, self.input_codec, self.output, self.input):
-            if item:
-                closer = getattr(item, 'close_independent_layer', None) or item.close
-                closer()
-        self.effect = self.guidance = self.output = self.input = None
+        from gpu_cleanup import release_owned, finish_cleanup
+        errors=[]
+        if self.owns_effect:release_owned(self,'effect',errors)
+        else:self.effect=None  # Borrowed from the shared anchor.
+        if not self.guidance_deferred:
+            release_owned(self,'guidance',errors,method='close_independent_layer')
+        else:self.guidance=None  # The anchor releases deferred flow imports.
+        for name in ('guide_bridge','output_codec','input_codec','output','input'):
+            release_owned(self,name,errors)
+        finish_cleanup(errors)
 
 
 class TrueHDRStage:
@@ -528,7 +575,9 @@ class EffectSeries:
         self.live = live
         wide = self.input_wide
         size = tuple(source_size)
-        for kind in ordered:
+        for stage in ordered:
+            kind=stage_kind(stage)
+            local=stage_settings(settings,stage)
             if kind == 'truehdr':
                 effect = TrueHDRStage(live, settings, size, wide, truehdr_tail, hdr=hdr)
             elif kind == 'nr':
@@ -537,7 +586,12 @@ class EffectSeries:
                 from truehdr_pipeline import HdrNRStage
                 effect = HdrNRStage(live, settings, size, provider)
             else:
-                effect = OutputEffect(live, settings, size, provider, kind=kind, wide=wide, hdr=hdr)
+                if kind in ('illustration','animesharp'):
+                    from image_upscale import ImageModelEffect
+                    effect=ImageModelEffect(local,kind,size,wide=wide,hdr=hdr)
+                else:
+                    effect = OutputEffect(live, local, size, provider, kind=kind, wide=wide, hdr=hdr)
+            effect.stage_id=stage
             self.effects.append(effect)
             size = effect.target
             wide, hdr = effect.wide, effect.output_hdr
@@ -571,9 +625,15 @@ class EffectSeries:
                             for kind, effect in zip(self.order, self.effects)], host_image_bytes=0)
 
     def close(self):
-        for item in (getattr(self, 'exit', None), *reversed(self.effects), getattr(self, 'entry', None)):
-            if item:
-                item.close()
+        from gpu_cleanup import release_owned, finish_cleanup
+        errors=[]
+        release_owned(self,'exit',errors)
+        effects,self.effects=self.effects,[]
+        for index,effect in reversed(list(enumerate(effects))):
+            try:effect.close()
+            except Exception as error:errors.append((f'effect {index}',error))
+        release_owned(self,'entry',errors)
+        finish_cleanup(errors)
 
 
 def update_vsr_options(chain, settings):
@@ -583,10 +643,10 @@ def update_vsr_options(chain, settings):
               if getattr(effect, 'selected', None) in ('vsr', 'nr_vsr')]
     from vsr_config import configuration
     configuration(settings)
-    if any(output_size(settings, owner.source_size) != owner.target for owner in owners):
+    if any(vsr_output_size(stage_settings(settings,getattr(owner,'stage_id','vsr')), owner.source_size) != owner.target for owner in owners):
         return False
     for owner in owners:
-        if not owner.update_vsr(settings): return False
+        if not owner.update_vsr(stage_settings(settings,getattr(owner,'stage_id','vsr'))): return False
     return True
 
 
@@ -630,7 +690,7 @@ def install(chain, live, settings, source_size, provider):
     if active_vfg:
         from ordered_vfg import install_ordered_vfg
         spatial = install_ordered_vfg(chain, live, settings, source_size, provider, ordered)
-    if 'vsr' in ordered and getattr(live, 'bytes_per_pixel', 4) == 8:
+    if has_stage(settings,'vsr') and getattr(live, 'bytes_per_pixel', 4) == 8:
         from native_runtime_paths import wide_vfx_runtime
         wide_vfx_runtime(settings.get('vsr_runtime_path'))
     # A legacy standalone DLAA remains the core itself, preserving saved sessions.

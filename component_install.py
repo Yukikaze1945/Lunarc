@@ -111,5 +111,9 @@ if __name__ == '__main__':
         install_ffmpeg(*sys.argv[2:4])
     elif sys.argv[1] == 'raft':
         verify_raft(*sys.argv[2:4])
+    elif sys.argv[1] == 'image-models':
+        sys.path[:0]=sys.argv[2:4]
+        import spandrel,safetensors,einops,torch
+        print('image-models-ready')
     else:
         raise ValueError('Unknown component')

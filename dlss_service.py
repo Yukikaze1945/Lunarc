@@ -284,6 +284,9 @@ class DLSSService:
         # Why the last preview session refused to open, surfaced to the operator.
         self._preview_live_error = None
         self._live_lock = threading.Lock()
+        self._preview_suspended=False
+        self._preview_release_busy=False
+        self._preview_release_error=None
 
         # Preview residual backend, cached per (source, working, requested) triple so
         # plans and scratch are not rebuilt while a movie plays.
@@ -413,6 +416,8 @@ class DLSSService:
                     f"输入为 {pix['pix_fmt'] or '未知格式'}/{pix['bit_depth']}-bit"
                     f"{' HDR' if pix['is_hdr'] else ' SDR'}；原生预览主色使用 FP16，显示图像为 8-bit；导出精度由导出链路决定。")
             self.video_info = {
+                "media_type": 'image' if __import__('image_source').is_image(path) else 'video',
+                "has_alpha": bool(hasattr(cap,'rgba') and np.any(cap.rgba[:,:,3] != 255)),
                 "path": path,
                 "filename": os.path.basename(path),
                 "frames": total,
@@ -830,10 +835,87 @@ class DLSSService:
     def preview_diagnostics(self):
         return dict(getattr(self, '_preview_diagnostics', {}) or {})
 
+    def preview_memory_state(self):
+        return dict(suspended=getattr(self,'_preview_suspended',False),
+            releasing=getattr(self,'_preview_release_busy',False),
+            error=getattr(self,'_preview_release_error',None))
+
+    def begin_preview_release(self):
+        self._ensure_native_healthy()
+        if self.active_job_id is not None or getattr(self,'_live_session_owner',None)=='export':
+            raise ValueError('正在导出，不能释放导出所用的 GPU 资源')
+        if getattr(self,'_preview_release_busy',False):raise ValueError('正在释放预览显存，请稍候')
+        self._preview_suspended=True;self._preview_release_busy=True;self._preview_release_error=None
+
+    def release_preview_memory(self):
+        if not self._live_lock.acquire(timeout=30):raise ValueError('当前 GPU 操作尚未结束，预览保持暂停，请稍后重试释放')
+        try:
+            self._ensure_native_healthy()
+            if self.active_job_id is not None or getattr(self,'_live_session_owner',None)=='export':
+                raise ValueError('正在导出，无法释放 GPU 资源；预览保持暂停')
+            if self._live_session:
+                live,self._live_session=self._live_session,None
+                self._live_session_owner=self._live_session_dims=self._live_session_kind=None
+                live.close()
+            if self._preview_backend is not None:
+                owner,self._preview_backend=self._preview_backend,None
+                self._preview_backend_key=None;self._preview_buffers={}
+                owner.close()
+            report=self._get_gpu_preview().release_memory()
+            self._preview_diagnostics=dict(status='released',memory_release=report)
+            return report
+        except Exception as error:
+            from gpu_faults import recovery_reason
+            reason=recovery_reason(error)
+            if reason:self._mark_native_degraded(reason)
+            raise
+        finally:self._live_lock.release()
+
+    def resume_preview_memory(self):
+        self._ensure_native_healthy()
+        if getattr(self,'_preview_release_busy',False):raise ValueError('请等待预览显存释放完成')
+        self._preview_suspended=False;self._preview_release_error=None
+        return self.preview_memory_state()
+
+    def export_image(self, path, output_path, fmt='png', quality=95, preserve_alpha=True, overwrite=False):
+        from image_source import is_image, validate_destination
+        if not is_image(path):
+            raise ValueError('请选择图片素材')
+        validate_destination(path, output_path, fmt, quality, overwrite)
+        if not self._live_lock.acquire(timeout=2):
+            raise ValueError('GPU 正忙，请稍后导出图片')
+        try:
+            self._ensure_native_healthy()
+            if getattr(self,'_preview_release_busy',False):raise ValueError('正在释放预览显存，请稍后导出图片')
+            if self.active_job_id is not None or getattr(self, '_live_session_owner', None) == 'export':
+                raise ValueError('视频正在导出，请完成后再导出图片')
+            if self._live_session:
+                self._live_session.close()
+                self._live_session = None
+                self._live_session_owner = None
+                self._live_session_dims = self._live_session_kind = None
+            with self._settings_lock:
+                settings = dict(self.settings)
+            engine=self._get_gpu_preview()
+            result=engine.export_image(path, settings, output_path,fmt,quality,preserve_alpha,overwrite)
+            if getattr(self,'_preview_suspended',False):
+                try:engine.release_memory()
+                except Exception as error:raise RuntimeError(f'图片已保存到 {result["path"]}，但预览显存释放失败：{error}') from error
+            return result
+        except Exception as error:
+            from gpu_faults import recovery_reason
+            reason = recovery_reason(error)
+            if reason:
+                self._mark_native_degraded(reason)
+            raise
+        finally:
+            self._live_lock.release()
+
     def _render_gpu_preview(self, frame_idx, view, split_x, zoom, pan, preview_mode, display_edge=0, native=False):
         if not self._live_lock.acquire(timeout=2):
             return None, 'GPU is busy; preview waiting, no layer reduction'
         try:
+            if getattr(self,'_preview_suspended',False):return None,'GPU_PREVIEW_RELEASED'
             if self.active_job_id is not None or getattr(self,'_live_session_owner',None)=='export':
                 return None,'GPU_EXPORT_BUSY'
             self._ensure_native_healthy()
@@ -916,6 +998,7 @@ class DLSSService:
     def render_preview(self, frame_idx: int, view: str = "dlss", split_x: float = 0.5,
                        zoom: float = 1.0, pan: tuple = (0.5, 0.5), preview_mode: bool = False, display_edge: int = 0, native=False):
         """Render preview frame according to active view and settings."""
+        if getattr(self,'_preview_suspended',False):return None,'GPU_PREVIEW_RELEASED'
         if not self.video_path or self.video_info is None:
             return None, "No video loaded"
         if view not in ("orig", "flow", "dlss", "split", "dual"):
@@ -932,13 +1015,8 @@ class DLSSService:
                           self.video_info.get('bit_depth', 8) > 8)
         device_flow_view = (view == 'flow' and self.settings.get('flow_engine', 'nvof')
                             in ('nvof', 'fidelityfx', 'raft', 'raft_large'))
-        # Still images have no NVDEC video stream. The existing image decoder and
-        # single NR host-upload path can process them without inventing a video.
-        still_image = os.path.splitext(self.video_path)[1].lower() in (
-            '.png', '.jpg', '.jpeg', '.bmp', '.webp', '.tif', '.tiff')
-        image_nr = (still_image and not wide_input and not wants_multiscale and
-                    self.settings.get('render_pipeline', ['nr']) == ['nr'])
-        if (not image_nr and self.active_job_id is None and
+        # Still pictures enter the same chain through a reusable RGBA GPU upload.
+        if (self.active_job_id is None and
                 (device_flow_view or (view != 'flow' and
                  (native_guidance or wants_multiscale or wide_input)))):
             return self._render_gpu_preview(frame_idx, view, split_x, zoom, pan, preview_mode, display_edge,native=native)
@@ -1046,6 +1124,7 @@ class DLSSService:
                             (0, 215, 255), 1, cv2.LINE_AA)
             else:
               try:
+                if getattr(self,'_preview_suspended',False):return None,'GPU_PREVIEW_RELEASED'
                 if use_pyramid:
                     backend, buffers = self._preview_resizing_backend(pw, ph, sw, sh)
                     down_cur = backend.prepare_working_color(cur_work, buffers["working"])

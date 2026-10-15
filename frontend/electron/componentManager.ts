@@ -35,7 +35,7 @@ export class ComponentManager {
   python() {return path.join(this.root,'base-v1','Scripts','python.exe')}
   runtime() {return path.join(this.root,'runtime')}
   raftSite() {return path.join(this.root,'raft-v1','site')}
-  private lock(id:'base'|'raft') {return path.join(this.resources,'components',`${id}.lock`)}
+  private lock(id:'base'|'raft'|'image-models') {return path.join(this.resources,'components',`${id}.lock`)}
   private identity(id:ComponentId) {
     if(id==='ffmpeg')return ffmpeg.sha256
     const hash=createHash('sha256').update(PYTHON).update(fs.readFileSync(this.lock(id),'utf8').replace(/\r\n/g,'\n'))
@@ -49,15 +49,17 @@ export class ComponentManager {
       if(value.identity!==this.identity(id)) return false
       if(id==='base') return fs.existsSync(this.python())
       if(id==='ffmpeg') return ['ffmpeg.exe','ffprobe.exe','avcodec-62.dll','avformat-62.dll','avfilter-11.dll','avutil-60.dll','swresample-6.dll','swscale-9.dll'].every(n=>fs.existsSync(path.join(this.runtime(),'tools',n)))
+      if(id==='image-models')return this.ready('raft')&&fs.existsSync(path.join(this.root,'image-models-v1','site','spandrel','__init__.py'))
       return fs.existsSync(path.join(this.raftSite(),'torch','__init__.py')) && fs.existsSync(path.join(this.runtime(),'torch_home','hub','checkpoints',raftModel.name))
     } catch {return false}
   }
   refresh() {
-    const base=this.ready('base'), ff=this.ready('ffmpeg'), raft=this.ready('raft')
+    const base=this.ready('base'), ff=this.ready('ffmpeg'), raft=this.ready('raft'), images=this.ready('image-models')
     this.state={...this.state,requiresSetup:!base||!ff,components:[
       {id:'base',label:'基础运行环境',installed:base,version:PYTHON,detail:'Python 与后端依赖，用于素材读取、预览和导出管理。'},
       {id:'ffmpeg',label:'视频处理组件',installed:ff,version:'8.1.2',detail:'FFmpeg 与编码运行库，用于读取素材、视频对比和导出。'},
-      {id:'raft',label:'RAFT 光流',installed:raft,version:'Torch 2.10.0 / CUDA 12.8',detail:'可选。使用 RAFT 光流时需要，下载量较大；原生 NVIDIA / AMD 光流不需要。'},
+      {id:'raft',label:'AI 模型运行环境',installed:raft,version:'Torch 2.10.0 / CUDA 12.8',detail:'RAFT 光流与图片放大模型共用 PyTorch / CUDA；原生 NVIDIA / AMD 光流不需要。'},
+      {id:'image-models',label:'图片模型组件',installed:images,version:'Spandrel 0.4.2',detail:'用于 IllustrationJaNai V3 和 AnimeSharp V4。先安装 AI 模型运行环境；模型权重在磁贴中下载或导入。'},
     ]};this.notify(this.state);return this.state
   }
   private set(patch:Partial<ComponentState>) {this.state={...this.state,...patch};this.notify(this.state)}
@@ -96,7 +98,7 @@ export class ComponentManager {
     return path.join(downloader.state.directory!,asset.name)
   }
   async install(id:unknown) {
-    if(!['base','ffmpeg','raft'].includes(String(id)))throw new Error('未知组件')
+    if(!['base','ffmpeg','raft','image-models'].includes(String(id)))throw new Error('未知组件')
     if(this.state.busy)return this.state
     const key=id as ComponentId
     if(this.ready(key))return this.refresh()
@@ -117,6 +119,12 @@ export class ComponentManager {
         const archive=await this.download(ffmpeg,'ffmpeg-8.1.2')
         this.set({phase:'正在解压并检查视频处理组件'})
         await this.command(this.python(),['-I',path.join(this.resources,'component_install.py'),'ffmpeg',archive,this.runtime()],120000)
+      } else if(key==='image-models') {
+        if(!this.ready('raft'))throw new Error('请先安装 AI 模型运行环境')
+        const uv=await this.uv(),site=path.join(this.root,'image-models-v1','site')
+        this.set({phase:'正在安装图片模型组件'})
+        await this.command(uv,['--no-config','pip','install','--python',this.python(),'--target',site,'--no-deps','--require-hashes','--only-binary',':all:','--index-url','https://pypi.org/simple','-r',this.lock('image-models')])
+        await this.command(this.python(),['-I',path.join(this.resources,'component_install.py'),'image-models',site,this.raftSite()],60000)
       } else {
         if(!this.ready('base'))throw new Error('请先安装基础运行环境')
         const uv=await this.uv();this.set({phase:'正在下载 PyTorch / CUDA，支持暂停后继续下载'})
@@ -146,7 +154,7 @@ export class ComponentManager {
         await fs.promises.mkdir(this.runtime(),{recursive:true})
         await fs.promises.writeFile(path.join(this.runtime(),'manifest.json'),JSON.stringify({schema:1,mode:'components',python:PYTHON,base:this.identity('base'),ffmpeg:this.identity('ffmpeg')}))
       }
-      this.set({phase:key==='raft'?'RAFT 已安装，重启软件后生效':'组件已安装'})
+      this.set({phase:['raft','image-models'].includes(key)?'AI 组件已安装，重启软件后生效':'组件已安装'})
     } catch(e) {this.set({error:this.cancelled?'安装已暂停，可继续安装。已完成的下载会复用。':(e as Error).message,phase:this.cancelled?'已暂停':'安装失败'})}
     finally {this.child=null;this.downloader=null;this.set({busy:null});this.refresh()}
     return this.state

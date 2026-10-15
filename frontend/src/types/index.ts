@@ -1,6 +1,9 @@
-export type RenderStage = 'nr' | 'dlaa' | 'vsr' | 'vfg' | 'truehdr'
+export type RenderStageKind = 'nr' | 'dlaa' | 'vsr' | 'vfg' | 'truehdr' | 'illustration' | 'animesharp'
+export type RenderStage = RenderStageKind | `vsr:${string}`
 
 export interface VideoInfo {
+  media_type?: 'video' | 'image'
+  has_alpha?: boolean
   path: string
   filename: string
   frames: number
@@ -45,6 +48,9 @@ export interface TemporalControls {
 export interface DLSSSettings {
   neural_mode?: 'nr' | 'dlaa' | 'vsr' | 'nr_dlaa' | 'nr_vsr'
   render_pipeline?: RenderStage[]
+  render_stage_options?: Partial<Record<RenderStage, Partial<DLSSSettings>>>
+  image_model_variant?: 'denoise' | 'detail'
+  image_model_tile?: 0 | 128 | 256 | 512
   render_stage_enabled?: Partial<Record<RenderStage, boolean>>
   frame_generation_saved_mode?: 'vfg' | 'vfg_dynamic'
   dlaa_preset?: 0 | 5 | 6 | 10 | 11 | 12 | 13

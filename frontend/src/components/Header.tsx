@@ -6,8 +6,9 @@ interface Props {
   activeTab: TabType; onNavigate: (tab: TabType) => void
   theme: Theme; onThemeChange: () => void
   onFileLoaded: (path: string) => void; onError: (message: string) => void
+  image?: boolean
 }
-export function Header({ activeTab, onNavigate, theme, onThemeChange, onFileLoaded, onError }: Props) {
+export function Header({ activeTab, onNavigate, theme, onThemeChange, onFileLoaded, onError, image }: Props) {
   const importFile = async () => {
     try { const path = await openNativeFileDialog(); if (path) onFileLoaded(path) }
     catch (error) { onError(`无法打开素材：${error instanceof Error ? error.message : String(error)}`) }
@@ -16,14 +17,14 @@ export function Header({ activeTab, onNavigate, theme, onThemeChange, onFileLoad
     <button className="wordmark" onClick={() => onNavigate('home')} aria-label="Lunarc 首页">Lunarc</button>
     <nav className="header-tabs" aria-label="工作区">
       <button aria-current={activeTab === 'dlss' ? 'page' : undefined} onClick={() => onNavigate('dlss')}>工作台</button>
-      <button aria-current={activeTab === 'deliver' ? 'page' : undefined} onClick={() => onNavigate('deliver')}>导出</button>
+      <button aria-current={activeTab === 'deliver'||activeTab==='image-deliver' ? 'page' : undefined} onClick={() => onNavigate(image?'image-deliver':'deliver')}>导出</button>
     </nav>
     <div className="header-actions">
       <button className="icon-button" onClick={onThemeChange} aria-label={theme === 'dark' ? '切换浅色模式' : '切换深色模式'} title={theme === 'dark' ? '浅色模式' : '深色模式'}>
         {theme === 'dark' ? <Sun size={19}/> : <Moon size={19}/>}
       </button>
       <button className="button quiet" onClick={importFile}><FolderOpen size={17}/>导入</button>
-      <button className="button primary" onClick={() => onNavigate('deliver')}>导出视频<ArrowUpRight size={17}/></button>
+      <button className="button primary" onClick={() => onNavigate(image?'image-deliver':'deliver')}>{image?'导出图片':'导出视频'}<ArrowUpRight size={17}/></button>
     </div>
   </header>
 }

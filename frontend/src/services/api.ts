@@ -2,6 +2,24 @@ import { SystemInfo, VideoInfo, DLSSSettings, RenderJob, QueueState, Environment
 
 const API_BASE = 'http://127.0.0.1:18923'
 
+export interface PreviewMemoryState {suspended:boolean;releasing:boolean;error?:string|null;report?:unknown}
+export async function previewMemory(action?:'release'|'resume'):Promise<PreviewMemoryState> {
+  const response=await fetch(`${API_BASE}/api/preview/memory${action?'/'+action:''}`,{
+    method:action?'POST':'GET',headers:authHeaders()})
+  const data=await response.json()
+  if(!response.ok)throw new Error(data.detail||'预览显存操作失败')
+  return data
+}
+
+export async function imageModelRequest(action='',body?:{key:string;path?:string}) {
+  const response=await fetch(`${API_BASE}/api/image/models${action}`,{
+    method:body?'POST':'GET',headers:authHeaders({'Content-Type':'application/json'}),
+    ...(body?{body:JSON.stringify(body)}:{})})
+  const data=await response.json()
+  if(!response.ok)throw new Error(data.detail||'图片模型操作失败')
+  return data
+}
+
 // Local-backend session token (P0-01): injected by Electron preload; plain
 // browser dev can set localStorage 'dlss_local_token' to match the backend.
 export function localToken(): string {
@@ -120,6 +138,26 @@ export async function loadVideoFile(path: string): Promise<VideoInfo> {
   }
   const data = await res.json()
   return data.video
+}
+
+export async function exportImage(request: {path:string;output_path:string;format:string;quality:number;preserve_alpha:boolean;overwrite:boolean}, settings:DLSSSettings): Promise<any> {
+  await saveSettings(settings)
+  const res=await fetch(`${API_BASE}/api/image/export`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify(request)})
+  const data=await res.json()
+  if(!res.ok)throw new Error(data.detail||'图片导出失败')
+  return data.image
+}
+
+export async function imageExportFormats():Promise<Record<string,boolean>> {
+  const res=await fetch(`${API_BASE}/api/image/formats`,{headers:authHeaders()})
+  if(!res.ok)throw new Error('无法检查图片编码器')
+  return (await res.json()).formats
+}
+
+export async function imageThumbnail(path:string,edge=720): Promise<Blob> {
+  const res=await fetch(`${API_BASE}/api/image/thumbnail?path=${encodeURIComponent(path)}&edge=${edge}`,{headers:authHeaders()})
+  if(!res.ok)throw new Error('无法读取图片缩略图')
+  return res.blob()
 }
 
 export async function fetchCurrentVideo(): Promise<VideoInfo | null> {

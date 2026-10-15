@@ -7,9 +7,9 @@
 
 **Windows x64** &nbsp; · &nbsp; **GPL-3.0-or-later**
 
-Lunarc 是一款视频增强软件，支持 DLSSNR、DLAA、RTX VSR、TrueHDR 和 NVIDIA VFG，可调整处理顺序、预览画面并批量导出。
+Lunarc 是一款视频与图片增强软件，支持 DLSSNR、DLAA、RTX VSR、TrueHDR、NVIDIA VFG，以及独立图片放大与导出工作流。
 
-[下载安装版](https://github.com/Yukikaze1945/Lunarc/releases/tag/v1.1.0-beta) &nbsp; / &nbsp; [安装说明](docs/installing.md) &nbsp; / &nbsp; [源码运行](docs/getting-started.md)
+[下载安装版](https://github.com/Yukikaze1945/Lunarc/releases/tag/v1.2.2) &nbsp; / &nbsp; [安装说明](docs/installing.md) &nbsp; / &nbsp; [源码运行](docs/getting-started.md)
 
 ## 01 / 界面
 
@@ -32,12 +32,12 @@ Lunarc 是一款视频增强软件，支持 DLSSNR、DLAA、RTX VSR、TrueHDR �
 | 色彩 | SDR 8-bit、SDR 10-bit 和 HDR10。HDR10 为实验性功能，支持保留静态 HDR 元数据。 |
 | TrueHDR | SDR 转 HDR10，可调整对比度、饱和度、中灰亮度和目标峰值，支持 AI 去色带；需要外部 NVIDIA 运行库。 |
 | 工作台 | 预设选择与保存、参数差异查看、可折叠卡片、区间导出和预渲染缓存。已完成且参数匹配的缓存区间显示绿条。 |
-| 素材与封装 | 拖入视频或图片；导出时保留音轨、字幕、章节、附件与元数据，具体取决于输出容器。 |
+| 素材与封装 | 拖入视频或图片；视频导出可保留音轨、字幕、章节、附件与元数据，具体取决于输出容器。图片支持独立处理和 PNG、JPEG、WebP、AVIF、HEIC 导出。 |
 | 运行库管理 | 下载、导入和切换 DLSSNR 版本，检查文件摘要、数字签名和版本。 |
 
 ## 03 / 安装
 
-1. 在 [Releases](https://github.com/Yukikaze1945/Lunarc/releases/tag/v1.1.0-beta) 下载并运行 `Lunarc-1.1.0-beta-x64-Setup.exe`，约 146.7 MB（139.9 MiB）。
+1. 在 [Releases](https://github.com/Yukikaze1945/Lunarc/releases/tag/v1.2.2) 下载并运行 `Lunarc-1.2.2-x64-Setup.exe`。
 2. 首次启动按提示安装基础运行环境和视频处理组件。
 3. 在 **运行与诊断 → DLSSNR 运行库** 中下载或导入运行库，再选择“使用”。
 

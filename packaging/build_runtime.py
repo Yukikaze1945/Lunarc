@@ -16,7 +16,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGES = ['numpy', 'opencv-python', 'torch', 'torchvision', 'fastapi', 'uvicorn', 'websockets',
-            'pydantic', 'Pillow', 'av']
+            'pydantic', 'Pillow', 'pillow-heif', 'av', 'spandrel', 'safetensors', 'einops']
 INVENTORY = r'''
 import importlib.metadata as m, json, sys, sysconfig
 from packaging.requirements import Requirement

@@ -16,12 +16,13 @@ import { FLOW_QUALITY_LABELS } from '../services/parameterHelp'
 import { QualityInspector } from '../components/QualityInspector'
 import { LayerNRControls } from '../components/LayerNRControls'
 import {useNativePreview} from '../services/useNativePreview'
+import {ImageViewport} from '../components/ImageViewport'
 import { RenderPipeline } from '../components/RenderPipeline'
 import {PresetPicker} from '../components/PresetPicker'
 import {CollapsibleSection} from '../components/CollapsibleSection'
-import { renderStages, vsrOutputSize } from '../services/renderPipeline'
+import { renderStages, hasScaleStages, vsrOutputSize } from '../services/renderPipeline'
 import { VideoInfo, DLSSSettings } from '../types'
-import { saveSettings, wsUrl, fetchFlowProviders, fetchJobDiagnostics } from '../services/api'
+import { saveSettings, wsUrl, fetchFlowProviders, fetchJobDiagnostics, previewMemory, type PreviewMemoryState } from '../services/api'
 import { subscribeQueue } from '../services/queue'
 import { resolveWorkingDims } from '../services/workingScale'
 import {
@@ -65,6 +66,9 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
   const [previewStats, setPreviewStats] = useState<any>(null)
   useEffect(()=>{publishPreviewMetrics(previewStats?{...previewStats,playing:isPlaying}:null)},[previewStats,isPlaying])
   const [previewPending, setPreviewPending] = useState(false)
+  const [memoryPaused,setMemoryPaused]=useState(false)
+  const [memoryBusy,setMemoryBusy]=useState(false)
+  const memoryPausedRef=useRef(false),memoryRevision=useRef(0)
   const [isDraggingSplit, setIsDraggingSplit] = useState<boolean>(false)
   const [isPanning, setIsPanning] = useState<boolean>(false)
   const [panStart, setPanStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
@@ -72,19 +76,34 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
   const canvasRef = useRef<HTMLDivElement>(null)
   const splitRef=useRef(splitX)
   const viewControls=useRef({view,zoom,pan});viewControls.current={view,zoom,pan}
-  const nativeVideo=Boolean(video&&!/\.(png|jpe?g|bmp|webp|tiff?)$/i.test(video.path))
+  const nativeVideo=Boolean(video&&!/\.(png|jpe?g|bmp|webp|tiff?|avif|heic|heif)$/i.test(video.path))
   const nativeRequired=Boolean(nativeVideo&&window.electronAPI?.getPreviewWindow)
   const nativePanel=useNativePreview(canvasRef,Boolean(nativeRequired&&isActive),view,zoom,pan)
   const nativeReadyRef=useRef(false);nativeReadyRef.current=nativePanel.ready&&view!=='flow'
   const nativeRequiredRef=useRef(false);nativeRequiredRef.current=nativeRequired&&view!=='flow'
   const renderScope=view==='flow'?'flow':nativeRequired?'native':'image'
-  const fullImagePreview=(!nativeRequired||view==='flow')&&(zoom>1||pixelPreview)
+  const fullImagePreview=video?.media_type!=='image'&&(!nativeRequired||view==='flow')&&(zoom>1||pixelPreview)
   const pendingNativeCommand=useRef<Record<string,unknown>|null>(null)
   const wsRef = useRef<WebSocket | null>(null)
   // P1-10: desired playback state, separate from what the socket confirmed.
   // Lets onopen (re)send play after drops instead of freezing on "playing".
   const wantPlayingRef = useRef<boolean>(false)
   const lastPlayRef = useRef<Record<string, unknown> | null>(null)
+  const applyMemoryState=useCallback((state:PreviewMemoryState)=>{
+    memoryRevision.current++
+    memoryPausedRef.current=state.suspended
+    setMemoryPaused(state.suspended);setMemoryBusy(state.releasing)
+    if(state.suspended){
+      wantPlayingRef.current=false;lastPlayRef.current=null
+      setIsPlaying(false);setPreviewPending(false);setPreviewStats(null)
+      setPlayerBusy(state.releasing?'正在结束当前帧并释放预览显存…':state.error||'预览已暂停，点击恢复预览重新加载模型')
+    }else setPlayerBusy('')
+  },[])
+  useEffect(()=>{
+    let active=true;const revision=memoryRevision.current
+    void previewMemory().then(state=>{if(active&&memoryRevision.current===revision)applyMemoryState(state)}).catch(()=>{})
+    return()=>{active=false}
+  },[applyMemoryState])
 
   // Optical flow hardware probe state
   const [flowProviders, setFlowProviders] = useState<any[]>([])
@@ -144,6 +163,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
   const lastSeekRef = useRef<Record<string, unknown> | null>(null)
   const displayedBlobRef = useRef('')
   const sendPlayer = useCallback((command: Record<string, unknown>) => {
+    if(memoryPausedRef.current&&command.action!=='pause')return
     if(!activeRef.current&&command.action!=='pause')return
     setPreviewPending(command.action !== 'pause')
     const bounds = canvasRef.current?.getBoundingClientRect()
@@ -151,9 +171,11 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
     const native=nativeRequiredRef.current
     const edge = pixelPreview || Number(command.zoom ?? controls.zoom) > 1 ? 0 : Math.max(512,
       Math.min(1920, Math.ceil(Math.max(bounds?.width || 1280, bounds?.height || 720) * devicePixelRatio)))
+    const imageSource=video?.media_type==='image'
     const payload = {...command, request_id: command.action === 'refresh' ? requestRevisionRef.current : ++requestRevisionRef.current,
       view:command.view??controls.view,
-      transport: native ? 'native' : 'binary', ack: true, display_edge: edge}
+      transport: native ? 'native' : 'binary', ack: true, display_edge: imageSource?0:edge,
+      ...(imageSource?{view:'dual',zoom:1,pan_x:.5,pan_y:.5}: {})}
     if (command.action === 'seek') lastSeekRef.current = payload
     if (command.action === 'play') lastPlayRef.current = payload
     if (command.action === 'pause') pendingNativeCommand.current=null
@@ -163,7 +185,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
       return
     }
     if (wsRef.current?.readyState === WebSocket.OPEN) wsRef.current.send(JSON.stringify(payload))
-  }, [fullImagePreview,nativePanel.ready,nativeRequired,view==='flow'])
+  }, [fullImagePreview,nativePanel.ready,nativeRequired,view==='flow',video?.media_type])
 
   useEffect(() => {
     let ws: WebSocket | null = null, stopped = false, header: any = null
@@ -175,7 +197,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
       ws = new WebSocket(wsUrl('player')); ws.binaryType = 'blob'; wsRef.current = ws
       const socket = ws
       const present = async (data: any, jpeg?: Blob) => {
-        if (data.request_id !== requestRevisionRef.current) return
+        if (memoryPausedRef.current || data.request_id !== requestRevisionRef.current) return
         const sequence = ++latestSequence, received = performance.now()
         const url = jpeg ? URL.createObjectURL(jpeg) : data.image
         const image = new Image(); image.src = url
@@ -186,7 +208,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
           return
         }
         const decoded = performance.now()
-        const stale = () => stopped || sequence !== latestSequence || data.request_id !== requestRevisionRef.current
+        const stale = () => stopped || memoryPausedRef.current || sequence !== latestSequence || data.request_id !== requestRevisionRef.current
         if (stale()) {if (jpeg) URL.revokeObjectURL(url); return}
         raf = requestAnimationFrame(() => {
           if (stale()) {if (jpeg) URL.revokeObjectURL(url); return}
@@ -216,6 +238,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
         })
       }
       ws.onopen = () => {
+        if(memoryPausedRef.current)return
         if(!activeRef.current)return
         if(nativeRequiredRef.current&&!nativeReadyRef.current)return
         if (wantPlayingRef.current && lastPlayRef.current) {
@@ -231,7 +254,11 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
         }
         try {
           const data = JSON.parse(event.data)
-          if (data.type === 'frame') {
+          if(data.type==='preview_memory'){
+            if(data.suspended){++latestSequence;header=null}
+            applyMemoryState(data)
+          } else if (data.type === 'frame') {
+            if(memoryPausedRef.current)return
             if(data.encoding==='native_fp16'){
               if(data.request_id!==requestRevisionRef.current)return
               ++latestSequence;const now=performance.now()
@@ -302,6 +329,31 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
     [video, sendPlayer]
   )
 
+  const handlePreviewMemory=async()=>{
+    memoryRevision.current++
+    const resume=memoryPausedRef.current
+    let serverBusy=false
+    setMemoryBusy(true);setPlayerError(null)
+    if(!resume){
+      memoryPausedRef.current=true;setMemoryPaused(true)
+      wantPlayingRef.current=false;lastPlayRef.current=null
+      setIsPlaying(false);setPreviewPending(false)
+      sendPlayer({action:'pause'})
+      setPlayerBusy('正在结束当前帧并释放预览显存…')
+      onStatusChange?.('正在释放预览显存；参数和模型文件会保留')
+    }
+    try{
+      const state=await previewMemory(resume?'resume':'release')
+      serverBusy=state.releasing
+      applyMemoryState(state)
+      if(resume){setPlayerBusy('正在重新加载预览模型…');requestFrame(currentFrameRef.current);onStatusChange?.('正在恢复预览')}
+      else onStatusChange?.('预览资源已释放；点击恢复预览重新加载模型')
+    }catch(error:any){
+      setPlayerError(error.message);onStatusChange?.(error.message)
+      try{const state=await previewMemory();serverBusy=state.releasing;applyMemoryState(state)}catch{}
+    }finally{setMemoryBusy(serverBusy)}
+  }
+
   useEffect(()=>{
     const restored=()=>{
       setPlayerError(null);setPreviewPending(false)
@@ -319,7 +371,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
     const pending = () => {
       settingsPendingRef.current = true
       settingsTimingRef.current = {inputAt:performance.now()}
-      setPlayerError(null); setPreviewPending(true)
+      setPlayerError(null); if(!memoryPausedRef.current)setPreviewPending(true)
     }
     const applied = (event: Event) => {
       const detail = (event as CustomEvent).detail
@@ -351,6 +403,8 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
     pendingNativeCommand.current=null
     setPreviewStats(null)
     setPreviewPending(false)
+    setZoom(1);setPan({x:.5,y:.5});setPixelPreview(false)
+    if(video?.media_type==='image')setView(current=>current==='flow'?'split':current)
   }, [video?.path])
 
   // The native window already holds both GPU pictures. View, wipe and pan
@@ -379,7 +433,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
   }, [video, isPlaying, requestFrame, renderScope, sendPlayer])
 
   useEffect(()=>{
-    if(!video||(nativeRequired&&view!=='flow'))return
+    if(!video||video.media_type==='image'||(nativeRequired&&view!=='flow'))return
     if(isPlaying)sendPlayer({action:'set_view',view,split_x:splitX,zoom,pan_x:pan.x,pan_y:pan.y})
     else requestFrame(currentFrameRef.current,view,splitX,zoom,pan)
   },[view,splitX,zoom,pan,nativeRequired])
@@ -387,7 +441,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
   // Play / Pause handling (P1-08 sends loop; P1-10 never claims playing
   // without an open socket — disconnected play becomes buffered intent)
   const togglePlay = () => {
-    if (!video) return
+    if (!video || video.media_type==='image') return
     const nextPlaying = !isPlaying
     wantPlayingRef.current = nextPlaying
 
@@ -606,7 +660,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
 
   // Split Wipe mouse drag
   const handleMouseDown = (e: React.PointerEvent<HTMLElement>) => {
-    if (nativeRequiredRef.current) return
+    if (nativeRequiredRef.current || video?.media_type==='image') return
     const rect=canvasRef.current?.getBoundingClientRect()
     if (view === 'split' && e.button === 0 && rect && Math.abs(e.clientX-rect.left-splitRef.current*rect.width)<18) {
       e.currentTarget.setPointerCapture(e.pointerId)
@@ -654,16 +708,17 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
         <div className="dlss-view-toolbar">
           <div className="dlss-view-modes" role="group" aria-label="预览视图">{([
             {id:'split',label:'对比'},{id:'dual',label:'双画面'},{id:'dlss',label:'增强'},{id:'orig',label:'原图'},{id:'flow',label:'光流'},
-          ] as const).map(item=><button key={item.id} type="button" aria-pressed={view===item.id} onClick={()=>setView(item.id)}>{item.label}</button>)}</div>
+          ] as const).filter(item=>video?.media_type!=='image'||item.id!=='flow').map(item=><button key={item.id} type="button" aria-pressed={view===item.id} onClick={()=>setView(item.id)}>{item.label}</button>)}</div>
           <div className="dlss-zoom-tools">
+            <button type="button" className="icon-button" disabled={!video||memoryBusy} onClick={()=>void handlePreviewMemory()} title={memoryPaused?'按当前参数重新加载预览模型':'暂停预览并释放模型、纹理和缓存；保留参数和模型文件'}>{memoryBusy?'处理中…':memoryPaused?'恢复预览':'释放预览显存'}</button>
             {nativeRequired&&<span className="native-preview-status">GPU 预览</span>}
             <select aria-label="预览缩放" value={pixelPreview?'native':zoom} onChange={e=>{if(e.target.value==='native')return;setPixelPreview(false);setZoom(Number(e.target.value));setPan({x:.5,y:.5})}}>
-              {pixelPreview&&<option value="native">原像素</option>}<option value={1}>适配</option><option value={.5}>缩小</option><option value={2}>放大 2×</option><option value={3}>放大 3×</option>
+              {pixelPreview&&<option value="native">原像素</option>}{![.5,1,2,3].includes(zoom)&&<option value={zoom}>{Math.round(zoom*100)}%</option>}<option value={1}>适配</option><option value={.5}>缩小</option><option value={2}>放大 2×</option><option value={3}>放大 3×</option>
             </select>
             <button type="button" className="icon-button" aria-label="按输出原始像素查看" title="按输出原始像素查看 VSR 细节" onClick={()=>{
               const bounds=canvasRef.current?.getBoundingClientRect()
               if (!video || !bounds) return
-              const size=view!=='orig'&&renderStages(settings).includes('vsr')?vsrOutputSize(settings,video):video
+              const size=view!=='orig'&&hasScaleStages(settings)?vsrOutputSize(settings,video):video
               setPixelPreview(true)
               setZoom(Math.max(1,size.width*(view==='dual'?2:1)/(bounds.width*devicePixelRatio),size.height/(bounds.height*devicePixelRatio)))
               setPan({x:.5,y:.5})
@@ -671,14 +726,14 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
             <button className="icon-button" title="全屏预览" aria-label="全屏预览" onClick={()=>{const action=document.fullscreenElement?document.exitFullscreen():canvasRef.current?.requestFullscreen();action?.catch(e=>onStatusChange?.(`无法全屏：${e.message}`))}}><Maximize size={17}/></button>
           </div>
         </div>
-        <section ref={canvasRef} className="dlss-monitor" aria-label="视频预览画布" title="实际处理层数和模式显示在画面中" onPointerDown={handleMouseDown} onPointerMove={handleMouseMove} onPointerUp={handleMouseUp} onPointerCancel={handleMouseUp} onContextMenu={event=>event.preventDefault()}>
+        <section ref={canvasRef} className="dlss-monitor" aria-label="视频预览画布" title={video?.media_type==='image'?'Alt＋滚轮缩放；左键拖动画面；滚轮上下移动':'实际处理层数和模式显示在画面中'} onPointerDown={handleMouseDown} onPointerMove={handleMouseMove} onPointerUp={handleMouseUp} onPointerCancel={handleMouseUp} onContextMenu={event=>event.preventDefault()}>
 
           {(playerError||nativePanel.error)&&<div className="dlss-player-error" role="alert"><AlertTriangle size={15}/><span>{playerError||nativePanel.error}</span><button type="button" aria-label="关闭错误" onClick={()=>setPlayerError(null)}>×</button></div>}
-          {nativeRequired&&view!=='flow'?<div className="dlss-empty-preview" aria-label="原生 GPU 显示区域">{!previewStats?.native_display&&<strong>{playerBusy||playerError||nativePanel.error||'正在准备原生预览…'}</strong>}</div>:activeFrameUrl?<img src={activeFrameUrl} alt="当前预览帧" className="dlss-preview-image" draggable={false}
-            onLoad={event=>setPreviewImageSize({width:event.currentTarget.naturalWidth,height:event.currentTarget.naturalHeight})}
+          {nativeRequired&&view!=='flow'?<div className="dlss-empty-preview" aria-label="原生 GPU 显示区域">{!previewStats?.native_display&&<strong>{playerBusy||playerError||nativePanel.error||'正在准备原生预览…'}</strong>}</div>:video?.media_type==='image'&&activeFrameUrl?<ImageViewport src={activeFrameUrl} paired view={view} zoom={zoom} onZoom={value=>{setPixelPreview(false);setZoom(value)}} pan={pan} onPan={setPan} split={splitX} onSplit={value=>{splitRef.current=value;setSplitX(value)}}/>:activeFrameUrl?<img src={activeFrameUrl} alt="当前预览帧" className="dlss-preview-image" draggable={false}
+            onLoad={event=>{setPreviewImageSize({width:event.currentTarget.naturalWidth,height:event.currentTarget.naturalHeight})}}
             style={pixelPreview&&previewImageSize?{width:previewImageSize.width/devicePixelRatio,height:previewImageSize.height/devicePixelRatio}:undefined}/>:<div className="dlss-empty-preview"><div className="empty-glyph"><span/><span/><span/></div><strong>{video?'正在准备预览…':'导入素材，开始重建。'}</strong></div>}
-          {zoom>1.01&&<div className="pan-hint"><Move size={13}/>右键拖动画布以查看细节</div>}
-          {!nativeRequired&&view==='split'&&activeFrameUrl&&<div className="split-marker" aria-hidden="true" style={{left:`${splitX*100}%`}}/>}
+          {zoom>1.01&&<div className="pan-hint"><Move size={13}/>{video?.media_type==='image'?'左键拖动画面 · 滚轮上下移动':'右键拖动画布以查看细节'}</div>}
+          {!nativeRequired&&video?.media_type!=='image'&&view==='split'&&activeFrameUrl&&<div className="split-marker" aria-hidden="true" style={{left:`${splitX*100}%`}}/>}
           {!nativePanel.ready&&(video?.is_hdr||settings.truehdr_enabled)&&<div className="preview-warning" title="当前预览将 HDR 映射到 SDR 显示，不改变 HDR 导出结果。"><AlertTriangle size={13}/>HDR → SDR 预览</div>}
           {previewPending && activeFrameUrl && <div className="preview-execution" role="status">更新预览…</div>}
           {!previewPending && previewStats?.layer_count && <div className="preview-execution" aria-label="预览实际执行" title={`实际尺寸 ${previewStats.preview_resolution?.join(' × ')} · 处理 ${Number(previewStats.processing_fps).toFixed(1)} FPS · 播放 ${Number(previewStats.presentation_fps||0).toFixed(1)} FPS · 跳过 ${previewStats.dropped_frames||0} 帧${previewStats.solver?` · GPU 融合 ${previewStats.solver.converged===false?'未收敛':'已执行'}`:''}`}>
@@ -695,16 +750,16 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
 
         </section>
         <div className="dlss-material"><strong title={video?.path}>{video?.filename||'未载入素材'}</strong><span>{video?`${video.width} × ${video.height} · ${video.is_hdr?'HDR10':'SDR'}`:''}</span></div>
-        <div className="dlss-transport">
+        {video?.media_type!=='image'&&<div className="dlss-transport">
           <SegmentTimeline video={video} settings={settings} currentFrame={currentFrame} onSeek={handleSeek} onSettingsChange={handleParamsBatchChange} onStatus={onStatusChange} onPause={()=>{wantPlayingRef.current=false;lastPlayRef.current=null;setIsPlaying(false);sendPlayer({action:"pause"})}}/>
           <div className="transport-buttons"><button type="button" aria-label="跳至首帧" onClick={()=>handleSeek(0)}><SkipBack size={16}/></button><button type="button" aria-label="后退一帧" onClick={()=>handleSeek(currentFrame-1)}>−1</button><button type="button" className="transport-play" onClick={togglePlay} aria-label={isPlaying?'暂停播放':'开始播放'}>{isPlaying?<Pause size={16}/>:<Play size={16} />}</button><button type="button" aria-label="前进一帧" onClick={()=>handleSeek(currentFrame+1)}>+1</button><button type="button" aria-label="跳至末帧" onClick={()=>handleSeek((video?.frames||1)-1)}><SkipForward size={16}/></button><button type="button" aria-pressed={loop} aria-label="循环播放" onClick={()=>setLoop(!loop)}><RotateCcw size={15}/></button></div>
           <div className="transport-meta">{video?`${video.fps||30} fps · ${video.duration_seconds.toFixed(2)} s`:'—'}</div>
-        </div>
+        </div>}
       </main>
       <QualityInspector settings={settings} onSettingsChange={onSettingsChange} onStatusChange={onStatusChange}
         primary={<>
           <PresetPicker settings={settings} onChange={handleParamsBatchChange} onStatus={onStatusChange}/>
-          <RenderPipeline settings={settings} onChange={handleParamsBatchChange}/>
+          <RenderPipeline image={video?.media_type==='image'} settings={settings} onChange={handleParamsBatchChange}/>
           {renderStages(settings).includes('nr')&&<>
           <CollapsibleSection title="DLSSNR 参数">
           {activeLayerCount(settings.reconstruction_mode || 'single') > 1 &&
@@ -720,10 +775,10 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
         basic={<div className="dlss-inspector-content">
           <section className="dlss-control-card"><h3>运行库</h3>
             <p className="dlss-note">默认自动查找本机运行库。留空即可。</p>
-            {(settings.truehdr_enabled||renderStages(settings).includes('vsr')||(settings.frame_generation && settings.frame_generation!=='off'))&&<label className="dlss-control-label">VFX 目录覆盖<input aria-label="VFX运行库目录" placeholder="自动查找" value={settings.vsr_runtime_path||''} onChange={e=>handleParamChange('vsr_runtime_path',e.target.value)}/></label>}
+            {(settings.truehdr_enabled||hasScaleStages(settings)||(settings.frame_generation && settings.frame_generation!=='off'))&&<label className="dlss-control-label">VFX 目录覆盖<input aria-label="VFX运行库目录" placeholder="自动查找" value={settings.vsr_runtime_path||''} onChange={e=>handleParamChange('vsr_runtime_path',e.target.value)}/></label>}
             {renderStages(settings).includes('dlaa')&&<label className="dlss-control-label">DLSS DLL 覆盖<input aria-label="DLSS DLL路径" placeholder="自动查找" value={settings.dlss_dll_path||''} onChange={e=>handleParamChange('dlss_dll_path',e.target.value)}/></label>}
             {renderStages(settings).includes('dlaa')&&<p className="dlss-note">DLAA 支持 SDR 8/10-bit 与 HDR10；视频输入的深度和抖动为零。</p>}
-            {renderStages(settings).includes('vsr')&&<p className="dlss-note">VSR 10-bit / HDR 使用 VFX 1.3 RGB10A2，运行库自动检测。</p>}
+            {hasScaleStages(settings)&&<p className="dlss-note">VSR 10-bit / HDR 使用 VFX 1.3 RGB10A2，运行库自动检测。</p>}
           </section>
           <section className="dlss-control-card"><div className="dlss-card-head"><div><h3>神经重建</h3></div></div>
             <label className="dlss-control-label">画面风格<select aria-label="画面风格" value={settings.style} onChange={e=>handleParamChange('style',Number(e.target.value))}><option value={0}>默认</option><option value={1}>自然</option><option value={2}>电影</option></select></label>

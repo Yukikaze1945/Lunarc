@@ -98,8 +98,10 @@ class RtxVsr:
 
     def close(self) -> None:
         if self._handle:
-            self._dll.rtx_vsr_close(self._handle)
-            self._handle = ctypes.c_void_p()
+            handle,self._handle=self._handle,ctypes.c_void_p()
+            self._dll.rtx_vsr_close(handle)
+            detail=self._dll.rtx_vsr_last_error()
+            if detail:raise self._error('close',-1)
 
     def __enter__(self) -> "RtxVsr":
         return self

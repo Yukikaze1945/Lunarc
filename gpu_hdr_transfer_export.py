@@ -2960,7 +2960,7 @@ def export_gpu_hdr_transfer(video, live, flow_provider, out_path, dims, frames,
     # whole chain is measured against.
     pipeline.assert_output_not_input(video, out_path)
     import native_effects
-    if 'vsr' in native_effects.stages(job_settings or {}):
+    if native_effects.has_stage(job_settings or {},'vsr'):
         from native_runtime_paths import wide_vfx_runtime
         wide_vfx_runtime((job_settings or {}).get('vsr_runtime_path'))
     intermediate = _reserve_intermediate(negotiation)

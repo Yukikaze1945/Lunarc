@@ -181,5 +181,6 @@ class FlowProvider:
             with self._torch_context():
                 torch.cuda.synchronize()
                 self.previous = self.output = self.input = None
+                self.model=None  # Immutable weights may still live in shared cache.
             _check(self.cuda.cuDevicePrimaryCtxRelease_v2(self.device_index), 'release Torch context retain')
             self.context = None

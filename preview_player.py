@@ -7,8 +7,20 @@ import asyncio
 import base64
 import json
 import time
+import weakref
 
 _render_gates = {}
+_players=weakref.WeakSet()
+
+def memory_state(service):
+    method=getattr(service,'preview_memory_state',None)
+    return method() if method else dict(suspended=bool(getattr(service,'_preview_suspended',False)),releasing=False,error=None)
+
+def notify_memory(service,pause=False):
+    for player in list(_players):
+        if player.service is not service or player.closed:continue
+        if pause:player.command(dict(action='pause',request_id=player.request_id))
+        player.memory_notice=memory_state(service);player.wake.set()
 
 
 def render_gate():
@@ -39,9 +51,15 @@ class PreviewPlayer:
         self.last_sent = None
         self.dropped = self.obsolete = 0
         self.accept_parameter_frames = False
+        self.memory_notice=memory_state(service) if getattr(service,'_preview_suspended',False) else None
+        _players.add(self)
 
     def command(self, cmd):
         action = cmd.get('action')
+        if action in ('play','seek','set_view','refresh') and getattr(self.service,'_preview_suspended',False):
+            self.revision+=1;self.playing=self.dirty=False
+            self.memory_notice=memory_state(self.service);self.wake.set()
+            return
         if action == 'refresh':
             # Parameter changes keep the same source/view scope and outstanding
             # presentation ACK. Finish current GPU work, show it, then apply latest.
@@ -95,6 +113,10 @@ class PreviewPlayer:
 
     async def run(self):
         while not self.closed:
+            if self.memory_notice is not None:
+                notice,self.memory_notice=self.memory_notice,None
+                await self._send(dict(type='preview_memory',**notice))
+                continue
             if not self.dirty and not self.playing or self.awaiting is not None:
                 self.wake.clear()
                 # A slow renderer must not build a websocket image queue. An
@@ -140,11 +162,11 @@ class PreviewPlayer:
                 except Exception as error:
                     data, message = None, str(error)
                 diagnostics = self.service.preview_diagnostics()
-            if message=='GPU_EXPORT_BUSY':
+            if message in ('GPU_EXPORT_BUSY','GPU_PREVIEW_RELEASED'):
                 if not self.closed and revision==self.revision:
                     self.playing=self.dirty=False
                     await self._send(dict(type='busy',request_id=request_id,
-                        message='正在导出，预览已暂停'))
+                        message='正在导出，预览已暂停' if message=='GPU_EXPORT_BUSY' else '预览显存已释放，请恢复预览'))
                 continue
             rendered_revision = diagnostics.get('settings_revision', service_revision)
             settings_current = rendered_revision == getattr(self.service, '_preview_revision', 0)

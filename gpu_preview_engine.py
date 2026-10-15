@@ -163,6 +163,8 @@ class GpuPreview:
         self.native_presenter = None
         self.native_display = False
         self.lifecycle_phase = 'idle'
+        self.memory_release_report=None
+        self.cold_memory_check=False
 
     def configure_native(self, layout):
         from native_preview import validate_layout
@@ -186,8 +188,50 @@ class GpuPreview:
         return self.executor.submit(self._render, video, dict(settings), int(frame_index),
                                     need_source, reuse_display, display_edge, flow_view, native).result()
 
+    def export_image(self, path, settings, output_path, fmt, quality, preserve_alpha, overwrite):
+        return self.executor.submit(self._export_image, path, dict(settings), output_path,
+                                    fmt, quality, preserve_alpha, overwrite).result()
+
+    def _export_image(self, path, settings, output_path, fmt, quality, preserve_alpha, overwrite):
+        from image_source import is_image, save_image
+        if not is_image(path):
+            raise ValueError('图片导出只接受图片素材')
+        self._image_export = True
+        try:
+            _, bgr, diagnostics = self._render(path, settings, 0, need_source=False,
+                                              reuse_display=False, display_edge=0, native=False)
+        finally:
+            self._image_export = False
+        result = save_image(path, cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB), output_path,
+                            fmt, quality, preserve_alpha, overwrite)
+        result['hdr_mapped_to_sdr'] = bool(diagnostics.get('output_hdr'))
+        result['diagnostics'] = diagnostics
+        return result
+
     def close(self):
         self.executor.submit(self._close).result()
+
+    def release_memory(self):
+        return self.executor.submit(self._release_memory).result()
+
+    def _release_memory(self,reason='manual',before=None):
+        import gc,sys
+        from preview_memory import sample
+        before=before if before is not None else sample(self.live)
+        self.lifecycle_phase='release preview memory'
+        self._close()  # A failing native release prevents new models from opening.
+        torch=sys.modules.get('torch')
+        if torch is not None and torch.cuda.is_initialized():
+            from torch_cuda_context import torch_primary_context
+            with torch_primary_context('cuda'):
+                self.raft_shared.clear();gc.collect()
+                torch.cuda.synchronize();torch.cuda.empty_cache()
+        else:self.raft_shared.clear();gc.collect()
+        self.cold_memory_check=True
+        self.memory_release_report=dict(reason=reason,before=before,after=sample(),
+            vendor_memory_scope='SDK allocation retirement cannot be measured completely')
+        self.diag=dict(status='released',memory_release=self.memory_release_report)
+        return self.memory_release_report
 
     def shutdown(self):
         self.close()
@@ -276,6 +320,9 @@ class GpuPreview:
         import native_effects
         native_effects.validate(settings, source)
         width, height = source['width'], source['height']
+        if getattr(self,'cold_memory_check',False):
+            from preview_memory import sample,check_cold_start
+            check_cold_start(sample(),settings,(width,height))
         process_w, process_h = native_effects.processing_size(settings, (width, height))
         self.multi = gtx.multi_scale_config(settings, process_w, process_h)
         uses_flow = gtx.guidance_requires_flow(settings)
@@ -375,9 +422,9 @@ class GpuPreview:
         if decoder_reuse:
             self.source_origin = decoder_reuse['origin']
         else:
-            raw = subprocess.check_output([pipeline._bundle_ffprobe(), '-v', 'error',
+            raw = (b'{"frames": []}' if source.get('media_type') == 'image' else subprocess.check_output([pipeline._bundle_ffprobe(), '-v', 'error',
                 '-select_streams', 'v:0', '-read_intervals', '%+#1', '-show_frames',
-                '-show_entries', 'frame=best_effort_timestamp_time', '-of', 'json', video])
+                '-show_entries', 'frame=best_effort_timestamp_time', '-of', 'json', video]))
             frames = json.loads(raw).get('frames', [])
             self.source_origin = float(frames[0]['best_effort_timestamp_time']) if frames else 0.0
         self.fps = negotiation['fps'][0] / negotiation['fps'][1]
@@ -427,14 +474,23 @@ class GpuPreview:
         strength_hot = len(inline.multi['scales'] if inline else self.multi['scales']) == 1
         solver_keys = {'layer_weights', 'fusion_beta', 'fusion_max_iterations',
                        'fusion_relative_tolerance'} if not strength_hot else set()
+        instance_hot=False
+        if 'render_stage_options' in changed:
+            before=self.active_settings.get('render_stage_options',{});after=settings.get('render_stage_options',{})
+            changed_instances={key for key in before.keys()|after.keys() if before.get(key)!=after.get(key)}
+            hot_keys={'vsr_mode','vsr_quality','vsr_strength'}
+            instance_hot=bool(changed_instances) and all(native_effects.stage_kind(key)=='vsr' and
+                {name for name in before.get(key,{}).keys()|after.get(key,{}).keys()
+                 if before.get(key,{}).get(name)!=after.get(key,{}).get(name)}<=hot_keys for key in changed_instances)
         allowed = runtime | {'residual_strength', 'dlaa_preset', 'vsr_mode', 'vsr_quality', 'vsr_strength'} | solver_keys
+        if instance_hot:allowed.add('render_stage_options')
         if strength_hot and getattr(self.chain, 'sdr10', False):
             allowed.add('residual_pyramid')
         if not changed <= allowed:
             return False
         if 'dlaa_preset' in changed and not native_effects.update_dlaa_model(self.chain, settings):
             return False
-        if changed & {'vsr_mode', 'vsr_quality', 'vsr_strength'} and not native_effects.update_vsr_options(self.chain, settings):
+        if (instance_hot or changed & {'vsr_mode', 'vsr_quality', 'vsr_strength'}) and not native_effects.update_vsr_options(self.chain, settings):
             return False
         self.runtime_changed_keys = changed
         from post_control import controls_from_settings
@@ -525,6 +581,32 @@ class GpuPreview:
         if self.native_display:
             return self._native_candidate(candidate,frame)
         mark = time.perf_counter()
+        if candidate.get('output_hdr') and getattr(self, '_image_export', False):
+            from hdr_display_mapping import hdr_to_sdr_linear
+            image = np.empty((candidate['height'],candidate['width'],4),np.float16)
+            cuda = C.WinDLL('nvcuda.dll')
+            cuda.cuMemcpy2D_v2.argtypes = [C.POINTER(_Copy2D)]
+            cuda.cuCtxPushCurrent_v2.argtypes = [C.c_void_p]
+            cuda.cuCtxPopCurrent_v2.argtypes = [C.POINTER(C.c_void_p)]
+            code = cuda.cuCtxPushCurrent_v2(candidate['cuda_context'])
+            if code:
+                raise RuntimeError(f'图片 HDR 回读上下文失败：{code}')
+            try:
+                copy = _Copy2D(srcMemoryType=2,srcDevice=candidate['device_ptr'],srcPitch=candidate['pitch_bytes'],
+                    dstMemoryType=1,dstHost=image.ctypes.data,dstPitch=image.strides[0],
+                    WidthInBytes=image.strides[0],Height=image.shape[0])
+                code = cuda.cuMemcpy2D_v2(C.byref(copy))
+                if code:
+                    raise RuntimeError(f'图片 HDR 回读失败：{code}')
+            finally:
+                popped = C.c_void_p()
+                cuda.cuCtxPopCurrent_v2(C.byref(popped))
+            rgb = np.clip(hdr_to_sdr_linear(image[:,:,:3].astype(np.float32)),0,1)
+            encoded = np.where(rgb<=.0031308,12.92*rgb,1.055*np.power(rgb,1/2.4)-.055)
+            self.result_bgr = np.ascontiguousarray(np.rint(encoded[:,:,::-1]*255),dtype=np.uint8)
+            self.display_bytes += image.nbytes
+            self.processed_display_ms = (time.perf_counter()-mark)*1000
+            return
         if candidate.get('output_hdr'):
             self.result_bgr = self._viewport('processed',candidate,candidate['d3d12_device'],True,
                                             edge=self.display_edge or max(candidate['width'],candidate['height']))
@@ -632,13 +714,22 @@ class GpuPreview:
 
     def _render(self, video, settings, index, need_source=True, reuse_display=False, display_edge=0, flow_view=False, native=False):
         settings = native_effects.execution_settings(settings)
+        from image_source import is_image
+        if is_image(video):
+            if flow_view:
+                raise ValueError('静态图片没有帧间光流')
+            index = 0
+            settings = dict(settings, guidance_mode=0,
+                temporal_controls={'scene_detection':False, 'mode':'off'})
         if index < 0:
             raise ValueError('preview frame must be nonnegative')
         settings = {key:value for key,value in settings.items() if key not in (
             'frame_generation','frame_multiplier','framegen_quality','framegen_target_fps','framegen_scene_detection')}
         ordered = settings.get('render_pipeline')
-        if ordered and any(stage != 'vfg' for stage in ordered):
+        if ordered and (is_image(video) or any(stage != 'vfg' for stage in ordered)):
             settings['render_pipeline'] = [stage for stage in ordered if stage != 'vfg']
+            if not settings['render_pipeline']:
+                settings['_pipeline_bypass'] = True
         # Preview always uses this device pipeline; export routing is not an image
         # parameter and must not rebuild its decoder or model sessions.
         settings['export_backend'] = 'gpu_transfer'
@@ -649,7 +740,8 @@ class GpuPreview:
         key = (os.path.realpath(video), os.stat(video).st_mtime_ns,
                json.dumps(settings, sort_keys=True, default=str),
                __import__('dlssnr_runtime').selection_key()
-               if 'nr' in __import__('native_effects').stages(settings) else None)
+               if 'nr' in __import__('native_effects').stages(settings) else None,
+               __import__('image_model_store').selection_key(settings))
         start = time.perf_counter()
         self.frame_readback_ms = self.processed_display_ms = 0.0
         self.display_edge = max(0, int(display_edge))
@@ -662,6 +754,13 @@ class GpuPreview:
             self.post_only_update = False
             if key != self.key:
                 same_source = self.key is not None and self.key[:2] == key[:2] and self.key[3:] == key[3:]
+                from preview_memory import sample,pressured,model_changed
+                if self.live is not None and self.active_settings is not None and (
+                        model_changed(self.active_settings,settings) or not same_source):
+                    memory=sample(self.live)
+                    if pressured(memory):
+                        self._release_memory('memory_pressure_model_switch',memory)
+                        same_source=False
                 self.lifecycle_phase = 'update live options'
                 runtime_changed = same_source and self._update_runtime(settings)
                 if not runtime_changed:
@@ -677,6 +776,7 @@ class GpuPreview:
                         self._open(video, settings)
                 self.key = key
                 self.active_settings = dict(settings)
+                self.cold_memory_check=False
             self.lifecycle_phase = 'render frame'
             setup_ms = (time.perf_counter() - setup) * 1000
             if (reuse_display and self.cached_display is not None and self.last_index == index
@@ -799,6 +899,11 @@ class GpuPreview:
             flow_readback_bytes = 0
             if flow_view:
                 self.result_bgr, flow_readback_bytes = self._flow_bgr(outcome.get('flow'))
+            if self.source.get('media_type') == 'image':
+                from image_source import output_pixels
+                self.result_bgr = output_pixels(self.result_bgr, self.source, settings)
+                if source_bgr is not None:
+                    source_bgr = output_pixels(source_bgr, self.source, {'render_pipeline':['nr']})
             self.last_index = index
             elapsed = time.perf_counter() - start
             layers = (self.chain.layer_diagnostics() if hasattr(self.chain, 'layer_diagnostics')
@@ -873,6 +978,10 @@ class GpuPreview:
                     fusion_mode_requested=inline.multi['fusion'],
                     fusion_mode_actual=(report['frame_report'] or {}).get('fusion_mode_actual', 'hdr_nr_after_truehdr'))
             self.diag['render_pipeline'] = native_effects.stages(settings)
+            if self.source.get('media_type') == 'image':
+                self.diag['image_source'] = dict(format='rgba8_cuda',
+                    host_upload_bytes=self.chain.image_decoder.host_upload_bytes,
+                    frames=1, guidance='zero_motion', temporal='off')
             from gpu_memory import capture
             self.diag['gpu_memory'] = capture(self, self.live, phase='preview', preview_cache=self.post_cache)
             if getattr(self.chain, 'scene_observer', None):
@@ -893,6 +1002,7 @@ class GpuPreview:
                 values = getattr(temporal, name, None)
                 if values is not None and len(values) > 16:
                     del values[:-16]
+            if self.memory_release_report is not None:self.diag['memory_release']=self.memory_release_report
             self.cached_display = source_bgr, self.result_bgr, dict(self.diag)
             self.cached_edge = self.display_edge
             self.cached_flow_view = flow_view

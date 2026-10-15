@@ -373,9 +373,9 @@ ipcMain.handle('dialog:openFile', async () => {
     title: '选择导入素材 (视频 / 图像)',
     properties: ['openFile'],
     filters: [
-      { name: 'Media Files', extensions: ['mp4', 'mkv', 'mov', 'avi', 'wmv', 'flv', 'webm', 'm4v', 'mpg', 'mpeg', 'ts', 'mts', 'm2ts', 'png', 'jpg', 'jpeg', 'bmp', 'webp', 'tif', 'tiff'] },
+      { name: 'Media Files', extensions: ['mp4', 'mkv', 'mov', 'avi', 'wmv', 'flv', 'webm', 'm4v', 'mpg', 'mpeg', 'ts', 'mts', 'm2ts', 'png', 'jpg', 'jpeg', 'bmp', 'webp', 'tif', 'tiff', 'avif', 'heic', 'heif'] },
       { name: 'Video Files', extensions: ['mp4', 'mkv', 'mov', 'avi', 'wmv', 'flv', 'webm', 'm4v', 'mpg', 'mpeg', 'ts', 'mts', 'm2ts'] },
-      { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'bmp', 'webp', 'tif', 'tiff'] },
+      { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'bmp', 'webp', 'tif', 'tiff', 'avif', 'heic', 'heif'] },
       { name: 'All Files', extensions: ['*'] },
     ],
   })
