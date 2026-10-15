@@ -1,3 +1,5 @@
+// localized-render-sinks
+import {ui} from '../i18n/locale'
 import {useEffect,useRef,useState,type PointerEvent} from 'react'
 import {useImageWheel,wheelZoom} from '../services/useImageWheel'
 
@@ -69,8 +71,8 @@ export function ImageViewport({src,paired=false,view='dlss',zoom,onZoom,pan,onPa
     drag.current=null
     if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId)
   }
-  return <div ref={box} className="image-viewport" aria-label="图片预览画布"
-    title="Alt＋滚轮缩放；左键拖动画面；滚轮上下移动；双击恢复适配"
+  return <div ref={box} className="image-viewport" aria-label={ui("图片预览画布")}
+    title={ui("Alt＋滚轮缩放；左键拖动画面；滚轮上下移动；双击恢复适配")}
     onDoubleClick={()=>{onZoom(1);onPan({x:.5,y:.5})}}
     onPointerDown={event=>{
       if(event.button!==0)return
@@ -87,6 +89,6 @@ export function ImageViewport({src,paired=false,view='dlss',zoom,onZoom,pan,onPa
       previous.x=event.clientX;previous.y=event.clientY
     }} onPointerUp={finish} onPointerCancel={finish} onLostPointerCapture={()=>{drag.current=null}}>
     <canvas ref={canvas}/>
-    {paired&&view==='split'&&<div className="split-marker" aria-hidden="true" style={{left:`${split*100}%`}}/>}
+    {ui(paired&&view==='split'&&<div className="split-marker" aria-hidden="true" style={{left:`${split*100}%`}}/>)}
   </div>
 }

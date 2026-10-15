@@ -250,6 +250,8 @@ export interface EnvironmentReport {checked_at: number; checks: EnvironmentCheck
 declare global {
   interface Window {
     electronAPI?: {
+      getLanguage?: () => Promise<unknown>
+      setLanguage?: (locale: import('../i18n/translate').Locale) => Promise<void>
       openRuntimeDialog?: () => Promise<string | null>
       openRuntimeDirDialog?: () => Promise<string | null>
       openFileDialog: () => Promise<string | null>

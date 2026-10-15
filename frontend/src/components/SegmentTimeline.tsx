@@ -1,3 +1,5 @@
+// localized-render-sinks
+import {ui} from '../i18n/locale'
 import {useEffect,useMemo,useRef,useState} from 'react'
 import {Range} from 'react-range'
 import type {DLSSSettings,VideoInfo} from '../types'
@@ -93,32 +95,32 @@ export function SegmentTimeline({video,settings,currentFrame,onSeek,onSettingsCh
     onSeek(frame-1)
   }
   return <div className="segment-timeline">
-    <div className="transport-scrub"><span>{String(video?currentFrame+1:0).padStart(3,'0')}</span>
+    <div className="transport-scrub"><span>{ui(String(video?currentFrame+1:0).padStart(3,'0'))}</span>
       <Range min={0} max={Math.max(1,total-1)} step={1} values={[Math.max(0,Math.min(total-1,currentFrame))]}
         disabled={!videoSource} onChange={values=>onSeek(values[0])}
-        renderTrack={({props,children})=><div {...props} className="segment-playhead-track">{ready.map(record=><button key={record.key} type="button" className="segment-cached" title={`已预渲染 ${record.frame_range.start_frame+1}–${record.frame_range.end_frame} 帧；点击回看`}
+        renderTrack={({props,children})=><div {...props} className="segment-playhead-track">{ui(ready.map(record=><button key={record.key} type="button" className="segment-cached" title={ui(`已预渲染 ${record.frame_range.start_frame+1}–${record.frame_range.end_frame} 帧；点击回看`)}
           style={{left:`${record.frame_range.start_frame/total*100}%`,width:`${(record.frame_range.end_frame-record.frame_range.start_frame)/total*100}%`}}
-          onMouseDown={e=>e.stopPropagation()} onTouchStart={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();play(record)}}/>)}{children}</div>}
-        renderThumb={({props})=>{const {key,...rest}=props;return <div key={key} {...rest} aria-label="时间轴帧位置" className="segment-playhead"/>}}/>
-      <span>{String(video?.frames||0).padStart(3,'0')}</span>
+          onMouseDown={e=>e.stopPropagation()} onTouchStart={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();play(record)}}/>))}{ui(children)}</div>}
+        renderThumb={({props})=>{const {key,...rest}=props;return <div key={key} {...rest} aria-label={ui("时间轴帧位置")} className="segment-playhead"/>}}/>
+      <span>{ui(String(video?.frames||0).padStart(3,'0'))}</span>
     </div>
-    {videoSource&&<>
-      <div className="segment-actions"><label><input type="checkbox" checked={range.enabled} onChange={e=>enable(e.target.checked)}/>选区导出</label>
-        {range.enabled&&<><span>{time(range.start_frame,fps)}–{time(range.end_frame,fps)} · {range.end_frame-range.start_frame} 帧</span>
-          <button type="button" disabled={submitting||!!pending||settings.export_backend!=='gpu_transfer'} onClick={render}>{submitting?'正在提交…':pending?`预渲染 ${current!.progress.toFixed(0)}%`:'预渲染选区'}</button>
-          {current?.ready&&<button type="button" onClick={()=>play(current)}>回看结果</button>}
-          {pending&&<button type="button" onClick={()=>window.dispatchEvent(new CustomEvent('lunarc:open-deliver'))}>查看任务</button>}
-        </>}
+    {ui(videoSource&&<>
+      <div className="segment-actions"><label><input type="checkbox" checked={range.enabled} onChange={e=>enable(e.target.checked)}/>{ui("选区导出")}</label>
+        {ui(range.enabled&&<><span>{ui(time(range.start_frame,fps))}–{ui(time(range.end_frame,fps))} · {ui(range.end_frame-range.start_frame)}{ui(" 帧")}</span>
+          <button type="button" disabled={submitting||!!pending||settings.export_backend!=='gpu_transfer'} onClick={render}>{ui(submitting?'正在提交…':pending?`预渲染 ${current!.progress.toFixed(0)}%`:'预渲染选区')}</button>
+          {ui(current?.ready&&<button type="button" onClick={()=>play(current)}>{ui("回看结果")}</button>)}
+          {ui(pending&&<button type="button" onClick={()=>window.dispatchEvent(new CustomEvent('lunarc:open-deliver'))}>{ui("查看任务")}</button>)}
+        </>)}
       </div>
-      {range.enabled&&<div className="segment-selection">
-        <label>起始帧<input type="number" min={1} max={total} value={startDraft??range.start_frame+1} onChange={e=>setStartDraft(e.target.value)} onBlur={()=>commit('start')} onKeyDown={e=>{if(e.key==='Enter'){e.currentTarget.blur()}}}/></label>
+      {ui(range.enabled&&<div className="segment-selection">
+        <label>{ui("起始帧")}<input type="number" min={1} max={total} value={startDraft??range.start_frame+1} onChange={e=>setStartDraft(e.target.value)} onBlur={()=>commit('start')} onKeyDown={e=>{if(e.key==='Enter'){e.currentTarget.blur()}}}/></label>
         <Range min={0} max={total} step={1} values={[range.start_frame,range.end_frame]} onChange={updateValues}
           onFinalChange={values=>onSeek(selectionHead.current===0?values[0]:values[1]-1)}
-          renderTrack={({props,children})=><div {...props} className="segment-range-track"><div className="segment-range-fill" style={{left:`${range.start_frame/total*100}%`,width:`${(range.end_frame-range.start_frame)/total*100}%`}}/>{children}</div>}
-          renderThumb={({props,index})=>{const {key,...rest}=props;return <div key={key} {...rest} onFocus={()=>{selectionHead.current=index?1:0;onSeek(index?range.end_frame-1:range.start_frame)}} aria-label={index?'选区结束帧':'选区起始帧'} className="segment-range-handle"/>}}/>
-        <label>结束帧<input type="number" min={1} max={total} value={endDraft??range.end_frame} onChange={e=>setEndDraft(e.target.value)} onBlur={()=>commit('end')} onKeyDown={e=>{if(e.key==='Enter'){e.currentTarget.blur()}}}/></label>
-      </div>}
-      {(error||current?.status==='failed')&&<p className="segment-error" role="alert">{error||current?.error}</p>}
-    </>}
+          renderTrack={({props,children})=><div {...props} className="segment-range-track"><div className="segment-range-fill" style={{left:`${range.start_frame/total*100}%`,width:`${(range.end_frame-range.start_frame)/total*100}%`}}/>{ui(children)}</div>}
+          renderThumb={({props,index})=>{const {key,...rest}=props;return <div key={key} {...rest} onFocus={()=>{selectionHead.current=index?1:0;onSeek(index?range.end_frame-1:range.start_frame)}} aria-label={ui(index?'选区结束帧':'选区起始帧')} className="segment-range-handle"/>}}/>
+        <label>{ui("结束帧")}<input type="number" min={1} max={total} value={endDraft??range.end_frame} onChange={e=>setEndDraft(e.target.value)} onBlur={()=>commit('end')} onKeyDown={e=>{if(e.key==='Enter'){e.currentTarget.blur()}}}/></label>
+      </div>)}
+      {ui((error||current?.status==='failed')&&<p className="segment-error" role="alert">{ui(error||current?.error)}</p>)}
+    </>)}
   </div>
 }

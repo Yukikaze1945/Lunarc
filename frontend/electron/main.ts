@@ -5,6 +5,7 @@ import http from 'node:http'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { spawn, execFileSync, ChildProcess } from 'node:child_process'
 import fs from 'node:fs'
+import {isLocale, translateText, type Locale} from '../src/i18n/translate'
 import {runtimeCandidates, runtimeDirectory, runtimeFingerprint, runtimeEnvironment, probeRuntime, type BackendStartup} from './backendRuntime'
 import {AppUpdates} from './appUpdates'
 import {ComponentManager} from './componentManager'
@@ -44,6 +45,20 @@ try {
 }
 
 let win: BrowserWindow | null = null
+let language: Locale = 'zh-CN'
+try {
+  const saved = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'ui-language.json'), 'utf8'))
+  if (isLocale(saved.language)) language = saved.language
+} catch { /* Use Chinese when no valid UI preference exists. */ }
+const nativeText = (text: string) => translateText(text, language)
+ipcMain.handle('ui:language:get', event =>
+  event.sender === win?.webContents && event.senderFrame === win?.webContents.mainFrame ? language : null)
+ipcMain.handle('ui:language:set', (event, value: unknown) => {
+  if (event.sender !== win?.webContents || event.senderFrame !== win?.webContents.mainFrame || !isLocale(value)) return
+  language = value
+  fs.mkdirSync(app.getPath('userData'), {recursive: true})
+  fs.writeFileSync(path.join(app.getPath('userData'), 'ui-language.json'), JSON.stringify({language}), 'utf8')
+})
 let updates: AppUpdates | null = null
 function appUpdates() {
   if (!updates) updates = new AppUpdates(app.getVersion(), app.isPackaged, path.join(app.getPath('userData'), 'updates'), state => {
@@ -352,7 +367,7 @@ ipcMain.handle('preview:window', event => {
 ipcMain.handle('dialog:openRuntime', async event => {
   if (!win || event.sender !== win.webContents) return null
   const result = await dialog.showOpenDialog(win, {
-    title: '导入 DLSSNR 运行库', properties: ['openFile'],
+    title: nativeText('导入 DLSSNR 运行库'), properties: ['openFile'],
     filters: [{name: 'DLSSNR DLL / ZIP', extensions: ['dll', 'zip']}],
   })
   return result.canceled ? null : result.filePaths[0] || null
@@ -360,7 +375,7 @@ ipcMain.handle('dialog:openRuntime', async event => {
 ipcMain.handle('dialog:openRuntimeDirectory', async event => {
   if (!win || event.sender !== win.webContents) return null
   const result = await dialog.showOpenDialog(win, {
-    title: '选择 DLSSNR 来源目录', properties: ['openDirectory'],
+    title: nativeText('选择 DLSSNR 来源目录'), properties: ['openDirectory'],
   })
   return result.canceled ? null : result.filePaths[0] || null
 })
@@ -370,13 +385,13 @@ ipcMain.handle('dialog:openFile', async () => {
   }
   if (!win) return null
   const result = await dialog.showOpenDialog(win, {
-    title: '选择导入素材 (视频 / 图像)',
+    title: nativeText('选择导入素材 (视频 / 图像)'),
     properties: ['openFile'],
     filters: [
-      { name: 'Media Files', extensions: ['mp4', 'mkv', 'mov', 'avi', 'wmv', 'flv', 'webm', 'm4v', 'mpg', 'mpeg', 'ts', 'mts', 'm2ts', 'png', 'jpg', 'jpeg', 'bmp', 'webp', 'tif', 'tiff', 'avif', 'heic', 'heif'] },
-      { name: 'Video Files', extensions: ['mp4', 'mkv', 'mov', 'avi', 'wmv', 'flv', 'webm', 'm4v', 'mpg', 'mpeg', 'ts', 'mts', 'm2ts'] },
-      { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'bmp', 'webp', 'tif', 'tiff', 'avif', 'heic', 'heif'] },
-      { name: 'All Files', extensions: ['*'] },
+      { name: nativeText('Media Files'), extensions: ['mp4', 'mkv', 'mov', 'avi', 'wmv', 'flv', 'webm', 'm4v', 'mpg', 'mpeg', 'ts', 'mts', 'm2ts', 'png', 'jpg', 'jpeg', 'bmp', 'webp', 'tif', 'tiff', 'avif', 'heic', 'heif'] },
+      { name: nativeText('Video Files'), extensions: ['mp4', 'mkv', 'mov', 'avi', 'wmv', 'flv', 'webm', 'm4v', 'mpg', 'mpeg', 'ts', 'mts', 'm2ts'] },
+      { name: nativeText('Images'), extensions: ['png', 'jpg', 'jpeg', 'bmp', 'webp', 'tif', 'tiff', 'avif', 'heic', 'heif'] },
+      { name: nativeText('All Files'), extensions: ['*'] },
     ],
   })
   if (result.canceled || result.filePaths.length === 0) return null
@@ -389,7 +404,7 @@ ipcMain.handle('dialog:openDirectory', async () => {
   }
   if (!win) return null
   const result = await dialog.showOpenDialog(win, {
-    title: '选择导出保存目录',
+    title: nativeText('选择导出保存目录'),
     properties: ['openDirectory', 'createDirectory'],
   })
   if (result.canceled || result.filePaths.length === 0) return null

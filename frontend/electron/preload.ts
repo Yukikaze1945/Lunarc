@@ -1,6 +1,8 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  getLanguage: () => ipcRenderer.invoke('ui:language:get'),
+  setLanguage: (locale: string) => ipcRenderer.invoke('ui:language:set', locale),
   openRuntimeDialog: () => ipcRenderer.invoke('dialog:openRuntime'),
   openRuntimeDirDialog: () => ipcRenderer.invoke('dialog:openRuntimeDirectory'),
   openFileDialog: () => ipcRenderer.invoke('dialog:openFile'),

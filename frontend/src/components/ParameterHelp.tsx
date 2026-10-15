@@ -1,3 +1,5 @@
+// localized-render-sinks
+import {ui} from '../i18n/locale'
 import { CircleHelp } from 'lucide-react'
 import {useEffect, useId, useRef, useState} from 'react'
 import {createPortal} from 'react-dom'
@@ -23,10 +25,10 @@ export function ParameterHelp({ name, label }: { name: string; label: string }) 
   if (!help) return null
   return <span className="parameter-help" onClick={event => event.stopPropagation()}
     onMouseEnter={show} onMouseLeave={()=>setPosition(null)}>
-    <button ref={button} type="button" aria-label={`${label}说明`} aria-describedby={position?id:undefined}
+    <button ref={button} type="button" aria-label={ui(`${ui(label)}说明`)} aria-describedby={position?id:undefined}
       onFocus={show} onBlur={()=>setPosition(null)} onClick={show} onKeyDown={event=>{if(event.key==='Escape')setPosition(null)}}>
       <CircleHelp size={13} aria-hidden="true" />
     </button>
-    {position && createPortal(<span id={id} className="parameter-tooltip" role="tooltip" style={position}>{help}</span>,document.body)}
+    {ui(position && createPortal(<span id={id} className="parameter-tooltip" role="tooltip" style={position}>{ui(help)}</span>,document.body))}
   </span>
 }

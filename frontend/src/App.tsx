@@ -1,3 +1,5 @@
+// localized-render-sinks
+import {ui} from './i18n/locale'
 import {useCallback, useEffect, useRef, useState, useSyncExternalStore, type DragEvent} from 'react'
 import {Home, Layers3, Film, Image as ImageIcon, Activity, Bookmark, Settings2, Info, Aperture, ArrowLeftRight, BookOpen} from 'lucide-react'
 import {Header} from './components/Header'
@@ -16,6 +18,7 @@ import './App.css'
 import {RuntimeGate} from './components/RuntimeGate'
 import {Guide} from './components/Guide'
 import {droppedMediaPath} from './services/mediaDrop'
+import {useLocale} from './i18n/locale'
 const NAV: {id:TabType;label:string;icon:typeof Home}[] = [
   {id:'home',label:'首页',icon:Home},
   {id:'dlss',label:'重建工作台',icon:Layers3},
@@ -129,17 +132,17 @@ function WorkspaceApp() {
     onDragOver={event=>{if(hasFiles(event)){event.preventDefault();event.dataTransfer.dropEffect='copy'}}}
     onDragLeave={event=>{if(hasFiles(event)){event.preventDefault();dragDepth.current=Math.max(0,dragDepth.current-1);if(!dragDepth.current)setDragging(false)}}}
     onDrop={dropMedia}>
-    {dragging&&<div className="media-drop-overlay" role="status"><span>松开以载入素材</span></div>}
-    <aside className="navigation"><div className="rail-mark" aria-hidden="true"><Aperture size={23}/></div><nav aria-label="主导航">{NAV.map(n=><button key={n.id} aria-label={n.label} title={n.label} className={activeTab===n.id?'active':''} onClick={()=>setActiveTab(n.id)} aria-current={activeTab===n.id?'page':undefined}><n.icon size={20}/></button>)}</nav></aside>
+    {ui(dragging&&<div className="media-drop-overlay" role="status"><span>{ui("松开以载入素材")}</span></div>)}
+    <aside className="navigation"><div className="rail-mark" aria-hidden="true"><Aperture size={23}/></div><nav aria-label={ui("主导航")}>{ui(NAV.map(n=><button key={n.id} aria-label={ui(n.label)} title={ui(n.label)} className={activeTab===n.id?'active':''} onClick={()=>setActiveTab(n.id)} aria-current={activeTab===n.id?'page':undefined}><n.icon size={20}/></button>))}</nav></aside>
     <div className="app-content"><Header activeTab={activeTab} onNavigate={setActiveTab} theme={theme} onThemeChange={()=>setTheme(t=>t==='dark'?'light':'dark')} onFileLoaded={importFile} onError={setStatusText} image={video?.media_type==='image'}/><main className="page-host">
       <div className={`mounted-page ${activeTab==='dlss'?'':'hidden'}`}><DLSSPage video={video} settings={settings} onSettingsChange={updateSettings} currentFrame={currentFrame} setCurrentFrame={setCurrentFrame} onStatusChange={setStatusText} isActive={ready&&activeTab==='dlss'}/></div>
       <div className={`mounted-page ${activeTab==='deliver'?'':'hidden'}`}><DeliverPage video={video?.media_type==='image'?null:video} settings={settings} onSettingsChange={updateSettings} onStatusChange={setStatusText} isActive={activeTab==='deliver'}/></div>
-      <div className={`mounted-page ${activeTab==='image-deliver'?'':'hidden'}`}>{video?.media_type==='image'?<ImageDeliverPage video={video} settings={settings} onStatusChange={setStatusText}/>:<div className="workspace-page"><h1>图片导出</h1><p>先导入一张图片，再选择格式与保存位置。</p></div>}</div>
-      {activeTab==='compare'&&<ComparePage initialPair={comparePair}/>}
-      {activeTab==='guide'&&<Guide/>}
-      {!['dlss','deliver','image-deliver','compare','guide'].includes(activeTab)&&<WorkspacePages page={activeTab} video={video} system={system} settings={settings} recent={recent} onImport={importFile} onNavigate={setActiveTab} onApply={applySettings} onStatus={setStatusText}/>}
+      <div className={`mounted-page ${activeTab==='image-deliver'?'':'hidden'}`}>{ui(video?.media_type==='image'?<ImageDeliverPage video={video} settings={settings} onStatusChange={setStatusText}/>:<div className="workspace-page"><h1>{ui("图片导出")}</h1><p>{ui("先导入一张图片，再选择格式与保存位置。")}</p></div>)}</div>
+      {ui(activeTab==='compare'&&<ComparePage initialPair={comparePair}/>)}
+      {ui(activeTab==='guide'&&<Guide/>)}
+      {ui(!['dlss','deliver','image-deliver','compare','guide'].includes(activeTab)&&<WorkspacePages page={activeTab} video={video} system={system} settings={settings} recent={recent} onImport={importFile} onNavigate={setActiveTab} onApply={applySettings} onStatus={setStatusText}/>)}
     </main><BottomBar system={system} statusText={statusText} queueSummary={queueSummary} onQueueClick={()=>setActiveTab('deliver')}/></div>
   </div>
 }
-export function App(){return <RuntimeGate><WorkspaceApp/></RuntimeGate>}
+export function App(){useLocale();return <RuntimeGate><WorkspaceApp/></RuntimeGate>}
 export default App

@@ -1,3 +1,5 @@
+**简体中文** · [English](README.en.md) · [日本語](README.ja.md) · [Русский](README.ru.md)
+
 <p>
   <img src="docs/assets/lunarc-logo.svg" width="32" height="32" alt="Lunarc" />
   &nbsp; <strong>LUNARC</strong>
@@ -10,6 +12,10 @@
 Lunarc 是一款视频与图片增强软件，支持 DLSSNR、DLAA、RTX VSR、TrueHDR、NVIDIA VFG，以及独立图片放大与导出工作流。
 
 [下载安装版](https://github.com/Yukikaze1945/Lunarc/releases/tag/v1.2.2) &nbsp; / &nbsp; [安装说明](docs/installing.md) &nbsp; / &nbsp; [源码运行](docs/getting-started.md)
+
+本文介绍当前源码；安装版功能请以对应发行说明为准。本次新增语言切换，旧安装包不会自动包含此功能。
+
+软件顶部语言菜单或 **软件设置 → 界面语言** 可切换中文、英文、日文和俄文，并保存选择。切换时保留当前素材、参数、队列和预览会话。技术标识和原始诊断保留原文。
 
 ## 01 / 界面
 
@@ -64,6 +70,8 @@ cd Lunarc
 
 | 文档 | 内容 |
 | :--- | :--- |
+| [使用手册](docs/user-guide.md) | 渲染链、参数、图片、导出与问题排查；提供四种语言。 |
+| [语言与翻译维护](docs/localization.md) | 界面语言、覆盖范围与翻译维护。 |
 | [安装说明](docs/installing.md) | 安装、组件下载和更新。 |
 | [DLSSNR 运行库](docs/dlssnr-runtime.md) | 下载、本地导入和版本管理。 |
 | [DLAA / VSR / VFG 配置](docs/native-runtime.md) | NVIDIA 运行库与 SDK 路径。 |
