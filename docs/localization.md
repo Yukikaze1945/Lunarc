@@ -1,8 +1,8 @@
 # Interface languages
 
-Lunarc supports Simplified Chinese (`zh-CN`), English (`en`), Japanese (`ja`) and Russian (`ru`). Use the top language selector or Preferences → Language. The first-run component screen has the same selector.
+Lunarc supports Simplified Chinese (`zh-CN`), English (`en`), Japanese (`ja`) and Russian (`ru`). The interface follows the system language by default. Preferences → Language offers Follow system and manual overrides; headers have no language selector. Unsupported system languages fall back to English.
 
-Language is a display preference. It does not enter backend settings, queue snapshots or render signatures. Changing it rerenders labels without remounting the workspace or restarting a preview session. The renderer persists the selection in `lunarc.language.v1`; Electron also stores it in `ui-language.json` within the existing application user-data directory. Native application-owned file-dialog titles use that language. System-owned dialog buttons follow Windows.
+Language is a display preference. It does not enter backend settings, queue snapshots or render signatures. Changing it rerenders labels without remounting the workspace or restarting a preview session. Automatic mode remains `auto` rather than saving the detected locale, so a later launch can follow a changed system language. Electron uses the OS preferred language list, while browser development uses navigator.languages. The renderer persists the selection in `lunarc.language.v1`; Electron also stores it in `ui-language.json` within the existing application user-data directory. Native application-owned file-dialog titles use that language. System-owned dialog buttons follow Windows.
 
 ## Translation files
 

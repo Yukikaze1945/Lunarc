@@ -4,7 +4,6 @@ import { FolderOpen, Moon, Sun, ArrowUpRight } from 'lucide-react'
 import { openNativeFileDialog } from '../services/api'
 import type { Theme } from '../services/appearance'
 import type { TabType } from './BottomBar'
-import {LanguagePicker} from './LanguagePicker'
 interface Props {
   activeTab: TabType; onNavigate: (tab: TabType) => void
   theme: Theme; onThemeChange: () => void
@@ -23,7 +22,6 @@ export function Header({ activeTab, onNavigate, theme, onThemeChange, onFileLoad
       <button aria-current={activeTab === 'deliver'||activeTab==='image-deliver' ? 'page' : undefined} onClick={() => onNavigate(image?'image-deliver':'deliver')}>{ui("导出")}</button>
     </nav>
     <div className="header-actions">
-      <LanguagePicker compact/>
       <button className="icon-button" onClick={onThemeChange} aria-label={ui(theme === 'dark' ? '切换浅色模式' : '切换深色模式')} title={ui(theme === 'dark' ? '浅色模式' : '深色模式')}>
         {ui(theme === 'dark' ? <Sun size={19}/> : <Moon size={19}/>)}
       </button>

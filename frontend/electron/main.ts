@@ -5,7 +5,7 @@ import http from 'node:http'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { spawn, execFileSync, ChildProcess } from 'node:child_process'
 import fs from 'node:fs'
-import {isLocale, translateText, type Locale} from '../src/i18n/translate'
+import {isLanguagePreference, resolveLocale, translateText, type LanguagePreference} from '../src/i18n/translate'
 import {runtimeCandidates, runtimeDirectory, runtimeFingerprint, runtimeEnvironment, probeRuntime, type BackendStartup} from './backendRuntime'
 import {AppUpdates} from './appUpdates'
 import {ComponentManager} from './componentManager'
@@ -45,16 +45,16 @@ try {
 }
 
 let win: BrowserWindow | null = null
-let language: Locale = 'zh-CN'
+let language: LanguagePreference = 'auto'
 try {
   const saved = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'ui-language.json'), 'utf8'))
-  if (isLocale(saved.language)) language = saved.language
-} catch { /* Use Chinese when no valid UI preference exists. */ }
-const nativeText = (text: string) => translateText(text, language)
+  if (isLanguagePreference(saved.language)) language = saved.language
+} catch { /* Follow the system when no valid UI preference exists. */ }
+const nativeText = (text: string) => translateText(text, resolveLocale(language, app.getPreferredSystemLanguages()))
 ipcMain.handle('ui:language:get', event =>
-  event.sender === win?.webContents && event.senderFrame === win?.webContents.mainFrame ? language : null)
+  event.sender === win?.webContents && event.senderFrame === win?.webContents.mainFrame ? {preference:language,systemLanguages:app.getPreferredSystemLanguages()} : null)
 ipcMain.handle('ui:language:set', (event, value: unknown) => {
-  if (event.sender !== win?.webContents || event.senderFrame !== win?.webContents.mainFrame || !isLocale(value)) return
+  if (event.sender !== win?.webContents || event.senderFrame !== win?.webContents.mainFrame || !isLanguagePreference(value)) return
   language = value
   fs.mkdirSync(app.getPath('userData'), {recursive: true})
   fs.writeFileSync(path.join(app.getPath('userData'), 'ui-language.json'), JSON.stringify({language}), 'utf8')

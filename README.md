@@ -15,9 +15,7 @@ Lunarc 使用 DLSS 5（DLSS5 / DLSSNR）神经渲染增强视频与图片，支�
 
 [下载安装版](https://github.com/Yukikaze1945/Lunarc-DLSS5/releases/tag/v1.2.2) &nbsp; / &nbsp; [功能手册](docs/user-guide.md) &nbsp; / &nbsp; [官方网站](https://lunarc-workbench.defaddg-9590.chatgpt.site/) &nbsp; / &nbsp; [安装说明](docs/installing.md) &nbsp; / &nbsp; [源码运行](docs/getting-started.md)
 
-本文介绍当前源码；安装版功能请以对应发行说明为准。本次新增语言切换，旧安装包不会自动包含此功能。
-
-软件顶部语言菜单或 **软件设置 → 界面语言** 可切换中文、英文、日文和俄文，并保存选择。切换时保留当前素材、参数、队列和预览会话。技术标识和原始诊断保留原文。
+本文介绍当前源码；安装版功能请以对应发行说明为准。
 
 ## 01 / 界面
 

@@ -25,7 +25,7 @@ async function run(){
     page.on('pageerror',error=>errors.push(error.message))
     await page.addInitScript(()=>{
       window.__languageCalls=[]
-      window.electronAPI={isElectron:true,getLanguage:async()=> 'zh-CN',
+      window.electronAPI={isElectron:true,getLanguage:async()=>({preference:'auto',systemLanguages:['zh-CN']}),
         setLanguage:async language=>window.__languageCalls.push(language),
         getComponents:async()=>location.search.includes('setup=1')?{requiresSetup:true,components:[],busy:null,phase:''}:null,onComponents:()=>()=>{},getBackendStartup:async()=>null}
     })
@@ -47,6 +47,13 @@ async function run(){
       await route.fulfill({status:200,contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify(result)})
     })
     await page.goto(`http://127.0.0.1:${server.address().port}`)
+    assert.equal(await page.locator('.project-header .language-picker').count(),0)
+    const selectLanguage=async locale=>{
+      const current=await page.locator('html').getAttribute('lang')
+      const labels={'zh-CN':'软件设置',en:'Preferences',ja:'ソフトウェア設定',ru:'Настройки'}
+      await page.getByRole('button',{name:labels[current],exact:true}).click()
+      await page.locator('.settings-grid .language-picker select').selectOption(locale)
+    }
     await page.getByRole('button',{name:'导出与队列',exact:true}).click()
     const name=page.getByPlaceholder('输出视频文件名',{exact:true})
     await name.fill('my-output-unchanged')
@@ -56,18 +63,18 @@ async function run(){
       ['ru','Экспорт и очередь','Имя выходного видео','Настройки','Обновление программы'],
       ['zh-CN','导出与队列','输出视频文件名','软件设置','软件更新']]
     for(const [locale,nav,placeholder,preferences] of cases){
-      await page.locator('.header-actions .language-picker select').selectOption(locale)
+      await selectLanguage(locale)
       await page.getByRole('button',{name:nav,exact:true}).waitFor()
-      assert.equal(await page.getByPlaceholder(placeholder,{exact:true}).inputValue(),'my-output-unchanged')
       assert.equal(await page.locator('html').getAttribute('lang'),locale)
       await page.getByRole('button',{name:preferences,exact:true}).click()
       assert.equal(await page.locator('.settings-grid .language-picker select').inputValue(),locale)
       await page.getByRole('button',{name:nav,exact:true}).click()
+      assert.equal(await page.getByPlaceholder(placeholder,{exact:true}).inputValue(),'my-output-unchanged')
       if(locale==='ru'||locale==='ja')await page.screenshot({path:path.resolve(__dirname,`../../build/localization-${locale}.png`)})
     }
     assert.equal(JSON.stringify(settings),snapshot,'language must not alter render settings')
     assert.equal(writes.length,writeCount,'language must not POST settings')
-    await page.locator('.header-actions .language-picker select').selectOption('en')
+    await selectLanguage('en')
     await page.getByRole('button',{name:'Reconstruction workbench',exact:true}).click()
     await page.locator('.qi-advanced > summary').click()
     await page.getByPlaceholder('Search settings',{exact:true}).fill('guidance')
@@ -75,12 +82,16 @@ async function run(){
     await page.getByRole('button',{name:'Export & queue',exact:true}).click()
     await page.setViewportSize({width:1000,height:800})
     await page.evaluate(()=>{document.documentElement.dataset.windowOverlay='true'})
-    await page.locator('.header-actions .language-picker select').selectOption('ru')
+    await selectLanguage('ru')
     const tabs=await page.locator('.header-tabs').boundingBox()
     const actions=await page.locator('.header-actions').boundingBox()
     assert.ok(tabs.x+tabs.width<=actions.x,'translated header must not overlap at minimum window width')
     assert.ok(actions.x+actions.width<=1000-138,'header must leave native window controls accessible')
-    await page.locator('.header-actions .language-picker select').selectOption('en')
+    await selectLanguage('en')
+    await page.locator('.settings-grid .language-picker select').selectOption('auto')
+    assert.equal(await page.locator('html').getAttribute('lang'),'zh-CN')
+    assert.equal(await page.evaluate(()=>localStorage.getItem('lunarc.language.v1')),'auto')
+    await page.locator('.settings-grid .language-picker select').selectOption('en')
     await page.setViewportSize({width:1600,height:1000})
     await page.reload()
     await page.getByRole('button',{name:'Export & queue',exact:true}).click()
@@ -90,10 +101,12 @@ async function run(){
     await page.screenshot({path:path.resolve(__dirname,'../../build/localization-en.png'),fullPage:true})
     await page.goto(`http://127.0.0.1:${server.address().port}/?setup=1`)
     await page.getByText('First use & component setup',{exact:true}).waitFor()
-    await page.locator('.project-header .language-picker select').selectOption('ja')
-    await page.getByText('初回使用とコンポーネント導入',{exact:true}).waitFor()
+    assert.equal(await page.locator('.project-header .language-picker').count(),0)
+    await page.evaluate(()=>localStorage.removeItem('lunarc.language.v1'))
+    await page.reload()
+    await page.getByText('首次使用与组件安装',{exact:true}).waitFor()
     assert.deepEqual(errors,[])
-    console.log('PASS: four languages; persistent preference; memoized export view; preserved media/draft/settings; translated search; no page errors')
+    console.log('PASS: automatic system language; settings-only switching; persistent overrides; preserved drafts; no header selector or page errors')
   }finally{await browser.close()}
 }
 run().catch(error=>{console.error(error);process.exitCode=1}).finally(()=>server.close())

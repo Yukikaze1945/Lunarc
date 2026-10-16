@@ -12,7 +12,7 @@ Lunarc brings DLSS 5 (DLSS5 / DLSSNR) neural rendering to video and image enhanc
 
 [Download](https://github.com/Yukikaze1945/Lunarc-DLSS5/releases/latest) / [User guide](docs/en/user-guide.md) / [Website](https://lunarc-workbench.defaddg-9590.chatgpt.site/en/)
 
-This page describes the current source. Check release notes for features included in a particular installer. The new language selector is available in this source update; older installers do not gain it automatically.
+This page describes the current source. Check release notes for features included in a particular installer.
 
 ## 01 / Workbench
 
@@ -23,8 +23,6 @@ The screenshot uses demonstration media; it may show an earlier interface langua
 | Processing chain | Comparison | Export queue |
 | --- | --- | --- |
 | Reorder cards and disable stages without losing their settings. | Inspect original, processed, split and side-by-side views. | Choose output size, encoding and destination; manage queued tasks. |
-
-Choose 中文, English, 日本語 or Русский from the top language menu or **Preferences → Language**. Your selection stays on this computer. Switching language preserves media, parameters and the queue. Technical identifiers and raw diagnostics stay unchanged.
 
 ## 02 / Features
 

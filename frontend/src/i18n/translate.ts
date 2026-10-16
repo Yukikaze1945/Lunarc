@@ -7,6 +7,19 @@ export type Locale = typeof LOCALES[number]
 export function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (LOCALES as readonly string[]).includes(value)
 }
+export type LanguagePreference = Locale | 'auto'
+export function isLanguagePreference(value: unknown): value is LanguagePreference {
+  return value === 'auto' || isLocale(value)
+}
+export function resolveLocale(preference: LanguagePreference, languages: readonly string[]): Locale {
+  if (isLocale(preference)) return preference
+  for (const language of languages) {
+    const base = language.toLowerCase().replaceAll('_', '-').split('-')[0]
+    if (base === 'zh') return 'zh-CN'
+    if (base === 'en' || base === 'ja' || base === 'ru') return base
+  }
+  return 'en'
+}
 const catalogs: Record<string, Record<string,string>> = {en,ja,ru}
 const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 type Pattern = {regex:RegExp; slots:string[]; target:string; weight:number}

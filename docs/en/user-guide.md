@@ -4,7 +4,7 @@
 
 Based on current source. The released installer may not include newer features. Availability depends on GPU, driver and runtimes.
 
-Use the language menu at the top, or Preferences → Language, to choose 中文, English, 日本語 or Русский. The choice is stored locally. Switching does not change media, processing settings, queue or preview session. Raw diagnostics, paths and technical identifiers remain unchanged.
+The interface follows your system language. To override it, open Preferences → Language.
 
 <a id="quickstart"></a>
 ## First steps

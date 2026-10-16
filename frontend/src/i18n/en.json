@@ -1281,5 +1281,6 @@
   "subtitle_mode={0}：复用的容器 copy pass 只表达 {1}。无法识别的取值会把字幕编码器的选择留给封装器，那是一次静默转换而不是所请求的复制": "subtitle_mode={0}: supported modes: {1}. Unknown values cannot guarantee subtitle copy.",
   "rate_mode={0}：编码入口不接受该码控模式": "rate_mode={0}: unsupported rate control.",
   "aq_mode={0}：编码入口不接受该自适应量化模式": "aq_mode={0}: unsupported adaptive quantization.",
-  "输出分辨率必须为 2–16384 范围内的偶数宽高": "Output width/height must be even and between 2 and 16384."
+  "输出分辨率必须为 2–16384 范围内的偶数宽高": "Output width/height must be even and between 2 and 16384.",
+  "跟随系统": "Follow system"
 }
