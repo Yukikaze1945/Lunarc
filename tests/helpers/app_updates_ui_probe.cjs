@@ -19,15 +19,15 @@ const out=path.resolve(process.argv[2]);
     const version='9.0.0';
     const executable={name:`Lunarc-${version}-x64-Setup.exe`,data:'test-small-setup'};
     const info={name:'INSTALLER.json',data:JSON.stringify({schema:1,mode:'components',version,installer:{name:executable.name,bytes:Buffer.byteLength(executable.data),sha256:crypto.createHash('sha256').update(executable.data).digest('hex')}})};
-    const assets=[executable,info].map(a=>({...a,size:Buffer.byteLength(a.data),state:'uploaded',digest:'sha256:'+crypto.createHash('sha256').update(a.data).digest('hex'),browser_download_url:`https://github.com/Yukikaze1945/Lunarc/releases/download/v${version}/${a.name}`}));
+    const assets=[executable,info].map(a=>({...a,size:Buffer.byteLength(a.data),state:'uploaded',digest:'sha256:'+crypto.createHash('sha256').update(a.data).digest('hex'),browser_download_url:`https://github.com/Yukikaze1945/Lunarc-DLSS5/releases/download/v${version}/${a.name}`}));
     const data=assets.map(a=>a.digest.slice(7)+'  '+a.name).join('\n')+'\n';
-    assets.push({name:'SHA256SUMS.txt',data,size:Buffer.byteLength(data),state:'uploaded',digest:'sha256:'+crypto.createHash('sha256').update(data).digest('hex'),browser_download_url:`https://github.com/Yukikaze1945/Lunarc/releases/download/v${version}/SHA256SUMS.txt`});
+    assets.push({name:'SHA256SUMS.txt',data,size:Buffer.byteLength(data),state:'uploaded',digest:'sha256:'+crypto.createHash('sha256').update(data).digest('hex'),browser_download_url:`https://github.com/Yukikaze1945/Lunarc-DLSS5/releases/download/v${version}/SHA256SUMS.txt`});
     const release={tag_name:`v${version}`,prerelease:true,draft:false,published_at:'2026-10-12',body:'UI fixture, not an actual release',assets};
     await app.evaluate(({net},release)=>{
       const original=net.fetch;
       globalThis.updateTestRestore=()=>net.fetch=original;
       net.fetch=async url=>{
-        if(String(url).startsWith('https://api.github.com/repos/Yukikaze1945/Lunarc/releases'))return new Response(JSON.stringify([release]),{headers:{'Content-Type':'application/json'}});
+        if(String(url).startsWith('https://api.github.com/repos/Yukikaze1945/Lunarc-DLSS5/releases'))return new Response(JSON.stringify([release]),{headers:{'Content-Type':'application/json'}});
         const asset=release.assets.find(a=>a.browser_download_url===String(url));
         if(asset)return new Response(asset.data);
         return original(url);
