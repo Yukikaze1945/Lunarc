@@ -56,4 +56,4 @@
 
 2.1.1 离线安装器曾在本地测试，未公开发布。2.1.2 曾公开发布，现已下架；以上数据保留为历史记录。
 
-此前的源码构建、运行库和安装测试详情见 [历史测试记录](https://github.com/Yukikaze1945/Lunarc/blob/fc82488b6986353bc12ba4fd652a4fed75531420/docs/public-release.md)。
+此前的源码构建、运行库和安装测试详情见 [历史测试记录](https://github.com/Yukikaze1945/Lunarc-DLSS5/blob/fc82488b6986353bc12ba4fd652a4fed75531420/docs/public-release.md)。

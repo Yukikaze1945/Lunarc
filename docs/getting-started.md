@@ -1,8 +1,8 @@
 # 源码运行
 
 ```powershell
-git clone https://github.com/Yukikaze1945/Lunarc.git
-cd Lunarc
+git clone https://github.com/Yukikaze1945/Lunarc-DLSS5.git
+cd Lunarc-DLSS5
 ```
 
 准备 Windows x64、支持相关功能的 NVIDIA GPU 和驱动、Python 3.10+、Node.js 22.18+、FFmpeg / FFprobe。RAFT 需要适配 GPU 的 CUDA 版 PyTorch；并非所有显卡都支持 Feature 18 或各项 NVIDIA 特效。

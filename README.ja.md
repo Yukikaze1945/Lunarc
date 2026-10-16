@@ -1,14 +1,16 @@
 [简体中文](README.md) · [English](README.en.md) · **日本語** · [Русский](README.ru.md)
 
+# Lunarc — DLSS 5 による動画・画像の高画質化
+
 <p><img src="docs/assets/lunarc-logo.svg" width="32" height="32" alt="Lunarc" /> &nbsp; <strong>LUNARC</strong></p>
 
 ![Lunarc — 動画・画像の高画質化](docs/assets/lunarc-banner.png)
 
 **Windows x64** · **GPL-3.0-or-later**
 
-Lunarc は動画と画像をローカルで処理するワークベンチです。DLSSNR、DLAA、RTX VSR、TrueHDR、NVIDIA VFG と専用画像拡大モデルを組み合わせて使用できます。
+Lunarc は DLSS 5（DLSS5 / DLSSNR）のニューラルレンダリングで動画と画像を高画質化する Windows 向けソフトウェアです。DLAA、RTX VSR による拡大、NVIDIA VFG によるフレーム補間、TrueHDR による SDR から HDR への変換、専用画像拡大モデルを組み合わせて使用できます。
 
-[ダウンロード](https://github.com/Yukikaze1945/Lunarc/releases/latest) / [操作マニュアル](docs/ja/user-guide.md) / [公式サイト](https://lunarc-workbench.defaddg-9590.chatgpt.site/ja/)
+[ダウンロード](https://github.com/Yukikaze1945/Lunarc-DLSS5/releases/latest) / [操作マニュアル](docs/ja/user-guide.md) / [公式サイト](https://lunarc-workbench.defaddg-9590.chatgpt.site/ja/)
 
 本ページは現在のソースを説明します。インストーラーの搭載機能はリリースノートをご確認ください。今回の言語切り替えはソース更新に含まれ、既存インストーラーには自動では追加されません。
 
@@ -42,7 +44,7 @@ Lunarc は動画と画像をローカルで処理するワークベンチです�
 
 ## 03 / インストール
 
-1. [Releases](https://github.com/Yukikaze1945/Lunarc/releases/latest) から Windows x64 インストーラーを取得。
+1. [Releases](https://github.com/Yukikaze1945/Lunarc-DLSS5/releases/latest) から Windows x64 インストーラーを取得。
 2. 初回起動で **基本実行環境** と **動画処理コンポーネント** を導入。
 3. **実行と診断 → DLSSNR ランタイム** で正当に使用できるライブラリを取得・導入して選択。
 4. 素材を読み込み、必要な段階を有効化。[初回操作](docs/ja/user-guide.md#quickstart) を参照。
@@ -60,8 +62,8 @@ Lunarc は動画と画像をローカルで処理するワークベンチです�
 ## 04 / ソースから実行
 
 ```powershell
-git clone https://github.com/Yukikaze1945/Lunarc.git
-cd Lunarc
+git clone https://github.com/Yukikaze1945/Lunarc-DLSS5.git
+cd Lunarc-DLSS5
 ```
 
 Python 3.10+、Node.js 22.18+、FFmpeg/FFprobe、Visual Studio C++ Build Tools、Windows SDK を準備。ネイティブ部品には対応 SDK と FFmpeg 開発ファイルが必要です。`DLSS_SDK_DIR` と `FFMPEG_SDK_DIR` を指定し、`native\build_all.bat` で構築後、ルートの **`run_gui.bat`** を実行します。

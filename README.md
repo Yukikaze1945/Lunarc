@@ -1,5 +1,7 @@
 **简体中文** · [English](README.en.md) · [日本語](README.ja.md) · [Русский](README.ru.md)
 
+# Lunarc — DLSS 5 视频与图片增强
+
 <p>
   <img src="docs/assets/lunarc-logo.svg" width="32" height="32" alt="Lunarc" />
   &nbsp; <strong>LUNARC</strong>
@@ -9,9 +11,9 @@
 
 **Windows x64** &nbsp; · &nbsp; **GPL-3.0-or-later**
 
-Lunarc 是一款视频与图片增强软件，支持 DLSSNR、DLAA、RTX VSR、TrueHDR、NVIDIA VFG，以及独立图片放大与导出工作流。
+Lunarc 使用 DLSS 5（DLSS5 / DLSSNR）神经渲染增强视频与图片，支持 DLAA、RTX VSR、NVIDIA VFG 补帧、TrueHDR SDR 转 HDR，以及独立图片放大与导出。
 
-[下载安装版](https://github.com/Yukikaze1945/Lunarc/releases/tag/v1.2.2) &nbsp; / &nbsp; [安装说明](docs/installing.md) &nbsp; / &nbsp; [源码运行](docs/getting-started.md)
+[下载安装版](https://github.com/Yukikaze1945/Lunarc-DLSS5/releases/tag/v1.2.2) &nbsp; / &nbsp; [功能手册](docs/user-guide.md) &nbsp; / &nbsp; [官方网站](https://lunarc-workbench.defaddg-9590.chatgpt.site/) &nbsp; / &nbsp; [安装说明](docs/installing.md) &nbsp; / &nbsp; [源码运行](docs/getting-started.md)
 
 本文介绍当前源码；安装版功能请以对应发行说明为准。本次新增语言切换，旧安装包不会自动包含此功能。
 
@@ -43,7 +45,7 @@ Lunarc 是一款视频与图片增强软件，支持 DLSSNR、DLAA、RTX VSR、T
 
 ## 03 / 安装
 
-1. 在 [Releases](https://github.com/Yukikaze1945/Lunarc/releases/tag/v1.2.2) 下载并运行 `Lunarc-1.2.2-x64-Setup.exe`。
+1. 在 [Releases](https://github.com/Yukikaze1945/Lunarc-DLSS5/releases/tag/v1.2.2) 下载并运行 `Lunarc-1.2.2-x64-Setup.exe`。
 2. 首次启动按提示安装基础运行环境和视频处理组件。
 3. 在 **运行与诊断 → DLSSNR 运行库** 中下载或导入运行库，再选择“使用”。
 
@@ -60,8 +62,8 @@ RAFT 光流需要另外安装 PyTorch/CUDA 和模型，可以在 **软件设置 
 ## 04 / 源码运行
 
 ```powershell
-git clone https://github.com/Yukikaze1945/Lunarc.git
-cd Lunarc
+git clone https://github.com/Yukikaze1945/Lunarc-DLSS5.git
+cd Lunarc-DLSS5
 ```
 
 按 [源码运行指南](docs/getting-started.md) 安装依赖、编译原生库，然后运行根目录的 **`run_gui.bat`**。

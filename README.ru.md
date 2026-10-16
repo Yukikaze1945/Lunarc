@@ -1,14 +1,16 @@
 [简体中文](README.md) · [English](README.en.md) · [日本語](README.ja.md) · **Русский**
 
+# Lunarc — улучшение видео и изображений с DLSS 5
+
 <p><img src="docs/assets/lunarc-logo.svg" width="32" height="32" alt="Lunarc" /> &nbsp; <strong>LUNARC</strong></p>
 
 ![Lunarc — Улучшение видео и изображений](docs/assets/lunarc-banner.png)
 
 **Windows x64** · **GPL-3.0-or-later**
 
-Lunarc — программа для локального улучшения видео и изображений с DLSSNR, DLAA, RTX VSR, TrueHDR, NVIDIA VFG и отдельными моделями увеличения изображений.
+Lunarc использует нейронный рендеринг DLSS 5 (DLSS5 / DLSSNR) для улучшения видео и изображений в Windows. Поддерживаются DLAA, масштабирование RTX VSR, интерполяция кадров NVIDIA VFG, преобразование SDR в HDR с TrueHDR и отдельные модели увеличения изображений.
 
-[Скачать](https://github.com/Yukikaze1945/Lunarc/releases/latest) / [Руководство](docs/ru/user-guide.md) / [Сайт](https://lunarc-workbench.defaddg-9590.chatgpt.site/ru/)
+[Скачать](https://github.com/Yukikaze1945/Lunarc-DLSS5/releases/latest) / [Руководство](docs/ru/user-guide.md) / [Сайт](https://lunarc-workbench.defaddg-9590.chatgpt.site/ru/)
 
 Страница описывает текущие исходники. Возможности конкретного установщика указаны в описании выпуска. Переключение языка входит в это обновление исходников; в старых установщиках оно автоматически не появляется.
 
@@ -42,7 +44,7 @@ Lunarc — программа для локального улучшения в�
 
 ## 03 / Установка
 
-1. Скачайте установщик Windows x64 из [Releases](https://github.com/Yukikaze1945/Lunarc/releases/latest).
+1. Скачайте установщик Windows x64 из [Releases](https://github.com/Yukikaze1945/Lunarc-DLSS5/releases/latest).
 2. При первом запуске установите **базовую среду выполнения** и **компоненты обработки видео**.
 3. Откройте **Работа и диагностика → Среда выполнения DLSSNR**, загрузите или импортируйте библиотеку, которой вправе пользоваться, и выберите её.
 4. Импортируйте файл и включите нужные этапы. См. [первые шаги](docs/ru/user-guide.md#quickstart).
@@ -60,8 +62,8 @@ Lunarc — программа для локального улучшения в�
 ## 04 / Запуск из исходников
 
 ```powershell
-git clone https://github.com/Yukikaze1945/Lunarc.git
-cd Lunarc
+git clone https://github.com/Yukikaze1945/Lunarc-DLSS5.git
+cd Lunarc-DLSS5
 ```
 
 Подготовьте Python 3.10+, Node.js 22.18+, FFmpeg/FFprobe, Visual Studio C++ Build Tools и Windows SDK. Для нативных библиотек нужны соответствующие SDK и файлы разработки FFmpeg. Задайте `DLSS_SDK_DIR` и `FFMPEG_SDK_DIR`, соберите через `native\build_all.bat`, затем запустите **`run_gui.bat`** из корня.

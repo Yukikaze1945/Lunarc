@@ -11,7 +11,7 @@ Use the language menu at the top, or Preferences → Language, to choose 中文,
 
 Lunarc processes videos and images locally on Windows. Install the runtime first, then add the effects you need. You do not have to download every model.
 
-1. Download the installer from [GitHub Releases](https://github.com/Yukikaze1945/Lunarc/releases), install it and launch Lunarc.
+1. Download the installer from [GitHub Releases](https://github.com/Yukikaze1945/Lunarc-DLSS5/releases), install it and launch Lunarc.
 2. Follow the first-run tutorial to install the **base runtime** and **video processing components**.
 3. For DLSSNR, open **Runtime & diagnostics → DLSSNR runtime**, download or import a library, then select it for use. DLAA, VSR, VFG and TrueHDR each need the corresponding NVIDIA components.
 4. Click **Import**, or drag a local video or image into the workbench.
@@ -329,4 +329,4 @@ After a device reset, old resources are unreliable. Wait for backend recovery. I
 
 HDR10, multiscale data-consistency fusion and VFG 5×–8× include experimental implementations. HLG, HDR10+, Dolby Vision and unsupported codec/container combinations are outside this scope. There is no claim of real-time 4K 120 fps processing on arbitrary hardware.
 
-See the [project documentation](https://github.com/Yukikaze1945/Lunarc#05--文档) for build and validation records. Website demos show interface behavior only; they do not run models or modify local application settings.
+See the [project documentation](https://github.com/Yukikaze1945/Lunarc-DLSS5#05--文档) for build and validation records. Website demos show interface behavior only; they do not run models or modify local application settings.

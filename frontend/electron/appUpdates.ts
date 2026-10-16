@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import {createHash} from 'node:crypto'
 
-const repository = 'https://github.com/Yukikaze1945/Lunarc'
+const repository = 'https://github.com/Yukikaze1945/Lunarc-DLSS5'
 import type {UpdateAsset, UpdateRelease, UpdateState} from '../src/types/appUpdates.ts'
 
 function version(value: string) {
@@ -78,7 +78,7 @@ export class AppUpdates {
     this.set({phase:'checking',release:null,directory:null,error:null,received:0,total:0})
     const timeout=setTimeout(()=>controller.abort(),20000)
     try {
-      const response=await this.request('https://api.github.com/repos/Yukikaze1945/Lunarc/releases?per_page=100', {signal:controller.signal,headers:{Accept:'application/vnd.github+json','User-Agent':'Lunarc-updater'}})
+      const response=await this.request('https://api.github.com/repos/Yukikaze1945/Lunarc-DLSS5/releases?per_page=100', {signal:controller.signal,headers:{Accept:'application/vnd.github+json','User-Agent':'Lunarc-updater'}})
       if (!response.ok) throw new Error(response.status===403?'GitHub 暂时限制请求，请稍后重试':`检查更新失败（HTTP ${response.status}）`)
       const data=await response.json()
       if (!Array.isArray(data)) throw new Error('发布信息无效')

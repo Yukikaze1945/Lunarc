@@ -10,7 +10,7 @@
 
 ## 下载来源与校验
 
-更新来自 [Lunarc Releases](https://github.com/Yukikaze1945/Lunarc/releases)，不需要 GitHub 账号。
+更新来自 [Lunarc Releases](https://github.com/Yukikaze1945/Lunarc-DLSS5/releases)，不需要 GitHub 账号。
 
 下载前检查 `INSTALLER.json`、GitHub 文件信息和 `SHA256SUMS.txt`。文件下载完成后核对大小及 SHA-256，校验失败的文件不能进入安装步骤。
 

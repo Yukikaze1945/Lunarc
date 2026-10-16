@@ -11,7 +11,7 @@ function smallFixture(bad=false){
   const v='2.1.2',exe={name:`Lunarc-${v}-x64-Setup.exe`,data:'small-installer'}
   const info={name:'INSTALLER.json',data:JSON.stringify({schema:1,mode:'components',version:v,installer:{name:exe.name,bytes:exe.data.length,sha256:bad?'0'.repeat(64):sha(exe.data)}})}
   const files=[exe,info];const ledger={name:'SHA256SUMS.txt',data:files.map(a=>`${sha(a.data)}  ${a.name}`).join('\n')+'\n'}
-  return {tag_name:`v${v}`,draft:false,prerelease:true,published_at:'2026-10-12',assets:[...files,ledger].map(a=>({...a,size:Buffer.byteLength(a.data),state:'uploaded',digest:'sha256:'+sha(a.data),browser_download_url:`https://github.com/Yukikaze1945/Lunarc/releases/download/v${v}/${a.name}`}))}
+  return {tag_name:`v${v}`,draft:false,prerelease:true,published_at:'2026-10-12',assets:[...files,ledger].map(a=>({...a,size:Buffer.byteLength(a.data),state:'uploaded',digest:'sha256:'+sha(a.data),browser_download_url:`https://github.com/Yukikaze1945/Lunarc-DLSS5/releases/download/v${v}/${a.name}`}))}
 }
 
 test('small standalone setup requires a verified component format declaration',async()=>{
@@ -30,7 +30,7 @@ const fixture=(v='2.1.1')=>{const r=({tag_name:`v${v}`,draft:false,prerelease:tr
   {name:`Lunarc-${v}-x64-Installer.zip`,data:'zip'},
   {name:`lunarc-workbench-${v}-x64.nsis.7z.001`,data:'abcdefgh'},
   {name:`lunarc-workbench-${v}-x64.nsis.7z.002`,data:'ijkl'},
-].map(a=>({...a,size:a.data.length,state:'uploaded',digest:`sha256:${sha(a.data)}`,browser_download_url:`https://github.com/Yukikaze1945/Lunarc/releases/download/v${v}/${a.name}`}))});const data=r.assets.map(a=>`${a.digest.slice(7)}  ${a.name}`).join('\n')+'\n';r.assets.push({name:'SHA256SUMS.txt',data,size:data.length,state:'uploaded',digest:'sha256:'+sha(data),browser_download_url:`https://github.com/Yukikaze1945/Lunarc/releases/download/v${v}/SHA256SUMS.txt`});return r}
+].map(a=>({...a,size:a.data.length,state:'uploaded',digest:`sha256:${sha(a.data)}`,browser_download_url:`https://github.com/Yukikaze1945/Lunarc-DLSS5/releases/download/v${v}/${a.name}`}))});const data=r.assets.map(a=>`${a.digest.slice(7)}  ${a.name}`).join('\n')+'\n';r.assets.push({name:'SHA256SUMS.txt',data,size:data.length,state:'uploaded',digest:'sha256:'+sha(data),browser_download_url:`https://github.com/Yukikaze1945/Lunarc-DLSS5/releases/download/v${v}/SHA256SUMS.txt`});return r}
 
 test('version comparison handles numeric components and prerelease order',()=>{
   assert.equal(compareVersions('2.10.0','2.9.0'),1)

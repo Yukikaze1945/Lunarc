@@ -11,7 +11,7 @@
 
 Lunarc 在 Windows 本机处理视频和图片。先装好运行环境，再添加你要用的效果；不需要一次下载所有模型。
 
-1. 从 [GitHub Releases](https://github.com/Yukikaze1945/Lunarc/releases) 下载安装程序，安装并启动。
+1. 从 [GitHub Releases](https://github.com/Yukikaze1945/Lunarc-DLSS5/releases) 下载安装程序，安装并启动。
 2. 按首次启动教程安装**基础运行环境**和**视频处理组件**。
 3. 需要 DLSSNR 时，进入**运行与诊断 → DLSSNR 运行库**，下载或导入运行库，再选择“使用”。DLAA、VSR、VFG、TrueHDR 分别需要相应的 NVIDIA 组件。
 4. 点击**导入**，或把本机视频、图片拖入工作台。
@@ -329,4 +329,4 @@ DLAA 默认检查本机 NGX 缓存；VSR、VFG、TrueHDR 查找对应 VFX 目录
 
 HDR10、多尺度数据一致性融合和 VFG 5×–8×包含实验性实现。HLG、HDR10+、Dolby Vision、不受支持的编码器 / 容器组合不属于这里的支持范围。没有承诺在任意显卡上实时处理 4K 120 fps。
 
-更详细的构建与验证记录见 [项目文档](https://github.com/Yukikaze1945/Lunarc#05--文档)。本站交互演示只展示操作方式，不运行模型、不修改你的本机设置。
+更详细的构建与验证记录见 [项目文档](https://github.com/Yukikaze1945/Lunarc-DLSS5#05--文档)。本站交互演示只展示操作方式，不运行模型、不修改你的本机设置。

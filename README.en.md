@@ -1,14 +1,16 @@
 [简体中文](README.md) · **English** · [日本語](README.ja.md) · [Русский](README.ru.md)
 
+# Lunarc — DLSS 5 Video & Image Enhancement
+
 <p><img src="docs/assets/lunarc-logo.svg" width="32" height="32" alt="Lunarc" /> &nbsp; <strong>LUNARC</strong></p>
 
 ![Lunarc — Video and image enhancement](docs/assets/lunarc-banner.png)
 
 **Windows x64** · **GPL-3.0-or-later**
 
-Lunarc is a local video and image enhancement workbench with DLSSNR, DLAA, RTX VSR, TrueHDR, NVIDIA VFG and dedicated image upscaling.
+Lunarc brings DLSS 5 (DLSS5 / DLSSNR) neural rendering to video and image enhancement on Windows, with DLAA, RTX VSR upscaling, NVIDIA VFG frame interpolation, TrueHDR SDR-to-HDR conversion and dedicated image upscaling.
 
-[Download](https://github.com/Yukikaze1945/Lunarc/releases/latest) / [User guide](docs/en/user-guide.md) / [Website](https://lunarc-workbench.defaddg-9590.chatgpt.site/en/)
+[Download](https://github.com/Yukikaze1945/Lunarc-DLSS5/releases/latest) / [User guide](docs/en/user-guide.md) / [Website](https://lunarc-workbench.defaddg-9590.chatgpt.site/en/)
 
 This page describes the current source. Check release notes for features included in a particular installer. The new language selector is available in this source update; older installers do not gain it automatically.
 
@@ -42,7 +44,7 @@ Native P010 export supports **HEVC Main10** and **AV1 Main, 10-bit** for SDR 10-
 
 ## 03 / Install
 
-1. Download the Windows x64 installer from [Releases](https://github.com/Yukikaze1945/Lunarc/releases/latest).
+1. Download the Windows x64 installer from [Releases](https://github.com/Yukikaze1945/Lunarc-DLSS5/releases/latest).
 2. On first launch, install the **base runtime** and **video processing components**.
 3. Open **Runtime & diagnostics → DLSSNR runtime**, download or import a library you are entitled to use, then select it.
 4. Import media and enable the stages you need. See the [user guide](docs/en/user-guide.md#quickstart).
@@ -60,8 +62,8 @@ The installer does not require a separate Python, Node.js or CUDA Toolkit instal
 ## 04 / Run from source
 
 ```powershell
-git clone https://github.com/Yukikaze1945/Lunarc.git
-cd Lunarc
+git clone https://github.com/Yukikaze1945/Lunarc-DLSS5.git
+cd Lunarc-DLSS5
 ```
 
 Prepare Python 3.10+, Node.js 22.18+, FFmpeg/FFprobe, Visual Studio C++ Build Tools and Windows SDK. Native bridges also require the relevant SDKs and FFmpeg development files. Set `DLSS_SDK_DIR` and `FFMPEG_SDK_DIR`, build with `native\build_all.bat`, then launch **`run_gui.bat`** from the root.

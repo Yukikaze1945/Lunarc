@@ -1,6 +1,6 @@
 # 安装 Lunarc
 
-[下载 Lunarc 1.2.2](https://github.com/Yukikaze1945/Lunarc/releases/tag/v1.2.2)
+[下载 Lunarc 1.2.2](https://github.com/Yukikaze1945/Lunarc-DLSS5/releases/tag/v1.2.2)
 
 ## 首次安装
 
