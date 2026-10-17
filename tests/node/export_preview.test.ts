@@ -121,6 +121,16 @@ test('offline VFG fps and final-frame hold policy appear in every precision path
   assert.match(hdr, /RGB10A2 \/ PQ \/ BT.2020/)
 })
 
+test('16x VFG is reflected in SDR8, SDR10 and HDR export plans',()=>{
+  for(const sdr10 of [false,true]){
+    assert.match(gpuLines({frameGeneration:'vfg',frameMultiplier:16,sdr10}),/NVIDIA VFG 16× · 120 → 1920 fps/)
+  }
+  const hdr=buildHdrTransferPreview({...gpuInput,requested:true,paperWhiteScrgb:8,
+    sourceWidth:1920,sourceHeight:1080,renderPipeline:['vfg'],
+    frameGeneration:'vfg',frameMultiplier:16}).lines.join('\n')
+  assert.match(hdr,/NVIDIA VFG 16× · 120 → 1920 fps/)
+})
+
 test('SDR10 preview describes BT.709 FP16 processing and independent layer scales', () => {
   const preview = buildGpuTransferPreview({ ...gpuInput, sdr10: true,
     ts: { ...SETTINGS, codec: 'hevc_nvenc' }, reconstructionMode: 'dual', layerScales: [.5, .75] })

@@ -61,7 +61,7 @@ def test_hdr_source_with_truehdr_is_admitted_but_hlg_keeps_existing_refusal(monk
     import truehdr_engine
     monkeypatch.setattr(truehdr_engine,'runtime_directory',lambda _: 'test-vfx')
     options=dict(render_pipeline=['truehdr'],export_backend='gpu_transfer',guidance_mode=0)
-    source=dict(pix_fmt='yuv420p10le',color_transfer='smpte2084')
+    source=dict(pix_fmt='yuv420p10le',color_transfer='smpte2084',width=640,height=360)
     native_effects.validate(options,source)
     with pytest.raises(ValueError,match='HLG'):
         native_effects.validate(options,dict(source,color_transfer='arib-std-b67'))

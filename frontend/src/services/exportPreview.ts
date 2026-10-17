@@ -1,4 +1,4 @@
-import type { TranscodeSettings, RenderStage } from '../types'
+import type { TranscodeSettings, RenderStage, DLSSSettings } from '../types'
 // The .ts extension is what lets `node --test` load this module directly: Node's ESM
 // resolver needs the real file name, and the delivery tests read the preview builder
 // straight from source rather than through a browser.
@@ -231,7 +231,7 @@ export interface GpuTransferPreviewInput {
   vsrQuality?: number
   vsrTarget?: string
   frameGeneration?: 'off' | 'vfg' | 'vfg_dynamic'
-  frameMultiplier?: 2 | 3 | 4 | 5 | 6 | 7 | 8
+  frameMultiplier?: DLSSSettings['frame_multiplier']
   framegenTargetFps?: number | string
   sdr10?: boolean
   ts: TranscodeSettings

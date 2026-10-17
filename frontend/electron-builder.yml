@@ -67,6 +67,7 @@ extraResources:
       - "component-tools/**"
       - "!component-tools/uv.zip"
       - "native-deps/**"
+      - "image-codecs/**"
   - from: "../LICENSE"
     to: "licenses/Lunarc-LICENSE.txt"
   - from: "../NOTICE"

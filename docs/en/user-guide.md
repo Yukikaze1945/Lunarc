@@ -118,7 +118,7 @@ The TrueHDR interface accepts RGBA8 SDR, so even a 10-bit SDR source does not ma
 
 ### Why can the preview look different?
 
-The native Windows video preview supports FP16/scRGB. It can present HDR when both the display and Windows HDR are enabled; otherwise it maps HDR to SDR. File comparison, ordinary image exports and this website use SDR tone mapping and do not represent an HDR display’s actual peak brightness.
+The Windows desktop app supports native FP16/scRGB preview for video and TrueHDR stills. It can present HDR when both the display and Windows HDR are enabled; otherwise it maps HDR to SDR. File comparison, ordinary image exports and this website use SDR tone mapping and do not represent an HDR display’s actual peak brightness.
 
 <a id="flow"></a>
 ## Optical-flow guidance
@@ -154,6 +154,8 @@ Static low-frequency accumulation mixes historical residuals only where the sour
 Debug views output residuals or protection weights as the image and may also affect GPU export. Turn off debug display before the final export.
 
 <a id="preview"></a>
+
+Importing media displays the source without loading effect models. Scrubbing also shows source frames; HDR source thumbnails use SDR display mapping. Configure the chain, then click **Start rendering** above the preview. Choose **Real-time rendering** or **Pre-render** for video. Pre-render offers 5/10 frames or 0.5/1/2/3/5 seconds from the current frame, clamped at the end. Use **Review result** or the green cache marker to inspect it in Video comparison. This does not change the export selection, and parameter edits do not automatically re-render cached clips. Stopping real-time rendering waits for the current frame and releases preview VRAM. Changing media, reopening the app or recovering the backend requires another manual start.
 ## Preview and range selection
 
 The workbench offers Original, Enhanced, central comparison and side-by-side views. The central divider redraws retained GPU images without rerunning the model. Changing model parameters may still require a new processing pass.
@@ -196,6 +198,16 @@ Preset management lists saved presets. Expand one to see changes from the defaul
 
 Import PNG, JPEG, BMP, WebP, TIFF, AVIF and HEIC / HEIF images. The current input path handles ordinary 8-bit SDR images. High-bit-depth image input is not yet connected, and animated images use only the first frame.
 
+### Single-frame rendering, memory and cached results
+
+Importing an image shows the original first. Click **Render one frame** to run the effects. Setting changes do not render automatically unless you enable **Realtime rendering**. Disable it to return to manual rendering. The current work completes before the latest request starts; model chains do not run concurrently.
+
+- **Lower VRAM (one stage at a time)** is the default. Each card stores its complete intermediate pixels in RAM and releases its GPU resources before the next card opens. SDR uses RGBA8 and HDR uses linear FP16, without preview-image compression. Transfers and model reloads add time.
+- **Fast (keep the full chain loaded)** retains models and processing resources for repeated adjustments, at higher VRAM cost.
+- Release boundaries are chain cards. Internal multilayer NR processing stays unchanged. No automatic tiling or precision reduction is used; an individual stage may still exceed available VRAM.
+
+Only the **current and previous** full-resolution results are kept in RAM. The third successful render evicts the oldest; closing the backend clears them. Select **Comparison reference → Previous result** to compare them without inference. Different sizes are fitted to the current result for display; each result retains its SDR/HDR interpretation and export dimensions.
+
 ### Inspecting an image
 
 - **Alt + mouse wheel**: zoom around the pointer, from 25% to 800%.
@@ -215,9 +227,21 @@ These models need the AI runtime, image-model component and separate weights. Of
 
 ### Saving an image
 
-Click **Export image** and choose PNG, JPEG, WebP, AVIF or HEIC. Saving processes the full-resolution image again rather than saving a preview screenshot. Available formats depend on installed encoders.
+Click **Export image**. The default **Rendered result (format conversion only)** saves the full-resolution cache without running models again. Choose the current or previous result from the same source. After changing settings, render again or explicitly allow exporting the saved result without later changes. **Render again and export** remains available. PNG, JPEG, WebP, AVIF and HEIC availability depends on installed encoders.
 
-PNG supports lossless output and transparency. JPEG has no transparency; transparent areas become white. WebP quality 100 uses lossless encoding; AVIF quality 100 does not imply RGB losslessness. Image output is 8-bit SDR with an sRGB profile. TrueHDR results are also mapped to SDR when saved as images; this is not HDR image export.
+Choose **Output color**:
+
+- **SDR · sRGB**: PNG, JPEG, WebP, AVIF or HEIC at 8-bit SDR. TrueHDR results are tone-mapped to SDR. PNG supports lossless output and transparency; JPEG fills transparent areas with white. WebP quality 100 uses lossless encoding.
+- **HDR · 10-bit PQ**: enable TrueHDR in the processing chain, then choose AVIF or HEIC. The processed FP16/scRGB image is converted directly to BT.2020/PQ and saved at 10-bit, full range, 4:4:4, without SDR display tone mapping. AVIF requires the video component's 10-bit libaom-av1 encoder and AVIF muxer; HEIC requires pillow-heif/libheif. The controls reflect installed components.
+
+- **UHDR JPEG**: writes `.jpg` with a Display-P3 SDR base and HDR gain map. Ordinary JPEG viewers display the base; compatible viewers reconstruct HDR. No transparency. Available only for HDR results.
+- **JXL**: 8-bit sRGB for SDR, or 16-bit BT.2020/PQ RGB for HDR, with transparency. Quality 100 losslessly encodes the supplied pixels; earlier gamut conversion and quantization still apply.
+
+Codecs are isolated in the application runtime; missing components disable the formats. 8-bit sRGB JXL can be imported again. HDR JXL input is not connected yet; UHDR JPEG import reads the SDR base. [Codec and color details](../image-codecs.md).
+
+Quality 100 does not imply lossless HDR RGB: gamut limits and 10-bit quantization still apply. Negative BT.2020 components and components above 10000 nits are clipped and counted in the save report; exposure is not normalized. Unmeasured mastering-display metadata is not invented.
+
+Source transparency can be retained when the encoder supports it. Cached results use an SDR-mapped thumbnail; a fresh render may still show the original thumbnail after saving. Check the saved file in an HDR-capable viewer. **Re-importing HDR stills is not yet supported.** The thumbnail does not represent the saved HDR image.
 
 Still images do not calculate inter-frame flow or temporal stability, do not run VFG and do not enter the video batch-export queue.
 
@@ -228,7 +252,7 @@ VFG is a reorderable stage that can be disabled independently. It runs for **exp
 
 | Setting | Use |
 | --- | --- |
-| NVIDIA VFG (Fixed) | Outputs 2×–8× the source frame rate. Multipliers 5×–8× are experimental. |
+| NVIDIA VFG (Fixed) | Outputs 2×–16× the source frame rate. Multipliers 5×–16× are experimental. |
 | NVIDIA VFG (Dynamic) | Enter a frame rate higher than the source, such as 60, 120 or 60000/1001. Intermediate timestamps are calculated automatically. |
 | Quality | Low, Medium or High: VFG model modes, not RAFT or NVOF flow quality. |
 | Scene-change detection | Avoids blending across a cut. Disabling it does not disable scene detection in other stages. |
@@ -327,6 +351,6 @@ After a device reset, old resources are unreliable. Wait for backend recovery. I
 
 ### Which features are experimental?
 
-HDR10, multiscale data-consistency fusion and VFG 5×–8× include experimental implementations. HLG, HDR10+, Dolby Vision and unsupported codec/container combinations are outside this scope. There is no claim of real-time 4K 120 fps processing on arbitrary hardware.
+HDR10, multiscale data-consistency fusion and VFG 5×–16× include experimental implementations. HLG, HDR10+, Dolby Vision and unsupported codec/container combinations are outside this scope. There is no claim of real-time 4K 120 fps processing on arbitrary hardware.
 
 See the [project documentation](https://github.com/Yukikaze1945/Lunarc-DLSS5#05--文档) for build and validation records. Website demos show interface behavior only; they do not run models or modify local application settings.

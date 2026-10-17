@@ -73,6 +73,11 @@
 .dlss-view-modes button:hover { color:var(--color-lunarc-text); }.dlss-view-modes button[aria-pressed='true'] { background:var(--color-lunarc-surface); color:var(--color-lunarc-text); }
 .dlss-zoom-tools select { padding:6px; border:0; background:transparent; color:var(--color-lunarc-muted); font-size:12px; }.dlss-zoom-tools option { background:var(--color-lunarc-surface); }
 .native-preview-status { padding:6px; color:var(--color-lunarc-muted); font-size:12px; }
+.image-reference-picker {display:flex;align-items:center;gap:8px;margin-inline:auto;font-size:12px;color:var(--color-lunarc-muted);}
+.image-reference-picker select {background:var(--color-lunarc-surface);color:var(--color-lunarc-text);border:1px solid var(--color-lunarc-border);padding:6px;}
+.image-realtime-toggle {display:flex;align-items:center;gap:8px;}
+.image-realtime-toggle input {accent-color:var(--color-lunarc-accent);}
+.image-comparison-caption {padding:0 0 10px;color:var(--color-lunarc-muted);font-size:12px;}
 .fold-heading { display:flex; width:100%; align-items:center; justify-content:space-between; gap:10px; padding:0 0 12px; border:0; color:inherit; background:none; cursor:pointer; text-align:left; }
 .fold-heading>span:first-child { flex:1; }.fold-heading>span:last-child { font-size:17px; }
 .fold-heading h3 { margin:0; font-size:13px; font-weight:600; }.fold-heading .dlss-card-head { margin:0; }

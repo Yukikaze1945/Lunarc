@@ -51,6 +51,7 @@ export interface DLSSSettings {
   render_stage_options?: Partial<Record<RenderStage, Partial<DLSSSettings>>>
   image_model_variant?: 'denoise' | 'detail'
   image_model_tile?: 0 | 128 | 256 | 512
+  image_memory_mode?: 'memory' | 'fast'
   render_stage_enabled?: Partial<Record<RenderStage, boolean>>
   frame_generation_saved_mode?: 'vfg' | 'vfg_dynamic'
   dlaa_preset?: 0 | 5 | 6 | 10 | 11 | 12 | 13
@@ -64,7 +65,7 @@ export interface DLSSSettings {
   vsr_height?: number
   vsr_runtime_path?: string
   frame_generation?: 'off' | 'vfg' | 'vfg_dynamic'
-  frame_multiplier?: 2 | 3 | 4 | 5 | 6 | 7 | 8
+  frame_multiplier?: 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16
   framegen_target_fps?: number | string
   framegen_scene_detection?: boolean
   framegen_quality?: 0 | 1 | 2

@@ -113,6 +113,10 @@ class PreviewPlayer:
 
     async def run(self):
         while not self.closed:
+            if (self.dirty or self.playing) and getattr(self.service, '_preview_suspended', False):
+                # A new source can be loaded while an old stream is playing.
+                self.dirty = self.playing = False
+                self.memory_notice = memory_state(self.service)
             if self.memory_notice is not None:
                 notice,self.memory_notice=self.memory_notice,None
                 await self._send(dict(type='preview_memory',**notice))

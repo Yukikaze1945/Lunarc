@@ -16,12 +16,15 @@ sys.path.insert(0,str(ROOT))
 import bundle_paths
 from build_runtime import imports, digest
 from prepare_component_tools import prepare
+from prepare_image_codecs import prepare as prepare_image_codecs
 
 
 def build(output,prefix):
     output=Path(output).resolve();prefix=Path(prefix).resolve()
     output.mkdir(parents=True,exist_ok=True)
     prepare(output/'component-tools')
+    image_codecs=ROOT/'runtime/tools/image-codecs'
+    if image_codecs.is_dir():prepare_image_codecs(image_codecs,output/'image-codecs')
     shutil.copytree(ROOT/'packaging/components',output/'components',dirs_exist_ok=True)
     for name in ('uv-LICENSE-MIT.txt','uv-LICENSE-APACHE.txt'):
         shutil.copy2(ROOT/'LICENSES'/name,output/'component-tools'/name)
@@ -91,7 +94,7 @@ def build(output,prefix):
         packages.append({k:m.get(k) for k in ('name','version','build','license','url','sha256')})
     (notices/'packages.json').write_text(json.dumps(packages,indent=2),encoding='utf-8')
     files={p.relative_to(output).as_posix():{'bytes':p.stat().st_size,'sha256':digest(p)}
-           for folder in ('component-tools','components','native-deps') for p in (output/folder).rglob('*') if p.is_file() and p.name!="uv.zip"}
+           for folder in ('component-tools','components','native-deps','image-codecs') for p in (output/folder).rglob('*') if p.is_file() and p.name!="uv.zip"}
     (output/'manifest.json').write_text(json.dumps({'schema':1,'mode':'components','files':files},indent=2),encoding='utf-8')
     print('Small resources:',sum(f['bytes'] for f in files.values()),flush=True)
 

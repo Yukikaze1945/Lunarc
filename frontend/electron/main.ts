@@ -388,9 +388,9 @@ ipcMain.handle('dialog:openFile', async () => {
     title: nativeText('选择导入素材 (视频 / 图像)'),
     properties: ['openFile'],
     filters: [
-      { name: nativeText('Media Files'), extensions: ['mp4', 'mkv', 'mov', 'avi', 'wmv', 'flv', 'webm', 'm4v', 'mpg', 'mpeg', 'ts', 'mts', 'm2ts', 'png', 'jpg', 'jpeg', 'bmp', 'webp', 'tif', 'tiff', 'avif', 'heic', 'heif'] },
+      { name: nativeText('Media Files'), extensions: ['mp4', 'mkv', 'mov', 'avi', 'wmv', 'flv', 'webm', 'm4v', 'mpg', 'mpeg', 'ts', 'mts', 'm2ts', 'png', 'jpg', 'jpeg', 'bmp', 'webp', 'tif', 'tiff', 'avif', 'heic', 'heif', 'jxl'] },
       { name: nativeText('Video Files'), extensions: ['mp4', 'mkv', 'mov', 'avi', 'wmv', 'flv', 'webm', 'm4v', 'mpg', 'mpeg', 'ts', 'mts', 'm2ts'] },
-      { name: nativeText('Images'), extensions: ['png', 'jpg', 'jpeg', 'bmp', 'webp', 'tif', 'tiff', 'avif', 'heic', 'heif'] },
+      { name: nativeText('Images'), extensions: ['png', 'jpg', 'jpeg', 'bmp', 'webp', 'tif', 'tiff', 'avif', 'heic', 'heif', 'jxl'] },
       { name: nativeText('All Files'), extensions: ['*'] },
     ],
   })

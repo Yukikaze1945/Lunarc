@@ -24,6 +24,7 @@ from component_paths import configure
 configure()
 BASE_MODULES = (('numpy', 'NumPy'), ('cv2', 'OpenCV'), ('fastapi', 'FastAPI'),
                 ('uvicorn', 'Uvicorn'), ('websockets', 'WebSocket'), ('pydantic', 'Pydantic'))
+MCP_MODULES = (('mcp', 'MCP'), ('httpx', 'HTTPX'))
 BRIDGES = {
     'dlss_gpu_host.dll': ('dlss_gpu_host_abi_version', 3),
     'nvof_d3d12_interop.dll': ('nvof_d3d12_abi_version', 1),
@@ -52,13 +53,14 @@ def item(key, label, status, detail='', action=''):
 
 def bootstrap():
     checks = []
-    for module, label in BASE_MODULES:
+    for module, label in BASE_MODULES+MCP_MODULES:
         try:
             value = importlib.import_module(module)
             checks.append(item(module, label, 'ok', str(getattr(value, '__version__', '已加载'))))
         except Exception as exc:
             checks.append(item(module, label, 'missing', str(exc), '在软件设置中重新安装基础运行环境'))
-    return {'ready': all(c['status'] == 'ok' for c in checks), 'checks': checks,
+        if (module,label) in MCP_MODULES:checks[-1]['required']=False
+    return {'ready': all(c['status'] == 'ok' for c in checks if c.get('required',True)), 'checks': checks,
             'python': platform.python_version(), 'executable': sys.executable,
             'isolated': bool(sys.flags.isolated)}
 

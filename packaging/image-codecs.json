@@ -1,0 +1,80 @@
+{
+  "schema": 1,
+  "uhdr_version": "2.0.2",
+  "jxl_version": "0.11.1",
+  "source": "Local Starshot libultrahdr v2.0.2 and starshot-uhdr-work/wgc-context-portable/app JPEG XL tools",
+  "libraries": {
+    "libultrahdr": "https://github.com/google/libultrahdr/tree/v2.0.2",
+    "libjxl": "https://github.com/libjxl/libjxl/tree/v0.11.1"
+  },
+  "files": {
+    "brotlicommon.dll": {
+      "bytes": 234496,
+      "sha256": "bf59fddc405e17d13e977ff1a3408a97a2a780c9248811ed08fec788e20433a3"
+    },
+    "brotlidec.dll": {
+      "bytes": 141312,
+      "sha256": "e4c445768b32d32502c55ffc111318afc05d1f02e46a09ec499744e6a255090a"
+    },
+    "brotlienc.dll": {
+      "bytes": 758272,
+      "sha256": "fdd31c8fbc5437eebf2d898ee9fecffd85fa1c564b5e2143511cc0b147c5a5b8"
+    },
+    "cjxl.exe": {
+      "bytes": 1095168,
+      "sha256": "1731d9fdac94cc9559ca5462117c3378d7e0d89776421e9ba79cac08acc5c89f"
+    },
+    "djxl.exe": {
+      "bytes": 1214976,
+      "sha256": "c9de463062bb96313c1604c5297ddf0158e300a87a06f566ba7d69d590ed0ad4"
+    },
+    "jxl.dll": {
+      "bytes": 2886656,
+      "sha256": "5a29dd326452e16ee673c17f9a96dcb5933a9e93cbc1af8d66cd0f1bcff7d7ad"
+    },
+    "jxlinfo.exe": {
+      "bytes": 354816,
+      "sha256": "3f7a6e9606f7e6031c6e1ca79678490144a519fe6f1356883eaa99ef500e00a1"
+    },
+    "jxl_cms.dll": {
+      "bytes": 318976,
+      "sha256": "e0123b15f878c0b33d9f0ea8c09fbbb8d27ee2ac0892fc9b1d982e67311bb9ac"
+    },
+    "jxl_threads.dll": {
+      "bytes": 136192,
+      "sha256": "6b40c3511ffbf1da3122f8f28ab4a7d287e523264b9e2bb0da873e87c3e32572"
+    },
+    "uhdr.dll": {
+      "bytes": 1541632,
+      "sha256": "415ee12ed6e979d1a96a495afcb634d54fbacf69e5b9e45c95c38793c737384b"
+    },
+    "licenses/brotli-LICENSE": {
+      "bytes": 1084,
+      "sha256": "3d180008e36922a4e8daec11c34c7af264fed5962d07924aea928c38e8663c94"
+    },
+    "licenses/gain-map-NOTICE": {
+      "bytes": 67,
+      "sha256": "b94dbc08e4ee43ec8271763e83dc7749710c2bc7bd919fe829539303e3844a56"
+    },
+    "licenses/highway-LICENSE": {
+      "bytes": 11356,
+      "sha256": "43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1"
+    },
+    "licenses/libjpeg-turbo-LICENSE.md": {
+      "bytes": 5345,
+      "sha256": "4a39a8fdad00d0f0d0555d35b393dc982ba8153d3aa98e2c3b8af739a5926227"
+    },
+    "licenses/libjxl-LICENSE": {
+      "bytes": 1508,
+      "sha256": "8405932022a556380c2d8c272eff154a923feb197233f348ce5f7334fb0a5ede"
+    },
+    "licenses/libjxl-PATENTS": {
+      "bytes": 1333,
+      "sha256": "91915f8ae056a68a3c5bdf05d9f6f78bb6903e27a8ca3a8434c9e4ac87300575"
+    },
+    "licenses/libultrahdr-LICENSE": {
+      "bytes": 12796,
+      "sha256": "3ec1545c2d134db41b8b15f3cc248a2433751bad8fc253e846de7a42cfa60519"
+    }
+  }
+}

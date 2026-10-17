@@ -48,6 +48,8 @@ class Presenter:
         self.lib.gpu_native_presenter_frame.argtypes=[C.c_void_p,C.c_void_p,C.c_uint64]+[C.c_uint32]*5+[C.c_uint64]+[C.c_uint32]*5
         self.lib.gpu_native_presenter_stats.argtypes=[C.c_void_p,C.POINTER(Stats)]
         self.lib.gpu_native_presenter_close.argtypes=[C.c_void_p]
+        self.freeze_fn=getattr(self.lib,'gpu_native_presenter_freeze',None)
+        if self.freeze_fn:self.freeze_fn.argtypes=[C.c_void_p]
         self.handle=C.c_void_p()
         self._check(self.lib.gpu_native_presenter_open(device,int(self.parent),C.byref(self.handle)))
         try:self.configure(layout)
@@ -80,6 +82,11 @@ class Presenter:
             sdr_white_scrgb=out.sdr_white,hwnd=str(out.hwnd),
             pointer_downs=out.pointer_downs,pointer_down_x=out.down_x,
             output_mode='HDR scRGB' if out.hdr else 'SDR display mapping')
+
+    def freeze(self):
+        if not self.freeze_fn:return False  # Older installed DLLs close normally.
+        self._check(self.freeze_fn(self.handle))
+        return True
 
     def close(self):
         if self.handle:

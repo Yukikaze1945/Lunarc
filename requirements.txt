@@ -11,6 +11,8 @@ fastapi>=0.110
 uvicorn>=0.29
 websockets>=13
 pydantic>=2.5
+mcp==2.0.0
+httpx>=0.28,<1
 # ---- desktop GUI (gui.py) ----
 Pillow>=11.3
 pillow-heif==1.8.1

@@ -181,7 +181,7 @@ def test_starting_a_round_does_not_resurrect_a_failed_job(service, monkeypatch):
     failed = _job(service, "old.mkv")
     failed["status"] = "failed"
     failed["error"] = "a reason from the earlier attempt"
-    monkeypatch.setattr(service, "_run_queue", lambda cb: None)
+    monkeypatch.setattr(service, "_run_queue", lambda cb, preview_only=False: None)
 
     assert service.start_queue(progress_callback=None) is True
 

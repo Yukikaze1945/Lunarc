@@ -1,5 +1,6 @@
 // localized-render-sinks
 import {ui} from '../i18n/locale'
+import {ProcessingError} from './ProcessingError'
 import {useEffect,useMemo,useRef,useState} from 'react'
 import {Range} from 'react-range'
 import type {DLSSSettings,VideoInfo} from '../types'
@@ -7,6 +8,7 @@ import {localToken} from '../services/api'
 import {useExportSettings,useFrameSelection,setFrameSelection} from '../services/segmentSelection'
 import {DEFAULT_EXPORT_SETTINGS,readTranscodeDraft} from '../services/exportSettings'
 import {normalizeExportOptions} from '../services/exportOptions'
+import type {PreviewRequest} from '../services/previewRender'
 import './segmentTimeline.css'
 
 type Segment={key:string;job_id:string;output_path:string;frame_range:{start_frame:number;end_frame:number};
@@ -18,9 +20,11 @@ async function request(path:string,body:unknown,signal?:AbortSignal){
 }
 function time(frame:number,fps:number){const seconds=frame/fps;return `${Math.floor(seconds/60)}:${(seconds%60).toFixed(2).padStart(5,'0')}`}
 
-export function SegmentTimeline({video,settings,currentFrame,onSeek,onSettingsChange,onStatus,onPause}:{
+export function SegmentTimeline({video,settings,currentFrame,onSeek,onSettingsChange,onStatus,onPause,onBeforeRender,previewRequest,onRenderBusy}:{
   video:VideoInfo|null;settings:DLSSSettings;currentFrame:number;onSeek:(frame:number)=>void;
-  onSettingsChange:(patch:Partial<DLSSSettings>)=>void;onStatus?:(message:string)=>void;onPause:()=>void}){
+  onSettingsChange:(patch:Partial<DLSSSettings>)=>void;onStatus?:(message:string)=>void;onPause:()=>void|Promise<void>;
+  onBeforeRender?:()=>Promise<void>;
+  previewRequest?:PreviewRequest|null;onRenderBusy?:(busy:boolean)=>void}){
   const selection=useFrameSelection(video?.path),exportSettings=useExportSettings()
   const fallback=useMemo(()=>readTranscodeDraft(DEFAULT_EXPORT_SETTINGS),[])
   const tx=normalizeExportOptions(exportSettings||fallback,settings,video)
@@ -29,49 +33,64 @@ export function SegmentTimeline({video,settings,currentFrame,onSeek,onSettingsCh
   const [cache,setCache]=useState<{signature:string;records:Segment[]}>({signature:'',records:[]})
   const [submitting,setSubmitting]=useState(false),[error,setError]=useState('')
   const [startDraft,setStartDraft]=useState<string|null>(null),[endDraft,setEndDraft]=useState<string|null>(null)
+  const [quickRange,setQuickRange]=useState<PreviewRequest|null>(null)
+  const lastQuickRequest=useRef(0)
   const requestRevision=useRef(0),signatureRef=useRef(signature);signatureRef.current=signature
   const selectionHead=useRef<0|1>(0)
   const total=Math.max(1,video?.frames||1),fps=video?.fps||30
   const range=selection&&selection.end_frame<=total?selection:{enabled:false,start_frame:0,end_frame:total}
   const records=cache.signature===signature?cache.records:[]
   const ready=records.filter(record=>record.ready)
-  const current=records.find(record=>record.frame_range.start_frame===range.start_frame&&record.frame_range.end_frame===range.end_frame)
+  const quick=quickRange?.source===video?.path?quickRange:null
+  const shownRange=quick??range
+  const current=records.find(record=>record.frame_range.start_frame===shownRange.start_frame&&record.frame_range.end_frame===shownRange.end_frame)
   const pending=current&&['pending','running'].includes(current.status)
-  const videoSource=!!video&&!/\.(png|jpe?g|bmp|webp|tiff?)$/i.test(video.path)
+  const videoSource=!!video&&video.media_type!=='image'&&!/\.(png|jpe?g|bmp|webp|tiff?|avif|heic|heif)$/i.test(video.path)
+  const watchCache=range.enabled||!!quick
   useEffect(()=>{
-    if(!videoSource||!range.enabled)return
+    if(!videoSource||!watchCache)return
     let stopped=false,inFlight=false
     const controller=new AbortController()
     const update=async()=>{
       if(inFlight||stopped)return;inFlight=true
       try{const data=await request('/api/preview/segments/list',body,controller.signal)
-        if(!stopped)setCache({signature,records:data.segments})
+        if(!stopped)setCache({signature,records:data.segments||[]})
       }catch(e:any){if(!stopped)setError(e.message)}finally{inFlight=false}
     }
     void update();const timer=setInterval(update,1500)
     return()=>{stopped=true;controller.abort();clearInterval(timer)}
-  },[signature,range.enabled,videoSource,body])
+  },[signature,watchCache,videoSource,body])
+  useEffect(()=>{onRenderBusy?.(submitting||!!pending)},[submitting,!!pending,onRenderBusy])
   useEffect(()=>{setError('')},[signature])
   const save=(start:number,end:number,enabled=range.enabled)=>{
     if(!video)return
+    setQuickRange(null)
     setFrameSelection(video.path,{enabled,start_frame:Math.max(0,Math.min(total-1,Math.round(start))),
       end_frame:Math.max(Math.round(start)+1,Math.min(total,Math.round(end)))})
   }
   const enable=(enabled:boolean)=>{
+    setQuickRange(null)
     if(enabled){save(currentFrame,Math.min(total,currentFrame+Math.max(2,Math.round(fps*2))),true)
       if(settings.export_backend!=='gpu_transfer')onSettingsChange({export_backend:'gpu_transfer'})}
     else save(range.start_frame,range.end_frame,false)
   }
-  const render=async()=>{
+  const render=async(selection={start_frame:range.start_frame,end_frame:range.end_frame})=>{
     const revision=++requestRevision.current,originalSignature=signature
-    setSubmitting(true);setError('');onPause()
+    setSubmitting(true);setError('')
     try{
-      const record=await request('/api/preview/segments',{...body,frame_range:{start_frame:range.start_frame,end_frame:range.end_frame}})
+      if(onBeforeRender)await onBeforeRender();else await onPause()
+      if(signatureRef.current!==originalSignature)throw new Error('参数已变化，请重新开始渲染')
+      const record=await request('/api/preview/segments',{...body,frame_range:selection})
       if(signatureRef.current===originalSignature){setCache(old=>({signature:originalSignature,
         records:[...(old.signature===originalSignature?old.records:[]).filter(row=>row.key!==record.key),record]}));onStatus?.('选区已加入预渲染队列')}
     }catch(e:any){if(signatureRef.current===originalSignature)setError(e.message)}finally{if(revision===requestRevision.current)setSubmitting(false)}
   }
-  const play=(record:Segment)=>{onPause();window.dispatchEvent(new CustomEvent('lunarc:compare',{detail:{
+  useEffect(()=>{
+    if(!previewRequest||previewRequest.id===lastQuickRequest.current||previewRequest.source!==video?.path)return
+    lastQuickRequest.current=previewRequest.id;setQuickRange(previewRequest)
+    void render({start_frame:previewRequest.start_frame,end_frame:previewRequest.end_frame})
+  },[previewRequest])
+  const play=async(record:Segment)=>{try{await onPause()}catch(error:any){setError(error.message);return}if(signatureRef.current!==signature)return;window.dispatchEvent(new CustomEvent('lunarc:compare',{detail:{
     original:video!.path,exported:record.output_path,original_offset_seconds:record.original_offset_seconds,
     duration_seconds:record.duration_seconds}}))}
   const updateValues=(values:number[])=>{
@@ -106,8 +125,9 @@ export function SegmentTimeline({video,settings,currentFrame,onSeek,onSettingsCh
     </div>
     {ui(videoSource&&<>
       <div className="segment-actions"><label><input type="checkbox" checked={range.enabled} onChange={e=>enable(e.target.checked)}/>{ui("选区导出")}</label>
-        {ui(range.enabled&&<><span>{ui(time(range.start_frame,fps))}–{ui(time(range.end_frame,fps))} · {ui(range.end_frame-range.start_frame)}{ui(" 帧")}</span>
-          <button type="button" disabled={submitting||!!pending||settings.export_backend!=='gpu_transfer'} onClick={render}>{ui(submitting?'正在提交…':pending?`预渲染 ${current!.progress.toFixed(0)}%`:'预渲染选区')}</button>
+        {ui((range.enabled||quick)&&<><span>{ui(time(shownRange.start_frame,fps))}–{ui(time(shownRange.end_frame,fps))} · {ui(shownRange.end_frame-shownRange.start_frame)}{ui(" 帧")}</span>
+          {ui(range.enabled&&!quick&&<button type="button" disabled={submitting||!!pending||settings.export_backend!=='gpu_transfer'} onClick={()=>void render()}>{ui(submitting?'正在提交…':pending?`预渲染 ${current!.progress.toFixed(0)}%`:'预渲染选区')}</button>)}
+          {ui(quick&&(submitting||pending)&&<span role="status">{ui(submitting?'正在提交…':`预渲染 ${current!.progress.toFixed(0)}%`)}</span>)}
           {ui(current?.ready&&<button type="button" onClick={()=>play(current)}>{ui("回看结果")}</button>)}
           {ui(pending&&<button type="button" onClick={()=>window.dispatchEvent(new CustomEvent('lunarc:open-deliver'))}>{ui("查看任务")}</button>)}
         </>)}
@@ -120,7 +140,7 @@ export function SegmentTimeline({video,settings,currentFrame,onSeek,onSettingsCh
           renderThumb={({props,index})=>{const {key,...rest}=props;return <div key={key} {...rest} onFocus={()=>{selectionHead.current=index?1:0;onSeek(index?range.end_frame-1:range.start_frame)}} aria-label={ui(index?'选区结束帧':'选区起始帧')} className="segment-range-handle"/>}}/>
         <label>{ui("结束帧")}<input type="number" min={1} max={total} value={endDraft??range.end_frame} onChange={e=>setEndDraft(e.target.value)} onBlur={()=>commit('end')} onKeyDown={e=>{if(e.key==='Enter'){e.currentTarget.blur()}}}/></label>
       </div>)}
-      {ui((error||current?.status==='failed')&&<p className="segment-error" role="alert">{ui(error||current?.error)}</p>)}
+      {(error||current?.status==='failed')&&<ProcessingError message={error||current?.error||'预渲染失败'}/>}
     </>)}
   </div>
 }

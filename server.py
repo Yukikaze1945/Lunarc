@@ -48,7 +48,7 @@ from runtime_environment import quick_system_info, environment_report
 # (2) per-launch session token required for everything except readiness.
 LOCAL_TOKEN = os.environ.get("DLSS_LOCAL_TOKEN") or secrets.token_urlsafe(32)
 if not os.environ.get("DLSS_LOCAL_TOKEN"):
-    print(f"[security] DLSS_LOCAL_TOKEN not set; generated ephemeral token: {LOCAL_TOKEN}", flush=True)
+    print("[security] Generated a local session token.", flush=True)
 
 _TOKEN_FILE = os.path.join(os.environ.get('LUNARC_DATA_DIR') or os.path.dirname(os.path.abspath(__file__)), ".session_token")
 
@@ -84,12 +84,13 @@ def _save_session_token(token: str) -> None:
 def _cleanup_session_token() -> None:
     try:
         if os.path.exists(_TOKEN_FILE):
-            os.remove(_TOKEN_FILE)
+            with open(_TOKEN_FILE,encoding='utf-8') as token_file:
+                matches=token_file.read().strip()==LOCAL_TOKEN
+            if matches:os.remove(_TOKEN_FILE)
     except Exception:
         pass
 
 
-_save_session_token(LOCAL_TOKEN)
 atexit.register(_cleanup_session_token)
 
 _LOCAL_ORIGIN_RE = re.compile(r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$", re.IGNORECASE)
@@ -140,7 +141,8 @@ async def lifespan(app: FastAPI):
     main_loop = asyncio.get_running_loop()
     _save_session_token(LOCAL_TOKEN)
     try:
-        yield
+        async with _mcp_http.router.lifespan_context(_mcp_http):
+            yield
     finally:
         try:
             engine=getattr(dlss_service,'_gpu_preview',None)
@@ -152,6 +154,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="DLSS 5 Studio Backend API", version="2.0.0", lifespan=lifespan)
+
+from automation import Automation, create_router as automation_router
+automation = Automation(dlss_service)
 
 app.add_middleware(
     CORSMiddleware,
@@ -246,6 +251,19 @@ async def _local_only_gate(request: Request, call_next):
         return JSONResponse({"detail": "Forbidden origin"}, status_code=403)
     if not _host_allowed(request.headers.get("host")):
         return JSONResponse({"detail": "Forbidden host (possible DNS rebinding)"}, status_code=403)
+    if request.url.path.rstrip('/')=='/mcp':
+        # URL-only native clients need no copied secret. Only this explicit local
+        # endpoint is exempt: REST and settings keep the existing token checks.
+        import ipaddress
+        try:loopback=ipaddress.ip_address(request.client.host).is_loopback
+        except (AttributeError,ValueError):loopback=False
+        if not loopback:
+            return JSONResponse({'detail':'MCP only accepts loopback connections'},status_code=403)
+        if (request.headers.get('origin') or request.headers.get('sec-fetch-site')) and not _token_ok(_request_token(request)):
+            return JSONResponse({'detail':'Browser MCP requests require the local token'},status_code=403)
+        if not automation.control.enabled:
+            return JSONResponse({'detail':'MCP 访问已关闭，请在软件设置中开启。'},status_code=403)
+        return await call_next(request)
     # CORS preflight (OPTIONS) does not carry custom credentials/headers like X-DLSS-Token.
     # Once origin and host checks pass, allow preflight through to CORSMiddleware.
     if request.method == "OPTIONS":
@@ -277,6 +295,7 @@ def _check_ws_access(websocket: WebSocket) -> str | None:
 
 async def broadcast_queue_update(job_or_data):
     """Direct async broadcast to queue WebSockets."""
+    automation.notify(job_or_data)
     if not queue_ws_clients:
         return
     if isinstance(job_or_data, dict) and "type" in job_or_data:
@@ -294,6 +313,7 @@ async def broadcast_queue_update(job_or_data):
 
 def broadcast_queue_update_from_thread(job_or_data):
     """Thread-safe broadcast called from background rendering threads."""
+    automation.notify(job_or_data)
     if not queue_ws_clients:
         return
     if isinstance(job_or_data, dict) and "type" in job_or_data:
@@ -500,9 +520,9 @@ def dialog_open_file():
         path = filedialog.askopenfilename(
             title="选择导入素材 (视频 / 图像)",
             filetypes=[
-                ("所有支持的媒体", "*.mp4;*.mkv;*.mov;*.avi;*.wmv;*.flv;*.png;*.jpg;*.jpeg;*.bmp;*.webp;*.tif;*.tiff;*.avif;*.heic;*.heif"),
+                ("所有支持的媒体", "*.mp4;*.mkv;*.mov;*.avi;*.wmv;*.flv;*.png;*.jpg;*.jpeg;*.bmp;*.webp;*.tif;*.tiff;*.avif;*.heic;*.heif;*.jxl"),
                 ("视频文件", "*.mp4;*.mkv;*.mov;*.avi;*.wmv;*.flv"),
-                ("图像文件", "*.png;*.jpg;*.jpeg;*.bmp;*.webp;*.tif;*.tiff;*.avif;*.heic;*.heif"),
+                ("图像文件", "*.png;*.jpg;*.jpeg;*.bmp;*.webp;*.tif;*.tiff;*.avif;*.heic;*.heif;*.jxl"),
                 ("所有文件", "*.*")
             ]
         )
@@ -556,16 +576,59 @@ class ImageExportRequest(BaseModel):
     quality: int = 95
     preserve_alpha: bool = True
     overwrite: bool = False
+    color_mode: str = 'sdr'
+    render_source: str = 'rerender'
+    result_id: Optional[str] = None
+    allow_stale: bool = False
 
 
 @app.post('/api/image/export')
 def export_image(req: ImageExportRequest):
     try:
         result = dlss_service.export_image(req.path, req.output_path, req.format,
-            req.quality, req.preserve_alpha, req.overwrite)
+            req.quality, req.preserve_alpha, req.overwrite, req.color_mode,
+            req.render_source,req.result_id,req.allow_stale)
         return {'status': 'ok', 'image': result}
     except Exception as error:
         raise HTTPException(status_code=400, detail=str(error))
+
+
+class ImageRenderRequest(BaseModel):
+    path: str
+    memory_mode: str = 'memory'
+    native: bool = False
+
+
+@app.post('/api/image/render')
+def render_image(req: ImageRenderRequest):
+    try:
+        return diagnostic_json(dlss_service.render_image(req.path,req.memory_mode,req.native))
+    except Exception as error:
+        raise HTTPException(400,str(error)) from error
+
+
+@app.get('/api/image/results')
+def image_results(path: str):
+    try:return diagnostic_json(dlss_service.image_result_state(path))
+    except (ValueError,OSError) as error:raise HTTPException(400,str(error)) from error
+
+
+@app.get('/api/image/results/preview')
+def image_result_preview(result_id: str, reference_id: Optional[str] = None):
+    try:payload=dlss_service.image_result_preview(result_id,reference_id)
+    except ValueError as error:raise HTTPException(400,str(error)) from error
+    return Response(payload,media_type='image/png',headers={'Cache-Control':'no-store'})
+
+
+class ImageCompareRequest(BaseModel):
+    result_id: str
+    reference_id: Optional[str] = None
+
+
+@app.post('/api/image/results/compare')
+def compare_image_results(req: ImageCompareRequest):
+    try:return dlss_service.compare_image_results(req.result_id,req.reference_id)
+    except (ValueError,RuntimeError,OSError) as error:raise HTTPException(400,str(error)) from error
 
 
 @app.get('/api/image/thumbnail')
@@ -590,7 +653,8 @@ def image_thumbnail(path: str, edge: int = Query(720,ge=0,le=8192)):
 @app.get('/api/image/formats')
 def image_formats():
     from image_source import export_formats
-    return {'formats': export_formats()}
+    from image_hdr_export import capabilities
+    return {'formats': export_formats(), 'hdr_formats': capabilities()}
 
 
 @app.get("/api/preview/diagnostics")
@@ -635,6 +699,15 @@ async def resume_preview_memory():
         except (ValueError,RuntimeError) as error:raise HTTPException(409,str(error)) from error
     notify_memory(dlss_service)
     return state
+
+
+@app.get('/api/source/frame')
+def source_frame(path: str, frame: int = Query(0, ge=0), edge: int = Query(1600, ge=256, le=1920)):
+    try:
+        payload = dlss_service.source_preview(path, frame, edge)
+    except (ValueError, RuntimeError, OSError) as error:
+        raise HTTPException(400, str(error)) from error
+    return Response(content=payload, media_type='image/jpeg', headers={'Cache-Control': 'no-store'})
 
 
 @app.get("/api/frame")
@@ -808,6 +881,8 @@ async def cancel_queue():
     return {"status": "cancelling"}
 
 
+app.include_router(automation_router(automation, broadcast_queue_update_from_thread))
+
 # ---------------- Diagnostics Endpoints ----------------
 @app.get("/api/diagnostics/logs")
 def get_diagnostic_logs(limit: int = Query(200)):
@@ -840,6 +915,9 @@ async def configure_native_preview(request: Request):
         engine = await asyncio.to_thread(dlss_service._get_gpu_preview)
         return await asyncio.to_thread(engine.configure_native,data)
     except (ValueError,RuntimeError) as error:
+        from gpu_faults import recovery_reason
+        reason=recovery_reason(error)
+        if reason:dlss_service._mark_native_degraded(reason)
         raise HTTPException(400,str(error)) from error
 
 
@@ -848,7 +926,11 @@ async def native_preview_status():
     engine=getattr(dlss_service,'_gpu_preview',None)
     if engine is None:return dict(native=False,pending=False)
     try:return await asyncio.to_thread(engine.native_status)
-    except RuntimeError as error:raise HTTPException(400,str(error)) from error
+    except RuntimeError as error:
+        from gpu_faults import recovery_reason
+        reason=recovery_reason(error)
+        if reason:dlss_service._mark_native_degraded(reason)
+        raise HTTPException(400,str(error)) from error
 
 
 # ---------------- WebSocket Player ----------------
@@ -960,6 +1042,13 @@ async def websocket_queue(websocket: WebSocket):
         queue_ws_clients.discard(websocket)
 
 
+from lunarc_mcp import create_http_app
+_mcp_http=create_http_app(app,LOCAL_TOKEN)
+automation.control.runtime_error=getattr(_mcp_http.state,'mcp_error',None)
+# Last route, preserving all existing API/WebSocket routes and exact /mcp URL.
+app.mount('/',_mcp_http)
+
+
 def preflight_check():
     """P2-02: fail fast with an actionable message when runtime deps or
     external tools are missing, instead of a bare ModuleNotFoundError mid-run."""
@@ -973,6 +1062,8 @@ def preflight_check():
         raise SystemExit(
             f"[preflight] 缺少运行时依赖: {', '.join(missing)}。请先 pip install -r requirements.txt")
     for opt, why in (("torch", "RAFT 光流需要此组件；原生 GPU 功能不需要"),
+                      ("mcp", "智能体连接需要此组件；素材读取、预览和导出不受影响"),
+                      ("httpx", "智能体连接需要此组件；素材读取、预览和导出不受影响"),
                       ("av", "PyAV 缺失将回退到 FFmpeg CLI 解码")):
         try:
             __import__(opt)

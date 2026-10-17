@@ -112,7 +112,7 @@ export class ComponentManager {
         this.set({phase:'正在安装后端依赖'})
         await this.command(uv,['--no-config','pip','sync','--python',this.python(),'--require-hashes','--only-binary',':all:','--index-url','https://pypi.org/simple',this.lock('base')])
         this.set({phase:'正在检查运行环境'})
-        await this.command(this.python(),['-I','-c','import numpy,cv2,fastapi,uvicorn,websockets,pydantic,av,PIL,ssl,sqlite3; assert __import__("importlib.util",fromlist=["find_spec"]).find_spec("torch") is None; print("base-ready")'],60000)
+        await this.command(this.python(),['-I','-c','import numpy,cv2,fastapi,uvicorn,websockets,pydantic,av,PIL,ssl,sqlite3,mcp,httpx; from mcp.server import MCPServer; assert __import__("importlib.util",fromlist=["find_spec"]).find_spec("torch") is None; print("base-ready")'],60000)
       } else if(key==='ffmpeg') {
         if(!this.ready('base'))throw new Error('请先安装基础运行环境')
         this.set({phase:'正在下载视频处理组件'})

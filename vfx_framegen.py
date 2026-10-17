@@ -16,8 +16,8 @@ def config(settings):
     if engine == 'vfg_dynamic':
         target_fps(settings)
         multiplier = 0
-    elif isinstance(multiplier, bool) or not isinstance(multiplier, int) or multiplier not in range(2, 9):
-        raise ValueError('Frame multiplier must be an integer from 2 through 8')
+    elif isinstance(multiplier, bool) or not isinstance(multiplier, int) or multiplier not in range(2, 17):
+        raise ValueError('Frame multiplier must be an integer from 2 through 16')
     if isinstance(quality, bool) or quality not in (0, 1, 2):
         raise ValueError('VFG quality must be low, medium or high')
     if not isinstance(settings.get('framegen_scene_detection', True), bool):
@@ -126,7 +126,11 @@ class FrameGenerator:
         self.lib.rtx_vsr_get_counters.argtypes = [C.c_void_p, C.POINTER(Counters)]
         self.lib.rtx_vsr_close.argtypes = [C.c_void_p]
         self.handle = C.c_void_p()
-        self.check(self.lib.vfx_framegen_open2(context, *size, multiplier, quality, int(wide),
+        self.multiplier = multiplier
+        # The SDK documents fixed FrameMultiplier as 2..8. Higher UI factors
+        # sample the same original pair at i/M using its explicit timestep API.
+        sdk_multiplier = 0 if multiplier > 8 else multiplier
+        self.check(self.lib.vfx_framegen_open2(context, *size, sdk_multiplier, quality, int(wide),
             int(scene_detection), runtime, C.byref(self.handle)))
 
     def check(self, rc):
@@ -134,6 +138,9 @@ class FrameGenerator:
             raise RuntimeError(f'NVIDIA VFG ({rc}): ' + self.lib.rtx_vsr_last_error().decode('utf-8', 'replace'))
 
     def process(self, previous, ppitch, current, cpitch, output, opitch, index, reset):
+        if self.multiplier > 8:
+            return self.process_time(previous, ppitch, current, cpitch, output, opitch,
+                                     Fraction(index, self.multiplier), reset)
         self.check(self.lib.vfx_framegen_process(self.handle, previous, ppitch, current,
             cpitch, output, opitch, index, int(reset)))
 
@@ -285,6 +292,7 @@ class Interpolator:
     def report(self):
         return dict(engine='NVIDIA VideoFrameGeneration', multiplier=self.multiplier,
             mode='dynamic' if self.dynamic else 'fixed', output_fps=str(self.target_rate),
+            temporal_selector='timestep' if self.dynamic or self.multiplier > 8 else 'frame_index',
             automatic_shot_change_detection=self.scene_detection, recent_timesteps=self.recent_timesteps,
             runtime=self.runtime, source_frames=self.sources, generated_frames=self.generated,
             tail_hold_frames=self.tail_holds, output_frames=self.emitted, recent_output_pts=self.recent_pts,

@@ -333,16 +333,21 @@ class MediaComparisonService:
             f"primaries=bt709:transfer={target_transfer}:matrix=gbr:range=full:npl=80,"
             "format=gbrpf32le")
 
-    def _decode_linear(self, media: _Media, actual_pts: float) -> np.ndarray:
+    def _decode_linear(self, media: _Media, actual_pts: float, display_edge: int = 0) -> np.ndarray:
         meta = media.metadata
+        width, height = int(meta['width']), int(meta['height'])
+        filters = self._zscale_filter(meta)
+        if display_edge and max(width, height) > display_edge:
+            ratio = display_edge / max(width, height)
+            width, height = max(2, round(width*ratio)//2*2), max(2, round(height*ratio)//2*2)
+            filters = f'scale={width}:{height}:flags=bilinear,' + filters
         # seek_timestamp makes -ss use the absolute presentation timestamp chosen by
         # ffprobe. Input seeking with transcoding retains FFmpeg's accurate seek step.
         cmd = [self.ffmpeg, "-hide_banner", "-v", "error", "-nostdin",
             "-seek_timestamp", "1", "-ss", f"{actual_pts:.9f}", "-i", media.path,
             "-map", "0:v:0", "-frames:v", "1", "-an", "-sn", "-vf",
-            self._zscale_filter(meta), "-f", "rawvideo", "-pix_fmt", "gbrpf32le", "pipe:1"]
+            filters, "-f", "rawvideo", "-pix_fmt", "gbrpf32le", "pipe:1"]
         payload = self._command(cmd, timeout=45, binary=True)
-        width, height = int(meta["width"]), int(meta["height"])
         expected = width * height * 3 * 4
         if len(payload) != expected:
             raise MediaComparisonEOF(

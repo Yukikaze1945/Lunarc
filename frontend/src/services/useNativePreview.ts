@@ -38,7 +38,9 @@ export function useNativePreview(element:RefObject<HTMLDivElement|null>,enabled:
     const timer=setInterval(()=>{
       if(disposed||!parent||statusBusy)return;statusBusy=true
       void fetch('http://127.0.0.1:18923/api/preview/native',{headers:{'X-DLSS-Token':localToken()}})
-        .then(async response=>{if(!response.ok)return;const data=await response.json();if(!disposed&&data.native)setHdrActive(Boolean(data.hdr_active))})
+        .then(async response=>{const data=await response.json();if(disposed)return
+          if(!response.ok){setReady(false);setError(data.detail||'原生预览连接失败');return}
+          if(data.native)setHdrActive(Boolean(data.hdr_active))})
         .catch(()=>{}).finally(()=>{statusBusy=false})
     },1000)
     void window.electronAPI.getPreviewWindow().then(handle=>{

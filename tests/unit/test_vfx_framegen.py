@@ -6,7 +6,8 @@ import native_runtime_paths as paths
 
 
 @pytest.mark.parametrize('settings', [dict(frame_generation='xess'), dict(frame_generation='vfg',frame_multiplier=True),
-    dict(frame_generation='vfg',frame_multiplier=9), dict(frame_generation='vfg',framegen_quality=3),
+    dict(frame_generation='vfg',frame_multiplier=17), dict(frame_generation='vfg',framegen_quality=3),
+    dict(frame_generation='vfg',frame_multiplier=1), dict(frame_generation='vfg',frame_multiplier=16.0),
     dict(frame_generation='vfg_dynamic',framegen_target_fps='nan'),
     dict(frame_generation='vfg_dynamic',framegen_target_fps=True),
     dict(frame_generation='vfg',framegen_scene_detection=1)])
@@ -15,8 +16,9 @@ def test_unknown_or_unsupported_choices_are_refused(settings):
         config(settings)
 
 
-@pytest.mark.parametrize('multiplier', range(2,9))
+@pytest.mark.parametrize('multiplier', range(2,17))
 def test_real_intermediates_precede_current_frame_and_tail_is_reported_separately(multiplier):
+    assert config(dict(frame_generation='vfg',frame_multiplier=multiplier))==(multiplier,1)
     events, emitted = [], []
     stage = object.__new__(Interpolator)
     stage.multiplier, stage.fps, stage.size = multiplier, (25,1), (128,64)
@@ -52,6 +54,55 @@ def test_nonuniform_or_reversed_time_is_not_silently_converted():
     stage.cancel = None
     with pytest.raises(ValueError, match='uniform'):
         stage.submit(dict(device_ptr=1,pitch_bytes=512),NS(pts=100,time_base_num=1,time_base_den=1000),False,None)
+
+
+@pytest.mark.parametrize('multiplier', [8,9,16])
+@pytest.mark.parametrize('wide', [False,True])
+def test_extended_fixed_factors_use_sdk_timesteps_on_the_original_pair(monkeypatch,multiplier,wide):
+    import vfx_framegen as vfg
+    calls=[]
+    class Function:
+        def __init__(self,name):self.name=name
+        def __call__(self,*args):
+            calls.append((self.name,args))
+            if self.name=='vfx_framegen_open2':args[-1]._obj.value=123
+            return 0
+    class Library:
+        def __getattr__(self,name):
+            function=Function(name)
+            setattr(self,name,function)
+            return function
+    monkeypatch.setattr(vfg.C,'WinDLL',lambda _:Library())
+    monkeypatch.setattr(vfg.bundle_paths,'require_native',lambda *a:'fixture.dll')
+    model=vfg.FrameGenerator(5,(128,64),'fixture-runtime',multiplier,1,wide=wide,scene_detection=False)
+    try:
+        opened=next(args for name,args in calls if name=='vfx_framegen_open2')
+        assert opened[3]==(0 if multiplier>8 else multiplier)
+        assert opened[5:7]==(int(wide),0)
+        for index in range(1,multiplier):
+            model.process(100,512,200,512,300,512,index,False)
+        runs=[(name,args) for name,args in calls if name.startswith('vfx_framegen_process')]
+        assert len(runs)==multiplier-1
+        assert all(args[1:7]==(100,512,200,512,300,512) for _,args in runs)
+        if multiplier>8:
+            assert all(name=='vfx_framegen_process_time' for name,_ in runs)
+            assert [args[-2] for _,args in runs]==pytest.approx([i/multiplier for i in range(1,multiplier)])
+        else:
+            assert all(name=='vfx_framegen_process' for name,_ in runs)
+            assert [args[-2] for _,args in runs]==list(range(1,multiplier))
+    finally:model.close()
+    assert calls[-1][0]=='rtx_vsr_close'
+
+
+def test_sixteen_times_output_retains_fractional_frame_rate_and_duration():
+    from fractions import Fraction
+    from vfx_framegen import encoder_timing,output_frame_count
+    settings=dict(frame_generation='vfg',frame_multiplier=16)
+    fps=(24000,1001)
+    rate,tb=encoder_timing(settings,fps,(1,24000))
+    assert rate==(384000,1001) and tb==(1,384000)
+    assert output_frame_count(settings,fps,6)==96
+    assert 6/Fraction(*fps)==96/Fraction(*rate)
 
 
 def test_cancellation_before_submit_or_emit_does_not_touch_picture_or_consumer():

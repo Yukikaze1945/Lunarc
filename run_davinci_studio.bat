@@ -54,6 +54,14 @@ if exist "%~dp0native\build\display\pending.txt" (
     )
     del "%~dp0native\build\display\pending.txt"
 )
+if exist "%~dp0native\build\presenter\pending.txt" (
+    copy /y "%~dp0native\build\presenter\gpu_native_presenter.dll" "%~dp0native\gpu_native_presenter.dll" >nul
+    if errorlevel 1 (
+        echo [ERROR] Close the existing Lunarc window and backend before restarting.
+        goto :FAILED
+    )
+    del "%~dp0native\build\presenter\pending.txt"
+)
 if exist "%~dp0native\build\vfx\pending.txt" (
     copy /y "%~dp0native\build\vfx\rtx_vsr_bridge.dll" "%~dp0native\rtx_vsr_bridge.dll" >nul
     if errorlevel 1 (

@@ -13,10 +13,13 @@
 .image-deliver-form fieldset {border:0;margin:0;padding:0;min-width:0;}
 .image-field {display:block;margin-bottom:24px;font-size:14px;}
 .image-field output {float:right;font-variant-numeric:tabular-nums;color:var(--color-lunarc-muted);}
-.image-format {display:flex;margin-top:12px;}
+.image-export-select {display:block;width:100%;margin-top:12px;padding:11px 12px;background:var(--color-lunarc-surface);border:1px solid var(--color-lunarc-border);color:var(--color-lunarc-text);font:inherit;}
+.image-format {display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
 .image-format button {flex:1;padding:12px;border:1px solid var(--color-lunarc-border);background:var(--color-lunarc-surface);color:var(--color-lunarc-muted);font-size:13px;}
-.image-format button+button {border-left:0;}
+.image-format button {min-width:64px;}
 .image-format button[aria-pressed=true] {background:var(--color-lunarc-accent);color:var(--accent-ink);}
+.image-format button:disabled {opacity:.4;cursor:not-allowed;}
+.image-deliver-output {flex-wrap:wrap;}
 .image-field input[type=range] {width:100%;margin-top:16px;accent-color:var(--color-lunarc-accent);}
 .image-directory,.image-filename {display:flex;align-items:center;gap:10px;margin-top:12px;}
 .image-directory input,.image-filename input {width:100%;min-width:0;flex:1;padding:11px 12px;background:var(--color-lunarc-surface);border:1px solid var(--color-lunarc-border);color:var(--color-lunarc-text);font-size:13px;}

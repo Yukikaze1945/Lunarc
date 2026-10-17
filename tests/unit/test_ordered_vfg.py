@@ -102,7 +102,7 @@ def test_vsr_vfg_truehdr_nr_decodes_once_and_uses_the_enlarged_passthrough(monke
     monkeypatch.setattr(ordered_vfg,'EffectSeries',Series)
     monkeypatch.setattr(native_runtime_paths,'wide_vfx_runtime',lambda *a,**k:'runtime')
     chain = NS(preview_consumer=None,process=lambda *a:None,working=(320,192),
-        post_control=NS(update_controls=lambda _:None),temporal_control=NS(controls=None))
+        post_control=NS(update_controls=lambda _:None),temporal_control=NS(update_controls=lambda _:None))
     live = NS(bytes_per_pixel=4)
     settings = dict(render_pipeline=['vsr','vfg','truehdr','nr'],frame_generation='vfg',
         frame_multiplier=2,vsr_output_mode='scale',vsr_scale=2)

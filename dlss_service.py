@@ -242,6 +242,7 @@ class DLSSService:
             "vsr_height": 1080,
             "vsr_runtime_path": "",
             "frame_generation": "off",
+            "image_memory_mode": "memory",
             "frame_multiplier": 2,
             "framegen_quality": 1,
             "framegen_target_fps": 60,
@@ -284,7 +285,8 @@ class DLSSService:
         # Why the last preview session refused to open, surfaced to the operator.
         self._preview_live_error = None
         self._live_lock = threading.Lock()
-        self._preview_suspended=False
+        # Loading a source is not permission to allocate neural/GPU preview resources.
+        self._preview_suspended=True
         self._preview_release_busy=False
         self._preview_release_error=None
 
@@ -406,6 +408,7 @@ class DLSSService:
             # pretending HDR survives the fixed 8-bit SDR neural path.
             pix = pipeline.probe_pixel_info(path)
             # A rejected drag/drop must not destroy the previously loaded source.
+            self._preview_suspended = True
             if self._cap is not None:
                 self._cap.release()
             self._cap = cap
@@ -463,6 +466,45 @@ class DLSSService:
                 return bgr
             return None
 
+    def source_preview(self, path: str, index: int = 0, edge: int = 1600):
+        """CPU source display only, independent of GPU preview suspension/exports."""
+        with self._cap_lock:
+            if path != self.video_path or self.video_info is None or self._cap is None:
+                raise ValueError('原素材已更换，请重新读取')
+            info = self.video_info
+            index = max(0, min(int(index), max(0, int(info['frames'])-1)))
+            edge = max(256, min(1920, int(edge)))
+            key = (path, os.stat(path).st_mtime_ns, index, edge)
+            cached = getattr(self, '_source_preview_image', None)
+            if cached and cached[0] == key:
+                return cached[1]
+            if info.get('is_hdr') and info.get('media_type') != 'image':
+                from comparison_media import MediaComparisonService, _Media, linear_rgb_to_display_bgr
+                source = getattr(self, '_source_preview_hdr', None)
+                if not source or source[0] != key[:2]:
+                    decoder = MediaComparisonService()
+                    metadata = decoder._probe_metadata(path)
+                    media = _Media(path, metadata, decoder._origin(path, metadata))
+                    source = self._source_preview_hdr = (key[:2], decoder, media)
+                _, decoder, media = source
+                linear = decoder._decode_linear(media, media.origin_pts + index/max(info['fps'], .001), edge)
+                bgr = linear_rgb_to_display_bgr(linear, hdr=True)
+            else:
+                self._cap.set(cv2.CAP_PROP_POS_FRAMES, index)
+                ok, bgr = self._cap.read()
+                if not ok or bgr is None:
+                    raise ValueError('无法读取原素材画面')
+                ratio = min(1., edge/max(bgr.shape[:2]))
+                if ratio < 1:
+                    bgr = cv2.resize(bgr, (max(1,round(bgr.shape[1]*ratio)),
+                                          max(1,round(bgr.shape[0]*ratio))), interpolation=cv2.INTER_AREA)
+            ok, encoded = cv2.imencode('.jpg', bgr, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+            if not ok:
+                raise ValueError('无法生成原素材显示图')
+            payload = encoded.tobytes()
+            self._source_preview_image = key, payload
+            return payload
+
     @staticmethod
     def _validated_dlss_backend(value):
         """The one host this build runs, or a refusal that names what was asked.
@@ -502,17 +544,29 @@ class DLSSService:
             return self._update_settings_locked(new_settings)
 
     def _update_settings_locked(self, new_settings: dict):
+        self.settings = self.normalize_settings(new_settings)
+        self._preview_revision = getattr(self, '_preview_revision', 0) + 1
+        self._logged_live_err = False
+        return self.settings
+
+    def normalize_settings(self, new_settings: dict, *, base=None):
+        """Validate a detached settings draft without changing preview or queued jobs."""
+        import copy
+        with self._settings_lock:
+            current = copy.deepcopy(self.settings if base is None else base)
         new_settings = dict(new_settings)
+        if 'image_memory_mode' in new_settings and new_settings['image_memory_mode'] not in ('memory','fast'):
+            raise ValueError('图片渲染模式只能选择省显存或快速模式')
         if {'vsr_mode','vsr_quality','vsr_strength'} & new_settings.keys():
             from vsr_config import configuration
-            configuration(dict(self.settings, **new_settings))
+            configuration(dict(current, **new_settings))
         if 'dlaa_preset' in new_settings:
             from native_effects import DLAA_PRESETS
             if isinstance(new_settings['dlaa_preset'], bool) or new_settings['dlaa_preset'] not in DLAA_PRESETS:
                 raise ValueError('DLAA preset must be Default, E, F, J, K, L or M')
         if 'render_pipeline' in new_settings or 'render_stage_enabled' in new_settings:
             import native_effects
-            merged = {**self.settings, **new_settings}
+            merged = {**current, **new_settings}
             ordered = native_effects.configured_stages(merged)
             active = native_effects.stages(merged)
             new_settings['render_pipeline'] = ordered
@@ -535,7 +589,7 @@ class DLSSService:
             patch = new_settings["post_controls"]
             if not isinstance(patch, dict):
                 raise ValueError("post_controls must be an object")
-            merged_controls = dict(self.settings.get("post_controls") or {})
+            merged_controls = dict(current.get("post_controls") or {})
             merged_controls.update(patch)
             new_settings["post_controls"] = controls_from_settings(
                 {"post_controls": merged_controls}).as_dict()
@@ -544,7 +598,7 @@ class DLSSService:
             patch = new_settings["temporal_controls"]
             if not isinstance(patch, dict):
                 raise ValueError("temporal_controls must be an object")
-            merged_controls = dict(self.settings.get("temporal_controls") or {})
+            merged_controls = dict(current.get("temporal_controls") or {})
             merged_controls.update(patch)
             new_settings["temporal_controls"] = temporal_from_settings(
                 {"temporal_controls": merged_controls}).as_dict()
@@ -572,7 +626,7 @@ class DLSSService:
         # Read through the chain's own predicates rather than a second copy of its
         # vocabulary, so an opt-in accepted here is the opt-in the chain acts on.
         if "experimental_hdr_scrgb" in new_settings or "hdr_paper_white_scrgb" in new_settings:
-            merged = dict(self.settings)
+            merged = dict(current)
             merged.update(new_settings)
             _hdr_reasons = _hdr_request(merged)[1]
             if _hdr_reasons:
@@ -588,20 +642,18 @@ class DLSSService:
         # immutable snapshot; the next GPU request applies it on the owner thread.
         with self._settings_lock:
             if (new_settings.get('reconstruction_mode') in ('dual', 'triple') and
-                    self.settings.get('reconstruction_mode', 'single') == 'single' and
+                    current.get('reconstruction_mode', 'single') == 'single' and
                     'fusion_mode' not in new_settings):
                 new_settings['fusion_mode'] = 'sequential'
             if 'layer_settings' in new_settings:
                 import copy
                 from layer_settings import resolve_layer_settings
-                merged = dict(self.settings, **new_settings)
+                merged = dict(current, **new_settings)
                 for index in (1, 2):
                     resolve_layer_settings(merged, index)
                 new_settings['layer_settings'] = copy.deepcopy(new_settings['layer_settings'])
-            self.settings = dict(self.settings, **new_settings)
-            self._preview_revision = getattr(self, '_preview_revision', 0) + 1
-            self._logged_live_err = False
-        return self.settings
+            current = dict(current, **new_settings)
+        return current
 
     def _preview_live_kind(self):
         """Which GPU-host entry point serves the current preview configuration.
@@ -877,11 +929,108 @@ class DLSSService:
         self._preview_suspended=False;self._preview_release_error=None
         return self.preview_memory_state()
 
-    def export_image(self, path, output_path, fmt='png', quality=95, preserve_alpha=True, overwrite=False):
+    def image_result_state(self, path):
+        engine=getattr(self,'_gpu_preview',None)
+        if engine is None:
+            return dict(available=False,results=[])
+        with self._settings_lock:
+            settings=dict(self.settings)
+        return engine.image_results.status(path,settings)
+
+    def image_result_preview(self, result_id, reference_id=None):
+        from image_render import preview_pair
+        engine=getattr(self,'_gpu_preview',None)
+        if engine is None:
+            raise ValueError('尚未渲染图片')
+        result=engine.image_results.get(result_id)
+        reference=engine.image_results.get(reference_id) if reference_id else None
+        return preview_pair(result,reference)
+
+    def render_image(self, path, memory_mode='memory', native=False):
+        from image_source import is_image
+        if not is_image(path) or path != self.video_path:
+            raise ValueError('请选择当前载入的图片素材')
+        if not self._live_lock.acquire(timeout=2):
+            raise ValueError('GPU 正忙，请稍后渲染图片')
+        try:
+            if path != self.video_path:
+                raise ValueError('原素材已更换，请重新渲染当前图片')
+            self._ensure_native_healthy()
+            if self.active_job_id is not None or getattr(self,'_live_session_owner',None)=='export':
+                raise ValueError('视频正在导出，请完成后再渲染图片')
+            if getattr(self,'_preview_release_busy',False):
+                raise ValueError('正在释放预览显存，请稍后渲染图片')
+            if self._live_session:
+                self._live_session.close();self._live_session=None;self._live_session_owner=None
+                self._live_session_dims=self._live_session_kind=None
+            with self._settings_lock:
+                settings=dict(self.settings)
+                revision=getattr(self,'_preview_revision',0)
+            source_revision=getattr(self,'_preview_source_revision',0)
+            engine=self._get_gpu_preview()
+            info=engine.render_image(path,settings,memory_mode)
+            if path != self.video_path or source_revision != getattr(self,'_preview_source_revision',0):
+                return dict(discarded=True)
+            if native and not getattr(self,'_preview_suspended',False) and self.active_job_id is None:
+                info['diagnostics']['native_display']=engine.present_image_result(info['id'])
+            info['diagnostics']['settings_revision']=revision
+            self._preview_diagnostics=info['diagnostics']
+            state=engine.image_results.status(path,self.settings)
+            return dict(result=info,current=state.get('current',False),previous=state.get('previous'))
+        except Exception as error:
+            from gpu_faults import recovery_reason
+            reason=recovery_reason(error)
+            if reason:self._mark_native_degraded(reason)
+            raise
+        finally:
+            self._live_lock.release()
+
+    def compare_image_results(self, result_id, reference_id=None):
+        if not self._live_lock.acquire(timeout=2):
+            raise ValueError('GPU 正忙，请稍后切换图片对比')
+        try:
+            self._ensure_native_healthy()
+            if getattr(self,'_preview_suspended',False) or getattr(self,'_preview_release_busy',False):
+                raise ValueError('预览已暂停，请先开启图片预览')
+            if self.active_job_id is not None or getattr(self,'_live_session_owner',None)=='export':
+                raise ValueError('视频正在导出，请完成后再切换原生图片对比')
+            engine=getattr(self,'_gpu_preview',None)
+            if engine is None:raise ValueError('尚未渲染图片')
+            from image_render import source_key
+            if engine.image_results.get(result_id).source[:1] != source_key(self.video_path)[:1]:
+                raise ValueError('原素材已更换，请重新选择结果')
+            return engine.present_image_result(result_id,reference_id)
+        except Exception as error:
+            from gpu_faults import recovery_reason
+            reason=recovery_reason(error)
+            if reason:self._mark_native_degraded(reason)
+            raise
+        finally:
+            self._live_lock.release()
+
+    def export_image(self, path, output_path, fmt='png', quality=95, preserve_alpha=True, overwrite=False, color_mode='sdr',
+                     render_source='rerender', result_id=None, allow_stale=False, settings_override=None):
         from image_source import is_image, validate_destination
         if not is_image(path):
             raise ValueError('请选择图片素材')
-        validate_destination(path, output_path, fmt, quality, overwrite)
+        validate_destination(path, output_path, fmt, quality, overwrite, color_mode)
+        if render_source == 'preview':
+            from image_render import source_key,signature,save_result
+            engine=getattr(self,'_gpu_preview',None)
+            if engine is None:raise ValueError('尚未渲染图片，请先渲染一帧')
+            state=self.image_result_state(path)
+            result=engine.image_results.get(result_id or (state.get('result') or {}).get('id'))
+            if result.source != source_key(path):
+                raise ValueError('原图片已改变，这份缓存不能用于当前素材')
+            with self._settings_lock:
+                current=result.settings_key==signature(self.settings)
+            if not current and not allow_stale:
+                raise ValueError('参数已改变；请重新渲染，或明确选择导出上次结果')
+            # Format conversion needs neither a healthy GPU nor its ownership lock.
+            saved=save_result(result,output_path,fmt,quality,preserve_alpha,overwrite,color_mode)
+            return dict(saved,reused_render=True,settings_current=current)
+        if render_source != 'rerender':
+            raise ValueError('图片导出来源无效')
         if not self._live_lock.acquire(timeout=2):
             raise ValueError('GPU 正忙，请稍后导出图片')
         try:
@@ -889,15 +1038,18 @@ class DLSSService:
             if getattr(self,'_preview_release_busy',False):raise ValueError('正在释放预览显存，请稍后导出图片')
             if self.active_job_id is not None or getattr(self, '_live_session_owner', None) == 'export':
                 raise ValueError('视频正在导出，请完成后再导出图片')
+            with self._settings_lock:
+                settings = dict(self.settings) if settings_override is None else self.normalize_settings(settings_override,base={})
+            if color_mode == 'hdr10':
+                from image_hdr_export import validate_request
+                validate_request(settings, fmt, path, preserve_alpha)
             if self._live_session:
                 self._live_session.close()
                 self._live_session = None
                 self._live_session_owner = None
                 self._live_session_dims = self._live_session_kind = None
-            with self._settings_lock:
-                settings = dict(self.settings)
             engine=self._get_gpu_preview()
-            result=engine.export_image(path, settings, output_path,fmt,quality,preserve_alpha,overwrite)
+            result=engine.export_image(path, settings, output_path,fmt,quality,preserve_alpha,overwrite,color_mode)
             if getattr(self,'_preview_suspended',False):
                 try:engine.release_memory()
                 except Exception as error:raise RuntimeError(f'图片已保存到 {result["path"]}，但预览显存释放失败：{error}') from error
@@ -1294,6 +1446,9 @@ class DLSSService:
             "dlss_host": None,
             "dlss_host_error": None,
         }
+        if job_data.get("automation_job"):
+            job.update(automation_job=True, automation_request_id=job_data.get("automation_request_id"),
+                       automation_fingerprint=job_data.get("automation_fingerprint"))
         with self._queue_lock:
             if self._queue_storage_error:
                 raise RuntimeError(f'队列存档不可用：{self._queue_storage_error}')
@@ -1388,11 +1543,12 @@ class DLSSService:
         # native call: set the flag AND kill owned FFmpeg subprocesses. Pipe
         # readers observe the death promptly via _read_exactly/proc.poll().
         self._preview_kick_cancelled = True
+        self._automation_kick_cancelled = True
         self._cancel_requested = True
         self._kill_active_procs()
         diagnostic_logger.log("WARN", "Queue", "收到主动取消当前渲染作业请求（已置位并杀死编码子进程）")
 
-    def start_queue(self, progress_callback=None, *, preview_only=False):
+    def start_queue(self, progress_callback=None, *, preview_only=False, automation_only=False):
         with self._queue_lock:
             self._ensure_native_healthy()
             if self._queue_storage_error:
@@ -1401,7 +1557,7 @@ class DLSSService:
                 return False
             self._cancel_requested = False
             self._queue_thread = threading.Thread(
-                target=self._run_queue, args=(progress_callback, preview_only), daemon=True, name="RenderQueue"
+                target=self._run_queue, args=((progress_callback, preview_only, True) if automation_only else (progress_callback, preview_only)), daemon=True, name="RenderQueue"
             )
             self._queue_thread.start()
             diagnostic_logger.log("INFO", "Queue", "后台渲染队列线程已启动")
@@ -1443,7 +1599,43 @@ class DLSSService:
             self._preview_kick_thread.start()
         return False
 
-    def _run_queue(self, progress_callback, preview_only=False):
+    def start_automation_queue(self, progress_callback=None):
+        """Wait behind the current owner, then run only pending MCP jobs."""
+        with self._queue_lock:
+            self._ensure_native_healthy()
+            self._automation_kick_cancelled = False
+            existing = getattr(self, '_automation_kick_thread', None)
+            if existing and existing.is_alive():
+                return False
+            def resume():
+                try:
+                    while True:
+                        with self._queue_lock:
+                            if getattr(self, '_automation_kick_cancelled', False):
+                                self._automation_kick_thread = None
+                                return
+                            pending = any(j['status']=='pending' and j.get('automation_job') for j in self.jobs)
+                            owner = self._queue_thread
+                            if not pending:
+                                self._automation_kick_thread = None
+                                return
+                        if owner and owner.is_alive():
+                            owner.join()
+                            continue
+                        self.start_queue(progress_callback, automation_only=True)
+                except Exception as error:
+                    diagnostic_logger.log('ERROR','MCP',f'自动化队列未启动：{error}')
+                    if progress_callback:
+                        progress_callback({'type':'automation_blocked','error':str(error)})
+                finally:
+                    with self._queue_lock:
+                        if self._automation_kick_thread is threading.current_thread():
+                            self._automation_kick_thread = None
+            self._automation_kick_thread = threading.Thread(target=resume,daemon=True,name='AutomationQueueResume')
+            self._automation_kick_thread.start()
+            return True
+
+    def _run_queue(self, progress_callback, preview_only=False, automation_only=False):
         # UI delivery must never abort the worker or strand a running row. This
         # wrapper also covers callbacks inside the encoder/export implementation.
         original_callback = progress_callback
@@ -1466,7 +1658,8 @@ class DLSSService:
                 if self._cancel_requested or self._native_degraded or self._queue_storage_error:
                     break
                 job = next((j for j in self.jobs if j['status'] == 'pending' and
-                            (not preview_only or j.get('preview_segment'))), None)
+                            (not preview_only or j.get('preview_segment')) and
+                            (not automation_only or j.get('automation_job'))), None)
                 if job is None:
                     break
                 job['status'] = 'running'

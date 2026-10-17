@@ -35,6 +35,18 @@ def test_bootstrap_refuses_environment_without_websocket_transport(monkeypatch):
     assert 'websockets' in failed[0]['detail']
 
 
+@pytest.mark.parametrize('missing',['mcp','httpx'])
+def test_missing_mcp_component_does_not_block_the_workbench(monkeypatch,missing):
+    def load(name):
+        if name==missing:raise ModuleNotFoundError(f"No module named '{name}'")
+        return SimpleNamespace(__version__='test')
+    monkeypatch.setattr(env.importlib,'import_module',load)
+    result=env.bootstrap()
+    assert result['ready']
+    failed=[c for c in result['checks'] if c['status']!='ok']
+    assert len(failed)==1 and failed[0]['id']==missing and failed[0]['required'] is False
+
+
 def test_system_never_invents_gpu_when_driver_unavailable(monkeypatch):
     def fail(): raise OSError("driver unavailable")
     monkeypatch.setattr(env, "driver_device", fail)

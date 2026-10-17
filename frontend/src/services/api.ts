@@ -1,4 +1,4 @@
-import { SystemInfo, VideoInfo, DLSSSettings, RenderJob, QueueState, EnvironmentReport } from '../types'
+import type { SystemInfo, VideoInfo, DLSSSettings, RenderJob, QueueState, EnvironmentReport } from '../types/index.ts'
 
 const API_BASE = 'http://127.0.0.1:18923'
 
@@ -140,23 +140,73 @@ export async function loadVideoFile(path: string): Promise<VideoInfo> {
   return data.video
 }
 
-export async function exportImage(request: {path:string;output_path:string;format:string;quality:number;preserve_alpha:boolean;overwrite:boolean}, settings:DLSSSettings): Promise<any> {
-  await saveSettings(settings)
+export async function exportImage(request: {path:string;output_path:string;format:string;quality:number;preserve_alpha:boolean;overwrite:boolean;color_mode?:'sdr'|'hdr10';render_source?:'preview'|'rerender';result_id?:string;allow_stale?:boolean}, settings:DLSSSettings): Promise<any> {
+  if(request.render_source==='preview')await waitForSettings()
+  else await saveSettings(settings)
   const res=await fetch(`${API_BASE}/api/image/export`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify(request)})
   const data=await res.json()
   if(!res.ok)throw new Error(data.detail||'图片导出失败')
   return data.image
 }
 
-export async function imageExportFormats():Promise<Record<string,boolean>> {
-  const res=await fetch(`${API_BASE}/api/image/formats`,{headers:authHeaders()})
-  if(!res.ok)throw new Error('无法检查图片编码器')
-  return (await res.json()).formats
+export interface ImageRenderResult {
+  id:string;path:string;filename:string;width:number;height:number;hdr:boolean;created_at:number;
+  host_bytes:number;diagnostics:any
+}
+export interface ImageResultState {
+  available:boolean;current?:boolean;source_unchanged?:boolean;result?:ImageRenderResult;
+  previous?:ImageRenderResult|null;results:ImageRenderResult[]
+}
+export async function imageResults(path:string):Promise<ImageResultState> {
+  const response=await fetch(`${API_BASE}/api/image/results?${new URLSearchParams({path})}`,{headers:authHeaders()})
+  const data=await response.json()
+  if(!response.ok)throw new Error(data.detail||'无法读取图片结果缓存')
+  return data
+}
+export async function renderImage(path:string,memory_mode:'memory'|'fast'):
+    Promise<{discarded?:boolean;result:ImageRenderResult;current:boolean;previous?:ImageRenderResult|null}> {
+  const response=await fetch(`${API_BASE}/api/image/render`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),
+    body:JSON.stringify({path,memory_mode,native:false})})
+  const data=await response.json()
+  if(!response.ok)throw new Error(data.detail||'图片渲染失败')
+  return data
+}
+export async function renderedImagePreview(result_id:string,reference_id?:string,signal?:AbortSignal):Promise<Blob> {
+  const params=new URLSearchParams({result_id});if(reference_id)params.set('reference_id',reference_id)
+  const response=await fetch(`${API_BASE}/api/image/results/preview?${params}`,{headers:authHeaders(),signal})
+  if(!response.ok){const data=await response.json();throw new Error(data.detail||'无法显示图片结果')}
+  return response.blob()
+}
+export async function compareImageResults(result_id:string,reference_id?:string):Promise<any> {
+  const response=await fetch(`${API_BASE}/api/image/results/compare`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),
+    body:JSON.stringify({result_id,reference_id})})
+  const data=await response.json()
+  if(!response.ok)throw new Error(data.detail||'无法切换图片对比')
+  return data
 }
 
-export async function imageThumbnail(path:string,edge=720): Promise<Blob> {
-  const res=await fetch(`${API_BASE}/api/image/thumbnail?path=${encodeURIComponent(path)}&edge=${edge}`,{headers:authHeaders()})
+export async function imageExportFormats():Promise<Record<string,boolean>> {
+  return (await imageExportCapabilities()).formats
+}
+
+export interface HdrImageFormat {available:boolean;alpha:boolean;reason:string}
+export async function imageExportCapabilities():Promise<{formats:Record<string,boolean>;hdr_formats:Record<string,HdrImageFormat>}> {
+  const res=await fetch(`${API_BASE}/api/image/formats`,{headers:authHeaders()})
+  if(!res.ok)throw new Error('无法检查图片编码器')
+  const data=await res.json()
+  return {formats:data.formats,hdr_formats:data.hdr_formats||{}}
+}
+
+export async function imageThumbnail(path:string,edge=720,signal?:AbortSignal): Promise<Blob> {
+  const res=await fetch(`${API_BASE}/api/image/thumbnail?path=${encodeURIComponent(path)}&edge=${edge}`,{headers:authHeaders(),signal})
   if(!res.ok)throw new Error('无法读取图片缩略图')
+  return res.blob()
+}
+
+export async function sourceFrame(path:string,frame:number,signal?:AbortSignal):Promise<Blob> {
+  const query=new URLSearchParams({path,frame:String(frame),edge:'1600'})
+  const res=await fetch(`${API_BASE}/api/source/frame?${query}`,{headers:authHeaders(),signal})
+  if(!res.ok){const data=await res.json();throw new Error(data.detail||'无法读取原素材画面')}
   return res.blob()
 }
 
@@ -205,6 +255,11 @@ let settingsInFlight = false
 let pendingSettings: Partial<DLSSSettings> = {}
 let settingsWaiters: {resolve: (s: DLSSSettings) => void; reject: (e: unknown) => void}[] = []
 let latestSettingsInput = 0
+
+function waitForSettings():Promise<void> {
+  if(!settingsInFlight)return Promise.resolve()
+  return new Promise(resolve=>window.addEventListener('lunarc:settings-settled',()=>resolve(),{once:true}))
+}
 
 export function saveSettings(settings: Partial<DLSSSettings>): Promise<DLSSSettings> {
   // One request plus one merged pending patch. Slider input cannot create an

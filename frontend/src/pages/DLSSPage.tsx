@@ -19,14 +19,17 @@ import { QualityInspector } from '../components/QualityInspector'
 import { LayerNRControls } from '../components/LayerNRControls'
 import {useNativePreview} from '../services/useNativePreview'
 import {ImageViewport} from '../components/ImageViewport'
+import {ProcessingError} from '../components/ProcessingError'
 import { RenderPipeline } from '../components/RenderPipeline'
 import {PresetPicker} from '../components/PresetPicker'
 import {CollapsibleSection} from '../components/CollapsibleSection'
 import { renderStages, hasScaleStages, vsrOutputSize } from '../services/renderPipeline'
 import { VideoInfo, DLSSSettings } from '../types'
-import { saveSettings, wsUrl, fetchFlowProviders, fetchJobDiagnostics, previewMemory, type PreviewMemoryState } from '../services/api'
+import { saveSettings, wsUrl, fetchFlowProviders, fetchJobDiagnostics, previewMemory, imageThumbnail, sourceFrame,
+  renderImage,imageResults,renderedImagePreview,compareImageResults,type ImageRenderResult,type PreviewMemoryState } from '../services/api'
 import { subscribeQueue } from '../services/queue'
 import { resolveWorkingDims } from '../services/workingScale'
+import {PREVIEW_LENGTHS,previewFrameRange,type PreviewLength,type PreviewMode,type PreviewRequest} from '../services/previewRender'
 import {
   HDR_LIMITATIONS, HDR_PAPER_WHITE_SCRGB, HDR_SETTING, HDR_PAPER_WHITE_SETTING,
   hdrPaperWhiteReason, hdrSettingsBlockers, isHdrRequested, paperWhiteLabel,
@@ -42,6 +45,7 @@ interface DLSSPageProps {
   setCurrentFrame: (frame: number) => void
   onStatusChange?: (msg: string) => void
   isActive?: boolean
+  onActivityChange?: (activity:{busy:boolean;error:boolean})=>void
 }
 
 export const DLSSPage: React.FC<DLSSPageProps> = ({
@@ -52,6 +56,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
   setCurrentFrame,
   onStatusChange,
   isActive = true,
+  onActivityChange,
 }) => {
   // View states
   const [view, setView] = useState<'dlss' | 'orig' | 'split' | 'dual' | 'flow'>('split')
@@ -63,14 +68,36 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
   const [loop, setLoop] = useState<boolean>(true)
   const [activeFrameUrl, setActiveFrameUrl] = useState<string>('')
+  const [sourcePicture,setSourcePicture]=useState<{source:VideoInfo;url:string}|null>(null)
+  const [sourceError,setSourceError]=useState('')
+  const sourcePictureUrl=useRef('')
   const [playerError, setPlayerError] = useState<string | null>(null)
   const [playerBusy,setPlayerBusy]=useState('')
   const [previewStats, setPreviewStats] = useState<any>(null)
   useEffect(()=>{publishPreviewMetrics(previewStats?{...previewStats,playing:isPlaying}:null)},[previewStats,isPlaying])
   const [previewPending, setPreviewPending] = useState(false)
+  // Permission belongs to this loaded object, never to a persisted auto-play flag.
+  const [renderVideo,setRenderVideo]=useState<VideoInfo|null>(null)
+  const [renderMode,setRenderMode]=useState<PreviewMode>('realtime')
+  const [previewLength,setPreviewLength]=useState<PreviewLength>('f5')
+  const [previewRequest,setPreviewRequest]=useState<PreviewRequest|null>(null)
+  const [launchBusy,setLaunchBusy]=useState(false),[prerenderBusy,setPrerenderBusy]=useState(false)
+  const [imageRealtime,setImageRealtime]=useState(false),imageRealtimeRef=useRef(false);imageRealtimeRef.current=imageRealtime
+  const [imageBusy,setImageBusy]=useState(false),imageWorkBusy=useRef(false)
+  const [imagePresentBusy,setImagePresentBusy]=useState(false)
+  const [imageTicket,setImageTicket]=useState(0),imageCompleted=useRef(0)
+  const [imageWorkEpoch,setImageWorkEpoch]=useState(0)
+  const [imageResult,setImageResult]=useState<ImageRenderResult|null>(null)
+  const [previousImageResult,setPreviousImageResult]=useState<ImageRenderResult|null>(null)
+  const [imageResultStale,setImageResultStale]=useState(false)
+  const imageResultRef=useRef(imageResult);imageResultRef.current=imageResult
+  const [imageReference,setImageReference]=useState<'original'|'previous'>('original')
+  const renderRevision=useRef(0),previewRequestId=useRef(0),sourceRef=useRef(video);sourceRef.current=video
   const [memoryPaused,setMemoryPaused]=useState(false)
   const [memoryBusy,setMemoryBusy]=useState(false)
   const memoryPausedRef=useRef(false),memoryRevision=useRef(0)
+  const renderEnabled=!!video&&renderVideo===video&&!memoryPaused&&(renderMode==='realtime'||video.media_type==='image')
+  const renderEnabledRef=useRef(false);renderEnabledRef.current=renderEnabled
   const [isDraggingSplit, setIsDraggingSplit] = useState<boolean>(false)
   const [isPanning, setIsPanning] = useState<boolean>(false)
   const [panStart, setPanStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
@@ -78,12 +105,44 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
   const canvasRef = useRef<HTMLDivElement>(null)
   const splitRef=useRef(splitX)
   const viewControls=useRef({view,zoom,pan});viewControls.current={view,zoom,pan}
-  const nativeVideo=Boolean(video&&!/\.(png|jpe?g|bmp|webp|tiff?|avif|heic|heif)$/i.test(video.path))
-  const nativeRequired=Boolean(nativeVideo&&window.electronAPI?.getPreviewWindow)
-  const nativePanel=useNativePreview(canvasRef,Boolean(nativeRequired&&isActive),view,zoom,pan)
+  const imageSource=video?.media_type==='image'
+  // TrueHDR stills need the same FP16 presenter as video, not an 8-bit JPEG pair.
+  const nativeRequired=Boolean(video&&window.electronAPI?.getPreviewWindow&&
+    (!imageSource||imageResult?.hdr||(imageReference==='previous'&&previousImageResult?.hdr)||renderStages(settings).includes('truehdr')))
+  const nativePanel=useNativePreview(canvasRef,Boolean(nativeRequired&&isActive&&renderEnabled),view,zoom,pan)
+  const showNative=nativeRequired&&renderEnabled&&view!=='flow'
+  const sourceUrl=sourcePicture?.source===video?sourcePicture.url:''
+  const activityBusy=Boolean(launchBusy||imageBusy||imagePresentBusy||prerenderBusy||memoryBusy||(isActive&&previewPending)||
+    (video&&isActive&&!renderEnabled&&!sourceUrl&&!sourceError))
+  const activityError=Boolean(playerError||nativePanel.error||(!renderEnabled&&sourceError))
+  useEffect(()=>{onActivityChange?.({busy:activityBusy,error:activityError})},[activityBusy,activityError,onActivityChange])
+  useEffect(()=>()=>{onActivityChange?.({busy:false,error:false})},[onActivityChange])
+  const nativeHdrActive=nativePanel.hdrActive??previewStats?.native_display?.hdr_active
+  const hdrDisplayExpected=renderEnabled?(imageSource&&imageResult?
+    Boolean(imageResult.hdr||(imageReference==='previous'&&previousImageResult?.hdr)):
+    Boolean(video?.is_hdr||renderStages(settings).includes('truehdr'))):Boolean(video?.is_hdr)
+  const showSdrMapping=hdrDisplayExpected&&(!showNative||nativeHdrActive===false)
   const nativeReadyRef=useRef(false);nativeReadyRef.current=nativePanel.ready&&view!=='flow'
   const nativeRequiredRef=useRef(false);nativeRequiredRef.current=nativeRequired&&view!=='flow'
   const renderScope=view==='flow'?'flow':nativeRequired?'native':'image'
+  useEffect(()=>{
+    if(!video||!isActive||(renderEnabled&&sourceUrl))return
+    let cancelled=false
+    const controller=new AbortController()
+    setSourceError('')
+    // Decode/display the source independently. Never resume GPU preview here.
+    const timer=setTimeout(()=>{
+      const request=imageSource?imageThumbnail(video.path,0,controller.signal):sourceFrame(video.path,currentFrame,controller.signal)
+      void request.then(blob=>{
+        if(cancelled)return
+        const url=URL.createObjectURL(blob),previous=sourcePictureUrl.current
+        sourcePictureUrl.current=url;setSourcePicture({source:video,url})
+        if(previous)URL.revokeObjectURL(previous)
+      }).catch(error=>{if(!cancelled&&error.name!=='AbortError')setSourceError(error.message)})
+    },80)
+    return()=>{cancelled=true;clearTimeout(timer);controller.abort()}
+  },[video,currentFrame,isActive,renderEnabled,imageSource])
+  useEffect(()=>()=>{if(sourcePictureUrl.current)URL.revokeObjectURL(sourcePictureUrl.current)},[])
   const fullImagePreview=video?.media_type!=='image'&&(!nativeRequired||view==='flow')&&(zoom>1||pixelPreview)
   const pendingNativeCommand=useRef<Record<string,unknown>|null>(null)
   const wsRef = useRef<WebSocket | null>(null)
@@ -98,7 +157,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
     if(state.suspended){
       wantPlayingRef.current=false;lastPlayRef.current=null
       setIsPlaying(false);setPreviewPending(false);setPreviewStats(null)
-      setPlayerBusy(state.releasing?'正在结束当前帧并释放预览显存…':state.error||'预览已暂停，点击恢复预览重新加载模型')
+      setPlayerBusy(state.releasing?'正在结束当前帧并释放预览显存…':state.error||'点击“开启渲染”后生成预览')
     }else setPlayerBusy('')
   },[])
   useEffect(()=>{
@@ -158,13 +217,15 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
 
   const requestRevisionRef = useRef(0)
   const activeRef=useRef(isActive);activeRef.current=isActive
-  const recoverySeekRef=useRef(false)
   const settingsRevisionRef = useRef(0)
   const settingsPendingRef = useRef(false)
   const settingsTimingRef = useRef<{inputAt:number; settings_apply_ms?:number; settings_http_ms?:number}>({inputAt:0})
   const lastSeekRef = useRef<Record<string, unknown> | null>(null)
   const displayedBlobRef = useRef('')
   const sendPlayer = useCallback((command: Record<string, unknown>) => {
+    // Stills use explicit HTTP render requests. Socket/view refreshes may not infer.
+    if(video?.media_type==='image'&&command.action!=='pause')return
+    if(!renderEnabledRef.current&&command.action!=='pause')return
     if(memoryPausedRef.current&&command.action!=='pause')return
     if(!activeRef.current&&command.action!=='pause')return
     setPreviewPending(command.action !== 'pause')
@@ -177,7 +238,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
     const payload = {...command, request_id: command.action === 'refresh' ? requestRevisionRef.current : ++requestRevisionRef.current,
       view:command.view??controls.view,
       transport: native ? 'native' : 'binary', ack: true, display_edge: imageSource?0:edge,
-      ...(imageSource?{view:'dual',zoom:1,pan_x:.5,pan_y:.5}: {})}
+      ...(imageSource&&!native?{view:'dual',zoom:1,pan_x:.5,pan_y:.5}: {})}
     if (command.action === 'seek') lastSeekRef.current = payload
     if (command.action === 'play') lastPlayRef.current = payload
     if (command.action === 'pause') pendingNativeCommand.current=null
@@ -199,7 +260,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
       ws = new WebSocket(wsUrl('player')); ws.binaryType = 'blob'; wsRef.current = ws
       const socket = ws
       const present = async (data: any, jpeg?: Blob) => {
-        if (memoryPausedRef.current || data.request_id !== requestRevisionRef.current) return
+        if (!renderEnabledRef.current || memoryPausedRef.current || data.request_id !== requestRevisionRef.current) return
         const sequence = ++latestSequence, received = performance.now()
         const url = jpeg ? URL.createObjectURL(jpeg) : data.image
         const image = new Image(); image.src = url
@@ -210,7 +271,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
           return
         }
         const decoded = performance.now()
-        const stale = () => stopped || memoryPausedRef.current || sequence !== latestSequence || data.request_id !== requestRevisionRef.current
+        const stale = () => stopped || !renderEnabledRef.current || memoryPausedRef.current || sequence !== latestSequence || data.request_id !== requestRevisionRef.current
         if (stale()) {if (jpeg) URL.revokeObjectURL(url); return}
         raf = requestAnimationFrame(() => {
           if (stale()) {if (jpeg) URL.revokeObjectURL(url); return}
@@ -240,6 +301,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
         })
       }
       ws.onopen = () => {
+        if(!renderEnabledRef.current)return
         if(memoryPausedRef.current)return
         if(!activeRef.current)return
         if(nativeRequiredRef.current&&!nativeReadyRef.current)return
@@ -260,6 +322,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
             if(data.suspended){++latestSequence;header=null}
             applyMemoryState(data)
           } else if (data.type === 'frame') {
+            if(!renderEnabledRef.current)return
             if(memoryPausedRef.current)return
             if(data.encoding==='native_fp16'){
               if(data.request_id!==requestRevisionRef.current)return
@@ -331,59 +394,150 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
     [video, sendPlayer]
   )
 
-  const handlePreviewMemory=async()=>{
+  const stopRendering=async()=>{
+    ++renderRevision.current
+    renderEnabledRef.current=false;setRenderVideo(null)
+    lastSeekRef.current=null;pendingNativeCommand.current=null
+    clearTimeout(seekTimerRef.current);pendingSeekFrameRef.current=null
     memoryRevision.current++
-    const resume=memoryPausedRef.current
     let serverBusy=false
     setMemoryBusy(true);setPlayerError(null)
-    if(!resume){
-      memoryPausedRef.current=true;setMemoryPaused(true)
-      wantPlayingRef.current=false;lastPlayRef.current=null
-      setIsPlaying(false);setPreviewPending(false)
-      sendPlayer({action:'pause'})
-      setPlayerBusy('正在结束当前帧并释放预览显存…')
-      onStatusChange?.('正在释放预览显存；参数和模型文件会保留')
-    }
+    memoryPausedRef.current=true;setMemoryPaused(true)
+    wantPlayingRef.current=false;lastPlayRef.current=null
+    setIsPlaying(false);setPreviewPending(false)
+    sendPlayer({action:'pause'})
+    setPlayerBusy('正在结束当前帧并释放预览显存…')
     try{
-      const state=await previewMemory(resume?'resume':'release')
+      const state=await previewMemory('release')
       serverBusy=state.releasing
       applyMemoryState(state)
-      if(resume){setPlayerBusy('正在重新加载预览模型…');requestFrame(currentFrameRef.current);onStatusChange?.('正在恢复预览')}
-      else onStatusChange?.('预览资源已释放；点击恢复预览重新加载模型')
+      onStatusChange?.('渲染已停止，预览显存已释放')
     }catch(error:any){
       setPlayerError(error.message);onStatusChange?.(error.message)
       try{const state=await previewMemory();serverBusy=state.releasing;applyMemoryState(state)}catch{}
+      throw error
     }finally{setMemoryBusy(serverBusy)}
   }
 
+  const startRendering=async()=>{
+    if(!video||launchBusy||memoryBusy||prerenderBusy||imageBusy)return
+    const source=video,revision=++renderRevision.current
+    setLaunchBusy(true);setPlayerError(null)
+    try{
+      if(source.media_type==='image'){
+        if(!renderEnabledRef.current){
+          const state=await previewMemory('resume')
+          if(revision!==renderRevision.current||sourceRef.current!==source)return
+          applyMemoryState(state);setRenderVideo(source)
+        }
+        setImageTicket(value=>value+1)
+      }else if(renderMode==='prerender'){
+        // Explicitly choose the same native export backend used by cached ranges.
+        if(settings.export_backend!=='gpu_transfer'){
+          const accepted=await saveSettings({export_backend:'gpu_transfer'})
+          if(revision!==renderRevision.current||sourceRef.current!==source)return
+          onSettingsChange(accepted)
+        }
+        if(revision!==renderRevision.current||sourceRef.current!==source)return
+        setPreviewRequest({id:++previewRequestId.current,source:source.path,
+          ...previewFrameRange(source,currentFrameRef.current,previewLength)})
+      }else{
+        const state=await previewMemory('resume')
+        if(revision!==renderRevision.current||sourceRef.current!==source)return
+        applyMemoryState(state);setRenderVideo(source);setPreviewPending(true)
+        setPlayerBusy('正在准备预览…')
+      }
+    }catch(error:any){setPlayerError(error.message);onStatusChange?.(error.message)}
+    finally{setLaunchBusy(false)}
+  }
+
+  const choosePreviewMode=(mode:PreviewMode)=>{
+    setRenderMode(mode)
+    if(renderVideo){void stopRendering().catch(()=>{})}
+  }
+
+  useEffect(()=>{
+    if(!imageSource||!video||!isActive||!renderEnabled||imageTicket<=imageCompleted.current||imageWorkBusy.current)return
+    if(settingsPendingRef.current&&!imageRealtime)return
+    if(nativeRequired&&!nativePanel.ready)return
+    const source=video,ticket=imageTicket
+    imageWorkBusy.current=true;setImageBusy(true);setPreviewPending(true);setPlayerError(null)
+    void renderImage(source.path,settings.image_memory_mode||'memory').then(data=>{
+      if(sourceRef.current!==source||!renderEnabledRef.current||data.discarded)return
+      setImageResult(data.result);setPreviousImageResult(data.previous||null)
+      setImageResultStale(!data.current);setPreviewStats(data.result.diagnostics)
+      onStatusChange?.(data.current?'图片渲染完成':'图片已渲染，参数有新改动')
+      window.dispatchEvent(new CustomEvent('lunarc:image-rendered',{detail:{path:source.path,result_id:data.result.id}}))
+    }).catch(error=>{
+      if(sourceRef.current===source&&renderEnabledRef.current){setPlayerError(error.message);onStatusChange?.(error.message)}
+    }).finally(()=>{
+      if(sourceRef.current===source)imageCompleted.current=Math.max(imageCompleted.current,ticket)
+      imageWorkBusy.current=false;setImageBusy(false);setPreviewPending(false)
+      setImageWorkEpoch(value=>value+1)
+    })
+  },[video,imageSource,isActive,renderEnabled,imageTicket,imageWorkEpoch,imageRealtime,nativeRequired,nativePanel.ready,settings.image_memory_mode])
+
+  useEffect(()=>{
+    if(!imageSource||!imageResult||!renderEnabled||!isActive||imageBusy||imageWorkBusy.current)return
+    if(nativeRequired&&!nativePanel.ready)return
+    let cancelled=false
+    const source=video,controller=new AbortController()
+    setImagePresentBusy(true)
+    const reference=imageReference==='previous'?previousImageResult?.id:undefined
+    const present=async()=>{
+      if(nativeRequired){
+        const report=await compareImageResults(imageResult.id,reference)
+        if(!cancelled)setPreviewStats((value:any)=>({...value,native_display:report}))
+      }else{
+        const blob=await renderedImagePreview(imageResult.id,reference,controller.signal)
+        if(cancelled||sourceRef.current!==source)return
+        const url=URL.createObjectURL(blob),previous=displayedBlobRef.current
+        displayedBlobRef.current=url;setActiveFrameUrl(url)
+        requestAnimationFrame(()=>{if(previous)URL.revokeObjectURL(previous)})
+      }
+    }
+    void present().catch(error=>{if(!cancelled&&error.name!=='AbortError')setPlayerError(error.message)})
+      .finally(()=>{if(!cancelled)setImagePresentBusy(false)})
+    return()=>{cancelled=true;controller.abort();setImagePresentBusy(false)}
+  },[imageSource,imageResult,imageReference,previousImageResult,renderEnabled,isActive,imageBusy,nativeRequired,nativePanel.ready,video])
+
   useEffect(()=>{
     const restored=()=>{
+      ++renderRevision.current;renderEnabledRef.current=false;setRenderVideo(null)
+      lastSeekRef.current=null;lastPlayRef.current=null;wantPlayingRef.current=false;setIsPlaying(false)
       setPlayerError(null);setPreviewPending(false)
-      recoverySeekRef.current=true
-      if(activeRef.current){recoverySeekRef.current=false;requestFrame(currentFrameRef.current)}
+      setImageRealtime(false);setImageResult(null);setPreviousImageResult(null)
+      setImageTicket(0);imageCompleted.current=0
     }
     window.addEventListener('lunarc:backend-restored',restored)
     return()=>window.removeEventListener('lunarc:backend-restored',restored)
-  },[requestFrame])
-  useEffect(()=>{
-    if(isActive&&recoverySeekRef.current){recoverySeekRef.current=false;requestFrame(currentFrameRef.current)}
-  },[isActive,requestFrame])
+  },[])
 
   useEffect(() => {
     const pending = () => {
       settingsPendingRef.current = true
       settingsTimingRef.current = {inputAt:performance.now()}
-      setPlayerError(null); if(!memoryPausedRef.current)setPreviewPending(true)
+      setPlayerError(null)
+      if(video?.media_type==='image')setImageResultStale(Boolean(imageResultRef.current))
+      if(renderEnabledRef.current&&!memoryPausedRef.current&&(video?.media_type!=='image'||imageRealtimeRef.current))setPreviewPending(true)
     }
     const applied = (event: Event) => {
       const detail = (event as CustomEvent).detail
       settingsRevisionRef.current = detail.revision ?? settingsRevisionRef.current
       settingsTimingRef.current = detail
-      if (video) sendPlayer({action:'refresh'})
+      if(video?.media_type==='image'){
+        if(imageRealtimeRef.current&&renderEnabledRef.current)setImageTicket(value=>value+1)
+      }else if (video) sendPlayer({action:'refresh'})
     }
     const settled = () => {
       settingsPendingRef.current = false
-      if (video) sendPlayer({action:'refresh'})
+      if(video?.media_type==='image'){
+        setImageWorkEpoch(value=>value+1)
+        const source=video,result=imageResultRef.current
+        if(result)void imageResults(source.path).then(state=>{
+          if(sourceRef.current===source&&imageResultRef.current?.id===result.id)setImageResultStale(!state.current)
+        }).catch(()=>{})
+      }else if (video) sendPlayer({action:'refresh'})
     }
     window.addEventListener('lunarc:settings-pending', pending)
     window.addEventListener('lunarc:settings-applied', applied)
@@ -396,23 +550,30 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
   }, [video, sendPlayer])
 
   useEffect(() => {
+    ++renderRevision.current;renderEnabledRef.current=false;setRenderVideo(null)
+    lastSeekRef.current=null;setPreviewRequest(null);setPrerenderBusy(false)
+    sendPlayer({action:'pause'})
+    if(renderVideo)void stopRendering().catch(()=>{})
     clearTimeout(seekTimerRef.current)
     pendingSeekFrameRef.current = null
     wantPlayingRef.current = false
     lastPlayRef.current = null
     setIsPlaying(false)
     setActiveFrameUrl('')
+    setPlayerError(null);setPlayerBusy('')
     pendingNativeCommand.current=null
     setPreviewStats(null)
+    setImageRealtime(false);setImageResult(null);setPreviousImageResult(null);setImageResultStale(false)
+    setImageReference('original');setImageTicket(0);imageCompleted.current=0
     setPreviewPending(false)
     setZoom(1);setPan({x:.5,y:.5});setPixelPreview(false)
     if(video?.media_type==='image')setView(current=>current==='flow'?'split':current)
-  }, [video?.path])
+  }, [video])
 
   // The native window already holds both GPU pictures. View, wipe and pan
   // changes redraw there, without sending a new frame through the backend.
   useEffect(() => {
-    if (!video) return
+    if (!video||!renderEnabled) return
     if(nativeRequired&&viewControls.current.view!=='flow'&&!nativePanel.ready)return
     if(pendingNativeCommand.current) {
       const command=pendingNativeCommand.current;pendingNativeCommand.current=null
@@ -432,7 +593,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
     } else {
       requestFrame(currentFrameRef.current)
     }
-  }, [video, isPlaying, requestFrame, renderScope, sendPlayer])
+  }, [video, isPlaying, requestFrame, renderScope, sendPlayer,renderEnabled])
 
   useEffect(()=>{
     if(!video||video.media_type==='image'||(nativeRequired&&view!=='flow'))return
@@ -443,7 +604,7 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
   // Play / Pause handling (P1-08 sends loop; P1-10 never claims playing
   // without an open socket — disconnected play becomes buffered intent)
   const togglePlay = () => {
-    if (!video || video.media_type==='image') return
+    if (!video || video.media_type==='image'||!renderEnabledRef.current) return
     const nextPlaying = !isPlaying
     wantPlayingRef.current = nextPlaying
 
@@ -711,9 +872,12 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
           <div className="dlss-view-modes" role="group" aria-label={ui("预览视图")}>{ui(([
             {id:'split',label:'对比'},{id:'dual',label:'双画面'},{id:'dlss',label:'增强'},{id:'orig',label:'原图'},{id:'flow',label:'光流'},
           ] as const).filter(item=>video?.media_type!=='image'||item.id!=='flow').map(item=><button key={item.id} type="button" aria-pressed={view===item.id} onClick={()=>setView(item.id)}>{ui(item.label)}</button>))}</div>
+          {imageSource&&imageResult&&<label className="image-reference-picker">{ui('对比参考')}<select aria-label={ui('图片对比参考')} value={imageReference} disabled={imageBusy} onChange={event=>setImageReference(event.target.value as 'original'|'previous')}>
+            <option value="original">{ui('原图')}</option><option value="previous" disabled={!previousImageResult}>{ui('上一份结果')}</option>
+          </select></label>}
           <div className="dlss-zoom-tools">
-            <button type="button" className="icon-button" disabled={!video||memoryBusy} onClick={()=>void handlePreviewMemory()} title={ui(memoryPaused?'按当前参数重新加载预览模型':'暂停预览并释放模型、纹理和缓存；保留参数和模型文件')}>{ui(memoryBusy?'处理中…':memoryPaused?'恢复预览':'释放预览显存')}</button>
-            {ui(nativeRequired&&<span className="native-preview-status">{ui("GPU 预览")}</span>)}
+            <button type="button" className="button quiet preview-release-button" disabled={!video||memoryBusy||launchBusy} onClick={()=>void stopRendering().catch(()=>{})} title={ui('暂停预览并释放模型、纹理和缓存；保留参数和模型文件')}>{ui(memoryBusy?'处理中…':'释放预览显存')}</button>
+            {ui(nativeRequired&&renderEnabled&&<span className="native-preview-status">{ui(hdrDisplayExpected&&nativeHdrActive===true?'HDR · FP16 scRGB':hdrDisplayExpected&&nativeHdrActive===false?'SDR 映射 · FP16':'GPU 预览')}</span>)}
             <select aria-label={ui("预览缩放")} value={pixelPreview?'native':zoom} onChange={e=>{if(e.target.value==='native')return;setPixelPreview(false);setZoom(Number(e.target.value));setPan({x:.5,y:.5})}}>
               {ui(pixelPreview&&<option value="native">{ui("原像素")}</option>)}{ui(![.5,1,2,3].includes(zoom)&&<option value={zoom}>{ui(Math.round(zoom*100))}%</option>)}<option value={1}>{ui("适配")}</option><option value={.5}>{ui("缩小")}</option><option value={2}>{ui("放大 2×")}</option><option value={3}>{ui("放大 3×")}</option>
             </select>
@@ -728,22 +892,45 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
             <button className="icon-button" title={ui("全屏预览")} aria-label={ui("全屏预览")} onClick={()=>{const action=document.fullscreenElement?document.exitFullscreen():canvasRef.current?.requestFullscreen();action?.catch(e=>onStatusChange?.(`无法全屏：${e.message}`))}}><Maximize size={17}/></button>
           </div>
         </div>
-        <section ref={canvasRef} className="dlss-monitor" aria-label={ui("视频预览画布")} title={ui(video?.media_type==='image'?'Alt＋滚轮缩放；左键拖动画面；滚轮上下移动':'实际处理层数和模式显示在画面中')} onPointerDown={handleMouseDown} onPointerMove={handleMouseMove} onPointerUp={handleMouseUp} onPointerCancel={handleMouseUp} onContextMenu={event=>event.preventDefault()}>
+        <div className="preview-render-controls">
+          {imageSource&&<><label>{ui('图片渲染模式')}<select aria-label={ui('图片渲染模式')} value={settings.image_memory_mode||'memory'} disabled={imageBusy||launchBusy||memoryBusy}
+            onChange={event=>handleParamChange('image_memory_mode',event.target.value as 'memory'|'fast')}>
+            <option value="memory">{ui('省显存（逐项处理）')}</option><option value="fast">{ui('快速（全链路常驻）')}</option>
+          </select></label><label className="image-realtime-toggle"><input type="checkbox" checked={imageRealtime} disabled={launchBusy||memoryBusy} onChange={event=>{
+            const enabled=event.target.checked;setImageRealtime(enabled)
+            if(enabled){if(imageBusy)setImageTicket(value=>value+1);else void startRendering()}
+            else imageCompleted.current=imageTicket
+          }}/>{ui('实时渲染')}</label></>}
+          {video?.media_type!=='image'&&<><label>{ui('渲染方式')}<select aria-label={ui('渲染方式')} value={renderMode} disabled={memoryBusy||launchBusy||prerenderBusy} onChange={event=>choosePreviewMode(event.target.value as PreviewMode)}>
+            <option value="realtime">{ui('实时渲染')}</option><option value="prerender">{ui('预渲染')}</option>
+          </select></label>{renderMode==='prerender'&&<label>{ui('预渲染长度')}<select aria-label={ui('预渲染长度')} value={previewLength} disabled={launchBusy||prerenderBusy} onChange={event=>setPreviewLength(event.target.value as PreviewLength)}>
+            {PREVIEW_LENGTHS.map(option=><option key={option.id} value={option.id}>{ui(option.label)}</option>)}
+          </select></label>}</>}
+          <button className="button primary" type="button" disabled={!video||memoryBusy||launchBusy||prerenderBusy||imageBusy} onClick={()=>void (imageSource?startRendering():renderEnabled?stopRendering():startRendering()).catch(()=>{})}>
+            {renderEnabled&&!imageSource?<Pause size={15}/>:<Play size={15}/>}{ui(memoryBusy||launchBusy?'处理中…':imageBusy?'正在渲染…':imageSource?'渲染一帧':prerenderBusy?'预渲染中…':renderEnabled?'停止渲染':'开启渲染')}
+          </button>
+        </div>
+        {imageSource&&imageResult&&imageReference==='previous'&&previousImageResult&&<div className="image-comparison-caption">{ui('上一份结果')} · {previousImageResult.filename} · {previousImageResult.width}×{previousImageResult.height} · {previousImageResult.hdr?'HDR':'SDR'} ↔ {ui('本次结果')} · {imageResult.width}×{imageResult.height} · {imageResult.hdr?'HDR':'SDR'}</div>}
+        {(playerError||nativePanel.error||(!renderEnabled&&sourceError))&&<ProcessingError message={playerError||nativePanel.error||sourceError}
+          onDismiss={()=>{setPlayerError(null);setSourceError('')}}/>}
+        <section ref={canvasRef} className="dlss-monitor" aria-label={ui("视频预览画布")} title={ui(showNative?'上方菜单缩放；右键拖动画面':video?.media_type==='image'?'Alt＋滚轮缩放；左键拖动画面；滚轮上下移动':'实际处理层数和模式显示在画面中')} onPointerDown={handleMouseDown} onPointerMove={handleMouseMove} onPointerUp={handleMouseUp} onPointerCancel={handleMouseUp} onContextMenu={event=>event.preventDefault()}>
 
-          {ui((playerError||nativePanel.error)&&<div className="dlss-player-error" role="alert"><AlertTriangle size={15}/><span>{ui(playerError||nativePanel.error)}</span><button type="button" aria-label={ui("关闭错误")} onClick={()=>setPlayerError(null)}>×</button></div>)}
-          {ui(nativeRequired&&view!=='flow'?<div className="dlss-empty-preview" aria-label={ui("原生 GPU 显示区域")}>{ui(!previewStats?.native_display&&<strong>{ui(playerBusy||playerError||nativePanel.error||'正在准备原生预览…')}</strong>)}</div>:video?.media_type==='image'&&activeFrameUrl?<ImageViewport src={activeFrameUrl} paired view={view} zoom={zoom} onZoom={value=>{setPixelPreview(false);setZoom(value)}} pan={pan} onPan={setPan} split={splitX} onSplit={value=>{splitRef.current=value;setSplitX(value)}}/>:activeFrameUrl?<img src={activeFrameUrl} alt={ui("当前预览帧")} className="dlss-preview-image" draggable={false}
+
+          {ui(!renderEnabled?sourceUrl?<ImageViewport src={sourceUrl} zoom={zoom} onZoom={value=>{setPixelPreview(false);setZoom(value)}} pan={pan} onPan={setPan}/>:<div className="dlss-empty-preview"><strong>{ui(video?'正在读取原素材…':'导入素材，开始重建。')}</strong></div>:showNative?(sourceUrl?<ImageViewport src={sourceUrl} zoom={zoom} onZoom={value=>{setPixelPreview(false);setZoom(value)}} pan={pan} onPan={setPan}/>:<div className="dlss-empty-preview" aria-label={ui("原生 GPU 显示区域")}><strong>{ui(playerBusy||'正在准备原生预览…')}</strong></div>):video?.media_type==='image'&&activeFrameUrl?<ImageViewport src={activeFrameUrl} paired view={view} zoom={zoom} onZoom={value=>{setPixelPreview(false);setZoom(value)}} pan={pan} onPan={setPan} split={splitX} onSplit={value=>{splitRef.current=value;setSplitX(value)}}/>:activeFrameUrl?<img src={activeFrameUrl} alt={ui("当前预览帧")} className="dlss-preview-image" draggable={false}
             onLoad={event=>{setPreviewImageSize({width:event.currentTarget.naturalWidth,height:event.currentTarget.naturalHeight})}}
-            style={pixelPreview&&previewImageSize?{width:previewImageSize.width/devicePixelRatio,height:previewImageSize.height/devicePixelRatio}:undefined}/>:<div className="dlss-empty-preview"><div className="empty-glyph"><span/><span/><span/></div><strong>{ui(video?'正在准备预览…':'导入素材，开始重建。')}</strong></div>)}
-          {ui(zoom>1.01&&<div className="pan-hint"><Move size={13}/>{ui(video?.media_type==='image'?'左键拖动画面 · 滚轮上下移动':'右键拖动画布以查看细节')}</div>)}
-          {ui(!nativeRequired&&video?.media_type!=='image'&&view==='split'&&activeFrameUrl&&<div className="split-marker" aria-hidden="true" style={{left:`${splitX*100}%`}}/>)}
-          {ui(!nativePanel.ready&&(video?.is_hdr||settings.truehdr_enabled)&&<div className="preview-warning" title={ui("当前预览将 HDR 映射到 SDR 显示，不改变 HDR 导出结果。")}><AlertTriangle size={13}/>{ui("HDR → SDR 预览")}</div>)}
-          {ui(previewPending && activeFrameUrl && <div className="preview-execution" role="status">{ui("更新预览…")}</div>)}
+            style={pixelPreview&&previewImageSize?{width:previewImageSize.width/devicePixelRatio,height:previewImageSize.height/devicePixelRatio}:undefined}/>:<div className="dlss-empty-preview"><div className="empty-glyph"><span/><span/><span/></div><strong>{ui(video?(renderEnabled?'正在准备预览…':'点击“开启渲染”后生成预览'):'导入素材，开始重建。')}</strong></div>)}
+          {ui(zoom>1.01&&<div className="pan-hint"><Move size={13}/>{ui(showNative?'右键拖动画布以查看细节':video?.media_type==='image'||!renderEnabled?'左键拖动画面 · 滚轮上下移动':'右键拖动画布以查看细节')}</div>)}
+          {ui(renderEnabled&&!nativeRequired&&video?.media_type!=='image'&&view==='split'&&activeFrameUrl&&<div className="split-marker" aria-hidden="true" style={{left:`${splitX*100}%`}}/>)}
+          {ui(showSdrMapping&&<div className="preview-warning" title={ui(showNative?'当前显示器未启用 HDR，原生预览正在映射为 SDR。':'当前预览将 HDR 映射到 SDR 显示，不改变 HDR 导出结果。')}><AlertTriangle size={13}/>{ui("HDR → SDR 预览")}</div>)}
+          {ui(showNative&&hdrDisplayExpected&&nativeHdrActive===true&&<div className="preview-warning">HDR · FP16 scRGB</div>)}
+          {ui(!renderEnabled&&sourceUrl&&<div className="preview-execution">{ui('原素材 · 未开启效果渲染')}</div>)}
           {ui(!previewPending && previewStats?.layer_count && <div className="preview-execution" aria-label={ui("预览实际执行")} title={ui(`实际尺寸 ${previewStats.preview_resolution?.join(' × ')} · 处理 ${Number(previewStats.processing_fps).toFixed(1)} FPS · 播放 ${Number(previewStats.presentation_fps||0).toFixed(1)} FPS · 跳过 ${previewStats.dropped_frames||0} 帧${previewStats.solver?` · GPU 融合 ${previewStats.solver.converged===false?'未收敛':'已执行'}`:''}`)}>
             {ui(previewStats.render_pipeline?.includes('nr') ? `${previewStats.layer_count} 层` : previewStats.render_pipeline?.includes('vsr') ? 'VSR' : previewStats.render_pipeline?.includes('dlaa') ? 'DLAA' : settings.truehdr_enabled ? 'TrueHDR' : '原帧预览')}
             {ui(previewStats.render_pipeline?.includes('vsr') && <>{ui((() => {
               const stages=[...(previewStats.native_input_effect?.stages||[]),...(previewStats.native_output_effect?.stages||[])]
               const vsr=stages.find((stage:any)=>stage.stage==='vsr')
-              return vsr?.counters?.model_loaded ? ` · ${['低','中','高','极高'][vsr.counters.quality_level-1]} · ${vsr.output_size.join('×')}` : ''
+              const grade=['低','中','高','极高'][vsr?.counters?.quality_level-1]
+              return vsr?.counters?.model_loaded ? `${grade?` · ${ui(grade)}`:''}${vsr.output_size?` · ${vsr.output_size.join('×')}`:''}` : ''
             })())}</>)}
             {ui(previewStats.layer_count > 1 && <> · {ui(previewStats.fusion_mode_actual?.startsWith('sequential') ? '顺序堆叠' : previewStats.fusion_mode_actual?.includes('data_consistency') ? '多尺度融合' : '仅第一层')}</>)}
             {ui(isPlaying && <> · {ui(Number(previewStats.presentation_fps || previewStats.processing_fps).toFixed(1))} fps</>)}
@@ -753,8 +940,8 @@ export const DLSSPage: React.FC<DLSSPageProps> = ({
         </section>
         <div className="dlss-material"><strong title={ui(video?.path)}>{video?.filename||ui('未载入素材')}</strong><span>{ui(video?`${video.width} × ${video.height} · ${video.is_hdr?'HDR10':'SDR'}`:'')}</span></div>
         {ui(video?.media_type!=='image'&&<div className="dlss-transport">
-          <SegmentTimeline video={video} settings={settings} currentFrame={currentFrame} onSeek={handleSeek} onSettingsChange={handleParamsBatchChange} onStatus={onStatusChange} onPause={()=>{wantPlayingRef.current=false;lastPlayRef.current=null;setIsPlaying(false);sendPlayer({action:"pause"})}}/>
-          <div className="transport-buttons"><button type="button" aria-label={ui("跳至首帧")} onClick={()=>handleSeek(0)}><SkipBack size={16}/></button><button type="button" aria-label={ui("后退一帧")} onClick={()=>handleSeek(currentFrame-1)}>−1</button><button type="button" className="transport-play" onClick={togglePlay} aria-label={ui(isPlaying?'暂停播放':'开始播放')}>{ui(isPlaying?<Pause size={16}/>:<Play size={16} />)}</button><button type="button" aria-label={ui("前进一帧")} onClick={()=>handleSeek(currentFrame+1)}>+1</button><button type="button" aria-label={ui("跳至末帧")} onClick={()=>handleSeek((video?.frames||1)-1)}><SkipForward size={16}/></button><button type="button" aria-pressed={loop} aria-label={ui("循环播放")} onClick={()=>setLoop(!loop)}><RotateCcw size={15}/></button></div>
+          <SegmentTimeline video={video} settings={settings} currentFrame={currentFrame} onSeek={handleSeek} onSettingsChange={handleParamsBatchChange} onStatus={onStatusChange} onBeforeRender={stopRendering} onPause={async()=>{if(!memoryPausedRef.current)await stopRendering()}} previewRequest={previewRequest} onRenderBusy={setPrerenderBusy}/>
+          <div className="transport-buttons"><button type="button" aria-label={ui("跳至首帧")} onClick={()=>handleSeek(0)}><SkipBack size={16}/></button><button type="button" aria-label={ui("后退一帧")} onClick={()=>handleSeek(currentFrame-1)}>−1</button><button type="button" className="transport-play" disabled={!renderEnabled} onClick={togglePlay} aria-label={ui(isPlaying?'暂停播放':'开始播放')}>{ui(isPlaying?<Pause size={16}/>:<Play size={16} />)}</button><button type="button" aria-label={ui("前进一帧")} onClick={()=>handleSeek(currentFrame+1)}>+1</button><button type="button" aria-label={ui("跳至末帧")} onClick={()=>handleSeek((video?.frames||1)-1)}><SkipForward size={16}/></button><button type="button" aria-pressed={loop} aria-label={ui("循环播放")} onClick={()=>setLoop(!loop)}><RotateCcw size={15}/></button></div>
           <div className="transport-meta">{ui(video?`${video.fps||30} fps · ${video.duration_seconds.toFixed(2)} s`:'—')}</div>
         </div>)}
       </main>

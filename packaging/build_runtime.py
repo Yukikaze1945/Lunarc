@@ -16,7 +16,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGES = ['numpy', 'opencv-python', 'torch', 'torchvision', 'fastapi', 'uvicorn', 'websockets',
-            'pydantic', 'Pillow', 'pillow-heif', 'av', 'spandrel', 'safetensors', 'einops']
+            'pydantic', 'Pillow', 'pillow-heif', 'av', 'spandrel', 'safetensors', 'einops', 'mcp', 'httpx']
 INVENTORY = r'''
 import importlib.metadata as m, json, sys, sysconfig
 from packaging.requirements import Requirement
@@ -154,7 +154,11 @@ def build(args):
                 copy_file(path, python / 'Lib/site-packages' / path.relative_to(site))
     # _pth implies isolated mode: ignores PYTHONHOME/PYTHONPATH, user site and
     # registry. Relative application root works in both source and packaged layout.
-    (python / f"python{inventory['minor']}._pth").write_text('.\nLib\nLib/site-packages\n../..\n', encoding='utf-8')
+    # Explicit pywin32 paths replace its site hook without enabling user/site .pth execution.
+    search_paths=['.','Lib','Lib/site-packages','Lib/site-packages/win32',
+        'Lib/site-packages/win32/lib','Lib/site-packages/pythonwin',
+        'Lib/site-packages/pywin32_system32','../..']
+    (python / f"python{inventory['minor']}._pth").write_text('\n'.join(search_paths)+'\n', encoding='utf-8')
     ffmpeg = Path(args.ffmpeg_dir).resolve()
     for name in ('ffmpeg.exe', 'ffprobe.exe'):
         copy_file(ffmpeg / name, output / 'tools' / name)

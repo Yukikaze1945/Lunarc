@@ -33,7 +33,7 @@ def run():
     parser.add_argument('--stages', nargs='+', choices=['nr', 'dlaa', 'vsr', 'vfg'])
     parser.add_argument('--vsr-target', choices=['720p','1080p','1440p','4k','8k'], default='1080p')
     parser.add_argument('--vsr-size', type=int, nargs=2)
-    parser.add_argument('--frame-multiplier', type=int, choices=range(1,9), default=1)
+    parser.add_argument('--frame-multiplier', type=int, choices=range(1,17), default=1)
     parser.add_argument('--framegen-fps', help='Dynamic VFG target fps, decimal or rational')
     parser.add_argument('--no-framegen-scene-detection', action='store_true')
     parser.add_argument('--vsr-scale', type=float)

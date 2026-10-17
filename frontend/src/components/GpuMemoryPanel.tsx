@@ -1,11 +1,14 @@
 // localized-render-sinks
 import {ui} from '../i18n/locale'
 import type {SystemInfo} from '../types'
+import {GpuMemoryMeter} from './GpuMemoryMeter'
 
 const gib=(bytes:number|undefined)=>bytes==null?'—':`${(bytes/1024**3).toFixed(2)} GiB`
 export function GpuMemoryPanel({memory}:{memory:SystemInfo['gpu_memory']}){
   return <section className="panel"><h2>{ui("显存分配")}</h2>{ui(!memory?<p>{ui("处理第一帧后显示显存统计。")}</p>:<>
     <p>{ui(memory.phase==='export'?'导出':'预览')} · {ui(memory.active?'最近采样':'上次采样')} · {ui(new Date(memory.sampled_at*1000).toLocaleTimeString())}</p>
+    <GpuMemoryMeter used={memory.process?.local_usage==null?undefined:memory.process.local_usage/1024**3}
+      total={memory.process?.local_budget==null?undefined:memory.process.local_budget/1024**3} label="进程用量 / 系统预算" unit="GiB"/>
     <dl className="fact-list"><dt>{ui("进程用量 / 系统预算")}</dt><dd>{ui(gib(memory.process?.local_usage))} / {ui(gib(memory.process?.local_budget))}</dd>
       <dt>{ui("进程非本地内存")}</dt><dd>{ui(gib(memory.process?.nonlocal_usage))}</dd>
       <dt>{ui("已统计设备资源分配")}</dt><dd>{ui(gib(memory.known_device_allocations_bytes))}</dd>

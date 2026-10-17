@@ -132,7 +132,8 @@ def validate(settings, source):
         runtime_directory(settings)
     if ordered == ['nr']:
         return
-    wide = source.get('pix_fmt') in ('yuv420p10le', 'p010le', 'p010')
+    image_input = source.get('media_type') == 'image' and source.get('pix_fmt') in ('rgba','rgba16f')
+    wide = source.get('pix_fmt') in ('yuv420p10le', 'p010le', 'p010') or (image_input and source.get('pix_fmt')=='rgba16f')
     if source.get('color_transfer') == 'arib-std-b67':
         raise ValueError('HLG is unsupported by the existing native HDR10/PQ chain')
     if source.get('color_transfer') == 'smpte2084' and not wide:
@@ -140,7 +141,6 @@ def validate(settings, source):
     if any(stage_kind(stage)=='vsr' and (wide or 'truehdr' in ordered[:index]) for index,stage in enumerate(ordered)):
         from native_runtime_paths import wide_vfx_runtime
         wide_vfx_runtime(settings.get('vsr_runtime_path'))
-    image_input = source.get('media_type') == 'image' and source.get('pix_fmt') == 'rgba'
     if not image_input and source.get('pix_fmt') not in ('yuv420p', 'nv12', 'yuv420p10le', 'p010le', 'p010'):
         raise ValueError('Native stages require a supported 8-bit or 10-bit YUV source')
     if settings.get('export_backend') != 'gpu_transfer':

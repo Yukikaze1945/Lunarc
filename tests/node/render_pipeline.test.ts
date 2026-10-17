@@ -51,6 +51,7 @@ test('VSR output extents and dynamic fps match queue display and reject invalid 
   assert.ok(nativeOutputBlockers({...settings,vsr_scale:5},video).length)
   assert.deepEqual(vsrOutputSize({...settings,vsr_output_mode:'resolution',vsr_target:'custom',vsr_width:2560,vsr_height:1440},video),{width:2560,height:1440})
   assert.equal(framegenOutputFps({frame_generation:'vfg',frame_multiplier:8} as DLSSSettings,25),200)
+  assert.equal(framegenOutputFps({frame_generation:'vfg',frame_multiplier:16} as DLSSSettings,25),400)
 })
 
 test('VFG is movable and independently usable; adding and removing controls activation', () => {

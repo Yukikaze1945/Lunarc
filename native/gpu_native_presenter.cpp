@@ -18,6 +18,7 @@
 #include <cstdio>
 #include <stdexcept>
 #include "nvof_d3d12_interop.h"
+#include "gpu_dred_diagnostics.h"
 using Microsoft::WRL::ComPtr;
 namespace {
 thread_local std::string error;
@@ -41,12 +42,17 @@ float Split,Zoom,PanX,PanY,SDRWhite;};
 ByteAddressBuffer A:register(t0); ByteAddressBuffer B:register(t1);
 float3 decode(float3 c){return float3(c.r<.081?c.r/4.5:pow((c.r+.099)/1.099,1./.45),
 c.g<.081?c.g/4.5:pow((c.g+.099)/1.099,1./.45),c.b<.081?c.b/4.5:pow((c.b+.099)/1.099,1./.45));}
-float3 fetch(bool first,uint2 xy){uint pitch=first?AP:BP,bytes=first?AB:BB;
-uint address=xy.y*pitch+xy.x*bytes;
-if(bytes==4){uint v=first?A.Load(address):B.Load(address);
-return decode(float3(v&255,(v>>8)&255,(v>>16)&255)/255.);}
-uint2 v=first?A.Load2(address):B.Load2(address);
-return float3(f16tof32(v.x&65535),f16tof32(v.x>>16),f16tof32(v.y&65535));}
+float3 fetch(bool first,uint2 xy){uint bytes;uint2 packed;
+// Raw root SRVs have no size bound. A ternary compiles to loads from BOTH
+// resources before movc, which faults for unequal extents or RGBA8/FP16 pairs.
+// Keep resource selection branched, with each resource's own address/format.
+[branch] if(first){bytes=AB;uint address=xy.y*AP+xy.x*AB;
+    [branch] if(AB==4)packed=uint2(A.Load(address),0);else packed=A.Load2(address);
+}else{bytes=BB;uint address=xy.y*BP+xy.x*BB;
+    [branch] if(BB==4)packed=uint2(B.Load(address),0);else packed=B.Load2(address);
+}
+if(bytes==4)return decode(float3(packed.x&255,(packed.x>>8)&255,(packed.x>>16)&255)/255.);
+return float3(f16tof32(packed.x&65535),f16tof32(packed.x>>16),f16tof32(packed.y&65535));}
 float3 sampleImage(bool first,float2 uv){uint2 extent=first?uint2(AW,AH):uint2(BW,BH);
 float2 p=clamp(uv*extent-.5,0.,float2(extent-1));uint2 q=(uint2)floor(p),s=min(q+1,extent-1);float2 f=frac(p);
 float3 rgb=lerp(lerp(fetch(first,q),fetch(first,uint2(s.x,q.y)),f.x),
@@ -85,7 +91,7 @@ struct Presenter {
     HANDLE ready=CreateEventW(nullptr,TRUE,FALSE,nullptr),done=CreateEventW(nullptr,FALSE,FALSE,nullptr);
     HWND parent=nullptr,window=nullptr;
     int x=0,y=0,w=1,h=1,mode=2;
-    bool visible=true,loaded=false,hdr=false,drag=false,panDrag=false,poisoned=false;
+    bool visible=true,loaded=false,hdr=false,drag=false,panDrag=false,poisoned=false,frozen=false,layoutDirty=true;
     POINT last{}; HMONITOR monitor=nullptr;
     UINT pointerDowns=0;float downX=0;
     float split=.5f,zoom=1.f,panX=.5f,panY=.5f,sdrWhite=1.f;
@@ -93,11 +99,14 @@ struct Presenter {
     UINT64 serial=0,frames=0,presents=0,dragPresents=0;
     std::string failure;
     ~Presenter(){if(ready)CloseHandle(ready);if(done)CloseHandle(done);}
-    void check(HRESULT hr,const char* operation){if(FAILED(hr)){char s[128];
-        std::snprintf(s,sizeof(s),"%s: 0x%08lx",operation,static_cast<unsigned long>(hr));throw std::runtime_error(s);}}
+    void check(HRESULT hr,const char* operation){if(FAILED(hr)){char s[2048];
+        if(device&&FAILED(device->GetDeviceRemovedReason()))describe_gpu_removal(device.Get(),operation,hr,s,sizeof(s));
+        else std::snprintf(s,sizeof(s),"%s: 0x%08lx",operation,static_cast<unsigned long>(hr));
+        throw std::runtime_error(s);}}
     void wait(){check(queue->Signal(fence.Get(),++serial),"presenter signal");
         check(fence->SetEventOnCompletion(serial,done),"presenter event");
-        if(WaitForSingleObject(done,30000)!=WAIT_OBJECT_0)throw std::runtime_error("presenter GPU timeout");poisoned=false;}
+        if(WaitForSingleObject(done,30000)!=WAIT_OBJECT_0)throw std::runtime_error("presenter GPU timeout");
+        check(device->GetDeviceRemovedReason(),"presenter GPU completion");poisoned=false;}
     void colour(){
         auto m=MonitorFromWindow(window,MONITOR_DEFAULTTONEAREST);monitor=m;
         ComPtr<IDXGIFactory1> factory;check(CreateDXGIFactory1(IID_PPV_ARGS(&factory)),"display factory");
@@ -164,8 +173,16 @@ struct Presenter {
         p.PrimitiveTopologyType=D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;p.NumRenderTargets=1;p.RTVFormats[0]=FORMAT;p.SampleDesc.Count=1;
         check(device->CreateGraphicsPipelineState(&p,IID_PPV_ARGS(&pipeline)),"present pipeline");
     }
+    void resize(){
+        if(!swap||frozen)return;
+        DXGI_SWAP_CHAIN_DESC1 desc{};check(swap->GetDesc1(&desc),"query FP16 panel size");
+        if(desc.Width!=UINT(w)||desc.Height!=UINT(h)){
+            for(auto& item:back)item.Reset();
+            check(swap->ResizeBuffers(2,w,h,FORMAT,0),"resize FP16 panel");buffers();
+        }
+    }
     void draw(bool dragging=false){
-        if(!failure.empty()||!swap||!visible||!IsWindowVisible(parent)||w<1||h<1)return;
+        if(frozen||!failure.empty()||!swap||!visible||!IsWindowVisible(parent)||w<1||h<1)return;
         check(allocator->Reset(),"draw allocator");check(list->Reset(allocator.Get(),pipeline.Get()),"draw list");
         UINT index=swap->GetCurrentBackBufferIndex();auto handle=rtv->GetCPUDescriptorHandleForHeapStart();
         handle.ptr+=index*device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -211,12 +228,19 @@ LRESULT CALLBACK proc(HWND window,UINT message,WPARAM wp,LPARAM lp){
         if(message==WM_ERASEBKGND)return 1;
         if(message==WM_PAINT){PAINTSTRUCT paint{};BeginPaint(window,&paint);EndPaint(window,&paint);std::lock_guard<std::mutex> lock(p->mutex);p->draw();return 0;}
         if(message==UPDATE){std::lock_guard<std::mutex> lock(p->mutex);
-            SetWindowPos(window,HWND_TOP,p->x,p->y,p->w,p->h,SWP_NOACTIVATE|(p->visible?SWP_SHOWWINDOW:SWP_HIDEWINDOW));
-            if(p->swap){DXGI_SWAP_CHAIN_DESC1 desc{};p->swap->GetDesc1(&desc);
-                if(desc.Width!=UINT(p->w)||desc.Height!=UINT(p->h)){for(auto& item:p->back)item.Reset();
-                    p->check(p->swap->ResizeBuffers(2,p->w,p->h,FORMAT,0),"resize FP16 panel");p->buffers();}p->colour();p->draw();}return 0;}
-        if(message==FRAME){std::lock_guard<std::mutex> lock(p->mutex);p->draw();return 0;}
-        if(message==WM_TIMER){std::lock_guard<std::mutex> lock(p->mutex);bool old=p->hdr;float white=p->sdrWhite;p->colour();if(old!=p->hdr||white!=p->sdrWhite)p->draw();return 0;}
+            SetWindowPos(window,HWND_TOP,p->x,p->y,p->w,p->h,SWP_NOACTIVATE|(p->visible&&p->loaded?0:SWP_HIDEWINDOW));
+            p->layoutDirty=false;
+            if(p->swap&&!p->frozen){p->resize();p->colour();p->draw();}
+            if(p->loaded&&p->visible)ShowWindow(window,SW_SHOWNOACTIVATE);return 0;}
+        if(message==FRAME){std::lock_guard<std::mutex> lock(p->mutex);
+            // Sent FRAME messages may overtake a posted layout UPDATE. Apply
+            // its latest size before drawing or revealing the first picture.
+            if(p->layoutDirty){SetWindowPos(window,HWND_TOP,p->x,p->y,p->w,p->h,SWP_NOACTIVATE|(p->visible?0:SWP_HIDEWINDOW));p->layoutDirty=false;}
+            p->resize();if(MonitorFromWindow(window,MONITOR_DEFAULTTONEAREST)!=p->monitor)p->colour();p->draw();
+            if(p->loaded&&p->visible&&!(GetWindowLongPtrW(window,GWL_STYLE)&WS_VISIBLE))
+                SetWindowPos(window,HWND_TOP,p->x,p->y,p->w,p->h,SWP_NOACTIVATE|SWP_SHOWWINDOW);
+            return 0;}
+        if(message==WM_TIMER){std::lock_guard<std::mutex> lock(p->mutex);if(p->frozen)return 0;bool old=p->hdr;float white=p->sdrWhite;p->colour();if(old!=p->hdr||white!=p->sdrWhite)p->draw();return 0;}
         if(message==WM_LBUTTONDOWN||message==WM_RBUTTONDOWN){SetCapture(window);std::lock_guard<std::mutex> lock(p->mutex);
             ++p->pointerDowns;p->downX=float(GET_X_LPARAM(lp));
             p->drag=message==WM_LBUTTONDOWN&&p->mode==2&&std::abs(GET_X_LPARAM(lp)-p->split*p->w)<18.f;
@@ -239,7 +263,7 @@ void run(Presenter* p){
         p->x,p->y,p->w,p->h,p->parent,nullptr,GetModuleHandleW(nullptr),p);
     try{if(!p->window)throw std::runtime_error("create native preview window failed");p->init();SetTimer(p->window,1,1000,nullptr);}
     catch(const std::exception& e){p->failure=e.what();SetEvent(p->ready);if(p->window)DestroyWindow(p->window);return;}
-    SetEvent(p->ready);ShowWindow(p->window,SW_SHOWNOACTIVATE);
+    SetEvent(p->ready); // Reveal only after the first complete frame is presented.
     MSG msg{};while(GetMessageW(&msg,nullptr,0,0)>0){TranslateMessage(&msg);DispatchMessageW(&msg);}
 }
 int fail(const std::exception& e){error=e.what();return -1;}
@@ -253,15 +277,30 @@ API int gpu_native_presenter_open(ID3D12Device* device,UINT64 parent,Presenter**
     if(!p->failure.empty()){error=p->failure;p->thread.join();return -1;}*out=p.release();return 0;}
 API int gpu_native_presenter_config(Presenter* p,int x,int y,int w,int h,int visible,int mode,float zoom,float panX,float panY){
     if(!p||w<1||h<1||w>16384||h>16384||mode<0||mode>3||!std::isfinite(zoom)||zoom<.1f||zoom>32.f){error="invalid native preview layout";return -1;}
-    {std::lock_guard<std::mutex> lock(p->mutex);p->x=x;p->y=y;p->w=w;p->h=h;p->visible=visible!=0;p->mode=mode;
+    {std::lock_guard<std::mutex> lock(p->mutex);
+        p->layoutDirty=p->layoutDirty||p->x!=x||p->y!=y||p->w!=w||p->h!=h||p->visible!=(visible!=0);
+        p->x=x;p->y=y;p->w=w;p->h=h;p->visible=visible!=0;p->mode=mode;
         if(p->zoom!=zoom||p->requestedPanX!=panX||p->requestedPanY!=panY){p->panX=std::clamp(panX,0.f,1.f);p->panY=std::clamp(panY,0.f,1.f);}
         p->zoom=zoom;p->requestedPanX=panX;p->requestedPanY=panY;}
     PostMessageW(p->window,UPDATE,0,0);return 0;}
 API int gpu_native_presenter_frame(Presenter* p,void* context,UINT64 ap,UINT ar,UINT aw,UINT ah,UINT ab,UINT ahdr,
     UINT64 bp,UINT br,UINT bw,UINT bh,UINT bb,UINT bhdr){if(!p){error="native preview closed";return -1;}
-    try{std::lock_guard<std::mutex> lock(p->mutex);if(!p->failure.empty())throw std::runtime_error(p->failure);
+    try{{std::lock_guard<std::mutex> lock(p->mutex);if(!p->failure.empty())throw std::runtime_error(p->failure);
+        if(p->frozen)throw std::runtime_error("frozen preview cannot accept a new CUDA context");
         p->upload(p->a,context,ap,ar,aw,ah,ab,ahdr!=0);p->upload(p->b,context,bp,br,bw,bh,bb,bhdr!=0);p->loaded=true;++p->frames;
-        PostMessageW(p->window,FRAME,0,0);return 0;}catch(const std::exception& e){return fail(e);}}
+        }
+        DWORD_PTR ignored=0;
+        if(!SendMessageTimeoutW(p->window,FRAME,0,0,SMTO_ABORTIFHUNG,30000,&ignored))throw std::runtime_error("native preview presentation timed out");
+        std::lock_guard<std::mutex> lock(p->mutex);if(!p->failure.empty())throw std::runtime_error(p->failure);
+        return 0;}catch(const std::exception& e){return fail(e);}}
+API int gpu_native_presenter_freeze(Presenter* p){if(!p)return -1;
+    try{std::lock_guard<std::mutex> lock(p->mutex);
+        if(!p->failure.empty())throw std::runtime_error(p->failure);
+        // The swapchain already owns the last displayed panel. Retire all CUDA
+        // imports while their borrowed context is alive, and keep only that
+        // panel instead of retaining two full-resolution source/result buffers.
+        p->frozen=true;p->a.reset();p->b.reset();return 0;
+    }catch(const std::exception& e){return fail(e);}}
 API int gpu_native_presenter_stats(Presenter* p,Stats* out){if(!p||!out||out->size!=sizeof(Stats))return -1;
     std::lock_guard<std::mutex> lock(p->mutex);if(!p->failure.empty()){error=p->failure;return -1;}
     *out={sizeof(Stats),UINT(p->hdr),UINT(p->w),UINT(p->h),p->frames,p->presents,p->dragPresents,0,p->split,p->sdrWhite,reinterpret_cast<UINT64>(p->window),p->pointerDowns,p->downX};return 0;}

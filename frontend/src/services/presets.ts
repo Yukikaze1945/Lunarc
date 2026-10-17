@@ -2,6 +2,7 @@ import {completeSettings,DEFAULT_SETTINGS} from './workspace.ts'
 import {configuredRenderStages} from './renderPipeline.ts'
 import {VSR_MODES} from './vsrModes.ts'
 import type {DLSSSettings} from '../types'
+import {localToken} from './api.ts'
 
 export type Preset = {name:string; settings:DLSSSettings}
 const OPTIONAL_DEFAULTS:Partial<DLSSSettings>={dlaa_preset:0,truehdr_enabled:false,
@@ -25,24 +26,91 @@ export function samePreset(a:Partial<DLSSSettings>,b:Partial<DLSSSettings>):bool
   return JSON.stringify(sorted(presetSettings(a)))===JSON.stringify(sorted(presetSettings(b)))
 }
 const KEY='lunarc.presets.v1'
-let raw='', snapshot:Preset[]=[]
+const MIGRATED='lunarc.presets.backend-migrated.v1'
+let snapshot:Preset[]=[]
+let initialized=false, initializing:Promise<void>|null=null
+let writeQueue=Promise.resolve()
+const API='http://127.0.0.1:18923/api/presets'
+function headers(json=false):Record<string,string>{const token=localToken();return {...(json?{'Content-Type':'application/json'}:{}),...(token?{'X-DLSS-Token':token}:{})}}
+async function request(path='',method='GET',body?:unknown):Promise<{presets:Preset[];revision:number}>{
+  const response=await fetch(`${API}${path}`,{method,headers:headers(body!==undefined),...(body===undefined?{}:{body:JSON.stringify(body)})})
+  const data=await response.json().catch(()=>({}))
+  if(!response.ok)throw new Error(data.detail||'预设同步失败')
+  return data
+}
+function normalize(list:unknown):Preset[]{return Array.isArray(list)?list.filter((p:any)=>typeof p?.name==='string'&&p.name.trim()&&p.settings&&typeof p.settings==='object'&&!Array.isArray(p.settings)).map((p:any)=>({name:p.name,settings:presetSettings(p.settings)})):[]}
+function setCache(list:Preset[],notify=true){snapshot=normalize(list);try{localStorage.setItem(KEY,JSON.stringify(snapshot))}catch{};if(notify)window.dispatchEvent(new Event('lunarc:presets'))}
+function cached():Preset[]{try{return normalize(JSON.parse(localStorage.getItem(KEY)||'[]'))}catch{return []}}
+async function initialize():Promise<void>{
+  if(initialized)return
+  if(initializing)return initializing
+  initializing=(async()=>{
+    const legacy=cached()
+    const server=await request()
+    let authoritative=normalize(server.presets)
+    if(localStorage.getItem(MIGRATED)!=='1'){
+      if(!localStorage.getItem('lunarc.presets.migration-backup.v1'))localStorage.setItem('lunarc.presets.migration-backup.v1',localStorage.getItem(KEY)||'[]')
+      const merged=await request('/import','POST',{presets:legacy})
+      authoritative=normalize(merged.presets)
+      localStorage.setItem(MIGRATED,'1')
+    }
+    setCache(authoritative)
+    initialized=true
+  })().finally(()=>{initializing=null})
+  return initializing
+}
+function enqueue<T>(operation:()=>Promise<T>):Promise<T>{const result=writeQueue.then(operation);writeQueue=result.then(()=>undefined,()=>undefined);return result}
+function reportSyncError(error:unknown){window.dispatchEvent(new CustomEvent('lunarc:preset-error',{detail:{message:error instanceof Error?error.message:'预设同步失败'}}))}
+export function initializePresets():Promise<void>{return initialize().catch(error=>{reportSyncError(error);throw error})}
 export function presetSnapshot():Preset[] {
-  const value=localStorage.getItem(KEY)||'[]'
-  if(value!==raw){raw=value;try{const list=JSON.parse(value);snapshot=Array.isArray(list)?list.filter(p=>
-    typeof p?.name==='string'&&p.name.trim()&&p.settings&&typeof p.settings==='object'&&!Array.isArray(p.settings))
-    .map(p=>({name:p.name,settings:presetSettings(p.settings)})):[]}catch{snapshot=[]}}
+  if(!initialized&&snapshot.length===0)snapshot=cached()
   return snapshot
 }
 export function subscribePresets(listener:()=>void) {
+  void initialize().catch(reportSyncError)
+  const focus=()=>{void refreshPresets().catch(reportSyncError)}
   window.addEventListener('lunarc:presets',listener);window.addEventListener('storage',listener)
-  return()=>{window.removeEventListener('lunarc:presets',listener);window.removeEventListener('storage',listener)}
+  window.addEventListener('focus',focus)
+  return()=>{window.removeEventListener('lunarc:presets',listener);window.removeEventListener('storage',listener);window.removeEventListener('focus',focus)}
 }
-export function writePresets(value:Preset[]) {
-  localStorage.setItem(KEY,JSON.stringify(value));window.dispatchEvent(new Event('lunarc:presets'))
+export async function refreshPresets():Promise<void>{
+  await enqueue(async()=>{await initialize();const data=await request();setCache(data.presets)})
 }
-export function savePreset(name:string,settings:DLSSSettings) {
+export function writePresets(value:Preset[]):Promise<void>{
+  return enqueue(async()=>{
+    await initialize()
+    const before=snapshot, after=normalize(value)
+    const nextNames=new Set(after.map(p=>p.name))
+    for(const old of before)if(!nextNames.has(old.name))await request('/delete','POST',{name:old.name})
+    for(const preset of after){const existing=before.find(p=>p.name===preset.name)
+      if(!existing||JSON.stringify(existing.settings)!==JSON.stringify(preset.settings))
+        await request('/save','POST',{name:preset.name,settings:preset.settings,overwrite:Boolean(existing)})
+    }
+    const data=await request();setCache(data.presets)
+  }).catch(error=>{reportSyncError(error);throw error})
+}
+export async function savePreset(name:string,settings:DLSSSettings):Promise<void> {
   name=name.trim();if(!name||name.length>80)throw new Error('请输入 1–80 字的预设名称')
-  writePresets([...presetSnapshot().filter(p=>p.name!==name),{name,settings:structuredClone(presetSettings(settings))}])
+  await enqueue(async()=>{
+    await initialize()
+    const existing=snapshot.some(p=>p.name===name)
+    const data=await request('/save','POST',{name,settings:presetSettings(settings),overwrite:existing})
+    setCache(data.presets)
+  }).catch(error=>{reportSyncError(error);throw error})
+}
+export async function deletePreset(name:string):Promise<void>{
+  await enqueue(async()=>{
+    await initialize()
+    const data=await request('/delete','POST',{name})
+    setCache(data.presets)
+  }).catch(error=>{reportSyncError(error);throw error})
+}
+export async function importPresets(presets:Preset[]):Promise<void>{
+  await enqueue(async()=>{
+    await initialize()
+    const data=await request('/import','POST',{presets:normalize(presets)})
+    setCache(data.presets)
+  }).catch(error=>{reportSyncError(error);throw error})
 }
 
 const labels:Record<string,string>={render_pipeline:'渲染顺序',style:'画面风格',intensity:'NR 强度',local_tone:'局部色调强度',

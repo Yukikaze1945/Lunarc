@@ -1,7 +1,9 @@
 // localized-render-sinks
 import {ui} from './i18n/locale'
 import {useCallback, useEffect, useRef, useState, useSyncExternalStore, type DragEvent} from 'react'
-import {Home, Layers3, Film, Image as ImageIcon, Activity, Bookmark, Settings2, Info, Aperture, ArrowLeftRight, BookOpen} from 'lucide-react'
+import {Home, Layers3, Film, Image as ImageIcon, Activity, Bookmark, Settings2, Info, ArrowLeftRight, BookOpen} from 'lucide-react'
+import {ActivityMark} from './components/ActivityMark'
+import {activityState} from './services/activityState'
 import {Header} from './components/Header'
 import {BottomBar, type TabType} from './components/BottomBar'
 import {DLSSPage} from './pages/DLSSPage'
@@ -52,6 +54,11 @@ function WorkspaceApp() {
   const [currentFrame,setCurrentFrame]=useState(0)
   const [statusText,setStatusText]=useState('连接本地工作台…')
   const [ready,setReady]=useState(false)
+  const [backendState,setBackendState]=useState<'starting'|'ready'|'recovering'|'error'>('starting')
+  const [importing,setImporting]=useState(false),[appError,setAppError]=useState(false)
+  const [previewActivity,setPreviewActivity]=useState({busy:false,error:false})
+  const [queueErrorId,setQueueErrorId]=useState<string|null>(null)
+  const observedJobs=useRef<Map<string,string>|null>(null)
   const recoveryDraft=useRef({video,settings,currentFrame});recoveryDraft.current={video,settings,currentFrame}
   const queue = useSyncExternalStore(subscribeQueue, queueSnapshot)
   useEffect(()=>{
@@ -70,17 +77,18 @@ function WorkspaceApp() {
           if(cancelled)return
           setSettings(completeSettings(current));setStatusText('工作台就绪')
         }
-        if(!cancelled){initialized=true;setReady(true)}
+        if(!cancelled){initialized=true;setReady(true);setBackendState('ready');setAppError(false)}
       }catch(e:any){
         const startup=await window.electronAPI?.getBackendStartup?.().catch(()=>null)
-        if(!cancelled)setStatusText(startup?.state==='error'?startup.message:`后端连接失败：${e.message} · 正在重试`)
+        if(!cancelled){setStatusText(startup?.state==='error'?startup.message:`后端连接失败：${e.message} · 正在重试`);setBackendState('error')}
       }finally{inFlight=false}
     }
     void init()
     const timer=setInterval(()=>{if(!initialized){void init();return}void fetchSystemInfo().then(s=>{if(!cancelled)setSystem(s)}).catch(()=>{})},5000)
-    const unsubscribe=window.electronAPI?.onBackendExit?.(info=>{if(!cancelled){setReady(false);setStatusText(`后端已退出 (${info.code})，正在检查恢复`)}})
+    const unsubscribe=window.electronAPI?.onBackendExit?.(info=>{if(!cancelled){setReady(false);setBackendState('error');setStatusText(`后端已退出 (${info.code})，正在检查恢复`)}})
     const recovery=window.electronAPI?.onBackendRecovery?.(state=>{
       if(cancelled)return
+      setBackendState(state.phase==='blocked'?'error':'recovering')
       setStatusText(state.phase==='restored'?'后端已启动，正在恢复工作台…':state.message)
       if(state.phase!=='restored'){setReady(false);return}
       void (async()=>{
@@ -90,13 +98,22 @@ function WorkspaceApp() {
           const restored=await saveSettings(recoveryDraft.current.settings)
           if(cancelled)return
           setSettings(completeSettings(restored));setCurrentFrame(draft.currentFrame)
-          initialized=true;setReady(true);setStatusText(state.message)
+          initialized=true;setReady(true);setBackendState('ready');setAppError(false);setStatusText(state.message)
           window.dispatchEvent(new Event('lunarc:backend-restored'))
-        }catch(error:any){if(!cancelled)setStatusText(`后端已启动，工作台恢复失败：${error.message}`)}
+        }catch(error:any){if(!cancelled){setBackendState('error');setStatusText(`后端已启动，工作台恢复失败：${error.message}`)}}
       })()
     })
     return()=>{cancelled=true;clearInterval(timer);unsubscribe?.();recovery?.()}
   },[])
+  useEffect(()=>{
+    if(!queue)return
+    const previous=observedJobs.current
+    const failed=previous&&queue.jobs.find(job=>job.status==='failed'&&previous.get(job.id)!=='failed')
+    if(failed)setQueueErrorId(failed.id)
+    else if(queue.jobs.some(job=>job.status==='running'||(job.status==='completed'&&previous?.get(job.id)==='running')))setQueueErrorId(null)
+    else setQueueErrorId(current=>current&&queue.jobs.some(job=>job.id===current)?current:null)
+    observedJobs.current=new Map(queue.jobs.map(job=>[job.id,job.status]))
+  },[queue])
   useEffect(()=>{const q=queue;if(!q)return;try{
     const terminal=q.jobs.filter(j=>['completed','failed','cancelled','skipped'].includes(j.status)).map(j=>({id:j.id,name:j.name,status:j.status,input_path:j.input_path,output_path:j.output_path,frame_range:j.frame_range,source_fps:j.source_fps,error:j.error,recorded:new Date().toISOString()}))
     if(terminal.length){let history:any[]=[];try{const h=JSON.parse(localStorage.getItem('lunarc.history.v1')||'[]');if(Array.isArray(h))history=h}catch{}
@@ -104,11 +121,11 @@ function WorkspaceApp() {
     }catch{}},[queue])
   useEffect(()=>{if(ready){try{storeWorkspace(settings,recent)}catch{setStatusText('本机草稿无法保存；当前后端参数仍保留')}}},[settings,recent,ready])
   const importFile=async(path:string)=>{
-    const revision=++importRevision.current;setStatusText('正在读取素材…')
+    const revision=++importRevision.current;setStatusText('正在读取素材…');setImporting(true);setAppError(false)
     // Serialize source replacement on the backend too, and skip obsolete drops.
     const request=importQueue.current.then(async()=>{
       if(revision!==importRevision.current)return
-      try{const loaded=await loadVideoFile(path);if(revision!==importRevision.current)return;setVideo(loaded);setCurrentFrame(0);setRecent(r=>[path,...r.filter(x=>x!==path)].slice(0,8));setActiveTab('dlss');setStatusText(`已载入 ${loaded.filename}`)}catch(e:any){if(revision===importRevision.current)setStatusText(`素材载入失败：${e.message}`)}
+      try{const loaded=await loadVideoFile(path);if(revision!==importRevision.current)return;setVideo(loaded);setCurrentFrame(0);setRecent(r=>[path,...r.filter(x=>x!==path)].slice(0,8));setActiveTab('dlss');setStatusText(`已载入 ${loaded.filename}`)}catch(e:any){if(revision===importRevision.current){setAppError(true);setStatusText(`素材载入失败：${e.message}`)}}finally{if(revision===importRevision.current)setImporting(false)}
     })
     importQueue.current=request.catch(()=>{});await request
   }
@@ -127,15 +144,18 @@ function WorkspaceApp() {
   const applySettings=async(next:DLSSSettings)=>{const saved=await saveSettings(completeSettings(next));setSettings(completeSettings(saved));setStatusText('参数已验证并保存')}
   const running=queue?.jobs.find(j=>j.status==='running')
   const pending=queue?.jobs.filter(j=>j.status==='pending').length||0
+  const markState=activityState({recovering:backendState==='recovering',
+    error:backendState==='error'||appError||previewActivity.error||Boolean(queueErrorId&&queue?.jobs.some(job=>job.id===queueErrorId&&job.status==='failed')),
+    exporting:Boolean(running),loading:backendState==='starting'||importing||previewActivity.busy})
   const queueSummary=running?`${running.name} · ${Math.round(running.progress)}%`:pending?`${pending} 个任务等待导出`:'队列空闲'
   return <div className="app-shell" onDragEnter={event=>{if(hasFiles(event)){event.preventDefault();if((event.target as Element).closest?.('.dlssnr-runtime')){dragDepth.current=0;setDragging(false);return}dragDepth.current++;setDragging(true)}}}
     onDragOver={event=>{if(hasFiles(event)){event.preventDefault();event.dataTransfer.dropEffect='copy'}}}
     onDragLeave={event=>{if(hasFiles(event)){event.preventDefault();dragDepth.current=Math.max(0,dragDepth.current-1);if(!dragDepth.current)setDragging(false)}}}
     onDrop={dropMedia}>
     {ui(dragging&&<div className="media-drop-overlay" role="status"><span>{ui("松开以载入素材")}</span></div>)}
-    <aside className="navigation"><div className="rail-mark" aria-hidden="true"><Aperture size={23}/></div><nav aria-label={ui("主导航")}>{ui(NAV.map(n=><button key={n.id} aria-label={ui(n.label)} title={ui(n.label)} className={activeTab===n.id?'active':''} onClick={()=>setActiveTab(n.id)} aria-current={activeTab===n.id?'page':undefined}><n.icon size={20}/></button>))}</nav></aside>
-    <div className="app-content"><Header activeTab={activeTab} onNavigate={setActiveTab} theme={theme} onThemeChange={()=>setTheme(t=>t==='dark'?'light':'dark')} onFileLoaded={importFile} onError={setStatusText} image={video?.media_type==='image'}/><main className="page-host">
-      <div className={`mounted-page ${activeTab==='dlss'?'':'hidden'}`}><DLSSPage video={video} settings={settings} onSettingsChange={updateSettings} currentFrame={currentFrame} setCurrentFrame={setCurrentFrame} onStatusChange={setStatusText} isActive={ready&&activeTab==='dlss'}/></div>
+    <aside className="navigation"><ActivityMark state={markState}/><nav aria-label={ui("主导航")}>{ui(NAV.map(n=><button key={n.id} aria-label={ui(n.label)} title={ui(n.label)} className={activeTab===n.id?'active':''} onClick={()=>setActiveTab(n.id)} aria-current={activeTab===n.id?'page':undefined}><n.icon size={20}/></button>))}</nav></aside>
+    <div className="app-content"><Header activeTab={activeTab} onNavigate={setActiveTab} theme={theme} onThemeChange={()=>setTheme(t=>t==='dark'?'light':'dark')} onFileLoaded={importFile} onError={message=>{setAppError(true);setStatusText(message)}} image={video?.media_type==='image'}/><main className="page-host">
+      <div className={`mounted-page ${activeTab==='dlss'?'':'hidden'}`}><DLSSPage video={video} settings={settings} onSettingsChange={updateSettings} currentFrame={currentFrame} setCurrentFrame={setCurrentFrame} onStatusChange={setStatusText} onActivityChange={setPreviewActivity} isActive={ready&&activeTab==='dlss'}/></div>
       <div className={`mounted-page ${activeTab==='deliver'?'':'hidden'}`}><DeliverPage video={video?.media_type==='image'?null:video} settings={settings} onSettingsChange={updateSettings} onStatusChange={setStatusText} isActive={activeTab==='deliver'}/></div>
       <div className={`mounted-page ${activeTab==='image-deliver'?'':'hidden'}`}>{ui(video?.media_type==='image'?<ImageDeliverPage video={video} settings={settings} onStatusChange={setStatusText}/>:<div className="workspace-page"><h1>{ui("图片导出")}</h1><p>{ui("先导入一张图片，再选择格式与保存位置。")}</p></div>)}</div>
       {ui(activeTab==='compare'&&<ComparePage initialPair={comparePair}/>)}

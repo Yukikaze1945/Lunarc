@@ -1,4 +1,5 @@
 // localized-render-sinks
+import {gpuFailure} from '../services/processingFeedback'
 import {ui,useLocale} from '../i18n/locale'
 import {jobComparison} from '../services/jobComparison'
 import {DEFAULT_EXPORT_SETTINGS,readTranscodeDraft,TRANSCODE_DRAFT_KEY,TRANSCODE_DRAFT_VERSION} from '../services/exportSettings'
@@ -1591,7 +1592,7 @@ export const DeliverPage: React.FC<DeliverPageProps> = React.memo(({
                       <div className="flex justify-between items-center text-[11px]">
                         {ui(job.status === 'failed' ? (
                           <div className="flex items-center gap-2 max-w-[80%]">
-                            <span className="text-rose-400 font-medium truncate">{ui("失败: ")}{ui(job.error || '未知异常中断')}
+                            <span className="text-rose-400 font-medium truncate">{ui("失败: ")}{ui(gpuFailure(job.error)?.message || job.error || '未知异常中断')}
                             </span>
                             <button
                               onClick={(e) => {
